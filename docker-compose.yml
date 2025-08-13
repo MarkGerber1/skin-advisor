@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  bot:
+    build: .
+    container_name: skin_advisor_bot
+    env_file:
+      - .env
+    volumes:
+      - ./data:/usr/src/app/data
+      - ./config:/usr/src/app/config
+      - ./db_volume:/usr/src/app/db_volume # Сохраняем БД между перезапусками
+    restart: unless-stopped
+    command: python -m app.main
+    ports:
+      # Пробрасываем порт только если используем вебхук
+      # - "8080:8080"
+      - "${WEBHOOK_PORT}:${WEBHOOK_PORT}"
+volumes:
+  db_volume:
+

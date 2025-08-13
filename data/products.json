@@ -1,0 +1,137 @@
+[
+  {
+    "id": 1,
+    "brand": "Promakeup Laboratory",
+    "name": "Soft Cleansing Gel",
+    "category": "очищение",
+    "purpose": "мягкое очищение",
+    "actives": ["пантенол", "экстракт зеленого чая"],
+    "skin_type": ["любой"],
+    "skin_state": ["обезвоженность", "чувствительность"],
+    "price_tier": "budget",
+    "volume": "150ml",
+    "article": "PML-CL-01",
+    "links": {
+      "Ozon": "https://www.ozon.ru/search/?text=Promakeup+Laboratory+Soft+Cleansing+Gel",
+      "Золотое Яблоко": "https://goldapple.ru/catalogsearch/result/?q=Promakeup+Laboratory+Soft+Cleansing+Gel"
+    }
+  },
+  {
+    "id": 2,
+    "brand": "Pecan",
+    "name": "Hydrating Toner",
+    "category": "тонизирование",
+    "purpose": "увлажнение и восстановление pH",
+    "actives": ["гиалуроновая кислота", "алоэ вера"],
+    "skin_type": ["сухая", "нормальная", "комбинированная"],
+    "skin_state": ["обезвоженность", "тусклость"],
+    "price_tier": "budget",
+    "volume": "200ml",
+    "article": "PCN-TN-01",
+    "links": {
+      "Wildberries": "https://www.wildberries.ru/catalog/0/search.aspx?search=Pecan+Hydrating+Toner"
+    }
+  },
+  {
+    "id": 3,
+    "brand": "LIC",
+    "name": "Niacinamide 10% + Zinc 1% Serum",
+    "category": "сыворотка",
+    "purpose": "себорегуляция и борьба с несовершенствами",
+    "actives": ["ниацинамид", "цинк"],
+    "skin_type": ["жирная", "комбинированная"],
+    "skin_state": ["расширенные поры", "акне", "постакне"],
+    "price_tier": "mid",
+    "volume": "30ml",
+    "article": "LIC-SR-05",
+    "links": {
+      "Ozon": "https://www.ozon.ru/search/?text=LIC+Niacinamide+10",
+      "Золотое Яблоко": "https://goldapple.ru/catalogsearch/result/?q=LIC+Niacinamide+10"
+    }
+  },
+  {
+    "id": 4,
+    "brand": "Estée Lauder",
+    "name": "Advanced Night Repair Serum",
+    "category": "сыворотка",
+    "purpose": "антивозрастной уход и восстановление",
+    "actives": ["пептиды", "гиалуроновая кислота"],
+    "skin_type": ["любой"],
+    "skin_state": ["морщины", "тусклость"],
+    "price_tier": "premium",
+    "volume": "50ml",
+    "article": "EL-ANR-50",
+    "links": {
+      "Золотое Яблоко": "https://goldapple.ru/catalogsearch/result/?q=Estée+Lauder+Advanced+Night+Repair"
+    }
+  },
+  {
+    "id": 5,
+    "brand": "Promakeup Laboratory",
+    "name": "Perfect Skin SPF 50 Cream",
+    "category": "spf",
+    "purpose": "защита от солнца",
+    "actives": ["химические фильтры нового поколения", "витамин E"],
+    "skin_type": ["любой"],
+    "skin_state": ["пигментация", "купероз", "чувствительность"],
+    "price_tier": "mid",
+    "volume": "50ml",
+    "article": "PML-SPF-50",
+    "links": {
+      "Ozon": "https://www.ozon.ru/search/?text=Promakeup+Laboratory+Perfect+Skin+SPF+50",
+      "Золотое Яблоко": "https://goldapple.ru/catalogsearch/result/?q=Promakeup+Laboratory+Perfect+Skin+SPF+50"
+    }
+  },
+  {
+    "id": 6,
+    "brand": "Pecan",
+    "name": "Retinal 0.1% Cream",
+    "category": "актив",
+    "purpose": "борьба с акне и возрастными изменениями",
+    "actives": ["ретиналь"],
+    "skin_type": ["жирная", "комбинированная", "нормальная"],
+    "skin_state": ["акне", "постакне", "морщины"],
+    "price_tier": "mid",
+    "volume": "30ml",
+    "article": "PCN-RET-01",
+    "links": {
+      "Wildberries": "https://www.wildberries.ru/catalog/0/search.aspx?search=Pecan+Retinal+0.1"
+    }
+  },
+  {
+    "id": 7,
+    "brand": "Estée Lauder",
+    "name": "Double Wear Stay-in-Place Makeup",
+    "category": "тон",
+    "purpose": "стойкое тональное покрытие",
+    "actives": [],
+    "skin_type": ["жирная", "комбинированная", "нормальная"],
+    "skin_state": [],
+    "price_tier": "premium",
+    "volume": "30ml",
+    "article": "EL-DW-01",
+    "links": {
+      "Золотое Яблоко": "https://goldapple.ru/catalogsearch/result/?q=Estee+Lauder+Double+Wear"
+    }
+  },
+  {
+    "id": 8,
+    "brand": "LIC",
+    "name": "Matte Liquid Lipstick",
+    "category": "губы",
+    "purpose": "матовая помада",
+    "actives": [],
+    "skin_type": [],
+    "skin_state": [],
+    "price_tier": "budget",
+    "volume": "5ml",
+    "article": "LIC-LIP-01",
+    "links": {
+      "Ozon": "https://www.ozon.ru/search/?text=LIC+Matte+Liquid+Lipstick",
+      "Золотое Яблоко": "https://goldapple.ru/catalogsearch/result/?q=LIC+Matte+Liquid+Lipstick"
+    }
+  }
+]
+
+
+

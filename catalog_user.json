@@ -1,0 +1,2885 @@
+{
+  "products": [
+    {
+      "id": "promakeup_laboratory_promakeup_laboratory",
+      "name": "PROMAKEUP laboratory",
+      "brand": "PROMAKEUP laboratory",
+      "category": "other",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/promakeup_laboratory_promakeup_laboratory",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "shik_cosmetics_shik_cosmetics",
+      "name": "SHIK cosmetics",
+      "brand": "SHIK cosmetics",
+      "category": "other",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/shik_cosmetics_shik_cosmetics",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "korolkova_korolkova",
+      "name": "KOROLKOVA",
+      "brand": "KOROLKOVA",
+      "category": "other",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/korolkova_korolkova",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "collagen_moisture_foundation_collagen_moisture_foundation",
+      "name": "COLLAGEN MOISTURE FOUNDATION",
+      "brand": "COLLAGEN MOISTURE FOUNDATION",
+      "category": "foundation",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/collagen_moisture_foundation_collagen_moisture_foundation",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "pekah_daily_moisture_peeling_toner_pekah_daily_moisture_peeling_toner",
+      "name": "PEKAH daily moisture peeling toner",
+      "brand": "PEKAH daily moisture peeling toner",
+      "category": "exfoliant",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/pekah_daily_moisture_peeling_toner_pekah_daily_moisture_peeling_toner",
+      "actives": [
+        "aha"
+      ],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "weekly",
+      "tags": []
+    },
+    {
+      "id": "estee_lauder_double_wear_stay_in_place_makeup",
+      "name": "double wear stay-in-place makeup",
+      "brand": "ESTEE LAUDER",
+      "category": "foundation",
+      "price_tier": "premium",
+      "base_price": 1000.0,
+      "link": "https://shop.example/estee_lauder_double_wear_stay_in_place_makeup",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": [
+        "finish_matte",
+        "longwear"
+      ]
+    },
+    {
+      "id": "estee_lauder_estee_lauder",
+      "name": "ESTEE LAUDER",
+      "brand": "ESTEE LAUDER",
+      "category": "other",
+      "price_tier": "premium",
+      "base_price": 1000.0,
+      "link": "https://shop.example/estee_lauder_estee_lauder",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "holy_land_holy_land",
+      "name": "HOLY LAND",
+      "brand": "HOLY LAND",
+      "category": "other",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/holy_land_holy_land",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "7days_b_colour",
+      "name": "b.colour консилер для лица",
+      "brand": "7DAYS",
+      "category": "concealer",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/7days_b_colour",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "rbg",
+      "name": "от алёны моисеевой",
+      "brand": "RBG",
+      "category": "other",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/rbg",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "elian_russia_liquid_eye_paint",
+      "name": "liquid eye paint",
+      "brand": "ELIAN RUSSIA",
+      "category": "eyeshadow",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/elian_russia_liquid_eye_paint",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "nivea_make_up_expert",
+      "name": "make up expert",
+      "brand": "NIVEA",
+      "category": "cleanser",
+      "price_tier": "budget",
+      "base_price": 1000.0,
+      "link": "https://shop.example/nivea_make_up_expert",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "luxvisage_aqua_gel_hyaluron_complex",
+      "name": "aqua gel hyaluron complex",
+      "brand": "LUXVISAGE",
+      "category": "other",
+      "price_tier": "budget",
+      "base_price": 1000.0,
+      "link": "https://shop.example/luxvisage_aqua_gel_hyaluron_complex",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "holy_land_super_lotion",
+      "name": "super lotion",
+      "brand": "HOLY LAND",
+      "category": "toner",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/holy_land_super_lotion",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "shikstudio_shikstudio",
+      "name": "SHIKSTUDIO",
+      "brand": "SHIKSTUDIO",
+      "category": "other",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/shikstudio_shikstudio",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "erborian_erborian",
+      "name": "ERBORIAN",
+      "brand": "ERBORIAN",
+      "category": "other",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/erborian_erborian",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "darling_lash_cocoon",
+      "name": "lash cocoon",
+      "brand": "DARLING*",
+      "category": "other",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/darling_lash_cocoon",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "missha_perfect_cover",
+      "name": "perfect cover",
+      "brand": "MISSHA",
+      "category": "other",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/missha_perfect_cover",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "pupa_true_lips",
+      "name": "true lips",
+      "brand": "PUPA",
+      "category": "lips",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/pupa_true_lips",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "luxvisage_glitter_rock",
+      "name": "glitter rock",
+      "brand": "LUXVISAGE",
+      "category": "other",
+      "price_tier": "budget",
+      "base_price": 1000.0,
+      "link": "https://shop.example/luxvisage_glitter_rock",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "pusy_super_fix_brow_gel",
+      "name": "super fix brow gel",
+      "brand": "PUSY",
+      "category": "brow",
+      "price_tier": "budget",
+      "base_price": 1000.0,
+      "link": "https://shop.example/pusy_super_fix_brow_gel",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "pusy_brow_fix_gel",
+      "name": "brow fix gel",
+      "brand": "PUSY",
+      "category": "brow",
+      "price_tier": "budget",
+      "base_price": 1000.0,
+      "link": "https://shop.example/pusy_brow_fix_gel",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "vivienne_sabo_marqueur_superb",
+      "name": "marqueur superb",
+      "brand": "VIVIENNE SABO",
+      "category": "other",
+      "price_tier": "budget",
+      "base_price": 1000.0,
+      "link": "https://shop.example/vivienne_sabo_marqueur_superb",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "miss_tais_lip_pencil",
+      "name": "lip pencil",
+      "brand": "MISS TAIS",
+      "category": "lips",
+      "price_tier": "budget",
+      "base_price": 1000.0,
+      "link": "https://shop.example/miss_tais_lip_pencil",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "physician_s_formula_murumuru_butter_bronzer",
+      "name": "murumuru butter bronzer",
+      "brand": "PHYSICIAN'S FORMULA",
+      "category": "bronzer",
+      "price_tier": "budget",
+      "base_price": 1000.0,
+      "link": "https://shop.example/physician_s_formula_murumuru_butter_bronzer",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": [
+        "finish_luminous"
+      ]
+    },
+    {
+      "id": "belor_design_browista",
+      "name": "browista",
+      "brand": "BELOR DESIGN",
+      "category": "brow",
+      "price_tier": "budget",
+      "base_price": 1000.0,
+      "link": "https://shop.example/belor_design_browista",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "vivienne_sabo_brow_arcade_slim",
+      "name": "brow arcade slim",
+      "brand": "VIVIENNE SABO",
+      "category": "brow",
+      "price_tier": "budget",
+      "base_price": 1000.0,
+      "link": "https://shop.example/vivienne_sabo_brow_arcade_slim",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "paese_lifting",
+      "name": "lifting",
+      "brand": "PAESE",
+      "category": "other",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/paese_lifting",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "shikstudio_extra_volume_eyelash_mascara",
+      "name": "extra volume eyelash mascara",
+      "brand": "SHIKSTUDIO",
+      "category": "mascara",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/shikstudio_extra_volume_eyelash_mascara",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "a_pieu_aqua_nature",
+      "name": "aqua nature",
+      "brand": "A'PIEU",
+      "category": "other",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/a_pieu_aqua_nature",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "annbeauty_annbeauty",
+      "name": "ANNBEAUTY",
+      "brand": "ANNBEAUTY",
+      "category": "other",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/annbeauty_annbeauty",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "pupa_makeup_stories_compact_rose_addicted",
+      "name": "makeup stories compact rose addicted",
+      "brand": "PUPA",
+      "category": "other",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/pupa_makeup_stories_compact_rose_addicted",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "nars_nars",
+      "name": "Nars",
+      "brand": "Nars",
+      "category": "other",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/nars_nars",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "vivienne_sabo_waterproof_mascara_volumateur_artistique",
+      "name": "waterproof mascara volumateur artistique",
+      "brand": "VIVIENNE SABO",
+      "category": "mascara",
+      "price_tier": "budget",
+      "base_price": 1000.0,
+      "link": "https://shop.example/vivienne_sabo_waterproof_mascara_volumateur_artistique",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "manly_pro_enchanted_skin",
+      "name": "enchanted skin",
+      "brand": "MANLY PRO",
+      "category": "other",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/manly_pro_enchanted_skin",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "celimax_celimax",
+      "name": "CELIMAX",
+      "brand": "CELIMAX",
+      "category": "other",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/celimax_celimax",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "romanovamakeup_romanovamakeup",
+      "name": "ROMANOVAMAKEUP",
+      "brand": "ROMANOVAMAKEUP",
+      "category": "other",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/romanovamakeup_romanovamakeup",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "enough_8_peptide",
+      "name": "8 peptide",
+      "brand": "ENOUGH",
+      "category": "other",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/enough_8_peptide",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "kundal_kundal",
+      "name": "KUNDAL",
+      "brand": "KUNDAL",
+      "category": "other",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/kundal_kundal",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "manly_pro_gel_eyepencil",
+      "name": "gel eyepencil",
+      "brand": "MANLY PRO",
+      "category": "eyeliner",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/manly_pro_gel_eyepencil",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "a_pieu_aqua_nature_500_a_pieu_aqua_nature_500",
+      "name": "СОФТНЕР ДЛЯ ЛИЦА A`PIEU AQUA NATURE ОЧИЩАЮЩИЙ 500 МЛН",
+      "brand": "СОФТНЕР ДЛЯ ЛИЦА A`PIEU AQUA NATURE ОЧИЩАЮЩИЙ 500 МЛН",
+      "category": "toner",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/a_pieu_aqua_nature_500_a_pieu_aqua_nature_500",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "kiko_milano_weightless_perfection_wet_and_dry",
+      "name": "weightless perfection wet and dry",
+      "brand": "KIKO MILANO",
+      "category": "powder",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/kiko_milano_weightless_perfection_wet_and_dry",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": [
+        "finish_matte",
+        "longwear"
+      ]
+    },
+    {
+      "id": "topface_baked_choice_rich_touch_highlighter",
+      "name": "baked choice rich touch highlighter",
+      "brand": "TOPFACE",
+      "category": "highlighter",
+      "price_tier": "budget",
+      "base_price": 1000.0,
+      "link": "https://shop.example/topface_baked_choice_rich_touch_highlighter",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "caudalie_caudalie",
+      "name": "CAUDALIE",
+      "brand": "CAUDALIE",
+      "category": "other",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/caudalie_caudalie",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "shu_cuties",
+      "name": "cuties",
+      "brand": "SHU",
+      "category": "other",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/shu_cuties",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "clinique_clinique",
+      "name": "CLINIQUE",
+      "brand": "CLINIQUE",
+      "category": "other",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/clinique_clinique",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "tom_ford_eye_color_quad",
+      "name": "eye color quad",
+      "brand": "TOM FORD",
+      "category": "eyeshadow",
+      "price_tier": "premium",
+      "base_price": 1000.0,
+      "link": "https://shop.example/tom_ford_eye_color_quad",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "the_u_keep_calm_cream",
+      "name": "keep calm cream",
+      "brand": "THE U",
+      "category": "moisturizer",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/the_u_keep_calm_cream",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "PM",
+      "tags": []
+    },
+    {
+      "id": "the_u_enzyme",
+      "name": "enzyme",
+      "brand": "THE U",
+      "category": "exfoliant",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/the_u_enzyme",
+      "actives": [
+        "aha"
+      ],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "weekly",
+      "tags": []
+    },
+    {
+      "id": "the_u_keep_calm_serum",
+      "name": "keep calm serum",
+      "brand": "THE U",
+      "category": "serum",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/the_u_keep_calm_serum",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "guerlain_parure_gold_skin",
+      "name": "parure gold skin",
+      "brand": "GUERLAIN",
+      "category": "foundation",
+      "price_tier": "premium",
+      "base_price": 1000.0,
+      "link": "https://shop.example/guerlain_parure_gold_skin",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": [
+        "finish_luminous"
+      ]
+    },
+    {
+      "id": "mac_mineralize_blush",
+      "name": "mineralize blush",
+      "brand": "MAC",
+      "category": "blush",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/mac_mineralize_blush",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": [
+        "finish_luminous"
+      ]
+    },
+    {
+      "id": "mac_mineralize_skinfinish_natural",
+      "name": "mineralize skinfinish natural",
+      "brand": "MAC",
+      "category": "powder",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/mac_mineralize_skinfinish_natural",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": [
+        "finish_luminous"
+      ]
+    },
+    {
+      "id": "mac_macximal_matte_lipstick",
+      "name": "macximal matte lipstick",
+      "brand": "MAC",
+      "category": "lips",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/mac_macximal_matte_lipstick",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": [
+        "finish_matte",
+        "longwear"
+      ]
+    },
+    {
+      "id": "the_u_the_u",
+      "name": "THE U",
+      "brand": "THE U",
+      "category": "other",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/the_u_the_u",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "rad_all_that_juice_mascara_rad_all_that_juice_mascara",
+      "name": "RAD all that juice mascara",
+      "brand": "RAD all that juice mascara",
+      "category": "mascara",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/rad_all_that_juice_mascara_rad_all_that_juice_mascara",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "catrice_sun_lover_glow_catrice_sun_lover_glow",
+      "name": "CATRICE sun lover glow",
+      "brand": "CATRICE sun lover glow",
+      "category": "highlighter",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/catrice_sun_lover_glow_catrice_sun_lover_glow",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": [
+        "finish_luminous"
+      ]
+    },
+    {
+      "id": "mac_extra_dimension_skinfinish",
+      "name": "extra dimension skinfinish",
+      "brand": "MAC",
+      "category": "powder",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/mac_extra_dimension_skinfinish",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "ga_de_velveteen",
+      "name": "velveteen",
+      "brand": "GA DE",
+      "category": "other",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/ga_de_velveteen",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "art_visage_nude_universe",
+      "name": "nude universe",
+      "brand": "ART-VISAGE",
+      "category": "other",
+      "price_tier": "budget",
+      "base_price": 1000.0,
+      "link": "https://shop.example/art_visage_nude_universe",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "art_visage_eyeshadow_palette",
+      "name": "eyeshadow palette",
+      "brand": "ART-VISAGE",
+      "category": "eyeshadow",
+      "price_tier": "budget",
+      "base_price": 1000.0,
+      "link": "https://shop.example/art_visage_eyeshadow_palette",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "anastasia_beverly_hills_glam_to_go_mini_palette",
+      "name": "glam to go mini palette",
+      "brand": "ANASTASIA BEVERLY HILLS",
+      "category": "eyeshadow",
+      "price_tier": "premium",
+      "base_price": 1000.0,
+      "link": "https://shop.example/anastasia_beverly_hills_glam_to_go_mini_palette",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "makeup_revolution_forever_flawless",
+      "name": "forever flawless",
+      "brand": "MAKEUP REVOLUTION",
+      "category": "other",
+      "price_tier": "budget",
+      "base_price": 1000.0,
+      "link": "https://shop.example/makeup_revolution_forever_flawless",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "catrice_blooming_bliss_slim_catrice_blooming_bliss_slim",
+      "name": "CATRICE blooming bliss slim",
+      "brand": "CATRICE blooming bliss slim",
+      "category": "other",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/catrice_blooming_bliss_slim_catrice_blooming_bliss_slim",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "krygina_cosmetics_exfoliating_toner",
+      "name": "exfoliating toner",
+      "brand": "KRYGINA COSMETICS",
+      "category": "exfoliant",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/krygina_cosmetics_exfoliating_toner",
+      "actives": [
+        "aha"
+      ],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "weekly",
+      "tags": []
+    },
+    {
+      "id": "clarins_clarins",
+      "name": "CLARINS",
+      "brand": "CLARINS",
+      "category": "other",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/clarins_clarins",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "la_roche_posay_effaclar_iso_biome",
+      "name": "effaclar н iso-biome",
+      "brand": "LA ROCHE-POSAY",
+      "category": "moisturizer",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/la_roche_posay_effaclar_iso_biome",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "PM",
+      "tags": []
+    },
+    {
+      "id": "vivienne_sabo_liner_virtuose",
+      "name": "liner virtuose",
+      "brand": "VIVIENNE SABO",
+      "category": "eyeliner",
+      "price_tier": "budget",
+      "base_price": 1000.0,
+      "link": "https://shop.example/vivienne_sabo_liner_virtuose",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "l_oreal_paris_volume_millions_lashes_feline",
+      "name": "volume millions lashes feline",
+      "brand": "L'OREAL PARIS",
+      "category": "mascara",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/l_oreal_paris_volume_millions_lashes_feline",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "paese_light_beige",
+      "name": "light beige",
+      "brand": "PAESE",
+      "category": "other",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/paese_light_beige",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "medi_peel_premium_2_0_collagen_naite_thread",
+      "name": "premium 2.0 collagen naite thread",
+      "brand": "MEDI PEEL",
+      "category": "other",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/medi_peel_premium_2_0_collagen_naite_thread",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "la_miso_pore_fresh_peeling_pad",
+      "name": "pore fresh peeling pad",
+      "brand": "LA MISO",
+      "category": "exfoliant",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/la_miso_pore_fresh_peeling_pad",
+      "actives": [
+        "aha"
+      ],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "weekly",
+      "tags": []
+    },
+    {
+      "id": "darling_magic_glow_revitalizing_mask",
+      "name": "magic glow revitalizing mask",
+      "brand": "DARLING*",
+      "category": "mask",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/darling_magic_glow_revitalizing_mask",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "weekly",
+      "tags": [
+        "finish_luminous"
+      ]
+    },
+    {
+      "id": "catrice_safari_fever_slim_catrice_safari_fever_slim",
+      "name": "CATRICE safari fever slim",
+      "brand": "CATRICE safari fever slim",
+      "category": "other",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/catrice_safari_fever_slim_catrice_safari_fever_slim",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "la_roche_posay_effaclar",
+      "name": "effaclar",
+      "brand": "LA ROCHE-POSAY",
+      "category": "moisturizer",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/la_roche_posay_effaclar",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "PM",
+      "tags": []
+    },
+    {
+      "id": "uriage_depiderm_soin_intensif",
+      "name": "depiderm soin intensif",
+      "brand": "URIAGE",
+      "category": "other",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/uriage_depiderm_soin_intensif",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "eucerin_hyaluron_filler_and_elasticity",
+      "name": "hyaluron-filler and elasticity",
+      "brand": "EUCERIN",
+      "category": "other",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/eucerin_hyaluron_filler_and_elasticity",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "bioderma_bioderma",
+      "name": "BIODERMA",
+      "brand": "BIODERMA",
+      "category": "other",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/bioderma_bioderma",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "sesderma_sesretinal",
+      "name": "sesretinal",
+      "brand": "SESDERMA",
+      "category": "retinoid",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/sesderma_sesretinal",
+      "actives": [
+        "retinoid"
+      ],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [
+        "pregnancy"
+      ],
+      "usage": "PM",
+      "tags": []
+    },
+    {
+      "id": "name_skin_care_pro_retinol_2",
+      "name": "pro retinol 2%",
+      "brand": "NAME SKIN CARE",
+      "category": "retinoid",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/name_skin_care_pro_retinol_2",
+      "actives": [
+        "retinoid"
+      ],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [
+        "pregnancy"
+      ],
+      "usage": "PM",
+      "tags": []
+    },
+    {
+      "id": "don_t_touch_my_skin_azacid",
+      "name": "azacid",
+      "brand": "DON'T TOUCH MY SKIN",
+      "category": "serum",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/don_t_touch_my_skin_azacid",
+      "actives": [
+        "azelaic"
+      ],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "PM",
+      "tags": []
+    },
+    {
+      "id": "cosrx_cosrx",
+      "name": "COSRX",
+      "brand": "COSRX",
+      "category": "other",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/cosrx_cosrx",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "bioderma_sebium_serum",
+      "name": "sebium serum",
+      "brand": "BIODERMA",
+      "category": "serum",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/bioderma_sebium_serum",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "sesderma_mandelac",
+      "name": "mandelac",
+      "brand": "SESDERMA",
+      "category": "exfoliant",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/sesderma_mandelac",
+      "actives": [
+        "aha",
+        "mandelic"
+      ],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "weekly",
+      "tags": []
+    },
+    {
+      "id": "vichy_liftactiv_pigment_specialist_b3",
+      "name": "liftactiv pigment specialist b3",
+      "brand": "VICHY",
+      "category": "other",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/vichy_liftactiv_pigment_specialist_b3",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "guerlain_terracotta_light",
+      "name": "terracotta light",
+      "brand": "GUERLAIN",
+      "category": "bronzer",
+      "price_tier": "premium",
+      "base_price": 1000.0,
+      "link": "https://shop.example/guerlain_terracotta_light",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "physician_s_formula_mineral_wear_diamond_bronzer",
+      "name": "mineral wear diamond bronzer",
+      "brand": "PHYSICIAN'S FORMULA",
+      "category": "bronzer",
+      "price_tier": "budget",
+      "base_price": 1000.0,
+      "link": "https://shop.example/physician_s_formula_mineral_wear_diamond_bronzer",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "uriage_bariederm",
+      "name": "bariederm",
+      "brand": "URIAGE",
+      "category": "moisturizer",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/uriage_bariederm",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "PM",
+      "tags": []
+    },
+    {
+      "id": "celimax_pore_dark_spot_brightening_pad",
+      "name": "pore+dark spot brightening pad",
+      "brand": "CELIMAX",
+      "category": "other",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/celimax_pore_dark_spot_brightening_pad",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "d_alba_d_alba",
+      "name": "D'ALBA",
+      "brand": "D'ALBA",
+      "category": "other",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/d_alba_d_alba",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "art_visage_performance",
+      "name": "performance",
+      "brand": "ART-VISAGE",
+      "category": "other",
+      "price_tier": "budget",
+      "base_price": 1000.0,
+      "link": "https://shop.example/art_visage_performance",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "makeup_revolution_ultra_contour_palette",
+      "name": "ultra contour palette",
+      "brand": "MAKEUP REVOLUTION",
+      "category": "bronzer",
+      "price_tier": "budget",
+      "base_price": 1000.0,
+      "link": "https://shop.example/makeup_revolution_ultra_contour_palette",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "relouis_pro",
+      "name": "pro пудра скульптор",
+      "brand": "RELOUIS",
+      "category": "bronzer",
+      "price_tier": "budget",
+      "base_price": 1000.0,
+      "link": "https://shop.example/relouis_pro",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "tom_ford_soleil_glow_bronzer_small",
+      "name": "soleil glow bronzer small",
+      "brand": "TOM FORD",
+      "category": "bronzer",
+      "price_tier": "premium",
+      "base_price": 1000.0,
+      "link": "https://shop.example/tom_ford_soleil_glow_bronzer_small",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": [
+        "finish_luminous"
+      ]
+    },
+    {
+      "id": "naj_oleari_fancy_sun",
+      "name": "fancy sun",
+      "brand": "NAJ OLEARI",
+      "category": "other",
+      "price_tier": "budget",
+      "base_price": 1000.0,
+      "link": "https://shop.example/naj_oleari_fancy_sun",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "estrade_mon_secret",
+      "name": "mon secret",
+      "brand": "ESTRADE",
+      "category": "other",
+      "price_tier": "budget",
+      "base_price": 1000.0,
+      "link": "https://shop.example/estrade_mon_secret",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "makeup_revolution_cheek_kit",
+      "name": "cheek kit",
+      "brand": "MAKEUP REVOLUTION",
+      "category": "other",
+      "price_tier": "budget",
+      "base_price": 1000.0,
+      "link": "https://shop.example/makeup_revolution_cheek_kit",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "medi_peel_peptide_9_aqua_essence_emulsion",
+      "name": "peptide 9 aqua essence emulsion",
+      "brand": "MEDI PEEL",
+      "category": "serum",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/medi_peel_peptide_9_aqua_essence_emulsion",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "darling_power_nap_super_moisture_embo_hydrogel_mask",
+      "name": "power nap super moisture embo hydrogel mask",
+      "brand": "DARLING*",
+      "category": "mask",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/darling_power_nap_super_moisture_embo_hydrogel_mask",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "weekly",
+      "tags": []
+    },
+    {
+      "id": "sisley_phyto_hydra_teint_sisley_phyto_hydra_teint",
+      "name": "SISLEY phyto-hydra teint",
+      "brand": "SISLEY phyto-hydra teint",
+      "category": "moisturizer",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/sisley_phyto_hydra_teint_sisley_phyto_hydra_teint",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "PM",
+      "tags": []
+    },
+    {
+      "id": "dr_jart_premium_beauty_balm_dr_jart_premium_beauty_balm",
+      "name": "DR.JART+ premium beauty balm",
+      "brand": "DR.JART+ premium beauty balm",
+      "category": "foundation",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/dr_jart_premium_beauty_balm_dr_jart_premium_beauty_balm",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "rbg_2",
+      "name": "от лены ясенковой",
+      "brand": "RBG №2",
+      "category": "other",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/rbg_2",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "manly_pro_liquid_silk",
+      "name": "liquid silk",
+      "brand": "MANLY PRO",
+      "category": "other",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/manly_pro_liquid_silk",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "manly_pro_moonlight",
+      "name": "moonlight",
+      "brand": "MANLY PRO",
+      "category": "other",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/manly_pro_moonlight",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "consly_hyaluronic_acid_collagen_all_in_one_ampoule",
+      "name": "hyaluronic acid & collagen all-in-one ampoule",
+      "brand": "CONSLY",
+      "category": "serum",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/consly_hyaluronic_acid_collagen_all_in_one_ampoule",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "revolution_pro_new_neutral_luxe_shadow_palette",
+      "name": "new neutral luxe shadow palette",
+      "brand": "REVOLUTION PRO",
+      "category": "eyeshadow",
+      "price_tier": "budget",
+      "base_price": 1000.0,
+      "link": "https://shop.example/revolution_pro_new_neutral_luxe_shadow_palette",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "viseart_viseart",
+      "name": "VISEART",
+      "brand": "VISEART",
+      "category": "other",
+      "price_tier": "premium",
+      "base_price": 1000.0,
+      "link": "https://shop.example/viseart_viseart",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "clarins_lotion_tonique_purifiante",
+      "name": "lotion tonique purifiante",
+      "brand": "CLARINS",
+      "category": "toner",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/clarins_lotion_tonique_purifiante",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "pupa_makeup_stories_compact_matt_attitude",
+      "name": "makeup stories compact matt attitude",
+      "brand": "PUPA",
+      "category": "other",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/pupa_makeup_stories_compact_matt_attitude",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "elian_russia_one_touch_liquid_blush",
+      "name": "one touch liquid blush",
+      "brand": "ELIAN RUSSIA",
+      "category": "blush",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/elian_russia_one_touch_liquid_blush",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "alix_avien_powder_blush_alix_avien_powder_blush",
+      "name": "ALIX AVIEN powder blush",
+      "brand": "ALIX AVIEN powder blush",
+      "category": "powder",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/alix_avien_powder_blush_alix_avien_powder_blush",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "makeup_revolution_blusher_reloaded",
+      "name": "blusher reloaded",
+      "brand": "MAKEUP REVOLUTION",
+      "category": "blush",
+      "price_tier": "budget",
+      "base_price": 1000.0,
+      "link": "https://shop.example/makeup_revolution_blusher_reloaded",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "note_baked_blusher_note_baked_blusher",
+      "name": "NOTE baked blusher",
+      "brand": "NOTE baked blusher",
+      "category": "blush",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/note_baked_blusher_note_baked_blusher",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "stellary_sexy_rich_stellary_sexy_rich",
+      "name": "STELLARY sexy&rich",
+      "brand": "STELLARY sexy&rich",
+      "category": "other",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/stellary_sexy_rich_stellary_sexy_rich",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "avene_avene",
+      "name": "AVENE",
+      "brand": "AVENE",
+      "category": "other",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/avene_avene",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "bme_nude_cover",
+      "name": "ВВ крем для лица Nude Cover",
+      "brand": "BME",
+      "category": "other",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/bme_nude_cover",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "skinjestique_your_perfect_sunscreen",
+      "name": "your perfect sunscreen",
+      "brand": "SKINJESTIQUE",
+      "category": "sunscreen",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/skinjestique_your_perfect_sunscreen",
+      "actives": [
+        "uv"
+      ],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "kiko_milano_radiance_boost_serum_face_base",
+      "name": "radiance boost serum face base",
+      "brand": "KIKO MILANO",
+      "category": "serum",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/kiko_milano_radiance_boost_serum_face_base",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "make_up_for_ever_make_up_for_ever",
+      "name": "MAKE UP FOR EVER",
+      "brand": "MAKE UP FOR EVER",
+      "category": "other",
+      "price_tier": "premium",
+      "base_price": 1000.0,
+      "link": "https://shop.example/make_up_for_ever_make_up_for_ever",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "manly_pro_manly_pro",
+      "name": "MANLY PRO",
+      "brand": "MANLY PRO",
+      "category": "other",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/manly_pro_manly_pro",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "dior_dior",
+      "name": "DIOR",
+      "brand": "DIOR",
+      "category": "other",
+      "price_tier": "premium",
+      "base_price": 1000.0,
+      "link": "https://shop.example/dior_dior",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "dior_backstage_dior_backstage",
+      "name": "DIOR backstage",
+      "brand": "DIOR backstage",
+      "category": "other",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/dior_backstage_dior_backstage",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": [
+        "finish_matte",
+        "longwear"
+      ]
+    },
+    {
+      "id": "natalya_shik_l",
+      "name": "l",
+      "brand": "NATALYA SHIK",
+      "category": "other",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/natalya_shik_l",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "divage_glow_sense_baked_highlighter",
+      "name": "glow sense baked highlighter",
+      "brand": "DIVAGE",
+      "category": "highlighter",
+      "price_tier": "budget",
+      "base_price": 1000.0,
+      "link": "https://shop.example/divage_glow_sense_baked_highlighter",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": [
+        "finish_luminous"
+      ]
+    },
+    {
+      "id": "lic_highlighter",
+      "name": "highlighter",
+      "brand": "LIC",
+      "category": "highlighter",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/lic_highlighter",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "luxvisage_lash_and_brow_gel_growth_activator",
+      "name": "lash and brow gel growth activator",
+      "brand": "LUXVISAGE",
+      "category": "brow",
+      "price_tier": "budget",
+      "base_price": 1000.0,
+      "link": "https://shop.example/luxvisage_lash_and_brow_gel_growth_activator",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "givenchy_givenchy",
+      "name": "GIVENCHY",
+      "brand": "GIVENCHY",
+      "category": "other",
+      "price_tier": "premium",
+      "base_price": 1000.0,
+      "link": "https://shop.example/givenchy_givenchy",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "relouis_relouis_eyeliner_marker_for_eyes_waterproof_with_a_brush",
+      "name": "relouis eyeliner marker for eyes waterproof with a brush",
+      "brand": "RELOUIS",
+      "category": "eyeliner",
+      "price_tier": "budget",
+      "base_price": 1000.0,
+      "link": "https://shop.example/relouis_relouis_eyeliner_marker_for_eyes_waterproof_with_a_brush",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "skin_1004_madagascar_centella_hyalu_cica",
+      "name": "madagascar centella hyalu-cica",
+      "brand": "SKIN 1004",
+      "category": "other",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/skin_1004_madagascar_centella_hyalu_cica",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "dr_ceuracle_cica_regen",
+      "name": "cica regen",
+      "brand": "DR. CEURACLE",
+      "category": "other",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/dr_ceuracle_cica_regen",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "dr_ceuracle_hyal_reyouth_moist_sun",
+      "name": "hyal reyouth moist sun",
+      "brand": "DR. CEURACLE",
+      "category": "sunscreen",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/dr_ceuracle_hyal_reyouth_moist_sun",
+      "actives": [
+        "uv"
+      ],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "shiseido_shiseido",
+      "name": "SHISEIDO",
+      "brand": "SHISEIDO",
+      "category": "other",
+      "price_tier": "premium",
+      "base_price": 1000.0,
+      "link": "https://shop.example/shiseido_shiseido",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "yves_saint_laurent_yves_saint_laurent",
+      "name": "YVES SAINT LAURENT",
+      "brand": "YVES SAINT LAURENT",
+      "category": "other",
+      "price_tier": "premium",
+      "base_price": 1000.0,
+      "link": "https://shop.example/yves_saint_laurent_yves_saint_laurent",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "catrice_hd_liquid_coverage_catrice_hd_liquid_coverage",
+      "name": "CATRICE hd liquid coverage",
+      "brand": "CATRICE hd liquid coverage",
+      "category": "foundation",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/catrice_hd_liquid_coverage_catrice_hd_liquid_coverage",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": [
+        "finish_matte",
+        "longwear"
+      ]
+    },
+    {
+      "id": "seven7een_time_plus_longlasting_make_up",
+      "name": "time plus longlasting make up",
+      "brand": "SEVEN7EEN",
+      "category": "other",
+      "price_tier": "budget",
+      "base_price": 1000.0,
+      "link": "https://shop.example/seven7een_time_plus_longlasting_make_up",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": [
+        "finish_matte",
+        "longwear"
+      ]
+    },
+    {
+      "id": "dior_forever_skin_glow",
+      "name": "forever skin glow",
+      "brand": "DIOR",
+      "category": "foundation",
+      "price_tier": "premium",
+      "base_price": 1000.0,
+      "link": "https://shop.example/dior_forever_skin_glow",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": [
+        "finish_luminous"
+      ]
+    },
+    {
+      "id": "estrade_satin_finish",
+      "name": "satin finish",
+      "brand": "ESTRADE",
+      "category": "other",
+      "price_tier": "budget",
+      "base_price": 1000.0,
+      "link": "https://shop.example/estrade_satin_finish",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "limoni_hyaluronic_ultra_moisture_bb_cream_limoni_hyaluronic_ultra_moisture_bb_cream",
+      "name": "LIMONI hyaluronic ultra moisture bb cream",
+      "brand": "LIMONI hyaluronic ultra moisture bb cream",
+      "category": "moisturizer",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/limoni_hyaluronic_ultra_moisture_bb_cream_limoni_hyaluronic_ultra_moisture_bb_cream",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "PM",
+      "tags": []
+    },
+    {
+      "id": "letique_cosmetics_skin_perfector",
+      "name": "skin perfector",
+      "brand": "LETIQUE COSMETICS",
+      "category": "other",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/letique_cosmetics_skin_perfector",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "manly_pro_long_lasting_gel_eyeliner",
+      "name": "long-lasting gel eyeliner",
+      "brand": "MANLY PRO",
+      "category": "eyeliner",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/manly_pro_long_lasting_gel_eyeliner",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": [
+        "finish_matte",
+        "longwear"
+      ]
+    },
+    {
+      "id": "vpitay_anti_acne_peeling_with_azelaic_acid",
+      "name": "anti-acne peeling with azelaic acid",
+      "brand": "VPITAY",
+      "category": "serum",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/vpitay_anti_acne_peeling_with_azelaic_acid",
+      "actives": [
+        "azelaic"
+      ],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "PM",
+      "tags": []
+    },
+    {
+      "id": "vivienne_sabo_le_grand_volume",
+      "name": "le grand volume",
+      "brand": "VIVIENNE SABO",
+      "category": "other",
+      "price_tier": "budget",
+      "base_price": 1000.0,
+      "link": "https://shop.example/vivienne_sabo_le_grand_volume",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "vivienne_sabo_sabo_acrobate",
+      "name": "sabo acrobate",
+      "brand": "VIVIENNE SABO",
+      "category": "other",
+      "price_tier": "budget",
+      "base_price": 1000.0,
+      "link": "https://shop.example/vivienne_sabo_sabo_acrobate",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "vivienne_sabo_gloire_d_amour",
+      "name": "gloire d'amour",
+      "brand": "VIVIENNE SABO",
+      "category": "other",
+      "price_tier": "budget",
+      "base_price": 1000.0,
+      "link": "https://shop.example/vivienne_sabo_gloire_d_amour",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "vivienne_sabo_grotesque",
+      "name": "grotesque",
+      "brand": "VIVIENNE SABO",
+      "category": "other",
+      "price_tier": "budget",
+      "base_price": 1000.0,
+      "link": "https://shop.example/vivienne_sabo_grotesque",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    },
+    {
+      "id": "luna_longlasting_tip_cover_fit",
+      "name": "longlasting tip cover-fit",
+      "brand": "LUNA",
+      "category": "concealer",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/luna_longlasting_tip_cover_fit",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": [
+        "finish_matte",
+        "longwear"
+      ]
+    },
+    {
+      "id": "darling_skin_fuel_soothing_hydrogel_mask",
+      "name": "skin fuel soothing hydrogel mask",
+      "brand": "DARLING*",
+      "category": "mask",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/darling_skin_fuel_soothing_hydrogel_mask",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "weekly",
+      "tags": []
+    },
+    {
+      "id": "ninelle_impulso",
+      "name": "impulso",
+      "brand": "NINELLE",
+      "category": "other",
+      "price_tier": "mid",
+      "base_price": 1000.0,
+      "link": "https://shop.example/ninelle_impulso",
+      "actives": [],
+      "suitable_skin": [
+        "dry",
+        "normal",
+        "combo",
+        "oily"
+      ],
+      "contraindications": [],
+      "usage": "AM",
+      "tags": []
+    }
+  ]
+}

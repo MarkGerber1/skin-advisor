@@ -1,0 +1,29 @@
+app:
+  bot_name: "Skin Advisor"
+  locale_default: "ru-RU"
+  currency: "RUB"
+  price_tiers:
+    budget: "<= 1500"
+    mid: "1501-5000"
+    premium: ">= 5001"
+  marketplaces:
+    - "Ozon"
+    - "Wildberries"
+    - "Золотое Яблоко"
+  brands_whitelist:
+    - "Promakeup Laboratory"
+    - "Pecan"
+    - "LIC"
+    - "Estée Lauder"
+  disclaimer: "ℹ️ Информация носит образовательный характер и не является медицинской консультацией. При чувствительности, беременности/лактации или активных дерматологических заболеваниях — обратитесь к врачу."
+  admin_usernames:
+    - "@owner_username" # Это поле информационное, проверка идет по ADMIN_IDS из .env
+  privacy_policy_url: "https://www.example.com/privacy" # Заглушка, замените на реальную ссылку
+  data_retention_days: 180
+
+run:
+  mode: "polling"   # или "webhook"
+  webhook_url: ""   # при режиме webhook — обязательный URL
+
+
+

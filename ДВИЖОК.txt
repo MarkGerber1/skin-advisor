@@ -1,0 +1,583 @@
+"""
+Cosmetics Recommendation Engine for a Telegram bot
+==================================================
+
+Назначение
+----------
+Модуль подбирает уходовую и декоративную косметику по результатам анкеты, фильтрует её
+по разрешённому каталогу брендов/продуктов, генерирует реферальные ссылки и рассчитывает
+цену с 5% скидкой пользователю + 10% вознаграждение владельцу бота (внутренний расчёт),
+в рамках общей скидки дистрибьюторов 15%.
+
+Как встроить
+------------
+1) Загрузите каталог (YAML/JSON) и передайте в select_products().
+2) Передайте профиль пользователя (user_profile) из вашей анкеты.
+3) Получите JSON с рекомендациями и ссылками для кнопок.
+4) Отправьте пользователю AM/PM/Weekly карточки с Inline-кнопками.
+
+Важные правила
+--------------
+- Никогда не показывайте комиссию владельца бота пользователю (только user_price).
+- Реферальные ссылки создавайте через собственный редирект (рекомендуется) или путём
+  добавления параметров к исходной ссылке.
+- Учтены базовые противопоказания (беременность/лактация ⇒ без ретиноидов/высоких BHA).
+
+Пример формата user_profile
+---------------------------
+user_profile = {
+    "skin_type": "combo",  # dry|normal|combo|oily
+    "modifiers": ["dehydrated", "sensitive", "acne_prone"],
+    "concerns": ["blackheads", "texture", "redness"],
+    "acne_severity": "mild",          # none|mild|moderate|diffuse
+    "pigmentation_severity": "none",  # none|localized|diffuse
+    "undertone": "neutral",           # warm|cool|neutral
+    "eye_color": "brown",             # brown|blue|green|gray|hazel
+    "retinoids_now": False,
+    "pregnant_or_lactating": False,    # важно для противопоказаний
+    "notes": ""
+}
+
+Пример формата каталога (YAML)
+------------------------------
+products:
+  - id: cln_gel_01
+    name: Gentle Gel Cleanser
+    brand: Pecan
+    category: cleanser
+    price_tier: budget
+    base_price: 990.0
+    link: https://shop.example/gel
+    actives: [gentle_surfactants]
+    suitable_skin: [oily, combo, normal]
+    contraindications: []
+    usage: AM
+    tags: [fragrance_free]
+  - id: serum_niam_05
+    name: Niacinamide 10% Serum
+    brand: PROMAKEUP laboratory
+    category: serum
+    price_tier: mid
+    base_price: 1790.0
+    link: https://shop.example/niacinamide
+    actives: [niacinamide]
+    suitable_skin: [oily, combo, normal, dry]
+    contraindications: []
+    usage: AM
+    tags: [oil_free]
+  - id: azelaic_10
+    name: Azelaic Acid 10%
+    brand: LIC
+    category: serum
+    price_tier: mid
+    base_price: 2190.0
+    link: https://shop.example/azelaic
+    actives: [azelaic]
+    suitable_skin: [oily, combo, normal, dry]
+    contraindications: []
+    usage: PM
+    tags: [gentle]
+  - id: retinol_03
+    name: Retinol 0.3%
+    brand: Estee Lauder
+    category: retinoid
+    price_tier: premium
+    base_price: 5200.0
+    link: https://shop.example/retinol03
+    actives: [retinoid]
+    suitable_skin: [combo, normal, oily]
+    contraindications: [pregnancy]
+    usage: PM
+    tags: []
+  - id: spf50_min
+    name: Mineral Sunscreen SPF50
+    brand: LIC
+    category: sunscreen
+    price_tier: mid
+    base_price: 1890.0
+    link: https://shop.example/spf50
+    actives: [zinc_oxide, titanium_dioxide]
+    suitable_skin: [sensitive, oily, combo, normal, dry]
+    contraindications: []
+    usage: AM
+    tags: [mineral]
+
+"""
+from __future__ import annotations
+from dataclasses import dataclass, field
+from typing import List, Dict, Any, Set, Tuple
+import json
+
+try:
+    import yaml  # type: ignore
+except Exception:
+    yaml = None  # Позволяет использовать JSON, если PyYAML не установлен
+
+# ==== ДАННЫЕ И КОНСТАНТЫ =====================================================
+
+PRIMARY_BY_CONCERN: Dict[str, List[str]] = {
+    # ключевые активы под задачу
+    "blackheads": ["bha", "niacinamide"],
+    "inflammation": ["azelaic", "niacinamide"],
+    "dullness": ["vitc", "aha", "azelaic"],
+    "redness": ["azelaic", "niacinamide", "centella"],
+    "texture": ["aha", "retinoid", "azelaic"],
+    "dark_circles": ["caffeine", "peptides"],
+    "puffiness": ["caffeine"],
+    "wrinkles": ["retinoid", "peptides"],
+    "pigmentation": ["vitc", "niacinamide", "azelaic", "retinoid"],
+}
+
+SECONDARY_BY_CONCERN: Dict[str, List[str]] = {
+    "blackheads": ["azelaic"],
+    "inflammation": ["bha"],
+    "dullness": ["niacinamide"],
+    "redness": ["ceramides"],
+    "texture": ["bha"],
+    "wrinkles": ["niacinamide"],
+}
+
+MANDATORY_CATEGORIES = ["cleanser", "serum", "moisturizer", "sunscreen"]
+
+# Категории, где актив целевой управляет выбором
+ACTIVE_DRIVEN_CATEGORIES = {"serum", "exfoliant", "retinoid"}
+
+SENSITIVE_AVOID = {"aha_high", "fragrance_strong"}
+
+# ==== СХЕМЫ ДАННЫХ ===========================================================
+
+@dataclass
+class Product:
+    id: str
+    name: str
+    brand: str
+    category: str
+    price_tier: str  # budget|mid|premium
+    base_price: float
+    link: str
+    actives: Set[str] = field(default_factory=set)
+    suitable_skin: Set[str] = field(default_factory=set)
+    contraindications: Set[str] = field(default_factory=set)
+    usage: str = "AM"  # AM|PM|weekly
+    tags: Set[str] = field(default_factory=set)
+    notes: str = ""
+
+    @staticmethod
+    def from_dict(d: Dict[str, Any]) -> "Product":
+        return Product(
+            id=d["id"],
+            name=d["name"],
+            brand=d["brand"],
+            category=d["category"],
+            price_tier=d["price_tier"],
+            base_price=float(d["base_price"]),
+            link=d["link"],
+            actives=set(d.get("actives", [])),
+            suitable_skin=set(d.get("suitable_skin", [])),
+            contraindications=set(d.get("contraindications", [])),
+            usage=d.get("usage", "AM"),
+            tags=set(d.get("tags", [])),
+            notes=d.get("notes", ""),
+        )
+
+@dataclass
+class PricingPolicy:
+    user_discount: float = 0.05   # 5% скидка пользователю
+    owner_commission: float = 0.10  # 10% комиссия владельцу бота
+    merchant_total_discount: float = 0.15  # 15% общая скидка от дистрибьютора
+
+# ==== УТИЛИТЫ ================================================================
+
+def load_catalog(stream: str) -> List[Product]:
+    """Загружает каталог из YAML или JSON строки."""
+    if yaml is not None:
+        try:
+            data = yaml.safe_load(stream)
+            if isinstance(data, dict) and "products" in data:
+                return [Product.from_dict(p) for p in data["products"]]
+        except Exception:
+            pass
+    # запасной путь: JSON
+    data = json.loads(stream)
+    if isinstance(data, dict) and "products" in data:
+        return [Product.from_dict(p) for p in data["products"]]
+    raise ValueError("Не удалось распарсить каталог: ожидается ключ 'products'.")
+
+# ==== ЯДРО РЕКОМЕНДАЦИЙ ======================================================
+
+def build_needset(user_profile: Dict[str, Any]) -> Dict[str, Any]:
+    """Определяет потребности по категориям и активам исходя из профиля."""
+    concerns: List[str] = user_profile.get("concerns", [])
+    modifiers: Set[str] = set(user_profile.get("modifiers", []))
+    skin_type: str = user_profile.get("skin_type", "normal")
+    pregnant: bool = bool(user_profile.get("pregnant_or_lactating", False))
+
+    primary_actives: Set[str] = set()
+    secondary_actives: Set[str] = set()
+    for c in concerns:
+        primary_actives.update(PRIMARY_BY_CONCERN.get(c, []))
+        secondary_actives.update(SECONDARY_BY_CONCERN.get(c, []))
+
+    # Модификаторы
+    if "sensitive" in modifiers:
+        # избегаем агрессивных AHA/BHA в высоких концентрациях
+        secondary_actives.discard("aha")
+    if skin_type == "oily":
+        primary_actives.add("niacinamide")
+    if "dehydrated" in modifiers:
+        primary_actives.add("hyaluronic")
+        secondary_actives.add("ceramides")
+
+    avoid_actives: Set[str] = set()
+    if pregnant:
+        avoid_actives.add("retinoid")
+        # ограничить салициловую в высоких концентрациях (условный тег bha_high)
+        avoid_actives.add("bha_high")
+
+    return {
+        "primary_actives": primary_actives,
+        "secondary_actives": secondary_actives,
+        "avoid_actives": avoid_actives,
+        "modifiers": modifiers,
+        "skin_type": skin_type,
+    }
+
+
+def score_product(p: Product, needset: Dict[str, Any]) -> float:
+    """Считает балл соответствия продукта запросу."""
+    score = 0.0
+    skin_type = needset["skin_type"]
+    modifiers = needset["modifiers"]
+    primary = needset["primary_actives"]
+    secondary = needset["secondary_actives"]
+    avoid = needset["avoid_actives"]
+
+    # Совпадения по активам
+    if p.actives & primary:
+        score += 3.0
+    if p.actives & secondary:
+        score += 1.5
+
+    # Пригодность по типу кожи
+    if skin_type in p.suitable_skin or (skin_type == "sensitive" and "sensitive" in p.suitable_skin):
+        score += 1.5
+
+    # Штрафы за чувствительность
+    if "sensitive" in modifiers and (p.tags & SENSITIVE_AVOID):
+        score -= 2.0
+
+    # Противопоказания
+    if "pregnancy" in p.contraindications and "pregnant" in needset.get("flags", set()):
+        score -= 5.0
+    if p.actives & needset["avoid_actives"]:
+        score -= 3.0
+
+    # Бонус за минеральный SPF при чувст. коже
+    if p.category == "sunscreen" and "sensitive" in modifiers and "mineral" in p.tags:
+        score += 1.0
+
+    return score
+
+
+def apply_pricing(base_price: float, policy: PricingPolicy) -> Dict[str, float]:
+    """Возвращает цены: цена для пользователя, комиссия владельца, общая скидка."""
+    user_price = round(base_price * (1.0 - policy.user_discount), 2)
+    owner_fee = round(base_price * policy.owner_commission, 2)
+    total_discount_value = round(base_price * policy.merchant_total_discount, 2)
+    return {
+        "user_price": user_price,
+        "owner_commission": owner_fee,
+        "total_discount_value": total_discount_value,
+    }
+
+
+def build_ref_link(original: str, partner_code: str, campaign: str = "tg_bot", via_redirect: str | None = None, extra: Dict[str, Any] | None = None) -> str:
+    """Строит реферальную ссылку. Если задан via_redirect (ваш домен),
+    генерирует ссылку вида https://yourdomain/r/<base64>?params для трекинга.
+    Иначе добавит utm/ref к исходной ссылке.
+    """
+    from urllib.parse import urlencode, urlparse, parse_qsl, urlunparse
+    extra = extra or {}
+
+    if via_redirect:
+        params = {"ref": partner_code, "cmp": campaign}
+        params.update(extra)
+        return f"{via_redirect}?{urlencode(params)}"
+
+    # прямой вариант: добавляем UTM к оригиналу
+    u = urlparse(original)
+    q = dict(parse_qsl(u.query))
+    q.update({"ref": partner_code, "utm_source": "telegram", "utm_campaign": campaign})
+    new_q = urlencode(q)
+    return urlunparse((u.scheme, u.netloc, u.path, u.params, new_q, u.fragment))
+
+
+def select_products(user_profile: Dict[str, Any], catalog: List[Product], partner_code: str, policy: PricingPolicy = PricingPolicy(), redirect_base: str | None = None) -> Dict[str, Any]:
+    """Главная функция подбора. Возвращает JSON, готовый к отправке пользователю.
+
+    Логика:
+      1) Определяем потребности (активы/ограничения).
+      2) Для каждой категории (обязательные + доп. по активам) выбираем до 3 продуктов,
+         стараясь покрыть price_tier: budget/mid/premium.
+      3) Считаем цену с 5% скидкой пользователю; комиссию возвращаем в analytics.
+      4) Генерим реферальные ссылки.
+    """
+    needset = build_needset(user_profile)
+
+    # Собираем список целевых категорий
+    target_categories: Set[str] = set(MANDATORY_CATEGORIES)
+    # Добавим актив-специфичные категории
+    if any(a in needset["primary_actives"] for a in ("retinoid",)) and not user_profile.get("pregnant_or_lactating", False):
+        target_categories.add("retinoid")
+    if any(a in needset["primary_actives"] for a in ("bha", "aha")):
+        target_categories.add("exfoliant")
+
+    # Кандидаты по категориям
+    by_cat: Dict[str, List[Tuple[Product, float]]] = {}
+    for cat in target_categories:
+        cands: List[Tuple[Product, float]] = []
+        for p in catalog:
+            if p.category != cat:
+                continue
+            # фильтр по противопоказаниям беременности/лактации
+            if user_profile.get("pregnant_or_lactating", False) and ("pregnancy" in p.contraindications or "retinoid" in p.actives):
+                continue
+            s = score_product(p, needset)
+            cands.append((p, s))
+        # сортируем по баллу убыв.
+        cands.sort(key=lambda t: t[1], reverse=True)
+        by_cat[cat] = cands
+
+    # Выбор до 3 на категорию с попыткой разнообразия по price_tier
+    result_products: List[Dict[str, Any]] = []
+    ids_am, ids_pm, ids_weekly = [], [], []
+
+    for cat, cands in by_cat.items():
+        if not cands:
+            continue
+        picked: Dict[str, Dict[str, Any]] = {}
+        seen_tiers: Set[str] = set()
+        for p, s in cands:
+            if p.price_tier in seen_tiers:
+                continue
+            pricing = apply_pricing(p.base_price, policy)
+            link = build_ref_link(p.link, partner_code, campaign=f"{cat}", via_redirect=redirect_base, extra={"d": int(policy.user_discount*100)})
+            item = {
+                "id": p.id,
+                "name": p.name,
+                "brand": p.brand,
+                "category": p.category,
+                "price_tier": p.price_tier,
+                "usage": p.usage,
+                "actives": sorted(list(p.actives)),
+                "user_price": pricing["user_price"],
+                "ref_link": link,
+                # аналитика (не показывать пользователю в UI)
+                "_analytics": {
+                    "owner_commission": pricing["owner_commission"],
+                    "total_discount_value": pricing["total_discount_value"],
+                    "score": s,
+                },
+            }
+            picked[p.price_tier] = item
+            seen_tiers.add(p.price_tier)
+            if len(picked) >= 3:
+                break
+        # добавляем в общий список
+        for it in picked.values():
+            result_products.append(it)
+            if it["usage"] == "AM":
+                ids_am.append(it["id"])
+            elif it["usage"] == "PM":
+                ids_pm.append(it["id"])
+            else:
+                ids_weekly.append(it["id"])
+
+    out = {
+        "summary": {
+            "skin_type": user_profile.get("skin_type"),
+            "modifiers": user_profile.get("modifiers", []),
+            "concerns": user_profile.get("concerns", []),
+        },
+        "products": result_products,
+        "routines": {
+            "am": ids_am,
+            "pm": ids_pm,
+            "weekly": ids_weekly,
+        },
+        "disclaimer": "Скидка 5% применяется автоматически на стороне партнёрского магазина. Комиссия 10% перечисляется владельцу бота согласно оферте дистрибьютора. Это не медицинская консультация.",
+    }
+    return out
+
+# ==== ПРИМЕР ИСПОЛЬЗОВАНИЯ ===================================================
+if __name__ == "__main__":
+    demo_profile = {
+        "skin_type": "combo",
+        "modifiers": ["dehydrated", "sensitive", "acne_prone"],
+        "concerns": ["blackheads", "texture", "redness"],
+        "acne_severity": "mild",
+        "pigmentation_severity": "none",
+        "undertone": "neutral",
+        "eye_color": "brown",
+        "retinoids_now": False,
+        "pregnant_or_lactating": False,
+        "notes": "",
+    }
+
+    demo_yaml = """
+products:
+  - id: cln_gel_01
+    name: Gentle Gel Cleanser
+    brand: Pecan
+    category: cleanser
+    price_tier: budget
+    base_price: 990
+    link: https://shop.example/gel
+    actives: [gentle_surfactants]
+    suitable_skin: [oily, combo, normal]
+    contraindications: []
+    usage: AM
+    tags: [fragrance_free]
+  - id: serum_niam_05
+    name: Niacinamide 10% Serum
+    brand: PROMAKEUP laboratory
+    category: serum
+    price_tier: mid
+    base_price: 1790
+    link: https://shop.example/niacinamide
+    actives: [niacinamide]
+    suitable_skin: [oily, combo, normal, dry]
+    contraindications: []
+    usage: AM
+    tags: [oil_free]
+  - id: azelaic_10
+    name: Azelaic Acid 10%
+    brand: LIC
+    category: serum
+    price_tier: mid
+    base_price: 2190
+    link: https://shop.example/azelaic
+    actives: [azelaic]
+    suitable_skin: [oily, combo, normal, dry]
+    contraindications: []
+    usage: PM
+    tags: [gentle]
+  - id: retinol_03
+    name: Retinol 0.3%
+    brand: Estee Lauder
+    category: retinoid
+    price_tier: premium
+    base_price: 5200
+    link: https://shop.example/retinol03
+    actives: [retinoid]
+    suitable_skin: [combo, normal, oily]
+    contraindications: [pregnancy]
+    usage: PM
+    tags: []
+  - id: spf50_min
+    name: Mineral Sunscreen SPF50
+    brand: LIC
+    category: sunscreen
+    price_tier: mid
+    base_price: 1890
+    link: https://shop.example/spf50
+    actives: [zinc_oxide, titanium_dioxide]
+    suitable_skin: [sensitive, oily, combo, normal, dry]
+    contraindications: []
+    usage: AM
+    tags: [mineral]
+"""
+
+    catalog = load_catalog(demo_yaml)
+    rec = select_products(demo_profile, catalog, partner_code="AFF-12345", redirect_base="https://yourdomain.tld/r")
+    print(json.dumps(rec, ensure_ascii=False, indent=2))
+
+
+# ==== MAKEUP SELECTION EXTENSION ==================================
+# Добавляет подбор декоративной косметики из вашего каталога на основе
+# типа кожи (логика финиша тона) и универсальных предпочтений.
+
+MAKEUP_CATEGORIES = [
+    "foundation","concealer","powder","blush","bronzer","highlighter",
+    "eyeshadow","mascara","eyeliner","brow","lips"
+]
+
+def score_makeup(p: Product, skin_type: str, undertone: str) -> float:
+    score = 0.0
+    # Финиш тона: для жирной/комби — матовый, для сухой/нормальной — сияющий
+    if p.category == "foundation":
+        if skin_type in ("oily","combo") and ("finish_matte" in p.tags or "longwear" in p.tags):
+            score += 2.0
+        if skin_type in ("dry","normal") and "finish_luminous" in p.tags:
+            score += 1.5
+    # Небольшой бонус за стойкость при oily/combo
+    if skin_type in ("oily","combo") and "longwear" in p.tags:
+        score += 0.5
+    return score
+
+
+def select_makeup(user_profile: Dict[str, Any], catalog: List[Product], partner_code: str,
+                  policy: PricingPolicy, redirect_base: str | None) -> Tuple[List[Dict[str, Any]], Dict[str, List[str]]]:
+    skin_type = user_profile.get("skin_type", "normal")
+    undertone = user_profile.get("undertone", "neutral")
+
+    result_products: List[Dict[str, Any]] = []
+    groups: Dict[str, List[str]] = {}
+
+    for cat in MAKEUP_CATEGORIES:
+        cands: List[Tuple[Product, float]] = []
+        for p in catalog:
+            if p.category != cat:
+                continue
+            s = score_makeup(p, skin_type, undertone)
+            cands.append((p, s))
+        cands.sort(key=lambda t: t[1], reverse=True)
+
+        picked: Dict[str, Dict[str, Any]] = {}
+        seen_tiers: set[str] = set()
+        for p, s in cands:
+            if p.price_tier in seen_tiers:
+                continue
+            pricing = apply_pricing(p.base_price, policy)
+            link = build_ref_link(p.link, partner_code, campaign=f"mk_{cat}", via_redirect=redirect_base,
+                                  extra={"d": int(policy.user_discount*100)})
+            item = {
+                "id": p.id,
+                "name": p.name,
+                "brand": p.brand,
+                "category": p.category,
+                "price_tier": p.price_tier,
+                "usage": p.usage,
+                "actives": sorted(list(p.actives)),
+                "user_price": pricing["user_price"],
+                "ref_link": link,
+                "_analytics": {
+                    "owner_commission": pricing["owner_commission"],
+                    "total_discount_value": pricing["total_discount_value"],
+                    "score": s,
+                },
+            }
+            picked[p.price_tier] = item
+            seen_tiers.add(p.price_tier)
+            if len(picked) >= 3:
+                break
+        if picked:
+            bucket = list(picked.values())
+            result_products.extend(bucket)
+            groups[cat] = [it["id"] for it in bucket]
+
+    return result_products, groups
+
+# Обновлённая главная функция: добавлен include_makeup
+old_select_products = select_products
+
+def select_products(user_profile: Dict[str, Any], catalog: List[Product], partner_code: str,
+                    policy: PricingPolicy = PricingPolicy(), redirect_base: str | None = None,
+                    include_makeup: bool = True) -> Dict[str, Any]:
+    base = old_select_products(user_profile, catalog, partner_code, policy, redirect_base)
+
+    if include_makeup:
+        mk_products, mk_groups = select_makeup(user_profile, catalog, partner_code, policy, redirect_base)
+        base.setdefault("products", []).extend(mk_products)
+        base.setdefault("makeup", {}).update(mk_groups)
+    return base
