@@ -85,7 +85,12 @@ async def main():
     ]
     await bot.set_my_commands(main_commands)
 
-    await bot.delete_webhook(drop_pending_updates=True)
+    try:
+        # Do not drop webhook in webhook mode to avoid race during restarts on PaaS
+        if os.getenv("MODE", args.mode) != "webhook":
+            await bot.delete_webhook(drop_pending_updates=True)
+    except Exception:
+        pass
 
     logger.info(
         "boot: mode=%s env=%s",

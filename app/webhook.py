@@ -31,6 +31,12 @@ def create_app(
     async def handle_healthz(request: web.Request) -> web.Response:
         return web.Response(text=healthz_text())
 
+    async def handle_root(request: web.Request) -> web.Response:
+        return web.Response(text="ok")
+
+    async def handle_favicon(request: web.Request) -> web.Response:
+        return web.Response(status=204)
+
     async def handle_version(request: web.Request) -> web.Response:
         return web.json_response(
             {"version": version or os.getenv("APP_VERSION", "dev")}
@@ -42,7 +48,10 @@ def create_app(
         if path_secret != secret:
             return web.Response(status=403, text="forbidden")
         try:
-            payload = await request.json()
+            if request.can_read_body:
+                payload = await request.json()
+            else:
+                payload = {}
             update = Update.model_validate(payload)
             await dp.feed_update(bot, update)
             # Basic log
@@ -57,6 +66,8 @@ def create_app(
             return web.Response(status=500, text="error")
 
     app.router.add_get("/healthz", handle_healthz)
+    app.router.add_get("/", handle_root)
+    app.router.add_get("/favicon.ico", handle_favicon)
     app.router.add_get("/version", handle_version)
     app.router.add_post("/tg/{secret}", handle_update)
     # Redirect tracker
