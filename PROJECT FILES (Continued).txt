@@ -1,0 +1,342 @@
+PROJECT FILES (Continued)
+# FILE: .skin-advisor/app/infra/settings.py
+Python
+
+import yaml
+from functools import lru_cache
+from pydantic import BaseModel
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+class BotSettings(BaseModel):
+    bot_token: str
+    admin_ids: list[int]
+
+class WebhookSettings(BaseModel):
+    host: str
+    port: int
+
+class RunSettings(BaseModel):
+    mode: str
+    webhook_url: str | None = None
+
+class AppConfig(BaseModel):
+    bot_name: str
+    locale_default: str
+    currency: str
+    price_tiers: dict[str, str]
+    marketplaces: list[str]
+    brands_whitelist: list[str]
+    disclaimer: str
+    admin_usernames: list[str]
+    privacy_policy_url: str
+    data_retention_days: int
+
+class Config(BaseModel):
+    app: AppConfig
+    run: RunSettings
+
+class Settings(BaseSettings):
+    bot: BotSettings
+    webhook: WebhookSettings
+    run: RunSettings
+    app: AppConfig
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        env_nested_delimiter="__",
+    )
+
+def load_yaml_config(path: str = "config/app.yaml") -> dict:
+    """Загружает конфигурацию из YAML файла."""
+    with open(path, "r", encoding="utf-8") as f:
+        return yaml.safe_load(f)
+
+@lru_cache
+def get_settings() -> Settings:
+    """
+    Возвращает объект настроек, комбинируя .env и app.yaml.
+    Использует кэширование для однократной загрузки.
+    """
+    yaml_config_data = load_yaml_config()
+    
+    # Сопоставляем структуру YAML с Pydantic моделями
+    run_settings = RunSettings(**yaml_config_data.get("run", {}))
+    app_settings = AppConfig(**yaml_config_data.get("app", {}))
+
+    # Загружаем настройки из .env и объединяем с YAML
+    env_settings = Settings(app=app_settings, run=run_settings)
+
+    # Убеждаемся, что режим запуска из .env имеет приоритет, если он там указан
+    if env_settings.run.mode and env_settings.run.mode != run_settings.mode:
+        run_settings.mode = env_settings.run.mode
+        env_settings.run = run_settings
+        
+    return env_settings
+
+# FILE: .skin-advisor/app/infra/models.py
+Python
+
+import datetime
+from sqlalchemy import (
+    BigInteger,
+    DateTime,
+    ForeignKey,
+    String,
+    JSON,
+    func
+)
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+
+class Base(DeclarativeBase):
+    """Базовая модель SQLAlchemy."""
+    pass
+
+class User(Base):
+    __tablename__ = 'users'
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(BigInteger, unique=True, index=True)
+    username: Mapped[str] = mapped_column(String(32), nullable=True)
+    first_name: Mapped[str] = mapped_column(String(64))
+    created_at: Mapped[datetime.datetime] = mapped_column(
+        DateTime, default=datetime.datetime.utcnow
+    )
+
+    survey_responses: Mapped[list["SurveyResponse"]] = relationship(back_populates="user")
+
+class SurveyResponse(Base):
+    __tablename__ = 'survey_responses'
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.user_id'))
+    answers_json: Mapped[dict] = mapped_column(JSON)
+    created_at: Mapped[datetime.datetime] = mapped_column(
+        DateTime, default=datetime.datetime.utcnow, server_default=func.now()
+    )
+
+    user: Mapped["User"] = relationship(back_populates="survey_responses")
+    diagnosis_result: Mapped["DiagnosisResult"] = relationship(back_populates="survey_response")
+
+
+class DiagnosisResult(Base):
+    __tablename__ = 'diagnosis_results'
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    survey_response_id: Mapped[int] = mapped_column(ForeignKey('survey_responses.id'))
+    result_json: Mapped[dict] = mapped_column(JSON)
+    created_at: Mapped[datetime.datetime] = mapped_column(
+        DateTime, default=datetime.datetime.utcnow, server_default=func.now()
+    )
+
+    survey_response: Mapped["SurveyResponse"] = relationship(back_populates="diagnosis_result")
+
+# FILE: .skin-advisor/app/infra/db.py
+Python
+
+import os
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+from app.infra.models import Base
+
+# Путь к файлу БД
+DB_FILE = "db_volume/bot.db"
+# Строка подключения к SQLite
+DATABASE_URL = f"sqlite+aiosqlite:///{DB_FILE}"
+
+# Создаем директорию для БД, если ее нет
+os.makedirs(os.path.dirname(DB_FILE), exist_ok=True)
+
+# Асинхронный "движок" SQLAlchemy
+async_engine = create_async_engine(DATABASE_URL, echo=False)
+
+# Асинхронная фабрика сессий
+async_session_maker = async_sessionmaker(async_engine, expire_on_commit=False)
+
+async def create_db_if_not_exists():
+    """Создает таблицы в базе данных, если они еще не существуют."""
+    async with async_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+async def get_db_session() -> AsyncSession:
+    """Зависимость для получения сессии базы данных."""
+    async with async_session_maker() as session:
+        yield session
+# FILE: .skin-advisor/app/infra/links.py
+Python
+
+from app.infra.settings import get_settings
+
+def generate_product_links(product: dict) -> str:
+    """Генерирует строку с Markdown-ссылками на маркетплейсы."""
+    settings = get_settings()
+    links = []
+    
+    # Используем список маркетплейсов из конфига, чтобы сохранить порядок
+    for marketplace_name in settings.app.marketplaces:
+        if marketplace_name in product.get("links", {}):
+            url = product["links"][marketplace_name]
+            links.append(f'<a href="{url}">{marketplace_name}</a>')
+            
+    return " | ".join(links)
+
+# FILE: .skin-advisor/app/infra/pdf.py
+Python
+
+import io
+from fpdf import FPDF
+from app.infra.settings import get_settings
+
+class PDFReport(FPDF):
+    """Класс для создания PDF отчета с кастомным хэдером и футером."""
+    
+    def header(self):
+        self.set_font('DejaVu', 'B', 15)
+        self.cell(0, 10, 'Персональные рекомендации по уходу', 0, 1, 'C')
+        self.ln(10)
+
+    def footer(self):
+        self.set_y(-15)
+        self.set_font('DejaVu', 'I', 8)
+        settings = get_settings()
+        self.cell(0, 10, f'Сформировано ботом {settings.app.bot_name}', 0, 0, 'C')
+
+    def chapter_title(self, title):
+        self.set_font('DejaVu', 'B', 12)
+        self.cell(0, 10, title, 0, 1, 'L')
+        self.ln(4)
+
+    def chapter_body(self, body):
+        self.set_font('DejaVu', '', 10)
+        self.multi_cell(0, 5, body)
+        self.ln()
+        
+    def product_info(self, name, description, links_html):
+        self.set_font('DejaVu', 'B', 11)
+        self.multi_cell(0, 5, name)
+        self.set_font('DejaVu', '', 10)
+        self.multi_cell(0, 5, description)
+        
+        # FPDF не поддерживает HTML, поэтому просто выводим текст ссылок
+        import re
+        clean_links = re.sub('<[^<]+?>', '', links_html.replace(' | ', '\n'))
+        self.set_font('DejaVu', 'I', 9)
+        self.multi_cell(0, 5, f"Ссылки для покупки:\n{clean_links}")
+        self.ln(5)
+
+
+def create_pdf_report(diagnosis_data: dict, recommendations_data: dict) -> bytes:
+    """
+    Создает PDF-отчет в виде байтовой строки.
+    """
+    pdf = PDFReport()
+    # Добавляем кириллический шрифт. Убедитесь, что файл шрифта доступен.
+    # Для Docker-сборки может потребоваться установка пакета со шрифтами.
+    # Здесь предполагается, что он есть в системе или рядом со скриптом.
+    # Простое решение - положить DejaVuSans.ttf в корень проекта.
+    # Мы будем рассчитывать на то, что он найдется в стандартных путях.
+    try:
+        pdf.add_font('DejaVu', '', 'DejaVuSans.ttf', uni=True)
+    except RuntimeError:
+        # Фоллбэк, если шрифт не найден (будут проблемы с кириллицей)
+        pdf.add_font('Arial', '', 'Arial.ttf', uni=True)
+        pdf.set_font('Arial', '', 12)
+
+    pdf.set_font('DejaVu', '', 12)
+    pdf.add_page()
+
+    # Раздел диагностики
+    pdf.chapter_title('✅ Результаты вашей диагностики')
+    diag_body = (
+        f"Тип кожи: {diagnosis_data.get('skin_type', 'не определен')}\n"
+        f"Подтон: {diagnosis_data.get('undertone', 'не определен')}\n"
+        f"Состояния: {', '.join(diagnosis_data.get('states', []))}\n\n"
+        f"Обоснование:\n"
+    )
+    for reason in diagnosis_data.get('reasoning', []):
+        diag_body += f"- {reason}\n"
+    pdf.chapter_body(diag_body)
+    
+    # Раздел рекомендаций
+    for routine_key, routine_name in [('am', '☀️ Утренний уход (AM)'), ('pm', '🌙 Вечерний уход (PM)'), ('weekly', '✨ Еженедельный уход'), ('makeup', '💄 Макияж')]:
+        if routine := recommendations_data.get(routine_key):
+            pdf.chapter_title(routine_name)
+            for i, step in enumerate(routine):
+                product = step['product']
+                description = f"{i+1}. {product['purpose'].capitalize()}\nКак использовать: {step['how_to_use']}"
+                # Ссылки в PDF пока не делаем кликабельными для простоты
+                pdf.product_info(product['name'], description, "Ссылки доступны в боте.")
+    
+    # Предосторожности
+    if warnings := recommendations_data.get('warnings'):
+        pdf.chapter_title('⚠️ Предосторожности')
+        pdf.chapter_body("\n".join(f"- {w}" for w in warnings))
+        
+    # Дисклеймер
+    settings = get_settings()
+    pdf.chapter_title('Дисклеймер')
+    pdf.chapter_body(settings.app.disclaimer)
+
+    pdf_bytes = pdf.output(dest='S').encode('latin1')
+    return pdf_bytes
+# FILE: .skin-advisor/app/i18n/ru.json
+JSON
+
+{
+  "welcome": "👋 Здравствуйте, {user_name}!\n\nЯ — ваш персональный помощник по уходу за кожей **Skin Advisor**.\n\nЯ помогу определить ваш тип кожи и подобрать подходящие средства. Начнем?",
+  "main_menu_prompt": "Выберите действие:",
+  "help_text": "🤖 **Как пользоваться ботом:**\n\n1. **🧪 Анкета** — пройдите опрос, чтобы я мог определить особенности вашей кожи.\n2. **📊 Результаты** — просмотрите итоги диагностики.\n3. **🛍 Рекомендации** — получите список подходящих средств по уходу и макияжу.\n4. **🔄 Сброс** — начните анкетирование заново.\n\n/start - перезапуск\n/privacy - политика конфиденциальности",
+  "privacy_text": "🔐 **Политика конфиденциальности**\n\nМы храним только ваш Telegram ID и ответы из анкеты для формирования рекомендаций. Данные хранятся {days} дней и не передаются третьим лицам. Подробнее: {url}",
+  
+  "btn_start_survey": "🧪 Начать анкету",
+  "btn_results": "📊 Результаты",
+  "btn_recommendations": "🛍 Рекомендации",
+  "btn_navigation": "🧭 Навигация",
+  "btn_reset": "🔄 Сброс",
+  "btn_help": "❓ Помощь",
+  "btn_policy": "🔐 Политика",
+  
+  "btn_continue_survey": "▶️ Продолжить анкету",
+  "btn_yes": "Да",
+  "btn_no": "Нет",
+  "btn_next": "Далее ➡️",
+  "btn_back": "⬅️ Назад",
+  "btn_confirm_results": "✅ Подтвердить результаты",
+  "btn_get_recommendations": "🛍 Получить рекомендации",
+  "btn_update_results": "🔄 Обновить анкету",
+  "btn_change_answers": "✏️ Изменить ответы",
+  "btn_download_pdf": "📄 Скачать PDF",
+  
+  "survey_progress": "Вопрос {current}/{total}",
+  "survey_finish_prompt": "🎉 Анкета завершена! Ваши ответы обработаны. Показать результаты?",
+  "btn_show_results": "👀 Показать результаты",
+
+  "reset_prompt": "Вы уверены, что хотите сбросить все ваши ответы и начать заново?",
+  "reset_confirmed": "✅ Все сброшено. Нажмите '🧪 Начать анкету', чтобы пройти опрос заново.",
+  
+  "no_results_yet": "Вы еще не проходили диагностику. Нажмите '🧪 Начать анкету'.",
+  
+  "price_tier_prompt": "Выберите ценовую категорию для рекомендаций:",
+  "btn_budget": "🪙 Бюджет",
+  "btn_mid": "💰 Средний",
+  "btn_premium": "💎 Премиум",
+  
+  "admin_welcome": "👋 Добро пожаловать в админ-панель, {user_name}!",
+  "admin_stats": "📊 **Статистика бота:**\n\n- Всего пользователей: {total_users}\n- Пройдено анкет: {completed_surveys}\n- Выдано диагнозов: {diagnoses_count}",
+  "admin_update_products_prompt": "Отправьте новый файл `products.json` для обновления каталога.",
+  "admin_update_success": "✅ Каталог продуктов успешно обновлен!",
+  "admin_update_fail": "❌ Ошибка при обновлении каталога. Проверьте формат JSON файла.",
+
+  "q1": "Есть ли ощущение стянутости после умывания?",
+  "q2": "Как ведёт себя кожа в течение дня после утреннего ухода?",
+  "q3": "Насколько выражены расширенные поры?",
+  "q4": "Беспокоят ли локальные шелушения?",
+  "q5": "Какие несовершенства беспокоят больше всего? (можно выбрать несколько)",
+  "q6": "Как бы вы описали пигментацию на вашем лице?",
+  "q7": "Беспокоит ли вас постакне (следы от прыщей) или активные высыпания?",
+  "q8": "Насколько выражены морщины при расслабленном лице?",
+  "q9": "Что вас беспокоит в области вокруг глаз? (можно выбрать несколько)",
+  "q10": "Используете ли вы сейчас средства с ретиноидами (ретинол, ретиналь, третиноин)?",
+  "q11": "Устраивает ли вас тон и рельеф кожи?",
+  "q12": "Замечаете ли вы на лице капиллярную сетку (купероз)?",
+  "q13": "Посмотрите на вены на запястье при дневном свете. Какого они цвета?",
+  "q14": "Какой у вас цвет глаз?"

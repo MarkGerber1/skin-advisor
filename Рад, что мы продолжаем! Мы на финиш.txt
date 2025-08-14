@@ -1,0 +1,493 @@
+Рад, что мы продолжаем\! Мы на финишной прямой.
+
+Вот следующая, самая объемная часть проекта: вся бизнес-логика (`domain`), компоненты интерфейса (`ui`) и обработчики команд (`handlers`).
+
+### **PROJECT FILES (Continued)**
+
+#### **\# FILE: .skin-advisor/app/domain/diagnosis.py**
+
+```python
+from collections import defaultdict
+
+def diagnose_skin(answers: dict) -> dict:
+    """
+    Анализирует ответы анкеты и выносит детерминированный диагноз.
+    Возвращает словарь с типом кожи, состояниями и обоснованием.
+    """
+    type_scores = defaultdict(int)
+    state_scores = defaultdict(int)
+    reasoning = []
+
+    # Q1: Стянутость после умывания (сухость/обезвоженность)
+    if answers.get('Q1') == 'Q1_A1':
+        type_scores['сухая'] += 2
+        state_scores['обезвоженность'] += 2
+        reasoning.append("Ощущение стянутости после умывания указывает на недостаток влаги или липидов.")
+
+    # Q2: Поведение кожи в течение дня
+    if answers.get('Q2') == 'Q2_A1': # Блеск через 2-3 часа
+        type_scores['жирная'] += 3
+        reasoning.append("Быстрое появление жирного блеска — классический признак жирной кожи.")
+    elif answers.get('Q2') == 'Q2_A2': # Блеск к вечеру
+        type_scores['нормальная'] += 1
+        type_scores['комбинированная'] += 1
+    elif answers.get('Q2') == 'Q2_A3': # Стянутость к обеду
+        type_scores['сухая'] += 2
+        state_scores['обезвоженность'] += 2
+        reasoning.append("Появление стянутости в течение дня говорит о нехватке увлажнения.")
+    elif answers.get('Q2') == 'Q2_A4': # Т-зона блестит, периферия стянута
+        type_scores['комбинированная'] += 3
+        reasoning.append("Разное поведение кожи на Т-зоне и щеках характерно для комбинированного типа.")
+
+    # Q3: Расширенные поры
+    if answers.get('Q3') == 'Q3_A3':
+        type_scores['жирная'] += 1
+        state_scores['расширенные поры'] += 2
+    elif answers.get('Q3') == 'Q3_A4':
+        type_scores['жирная'] += 2
+        state_scores['расширенные поры'] += 3
+        reasoning.append("Выраженные поры часто связаны с повышенной активностью сальных желез.")
+
+    # Q4: Шелушения
+    if answers.get('Q4') == 'Q4_A1':
+        state_scores['обезвоженность'] += 2
+        state_scores['чувствительность'] += 1
+        reasoning.append("Шелушения являются признаком нарушения защитного барьера и обезвоженности.")
+
+    # Q5: Несовершенства (мультивыбор)
+    if 'Q5_A1' in answers.get('Q5', []): # Черные точки
+        state_scores['расширенные поры'] += 2
+        type_scores['жирная'] += 1
+        type_scores['комбинированная'] += 1
+    if 'Q5_A2' in answers.get('Q5', []): # Воспаления
+        state_scores['акне'] += 2
+        reasoning.append("Периодические воспаления требуют внимания к очищению и использованию противовоспалительных активов.")
+    
+    # Q6: Пигментация
+    if answers.get('Q6') == 'Q6_A2' or answers.get('Q6') == 'Q6_A3':
+        state_scores['пигментация'] += 3
+        reasoning.append("Наличие пигментации указывает на необходимость использования SPF и осветляющих компонентов.")
+
+    # Q7: Постакне/акне
+    if answers.get('Q7') == 'Q7_A2' or answers.get('Q7') == 'Q7_A3':
+        state_scores['постакне'] += 3
+        if answers.get('Q7') == 'Q7_A3':
+            state_scores['акне'] += 2
+        reasoning.append("Следы от акне (постакне) требуют активов, направленных на обновление кожи.")
+
+    # Q8: Морщины
+    if answers.get('Q8') == 'Q8_A2' or answers.get('Q8') == 'Q8_A3':
+        state_scores['морщины'] += 3
+        reasoning.append("Наличие морщин — показание к использованию антивозрастных компонентов (пептиды, ретиноиды).")
+
+    # Q9: Область вокруг глаз (мультивыбор)
+    if 'Q9_A1' in answers.get('Q9', []):
+        state_scores['отеки'] += 2
+    if 'Q9_A2' in answers.get('Q9', []):
+        state_scores['темные круги'] += 2
+    if 'Q9_A3' in answers.get('Q9', []):
+        state_scores['морщины вокруг глаз'] += 2
+
+    # Q11: Тон и рельеф
+    if answers.get('Q11') == 'Q11_A2': # Тусклая
+        state_scores['тусклость'] += 2
+        reasoning.append("Тусклый цвет лица говорит о необходимости улучшения микроциркуляции и эксфолиации.")
+    if answers.get('Q11') == 'Q11_A3': # Покраснения
+        state_scores['чувствительность'] += 2
+        state_scores['купероз'] += 1
+        reasoning.append("Покраснения и сосудистые звездочки требуют деликатного ухода и укрепления сосудов.")
+    if answers.get('Q11') == 'Q11_A4': # Раздражения
+        state_scores['чувствительность'] += 3
+        reasoning.append("Частые раздражения — признак чувствительной кожи и поврежденного барьера.")
+        
+    # Q12: Купероз
+    if answers.get('Q12') == 'Q12_A1' or answers.get('Q12') == 'Q12_A2':
+        state_scores['купероз'] += 3
+        state_scores['чувствительность'] += 2
+    
+    # Определение типа кожи
+    # Если баллов у "комби" больше всех, то это она.
+    # Иначе, если у "жирной" и "сухой" примерно равные баллы - тоже "комби".
+    if type_scores['комбинированная'] >= max(type_scores.values()):
+        skin_type = 'комбинированная'
+    elif abs(type_scores['жирная'] - type_scores['сухая']) <= 1 and type_scores['жирная'] > 1 and type_scores['сухая'] > 1:
+        skin_type = 'комбинированная'
+    else:
+        # Убираем "комби" из сравнения, чтобы найти доминирующий тип
+        del type_scores['комбинированная']
+        if not type_scores or max(type_scores.values()) == 0:
+            skin_type = 'нормальная'
+        else:
+            skin_type = max(type_scores, key=type_scores.get)
+
+    # Определение подтона
+    undertone_map = {'Q13_A1': 'тёплый', 'Q13_A2': 'холодный', 'Q13_A3': 'нейтральный'}
+    undertone = undertone_map.get(answers.get('Q13'), 'не определен')
+    
+    # Определение колорита
+    color_palette = undertone
+    if undertone == 'холодный' and answers.get('Q14') in ['Q14_A2', 'Q14_A4']: # Синие/серые глаза
+        color_palette = "холодная гамма"
+    elif undertone == 'тёплый' and answers.get('Q14') in ['Q14_A1', 'Q14_A5']: # Карие/ореховые
+        color_palette = "тёплая гамма"
+
+    # Формирование итогового списка состояний
+    final_states = [state for state, score in state_scores.items() if score > 0]
+    if not final_states:
+        final_states.append("сбалансированная")
+        
+    return {
+        "skin_type": skin_type,
+        "states": final_states,
+        "undertone": undertone,
+        "color_palette": color_palette,
+        "reasoning": reasoning,
+        "uses_retinoids": answers.get('Q10') == 'Q10_A1'
+    }
+
+```
+
+#### **\# FILE: .skin-advisor/app/domain/recommender.py**
+
+```python
+import json
+from pathlib import Path
+
+# Загружаем каталог продуктов один раз при старте модуля
+PRODUCTS_PATH = Path(__file__).parent.parent / "data" / "products.json"
+with open(PRODUCTS_PATH, 'r', encoding='utf-8') as f:
+    PRODUCTS = json.load(f)
+
+def _find_product(category: str, diagnosis: dict, price_tier: str, purpose_keywords: list[str] | None = None, required_actives: list[str] | None = None):
+    """
+    Ищет наиболее подходящий продукт в каталоге.
+    """
+    candidates = []
+    for product in PRODUCTS:
+        if product['category'] != category:
+            continue
+        
+        # Фильтрация по цене
+        if product['price_tier'] != price_tier:
+            continue
+        
+        # Фильтрация по типу кожи
+        is_type_match = diagnosis['skin_type'] in product['skin_type'] or 'любой' in product['skin_type']
+        if not is_type_match:
+            continue
+            
+        # Оценка соответствия
+        score = 0
+        if purpose_keywords:
+            if any(key in product['purpose'] for key in purpose_keywords):
+                score += 5
+        
+        if required_actives:
+            if any(act in product['actives'] for act in required_actives):
+                score += 10 # Актив в приоритете
+        
+        # Соответствие состояниям кожи
+        state_matches = set(diagnosis['states']) & set(product['skin_state'])
+        score += len(state_matches)
+        
+        if score > 0:
+            candidates.append({'product': product, 'score': score})
+    
+    if not candidates:
+        return None, "К сожалению, продукт не найден. Попробуйте другую ценовую категорию."
+
+    # Возвращаем продукт с наивысшим баллом
+    best_match = max(candidates, key=lambda x: x['score'])
+    return best_match['product'], None
+
+
+def get_recommendations(diagnosis: dict, price_tier: str) -> dict:
+    """
+    Формирует полные рекомендации по уходу и макияжу.
+    """
+    routines = {
+        'am': [],
+        'pm': [],
+        'weekly': [],
+        'makeup': [],
+    }
+    warnings = []
+    
+    # --- AM Routine ---
+    # 1. Очищение
+    p_clean, _ = _find_product('очищение', diagnosis, price_tier, purpose_keywords=['мягкое', 'очищение'])
+    if p_clean: routines['am'].append({'product': p_clean, 'how_to_use': 'Используйте для умывания утром.'})
+    
+    # 2. Сыворотка (Витамин C или Ниацинамид)
+    if 'пигментация' in diagnosis['states'] or 'тусклость' in diagnosis['states']:
+        p_serum_am, _ = _find_product('сыворотка', diagnosis, price_tier, required_actives=['витамин C'])
+        if p_serum_am: routines['am'].append({'product': p_serum_am, 'how_to_use': 'Нанесите на сухую кожу после очищения.'})
+    
+    # 3. Увлажнение
+    p_moist, _ = _find_product('увлажнение', diagnosis, price_tier, purpose_keywords=['увлажнение', 'крем'])
+    if p_moist: routines['am'].append({'product': p_moist, 'how_to_use': 'Наносите после сыворотки или на чистую кожу.'})
+
+    # 4. SPF
+    p_spf, _ = _find_product('spf', diagnosis, price_tier)
+    if p_spf: routines['am'].append({'product': p_spf, 'how_to_use': 'Обязательно наносите каждое утро за 20 минут до выхода.'})
+    else: warnings.append("❗ SPF 50+ обязателен каждое утро! В каталоге не найден подходящий продукт, но его использование критически важно.")
+
+    # --- PM Routine ---
+    # 1. Очищение (может быть то же, что и утром)
+    if p_clean: routines['pm'].append({'product': p_clean, 'how_to_use': 'Используйте для умывания вечером. Если носите макияж - это второй этап после гидрофильного масла/бальзама.'})
+
+    # 2. Актив (Ретиноиды/Кислоты)
+    active_product = None
+    if 'акне' in diagnosis['states'] or 'постакне' in diagnosis['states'] or 'морщины' in diagnosis['states']:
+        p_ret, _ = _find_product('актив', diagnosis, price_tier, required_actives=['ретиналь', 'ретинол'])
+        if p_ret:
+            active_product = p_ret
+            routines['pm'].append({'product': p_ret, 'how_to_use': 'Наносите на сухую кожу 2-3 раза в неделю, постепенно увеличивая частоту.'})
+            warnings.append("⚠️ Начинайте вводить ретиноиды постепенно (2 раза в неделю), следите за реакцией кожи.")
+            warnings.append("Не используйте ретиноиды в один вечер с кислотными пилингами.")
+    
+    # 3. Увлажнение (вечер)
+    if p_moist: routines['pm'].append({'product': p_moist, 'how_to_use': 'Наносите через 20-30 минут после актива или сразу после очищения в свободные от активов дни.'})
+
+    # --- Weekly Routine ---
+    p_weekly, _ = _find_product('маска', diagnosis, price_tier, purpose_keywords=['энзимная', 'кислотная', 'очищающая'])
+    if p_weekly: routines['weekly'].append({'product': p_weekly, 'how_to_use': 'Используйте 1-2 раза в неделю на очищенную кожу.'})
+
+    # --- Makeup ---
+    if diagnosis['skin_type'] in ['жирная', 'комбинированная']:
+        p_base, _ = _find_product('тон', diagnosis, price_tier, purpose_keywords=['стойкое', 'матирующее'])
+    else:
+        p_base, _ = _find_product('тон', diagnosis, price_tier, purpose_keywords=['увлажняющее', 'легкое'])
+    if p_base: routines['makeup'].append({'product': p_base, 'how_to_use': f"Подходит для вашего типа кожи. Выбирайте оттенок, соответствующий вашему подтону ({diagnosis['undertone']})."})
+
+    p_lips, _ = _find_product('губы', diagnosis, price_tier)
+    if p_lips: routines['makeup'].append({'product': p_lips, 'how_to_use': f"Подбирайте оттенки из вашей цветовой палитры ({diagnosis['color_palette']})."})
+
+    return {'routines': routines, 'warnings': warnings}
+
+```
+
+#### **\# FILE: .skin-advisor/app/ui/keyboards.py**
+
+```python
+import json
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.utils.keyboard import ReplyKeyboardBuilder, InlineKeyboardBuilder
+
+# Загружаем тексты кнопок
+with open('app/i18n/ru.json', 'r', encoding='utf-8') as f:
+    LEXICON = json.load(f)
+
+def set_main_menu() -> ReplyKeyboardMarkup:
+    """Создает основную клавиатуру с кнопками."""
+    builder = ReplyKeyboardBuilder()
+    builder.row(
+        KeyboardButton(text=LEXICON['btn_start_survey']),
+        KeyboardButton(text=LEXICON['btn_results']),
+        KeyboardButton(text=LEXICON['btn_recommendations']),
+    )
+    builder.row(
+        KeyboardButton(text=LEXICON['btn_navigation']),
+        KeyboardButton(text=LEXICON['btn_reset'])
+    )
+    return builder.as_markup(resize_keyboard=True)
+
+def create_nav_keyboard() -> InlineKeyboardMarkup:
+    """Создает клавиатуру для навигации."""
+    builder = InlineKeyboardBuilder()
+    builder.row(
+        InlineKeyboardButton(text=LEXICON['btn_help'], callback_data='nav_help'),
+        InlineKeyboardButton(text=LEXICON['btn_policy'], callback_data='nav_policy')
+    )
+    return builder.as_markup()
+
+def create_survey_keyboard(question_id: str, options: dict, is_multi: bool = False) -> InlineKeyboardMarkup:
+    """Создает клавиатуру для вопроса анкеты."""
+    builder = InlineKeyboardBuilder()
+    for key, value in options.items():
+        builder.add(InlineKeyboardButton(text=value, callback_data=f'survey:{question_id}:{key}'))
+    
+    if is_multi:
+        builder.add(InlineKeyboardButton(text=LEXICON['btn_next'], callback_data=f'survey:{question_id}:next'))
+    
+    builder.adjust(1)
+    return builder.as_markup()
+
+
+def create_confirm_keyboard(callback_data: str, text: str) -> InlineKeyboardMarkup:
+    """Создает клавиатуру с одной кнопкой подтверждения."""
+    builder = InlineKeyboardBuilder()
+    builder.add(InlineKeyboardButton(text=text, callback_data=callback_data))
+    return builder.as_markup()
+    
+def create_results_keyboard() -> InlineKeyboardMarkup:
+    """Клавиатура для страницы с результатами."""
+    builder = InlineKeyboardBuilder()
+    builder.row(
+        InlineKeyboardButton(text=LEXICON['btn_get_recommendations'], callback_data='action:get_recs'),
+        InlineKeyboardButton(text=LEXICON['btn_download_pdf'], callback_data='action:get_pdf')
+    )
+    builder.row(
+        InlineKeyboardButton(text=LEXICON['btn_change_answers'], callback_data='action:reset')
+    )
+    return builder.as_markup()
+
+def create_price_tier_keyboard() -> InlineKeyboardMarkup:
+    """Клавиатура для выбора ценовой категории."""
+    builder = InlineKeyboardBuilder()
+    builder.row(
+        InlineKeyboardButton(text=LEXICON['btn_budget'], callback_data='price:budget'),
+        InlineKeyboardButton(text=LEXICON['btn_mid'], callback_data='price:mid'),
+        InlineKeyboardButton(text=LEXICON['btn_premium'], callback_data='price:premium')
+    )
+    return builder.as_markup()
+
+def create_links_keyboard(product: dict) -> InlineKeyboardMarkup:
+    """Создает клавиатуру со ссылками на маркетплейсы."""
+    builder = InlineKeyboardBuilder()
+    from app.infra.settings import get_settings
+    settings = get_settings()
+    
+    for marketplace_name in settings.app.marketplaces:
+        if url := product.get("links", {}).get(marketplace_name):
+            builder.add(InlineKeyboardButton(text=f'🛒 {marketplace_name}', url=url))
+            
+    builder.adjust(1)
+    return builder.as_markup()
+```
+
+#### **\# FILE: .skin-advisor/app/ui/messages.py**
+
+```python
+import json
+from app.infra.links import generate_product_links
+from app.infra.settings import get_settings
+
+with open('app/i18n/ru.json', 'r', encoding='utf-8') as f:
+    LEXICON = json.load(f)
+
+def get_welcome_message(user_name: str) -> str:
+    """Форматирует приветственное сообщение."""
+    return LEXICON['welcome'].format(user_name=user_name)
+
+def get_help_message() -> str:
+    """Возвращает текст помощи."""
+    return LEXICON['help_text']
+    
+def get_privacy_message() -> str:
+    """Возвращает политику конфиденциальности."""
+    settings = get_settings()
+    return LEXICON['privacy_text'].format(
+        days=settings.app.data_retention_days,
+        url=settings.app.privacy_policy_url
+    )
+
+def format_diagnosis_result(result: dict) -> str:
+    """Форматирует результат диагностики для вывода пользователю."""
+    states_str = ", ".join(result.get('states', ['не определены']))
+    
+    text = (
+        f"<b>✅ Ваши результаты диагностики:</b>\n\n"
+        f"<b>Тип кожи:</b> {result.get('skin_type', 'не определен').capitalize()}\n"
+        f"<b>Состояния:</b> {states_str.capitalize()}\n"
+        f"<b>Подтон:</b> {result.get('undertone', 'не определен').capitalize()}\n\n"
+        f"<b>Почему мы так решили (основные моменты):</b>\n"
+    )
+    for reason in result.get('reasoning', [])[:3]: # Показываем только 3 для краткости
+        text += f"• <i>{reason}</i>\n"
+        
+    return text
+
+def format_recommendations(recs: dict) -> str:
+    """Форматирует рекомендации для вывода пользователю."""
+    settings = get_settings()
+    text = ""
+    
+    routines = recs.get('routines', {})
+    
+    # Словарь для красивых заголовков
+    titles = {
+        'am': '☀️ <b>Утренний уход (AM)</b>',
+        'pm': '🌙 <b>Вечерний уход (PM)</b>',
+        'weekly': '✨ <b>Еженедельный уход (1-2 раза в неделю)</b>',
+        'makeup': '💄 <b>Рекомендации по макияжу</b>'
+    }
+
+    for key, title in titles.items():
+        if routine_steps := routines.get(key):
+            text += f"{title}\n"
+            for i, step in enumerate(routine_steps):
+                product = step['product']
+                how_to_use = step['how_to_use']
+                links = generate_product_links(product)
+                
+                text += (
+                    f"<b>{i+1}. {product['name']} ({product['brand']})</b>\n"
+                    f"<i>Назначение:</i> {product['purpose']}\n"
+                    f"<i>Как использовать:</i> {how_to_use}\n"
+                    f"{'🛒 ' + links if links else ''}\n\n"
+                )
+            text += "\n"
+
+    if warnings := recs.get('warnings'):
+        text += "⚠️ <b>Важные предосторожности:</b>\n"
+        for warning in warnings:
+            text += f"• <i>{warning}</i>\n"
+        text += "\n"
+        
+    text += f"\n{settings.app.disclaimer}"
+    
+    return text
+```
+
+#### **\# FILE: .skin-advisor/app/handlers/start.py**
+
+```python
+from aiogram import Router, F
+from aiogram.filters import CommandStart, Command
+from aiogram.types import Message, CallbackQuery
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.infra.models import User
+from app.ui import keyboards, messages
+
+router = Router()
+
+@router.message(CommandStart())
+async def cmd_start(message: Message, session: AsyncSession):
+    """Обработчик команды /start."""
+    # Проверяем, есть ли пользователь в БД
+    user = await session.get(User, message.from_user.id)
+    if not user:
+        new_user = User(
+            user_id=message.from_user.id,
+            username=message.from_user.username,
+            first_name=message.from_user.first_name
+        )
+        session.add(new_user)
+        await session.commit()
+    
+    await message.answer(
+        messages.get_welcome_message(message.from_user.first_name),
+        reply_markup=keyboards.set_main_menu()
+    )
+
+@router.message(F.text == messages.LEXICON['btn_navigation'])
+@router.message(Command("help", "privacy"))
+async def cmd_navigation(message: Message):
+    """Обработчик кнопки навигации и команд помощи/приватности."""
+    await message.answer("Выберите раздел:", reply_markup=keyboards.create_nav_keyboard())
+
+@router.callback_query(F.data == 'nav_help')
+async def cb_help(callback: CallbackQuery):
+    await callback.message.edit_text(messages.get_help_message())
+    await callback.answer()
+
+@router.callback_query(F.data == 'nav_policy')
+async def cb_policy(callback: CallbackQuery):
+    await callback.message.edit_text(messages.get_privacy_message())
+    await callback.answer()
+
+```
+
+... И последний блок файлов будет в следующем сообщении\! Мы почти закончили.
