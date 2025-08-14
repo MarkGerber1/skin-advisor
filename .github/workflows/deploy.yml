@@ -15,14 +15,17 @@ jobs:
       - name: Deploy
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-          # Optional: set if you want to force a specific service
-          # RAILWAY_SERVICE_ID: ${{ secrets.RAILWAY_SERVICE_ID }}
-          # RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
+          # Optional: set if you want to force a specific project/service
+          RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
+          RAILWAY_SERVICE_ID: ${{ secrets.RAILWAY_SERVICE_ID }}
         run: |
-          if [ -n "$RAILWAY_SERVICE_ID" ]; then
-            railway up --service $RAILWAY_SERVICE_ID --ci
-          else
-            railway up --ci
+          ARGS="--ci"
+          if [ -n "$RAILWAY_PROJECT_ID" ]; then
+            ARGS="$ARGS --project $RAILWAY_PROJECT_ID"
           fi
+          if [ -n "$RAILWAY_SERVICE_ID" ]; then
+            ARGS="$ARGS --service $RAILWAY_SERVICE_ID"
+          fi
+          railway up $ARGS
 
 
