@@ -48,7 +48,7 @@ def load_yaml_config(path: str = "config/app.yaml") -> dict:
 def _parse_admin_ids(raw: str | None) -> list[int]:
     if not raw:
         return []
-    return [int(x.strip()) for x in raw.split(',') if x.strip().isdigit()]
+    return [int(x.strip()) for x in raw.split(",") if x.strip().isdigit()]
 
 
 @lru_cache

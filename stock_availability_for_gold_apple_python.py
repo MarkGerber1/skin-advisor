@@ -27,13 +27,20 @@ GA может отдавать часть данных через JS; испол
 Для ссылок-поиска модуль пытается резолвить первую карточку товара.
 Для масштаба рекомендуются партнёрские фиды.
 """
+
 from __future__ import annotations
 from typing import Any, Dict, List
 from dataclasses import dataclass, asdict
-import time, json, re
+import time
+import json
+import re
 from reco_engine import (
-    select_products, PricingPolicy, DeeplinkConfig, goldapple_search_url
+    select_products,
+    PricingPolicy,
+    DeeplinkConfig,
+    goldapple_search_url,
 )
+
 
 @dataclass
 class StockRecord:
@@ -41,6 +48,7 @@ class StockRecord:
     in_stock: bool | None = None
     price: float | None = None
     checked_at: float = 0.0
+
 
 class StockCache:
     def __init__(self, path: str = "stock_cache.json", ttl_sec: int = 1800):
@@ -68,6 +76,7 @@ class StockCache:
         except Exception:
             pass
 
+
 try:
     import requests
 except Exception:
@@ -75,11 +84,17 @@ except Exception:
 
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36"
 
+
 def _http_get(url: str, timeout: float = 8.0) -> str | None:
     if not requests:
         return None
     try:
-        r = requests.get(url, headers={"User-Agent": USER_AGENT}, timeout=timeout, allow_redirects=True)
+        r = requests.get(
+            url,
+            headers={"User-Agent": USER_AGENT},
+            timeout=timeout,
+            allow_redirects=True,
+        )
         if r.status_code == 200 and r.text:
             return r.text
     except Exception:
@@ -90,12 +105,20 @@ def _http_get(url: str, timeout: float = 8.0) -> str | None:
 def parse_ga_product(html: str) -> tuple[bool | None, float | None]:
     if not html:
         return None, None
-    for m in re.finditer(r"<script[^>]*type=\"application/ld\+json\"[^>]*>(.*?)</script>", html, re.S|re.I):
+    for m in re.finditer(
+        r"<script[^>]*type=\"application/ld\+json\"[^>]*>(.*?)</script>",
+        html,
+        re.S | re.I,
+    ):
         block = m.group(1)
         if '"Product"' in block:
-            instock = True if "InStock" in block else (False if "OutOfStock" in block else None)
+            instock = (
+                True
+                if "InStock" in block
+                else (False if "OutOfStock" in block else None)
+            )
             mp = re.search(r'"price"\s*:\s*"?([0-9]+[\.,]?[0-9]*)', block)
-            price = float(mp.group(1).replace(',', '.')) if mp else None
+            price = float(mp.group(1).replace(",", ".")) if mp else None
             return instock, price
     if re.search(r"нет в наличии|ожидается|sold out", html, re.I):
         return False, None
@@ -117,7 +140,9 @@ def resolve_ga_product_url_from_search(search_url: str) -> str | None:
     return None
 
 
-def check_ga_availability(url_or_search: str, cache: StockCache | None = None) -> StockRecord:
+def check_ga_availability(
+    url_or_search: str, cache: StockCache | None = None
+) -> StockRecord:
     cache = cache or StockCache()
     cached = cache.get(url_or_search)
     if cached:
@@ -134,20 +159,48 @@ def check_ga_availability(url_or_search: str, cache: StockCache | None = None) -
     return rec
 
 
-def find_alternatives(base_item: Dict[str, Any], all_items: List[Dict[str, Any]], max_n: int = 3) -> List[Dict[str, Any]]:
+def find_alternatives(
+    base_item: Dict[str, Any], all_items: List[Dict[str, Any]], max_n: int = 3
+) -> List[Dict[str, Any]]:
     cat = base_item.get("category")
     tier = base_item.get("price_tier")
-    primary = [x for x in all_items if x.get("category") == cat and x.get("price_tier") == tier and x.get("id") != base_item.get("id")]
-    secondary = [x for x in all_items if x.get("category") == cat and x.get("id") != base_item.get("id") and x not in primary]
+    primary = [
+        x
+        for x in all_items
+        if x.get("category") == cat
+        and x.get("price_tier") == tier
+        and x.get("id") != base_item.get("id")
+    ]
+    secondary = [
+        x
+        for x in all_items
+        if x.get("category") == cat
+        and x.get("id") != base_item.get("id")
+        and x not in primary
+    ]
     return (primary + secondary)[:max_n]
 
 
-def select_products_avail(user_profile: Dict[str, Any], catalog: List[Any], partner_code: str,
-                          policy: PricingPolicy = PricingPolicy(), redirect_base: str | None = None,
-                          include_makeup: bool = True, deeplink_cfg: DeeplinkConfig | None = None,
-                          availability_mode: str = "prefer_in_stock",
-                          stock_cache: StockCache | None = None) -> Dict[str, Any]:
-    base = select_products(user_profile, catalog, partner_code, policy, redirect_base, include_makeup, deeplink_cfg)
+def select_products_avail(
+    user_profile: Dict[str, Any],
+    catalog: List[Any],
+    partner_code: str,
+    policy: PricingPolicy = PricingPolicy(),
+    redirect_base: str | None = None,
+    include_makeup: bool = True,
+    deeplink_cfg: DeeplinkConfig | None = None,
+    availability_mode: str = "prefer_in_stock",
+    stock_cache: StockCache | None = None,
+) -> Dict[str, Any]:
+    base = select_products(
+        user_profile,
+        catalog,
+        partner_code,
+        policy,
+        redirect_base,
+        include_makeup,
+        deeplink_cfg,
+    )
     if availability_mode == "ignore":
         return base
     stock_cache = stock_cache or StockCache()
@@ -167,7 +220,9 @@ def select_products_avail(user_profile: Dict[str, Any], catalog: List[Any], part
             ga_url = goldapple_search_url(brand, name)
         rec = check_ga_availability(ga_url, cache=stock_cache)
         item.setdefault("_stock", {})
-        item["_stock"].update({"in_stock": rec.in_stock, "price": rec.price, "url_checked": rec.url})
+        item["_stock"].update(
+            {"in_stock": rec.in_stock, "price": rec.price, "url_checked": rec.url}
+        )
         if availability_mode == "only_in_stock":
             if rec.in_stock is True:
                 final_products.append(item)
@@ -180,10 +235,20 @@ def select_products_avail(user_profile: Dict[str, Any], catalog: List[Any], part
                     if an_id in used_ids:
                         continue
                     b2, n2 = an.get("brand", ""), an.get("name", "")
-                    url2 = an.get("ref_link") or an.get("link") or goldapple_search_url(b2, n2)
+                    url2 = (
+                        an.get("ref_link")
+                        or an.get("link")
+                        or goldapple_search_url(b2, n2)
+                    )
                     r2 = check_ga_availability(url2, cache=stock_cache)
                     an.setdefault("_stock", {})
-                    an["_stock"].update({"in_stock": r2.in_stock, "price": r2.price, "url_checked": r2.url})
+                    an["_stock"].update(
+                        {
+                            "in_stock": r2.in_stock,
+                            "price": r2.price,
+                            "url_checked": r2.url,
+                        }
+                    )
                     if r2.in_stock is True:
                         picked = an
                         break
@@ -202,10 +267,14 @@ def select_products_avail(user_profile: Dict[str, Any], catalog: List[Any], part
                 if an_id in used_ids:
                     continue
                 b2, n2 = an.get("brand", ""), an.get("name", "")
-                url2 = an.get("ref_link") or an.get("link") or goldapple_search_url(b2, n2)
+                url2 = (
+                    an.get("ref_link") or an.get("link") or goldapple_search_url(b2, n2)
+                )
                 r2 = check_ga_availability(url2, cache=stock_cache)
                 an.setdefault("_stock", {})
-                an["_stock"].update({"in_stock": r2.in_stock, "price": r2.price, "url_checked": r2.url})
+                an["_stock"].update(
+                    {"in_stock": r2.in_stock, "price": r2.price, "url_checked": r2.url}
+                )
                 if r2.in_stock is True:
                     picked = an
                     break
@@ -224,6 +293,7 @@ def select_products_avail(user_profile: Dict[str, Any], catalog: List[Any], part
     base["replaced"] = replaced
     return base
 
+
 if __name__ == "__main__":
     h1 = '<script type="application/ld+json">{"@type":"Product","offers":{"availability":"InStock"},"price":"1999"}</script>'
     a1 = parse_ga_product(h1)
@@ -231,18 +301,22 @@ if __name__ == "__main__":
     h2 = '<script type="application/ld+json">{"@type":"Product","offers":{"availability":"OutOfStock"},"price":"1234"}</script>'
     a2 = parse_ga_product(h2)
     assert a2 == (False, 1234.0)
-    h3 = 'нет в наличии'
+    h3 = "нет в наличии"
     a3 = parse_ga_product(h3)
     assert a3 == (False, None)
-    h4 = 'в корзину'
+    h4 = "в корзину"
     a4 = parse_ga_product(h4)
     assert a4 == (True, None)
+
     def fake_get(url: str, timeout: float = 8.0) -> str | None:
         return '<a href="/123456-test-item">x</a>'
+
     _orig = _http_get
     _globals = globals()
-    _globals['_http_get'] = fake_get
-    s = resolve_ga_product_url_from_search("https://goldapple.ru/catalogsearch/result/?q=test")
+    _globals["_http_get"] = fake_get
+    s = resolve_ga_product_url_from_search(
+        "https://goldapple.ru/catalogsearch/result/?q=test"
+    )
     assert s == "https://goldapple.ru/123456-test-item"
-    _globals['_http_get'] = _orig
+    _globals["_http_get"] = _orig
     print("OK")

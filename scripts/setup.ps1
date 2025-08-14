@@ -66,3 +66,4 @@ try { & .\venv\Scripts\python.exe -m pytest -q } catch { Write-Warning "Tests fa
 Write-Host "Setup completed." -ForegroundColor Green
 Write-Host "Use scripts/run-polling.ps1 to start in polling mode, or scripts/run-webhook-ngrok.ps1 for webhook via ngrok." -ForegroundColor Green
 
+

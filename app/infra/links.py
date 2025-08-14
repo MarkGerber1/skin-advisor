@@ -13,4 +13,3 @@ def generate_product_links(product: dict) -> str:
             links.append(f'<a href="{url}">{marketplace_name}</a>')
 
     return " | ".join(links)
-
