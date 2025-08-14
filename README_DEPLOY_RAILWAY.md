@@ -38,6 +38,11 @@ Deploy to Railway (PaaS)
 5. После запуска в логах появятся строки вида:
    - `boot: mode=webhook port=<PORT> webhook_base=<url> redirect_base=<url>`
    - `webhook: set ok url=<url>` (или предупреждение, если установка не удалась)
+6. (Опционально) Авто‑деплой из GitHub Actions:
+   - Зайдите в GitHub → Repo → Settings → Secrets and variables → Actions → New repository secret
+   - Добавьте `RAILWAY_TOKEN` (получить в Railway → Account → Tokens)
+   - При желании добавьте `RAILWAY_PROJECT_ID` и `RAILWAY_SERVICE_ID`
+   - Workflow `.github/workflows/deploy.yml` будет триггерить `railway up` на каждый push в `main`
 
 Проверка
 - `GET https://<service>.up.railway.app/healthz` → `ok`
