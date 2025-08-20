@@ -1,0 +1,89 @@
+# 0) Перейти в проект
+Set-Location -LiteralPath 'C:\Users\1\Desktop\чат бот поуходу за кожей\.skin-advisor'
+
+# 1) Сбросить старые сессии/переменные Railway и выйти
+Remove-Item Env:RAILWAY_TOKEN -ErrorAction SilentlyContinue
+Remove-Item Env:RAILWAY_API_TOKEN -ErrorAction SilentlyContinue
+railway logout
+
+# 2) Войти заново (browserless). Откроется ссылка и покажет код → в браузере введи код и дождись успеха
+railway login --browserless
+
+# 3) Проверить вход и привязать проект (если спросит workspace/service — выбери web)
+railway whoami
+railway link --project 405c7ff9-f519-4f83-854b-64e8fec7ed08
+
+# 4) BOT_TOKEN без пробелов/переносов, валидируем и ставим переменные
+$t = (Get-Content -Raw .\Токен.txt) -replace '\s',''
+try {
+  $me = Invoke-RestMethod -Uri "https://api.telegram.org/bot$($t)/getMe" -TimeoutSec 15
+  "getMe ok=$($me.ok) username=$($me.result.username)"
+} catch { "getMe error: $($_.Exception.Message)" }
+
+# 5) Установить переменные в Railway (MODE=webhook, каталог)
+railway variables --set "BOT_TOKEN=$t" --set "MODE=webhook" --set "CATALOG_PATH=catalog/catalog_user_ga_full.json"
+
+# 6) WEBHOOK_SECRET (если файл есть) — тоже без пробелов
+if (Test-Path '.\вебхук секрет.txt') {
+  $sec = (Get-Content -Raw '.\вебхук секрет.txt') -replace '\s',''
+  railway variables --set "WEBHOOK_SECRET=$sec"
+}
+
+# 7) Редеплой сервиса web
+railway up --service web
+
+# 8) Проверки
+railway status
+Invoke-WebRequest -UseBasicParsing https://web-production-44f2.up.railway.app/healthz
+Invoke-RestMethod https://web-production-44f2.up.railway.app/version
+
+
+
+
+Set-Location -LiteralPath 'C:\Users\1\Desktop\чат бот поуходу за кожей\.skin-advisor'
+
+Remove-Item Env:RAILWAY_TOKEN -ErrorAction SilentlyContinue
+Remove-Item Env:RAILWAY_API_TOKEN -ErrorAction SilentlyContinue
+railway logout
+
+
+railway login --browserless
+
+
+railway whoami
+railway link --project 405c7ff9-f519-4f83-854b-64e8fec7ed08
+
+
+$t = (Get-Content -Raw .\Токен.txt) -replace '\s',''
+try {
+  $me = Invoke-RestMethod -Uri "https://api.telegram.org/bot$($t)/getMe" -TimeoutSec 15
+  "getMe ok=$($me.ok) username=$($me.result.username)"
+} catch { "getMe error: $($_.Exception.Message)" }
+
+
+railway variables --set "BOT_TOKEN=$t" --set "MODE=webhook" --set "CATALOG_PATH=catalog/catalog_user_ga_full.json"
+
+
+if (Test-Path '.\вебхук секрет.txt') {
+  $sec = (Get-Content -Raw '.\вебхук секрет.txt') -replace '\s',''
+  railway variables --set "WEBHOOK_SECRET=$sec"
+}
+
+
+
+railway up --service web
+
+
+
+railway status
+Invoke-WebRequest -UseBasicParsing https://web-production-44f2.up.railway.app/healthz
+Invoke-RestMethod https://web-production-44f2.up.railway.app/version
+
+
+
+
+
+
+
+
+

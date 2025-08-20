@@ -1,0 +1,132 @@
+# fixed_catalog.yaml (первые 20 товаров)
+products:
+  - id: "nivea_make_up_expert"
+    name: "Make Up Expert cleansing gel"
+    brand: "NIVEA"
+    category: "cleanser"
+    price_tier: "budget"
+    base_price: 350.0
+    link: "https://shop.example/nivea_make_up_expert"
+    actives: ["gentle_surfactants"]
+    suitable_skin: ["dry", "normal", "combo", "oily"]
+    contraindications: []
+    usage: "AM"
+    tags: ["fragrance_free"]
+
+  - id: "a_pieu_aqua_nature_500"
+    name: "A'PIEU Aqua Nature Cleansing Toner"
+    brand: "A'PIEU"
+    category: "toner"
+    price_tier: "mid"
+    base_price: 800.0
+    link: "https://shop.example/a_pieu_aqua_nature_500"
+    actives: ["hyaluronic_acid", "centella"]
+    suitable_skin: ["dry", "normal", "combo", "oily", "sensitive"]
+    contraindications: []
+    usage: "AM"
+    tags: ["hydrating", "soothing"]
+
+  - id: "holy_land_super_lotion"
+    name: "Super Lotion"
+    brand: "HOLY LAND"
+    category: "toner"
+    price_tier: "mid"
+    base_price: 1200.0
+    link: "https://shop.example/holy_land_super_lotion"
+    actives: ["aha", "beta_glucan"]
+    suitable_skin: ["normal", "combo", "oily"]
+    contraindications: []
+    usage: "PM"
+    tags: ["exfoliating"]
+
+  - id: "the_u_keep_calm_serum"
+    name: "Keep Calm Serum"
+    brand: "THE U"
+    category: "serum"
+    price_tier: "mid"
+    base_price: 1500.0
+    link: "https://shop.example/the_u_keep_calm_serum"
+    actives: ["niacinamide", "peptides"]
+    suitable_skin: ["sensitive", "dry", "normal", "combo"]
+    contraindications: []
+    usage: "AM"
+    tags: ["soothing", "barrier_repair"]
+
+  - id: "bioderma_sebium_serum"
+    name: "Sebium Serum"
+    brand: "BIODERMA"
+    category: "serum"
+    price_tier: "mid"
+    base_price: 1800.0
+    link: "https://shop.example/bioderma_sebium_serum"
+    actives: ["salicylic_acid", "zinc"]
+    suitable_skin: ["oily", "combo", "acne_prone"]
+    contraindications: []
+    usage: "PM"
+    tags: ["pore_minimizing", "oil_control"]
+
+  - id: "the_u_keep_calm_cream"
+    name: "Keep Calm Cream"
+    brand: "THE U"
+    category: "moisturizer"
+    price_tier: "mid"
+    base_price: 1300.0
+    link: "https://shop.example/the_u_keep_calm_cream"
+    actives: ["ceramides", "squalane"]
+    suitable_skin: ["sensitive", "dry", "normal"]
+    contraindications: []
+    usage: "PM"
+    tags: ["barrier_repair", "rich_texture"]
+
+  - id: "la_roche_posay_effaclar_iso_biome"
+    name: "Effaclar H Iso-Biome"
+    brand: "LA ROCHE-POSAY"
+    category: "moisturizer"
+    price_tier: "mid"
+    base_price: 1600.0
+    link: "https://shop.example/la_roche_posay_effaclar_iso_biome"
+    actives: ["niacinamide", "prebiotics"]
+    suitable_skin: ["sensitive", "oily", "combo", "acne_prone"]
+    contraindications: []
+    usage: "PM"
+    tags: ["oil_free", "non_comedogenic"]
+
+  - id: "skinjestique_your_perfect_sunscreen"
+    name: "Your Perfect Sunscreen SPF50"
+    brand: "SKINJESTIQUE"
+    category: "sunscreen"
+    price_tier: "mid"
+    base_price: 1100.0
+    link: "https://shop.example/skinjestique_your_perfect_sunscreen"
+    actives: ["uv_filters"]
+    suitable_skin: ["dry", "normal", "combo", "oily"]
+    contraindications: []
+    usage: "AM"
+    tags: ["lightweight", "non_white_cast"]
+
+  - id: "dr_ceuracle_hyal_reyouth_moist_sun"
+    name: "Hyal Reyouth Moist Sun SPF50+"
+    brand: "DR. CEURACLE"
+    category: "sunscreen"
+    price_tier: "mid"
+    base_price: 1400.0
+    link: "https://shop.example/dr_ceuracle_hyal_reyouth_moist_sun"
+    actives: ["uv_filters", "hyaluronic_acid"]
+    suitable_skin: ["dry", "normal", "dehydrated"]
+    contraindications: []
+    usage: "AM"
+    tags: ["moisturizing", "dewy_finish"]
+
+  - id: "pekah_daily_moisture_peeling_toner"
+    name: "Daily Moisture Peeling Toner"
+    brand: "PEKAH"
+    category: "exfoliant"
+    price_tier: "mid"
+    base_price: 1700.0
+    link: "https://shop.example/pekah_daily_moisture_peeling_toner"
+    actives: ["pha", "lactic_acid"]
+    suitable_skin: ["sensitive", "dry", "normal", "combo"]
+    contraindications: []
+    usage: "weekly"
+    tags: ["gentle_exfoliation", "hydrating"]
+# ... (и так далее для остальных 10 товаров)

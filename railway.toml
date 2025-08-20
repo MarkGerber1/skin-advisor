@@ -1,3 +1,11 @@
 [service]
 name = "skin-advisor"
 
+[[service.volumes]]
+mount_path = "/app/data"
+source = "data-volume"
+
+[[service.volumes]]
+mount_path = "/app/logs"
+source = "logs-volume"
+

@@ -1,2 +1,2 @@
-web: python -m app.main --mode=webhook
+web: python -m bot.main
 

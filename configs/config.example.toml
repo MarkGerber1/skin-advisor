@@ -1,0 +1,6 @@
+BOT_TOKEN = "your_telegram_bot_token"
+CATALOG_PATH = "data/fixed_catalog.yaml"
+PARTNER_CODE = "aff_123"
+REDIRECT_BASE = ""
+
+

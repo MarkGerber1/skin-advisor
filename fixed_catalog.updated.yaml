@@ -1,0 +1,82 @@
+products:
+- id: la-roche-posay-effaclar-h-iso-biome-cleansing-cream-gel-200ml
+  brand: La Roche-Posay
+  line: Effaclar
+  name: H Iso-Biome Cleansing Cream-Gel
+  category: Очищение
+  subcategory: cream-gel
+  texture: cream-gel
+  finish: null
+  shade: null
+  undertone: null
+  volume_ml: 200
+  spf: null
+  actives:
+  - Niacinamide
+  - Bixa Orellana Seed Extract
+  - Shea Butter
+  price: 1895
+  price_currency: RUB
+  price_converted: 1895
+  in_stock: true
+  gtin: null
+  link: https://zdravcity.ru/p_krem-gel-protiv-nesovershenstv-effaclar-n-iso-biome-la-roche-posay-lja-rosh-poze-200ml-mv424500-0184522.html
+  source: retailer
+  source_region: RU
+  checked_at: '2025-08-20T00:00:00+03:00'
+  evidence_type: html
+- id: la-roche-posay-effaclar-ultra-concentrated-serum-30ml
+  brand: La Roche-Posay
+  line: Effaclar
+  name: Ultra Concentrated Serum
+  category: Уход
+  subcategory: serum
+  texture: serum
+  finish: null
+  shade: null
+  undertone: null
+  volume_ml: 30
+  spf: null
+  actives:
+  - Niacinamide
+  - Salicylic Acid
+  - Glycolic Acid
+  - LHA (Capryloyl Salicylic Acid)
+  price: 3048
+  price_currency: RUB
+  price_converted: 3048
+  in_stock: true
+  gtin: null
+  link: https://zdravcity.ru/p_lja-rosh-poze-jefaklar-syvorotka-ultra-koncentrirovannaja-fl-30ml-mb276400-0118572.html
+  source: retailer
+  source_region: RU
+  checked_at: '2025-08-20T00:00:00+03:00'
+  evidence_type: html
+- id: la-roche-posay-effaclar-micro-exfoliating-cleansing-gel-200ml
+  brand: La Roche-Posay
+  line: Effaclar
+  name: Micro-Exfoliating Cleansing Gel
+  category: Очищение
+  subcategory: gel
+  texture: gel
+  finish: null
+  shade: null
+  undertone: null
+  volume_ml: 200
+  spf: null
+  actives:
+  - Salicylic Acid
+  - LHA (Capryloyl Salicylic Acid)
+  - Zinc
+  - Glycerin
+  - Menthol
+  price: 1591
+  price_currency: RUB
+  price_converted: 1591
+  in_stock: true
+  gtin: null
+  link: https://zdravcity.ru/p_lja-rosh-poze-jefaklar-gel-ochisch-mikrootshelushivajuschij-dlja-kozhi-s-vyrazhennymi-nesovershenstv-0101377.html
+  source: retailer
+  source_region: RU
+  checked_at: '2025-08-20T00:00:00+03:00'
+  evidence_type: html

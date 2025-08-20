@@ -1,0 +1,44 @@
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+venv/
+env/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Databases
+*.db
+*.sqlite3
+db_volume/
+
+# Logs
+logs/
+*.log
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*~
+
+# IDEs
+.idea/
+.vscode/
+*.sublime-*
+.DS_Store
+
+# Other
+out/
+catalog/
+content/
+data/
+tools/
+TASKS.md
+"\320\262\320\265\320\261\321\205\321\203\320\272 \321\201\320\265\320\272\321\200\320\265\321\202.txt"
+
+
