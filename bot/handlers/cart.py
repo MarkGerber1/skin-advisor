@@ -59,5 +59,3 @@ async def show_cart(m: Message, state: FSMContext) -> None:
     lines.append("")
     lines.append(f"Итого позиций: {len(items)}")
     await m.answer("\n".join(lines))
-
-

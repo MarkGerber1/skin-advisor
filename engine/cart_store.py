@@ -42,7 +42,9 @@ class CartStore:
     def _save(self, user_id: int, items: Dict[str, CartItem]) -> None:
         path = self._path(user_id)
         with open(path, "w", encoding="utf-8") as f:
-            json.dump({pid: asdict(ci) for pid, ci in items.items()}, f, ensure_ascii=False, indent=2)
+            json.dump(
+                {pid: asdict(ci) for pid, ci in items.items()}, f, ensure_ascii=False, indent=2
+            )
 
     def add(self, user_id: int, item: CartItem) -> None:
         with self._lock:
@@ -79,5 +81,3 @@ class CartStore:
     def get(self, user_id: int) -> List[CartItem]:
         with self._lock:
             return list(self._load(user_id).values())
-
-

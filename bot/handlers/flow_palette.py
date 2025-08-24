@@ -11,12 +11,17 @@ from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, C
 from engine.catalog_store import CatalogStore
 from engine.models import UserProfile
 from engine.selector import select_products
+
 try:
     from bot.ui.pdf import save_text_pdf, save_last_json
 except ImportError as e:
     print(f"Warning: Could not import pdf module: {e}")
-    def save_text_pdf(*args, **kwargs): return ""
-    def save_last_json(*args, **kwargs): pass
+
+    def save_text_pdf(*args, **kwargs):
+        return ""
+
+    def save_last_json(*args, **kwargs):
+        pass
 
 
 router = Router()
@@ -35,34 +40,65 @@ class PaletteFlow(StatesGroup):
 
 def _kb_undertone() -> InlineKeyboardMarkup:
     rows = [
-        [InlineKeyboardButton(text="Холодный", callback_data="pal:1:undertone:cool"), InlineKeyboardButton(text="Тёплый", callback_data="pal:1:undertone:warm")],
-        [InlineKeyboardButton(text="Нейтральный", callback_data="pal:1:undertone:neutral"), InlineKeyboardButton(text="Оливковый", callback_data="pal:1:undertone:olive")],
+        [
+            InlineKeyboardButton(text="Холодный", callback_data="pal:1:undertone:cool"),
+            InlineKeyboardButton(text="Тёплый", callback_data="pal:1:undertone:warm"),
+        ],
+        [
+            InlineKeyboardButton(text="Нейтральный", callback_data="pal:1:undertone:neutral"),
+            InlineKeyboardButton(text="Оливковый", callback_data="pal:1:undertone:olive"),
+        ],
     ]
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
 def _kb_value() -> InlineKeyboardMarkup:
-    rows = [[InlineKeyboardButton(text=t, callback_data=f"pal:2:value:{c}") for t, c in [("Светлый", "light"), ("Средний", "medium"), ("Тёмный", "deep")]]]
+    rows = [
+        [
+            InlineKeyboardButton(text=t, callback_data=f"pal:2:value:{c}")
+            for t, c in [("Светлый", "light"), ("Средний", "medium"), ("Тёмный", "deep")]
+        ]
+    ]
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
 def _kb_hair() -> InlineKeyboardMarkup:
-    rows = [[InlineKeyboardButton(text=t, callback_data=f"pal:3:hair:{c}") for t, c in [("Светлые", "light"), ("Средние", "medium"), ("Тёмные", "dark")]]]
+    rows = [
+        [
+            InlineKeyboardButton(text=t, callback_data=f"pal:3:hair:{c}")
+            for t, c in [("Светлые", "light"), ("Средние", "medium"), ("Тёмные", "dark")]
+        ]
+    ]
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
 def _kb_brows() -> InlineKeyboardMarkup:
-    rows = [[InlineKeyboardButton(text=t, callback_data=f"pal:4:brows:{c}") for t, c in [("Светлые", "light"), ("Средние", "medium"), ("Тёмные", "dark")]]]
+    rows = [
+        [
+            InlineKeyboardButton(text=t, callback_data=f"pal:4:brows:{c}")
+            for t, c in [("Светлые", "light"), ("Средние", "medium"), ("Тёмные", "dark")]
+        ]
+    ]
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
 def _kb_eyes() -> InlineKeyboardMarkup:
-    rows = [[InlineKeyboardButton(text=t, callback_data=f"pal:5:eyes:{c}") for t, c in [("Голубые", "blue"), ("Зелёные", "green"), ("Карие", "brown")]]]
+    rows = [
+        [
+            InlineKeyboardButton(text=t, callback_data=f"pal:5:eyes:{c}")
+            for t, c in [("Голубые", "blue"), ("Зелёные", "green"), ("Карие", "brown")]
+        ]
+    ]
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
 def _kb_contrast() -> InlineKeyboardMarkup:
-    rows = [[InlineKeyboardButton(text=t, callback_data=f"pal:6:contrast:{c}") for t, c in [("Низкий", "low"), ("Средний", "medium"), ("Высокий", "high")]]]
+    rows = [
+        [
+            InlineKeyboardButton(text=t, callback_data=f"pal:6:contrast:{c}")
+            for t, c in [("Низкий", "low"), ("Средний", "medium"), ("Высокий", "high")]
+        ]
+    ]
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
@@ -71,9 +107,13 @@ def _kb_confirm(enabled: bool) -> InlineKeyboardMarkup:
         [InlineKeyboardButton(text="Назад", callback_data="pal:7:back:6")],
     ]
     if enabled:
-        btns[0].append(InlineKeyboardButton(text="Сформировать отчёт", callback_data="pal:7:confirm:ok"))
+        btns[0].append(
+            InlineKeyboardButton(text="Сформировать отчёт", callback_data="pal:7:confirm:ok")
+        )
     else:
-        btns[0].append(InlineKeyboardButton(text="Сформировать отчёт", callback_data="pal:7:confirm:disabled"))
+        btns[0].append(
+            InlineKeyboardButton(text="Сформировать отчёт", callback_data="pal:7:confirm:disabled")
+        )
     return InlineKeyboardMarkup(inline_keyboard=btns)
 
 
@@ -226,7 +266,7 @@ async def a6(cb: CallbackQuery, state: FSMContext) -> None:
         return
     await state.update_data(contrast=value)
     await state.set_state(PaletteFlow.A7_CONFIRM)
-    
+
     d = await state.get_data()
     undertone = d.get("undertone")
     value = d.get("value")
@@ -234,9 +274,9 @@ async def a6(cb: CallbackQuery, state: FSMContext) -> None:
     brows = d.get("brows")
     eye_color = d.get("eye_color")
     contrast = d.get("contrast")
-    
+
     ready = bool(undertone and value and hair_depth and brows and eye_color and contrast)
-    
+
     text = (
         "Шаг 7/7 — Подтверждение\n\n"
         f"Подтон: {undertone}\n"
@@ -304,11 +344,18 @@ async def a7(cb: CallbackQuery, state: FSMContext) -> None:
         text, kb = render_makeup_report(result)
         # AnswerExpander (TL;DR/FULL)
         from engine.answer_expander import expand
+
         enriched = expand(profile.model_dump(), text, result)
         text_to_pdf = enriched.get("full_text") or text
         # Save JSON + PDF
         uid = int(cb.from_user.id) if cb.from_user and cb.from_user.id else 0
-        snapshot = {"type": "palette", "profile": profile.model_dump(), "result": result, "tl_dr": enriched.get("tl_dr"), "full_text": enriched.get("full_text")}
+        snapshot = {
+            "type": "palette",
+            "profile": profile.model_dump(),
+            "result": result,
+            "tl_dr": enriched.get("tl_dr"),
+            "full_text": enriched.get("full_text"),
+        }
         save_last_json(uid, snapshot)
         save_text_pdf(uid, title="Отчёт по палитре", body_text=text_to_pdf)
         await msg.edit_text(text, disable_web_page_preview=True)
@@ -316,5 +363,3 @@ async def a7(cb: CallbackQuery, state: FSMContext) -> None:
         await state.clear()
         return
     await cb.answer()
-
-

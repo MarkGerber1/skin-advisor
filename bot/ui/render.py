@@ -31,7 +31,9 @@ def _rows(items: List[Dict]) -> List[str]:
 
 
 def _noop_keyboard() -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="🔄 Обновить", callback_data="noop")]])
+    return InlineKeyboardMarkup(
+        inline_keyboard=[[InlineKeyboardButton(text="🔄 Обновить", callback_data="noop")]]
+    )
 
 
 def render_skincare_report(result: Dict) -> Tuple[str, InlineKeyboardMarkup]:
@@ -64,7 +66,9 @@ def render_skincare_report(result: Dict) -> Tuple[str, InlineKeyboardMarkup]:
         if atc:
             buttons.append([atc])
         if it.get("ref_link"):
-            buttons.append([InlineKeyboardButton(text=f"🛒 {it['brand']} {it['name']}", url=it["ref_link"])])
+            buttons.append(
+                [InlineKeyboardButton(text=f"🛒 {it['brand']} {it['name']}", url=it["ref_link"])]
+            )
 
     kb = InlineKeyboardMarkup(inline_keyboard=buttons)
     return "\n".join(text_lines), kb
@@ -104,14 +108,9 @@ def render_makeup_report(result: Dict) -> Tuple[str, InlineKeyboardMarkup]:
         if atc:
             buttons.append([atc])
         if it.get("ref_link"):
-            buttons.append([InlineKeyboardButton(text=f"🛒 {it['brand']} {it['name']}", url=it["ref_link"])])
+            buttons.append(
+                [InlineKeyboardButton(text=f"🛒 {it['brand']} {it['name']}", url=it["ref_link"])]
+            )
 
     kb = InlineKeyboardMarkup(inline_keyboard=buttons)
     return "\n".join(text_lines), kb
-
-
-
-
-
-
-

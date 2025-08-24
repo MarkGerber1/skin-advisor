@@ -5,7 +5,15 @@ from aiogram.filters import CommandStart, StateFilter
 from aiogram.types import Message
 from aiogram.fsm.context import FSMContext
 
-from bot.ui.keyboards import main_menu, BTN_PALETTE, BTN_SKINCARE, BTN_ABOUT, BTN_PICK, BTN_SETTINGS, BTN_REPORT
+from bot.ui.keyboards import (
+    main_menu,
+    BTN_PALETTE,
+    BTN_SKINCARE,
+    BTN_ABOUT,
+    BTN_PICK,
+    BTN_SETTINGS,
+    BTN_REPORT,
+)
 
 
 router = Router()
@@ -79,20 +87,16 @@ async def settings(m: Message, state: FSMContext) -> None:
 async def report_latest(m: Message, state: FSMContext) -> None:
     await state.clear()
     from aiogram.types import CallbackQuery
+
     # Имитация нажатия кнопки для переиспользования логики report:latest
     class _FakeCb(CallbackQuery):
         pass
+
     # Вызовем хендлер отправки отчёта напрямую
     from bot.handlers.report import send_latest_report
+
     cb = _FakeCb(id="0", from_user=m.from_user, chat_instance="0", data="report:latest", message=m)
     try:
         await send_latest_report(cb)
     except Exception:
         await m.answer("Отчёт ещё не сформирован. Пройдите диагностику или палитрометр.")
-
-
-
-
-
-
-

@@ -30,7 +30,7 @@ def sample_catalog():
             actives=["gentle_surfactants"],
             tags=["gentle", "fragrance_free"],
             in_stock=True,
-            volume_ml=200.0
+            volume_ml=200.0,
         ),
         # Тоник
         Product(
@@ -44,7 +44,7 @@ def sample_catalog():
             actives=["hyaluronic_acid"],
             tags=["hydrating"],
             in_stock=True,
-            volume_ml=200.0
+            volume_ml=200.0,
         ),
         # Сыворотка
         Product(
@@ -58,7 +58,7 @@ def sample_catalog():
             actives=["niacinamide"],
             tags=["oil_control"],
             in_stock=True,
-            volume_ml=30.0
+            volume_ml=30.0,
         ),
         # Крем
         Product(
@@ -72,7 +72,7 @@ def sample_catalog():
             actives=["ceramides"],
             tags=["barrier_repair"],
             in_stock=True,
-            volume_ml=50.0
+            volume_ml=50.0,
         ),
         # Солнцезащита
         Product(
@@ -86,7 +86,7 @@ def sample_catalog():
             spf=50,
             tags=["broad_spectrum"],
             in_stock=True,
-            volume_ml=50.0
+            volume_ml=50.0,
         ),
         # Макияж - тональный крем
         Product(
@@ -99,15 +99,10 @@ def sample_catalog():
             price_currency="RUB",
             link="https://example.com/foundation1",
             finish="natural",
-            shade=Shade(
-                name="Natural Ivory",
-                code="110",
-                undertone="cool",
-                color_family="fair"
-            ),
+            shade=Shade(name="Natural Ivory", code="110", undertone="cool", color_family="fair"),
             tags=["buildable"],
             in_stock=True,
-            volume_ml=30.0
+            volume_ml=30.0,
         ),
         # Макияж - помада
         Product(
@@ -120,46 +115,38 @@ def sample_catalog():
             price_currency="RUB",
             link="https://example.com/lipstick1",
             finish="matte",
-            shade=Shade(
-                name="Ruby Red",
-                code="RR",
-                undertone="cool",
-                color_family="red"
-            ),
+            shade=Shade(name="Ruby Red", code="RR", undertone="cool", color_family="red"),
             tags=["long_wearing"],
             in_stock=True,
-            weight_g=3.0
+            weight_g=3.0,
         ),
     ]
 
 
 def test_select_skincare_products(sample_catalog):
     """Тест подбора товаров для ухода за кожей."""
-    profile = UserProfile(
-        skin_type="oily",
-        concerns=["acne", "dehydration"]
-    )
-    
+    profile = UserProfile(skin_type="oily", concerns=["acne", "dehydration"])
+
     result = select_products(
         user_profile=profile,
         catalog=sample_catalog,
         partner_code="test_123",
-        redirect_base="https://example.com/redirect"
+        redirect_base="https://example.com/redirect",
     )
-    
+
     # Проверяем структуру результата
     assert "skincare" in result
     assert "makeup" in result
-    
+
     skincare = result["skincare"]
     assert "AM" in skincare
     assert "PM" in skincare
     assert "weekly" in skincare
-    
+
     # Проверяем, что подобраны товары
     assert len(skincare["AM"]) > 0
     assert len(skincare["PM"]) > 0
-    
+
     # Проверяем, что товары имеют правильные поля
     for product in skincare["AM"]:
         assert "id" in product
@@ -172,30 +159,26 @@ def test_select_skincare_products(sample_catalog):
 def test_select_makeup_products(sample_catalog):
     """Тест подбора товаров для макияжа."""
     profile = UserProfile(
-        undertone="cool",
-        value="light",
-        hair_depth="dark",
-        eye_color="blue",
-        contrast="high"
+        undertone="cool", value="light", hair_depth="dark", eye_color="blue", contrast="high"
     )
-    
+
     result = select_products(
         user_profile=profile,
         catalog=sample_catalog,
         partner_code="test_123",
-        redirect_base="https://example.com/redirect"
+        redirect_base="https://example.com/redirect",
     )
-    
+
     makeup = result["makeup"]
     assert "face" in makeup
     assert "brows" in makeup
     assert "eyes" in makeup
     assert "lips" in makeup
-    
+
     # Проверяем, что подобраны товары для лица и губ
     assert len(makeup["face"]) > 0
     assert len(makeup["lips"]) > 0
-    
+
     # Проверяем, что товары имеют правильные поля
     for product in makeup["face"]:
         assert "id" in product
@@ -207,17 +190,10 @@ def test_select_makeup_products(sample_catalog):
 
 def test_filter_by_undertone(sample_catalog):
     """Тест фильтрации по подтону."""
-    profile = UserProfile(
-        undertone="cool",
-        value="light"
-    )
-    
-    result = select_products(
-        user_profile=profile,
-        catalog=sample_catalog,
-        partner_code="test_123"
-    )
-    
+    profile = UserProfile(undertone="cool", value="light")
+
+    result = select_products(user_profile=profile, catalog=sample_catalog, partner_code="test_123")
+
     # Проверяем, что подобраны товары с cool подтоном
     makeup = result["makeup"]
     for product in makeup["face"] + makeup["lips"]:
@@ -229,17 +205,13 @@ def test_filter_by_undertone(sample_catalog):
 def test_empty_catalog():
     """Тест работы с пустым каталогом."""
     profile = UserProfile(skin_type="normal")
-    
-    result = select_products(
-        user_profile=profile,
-        catalog=[],
-        partner_code="test_123"
-    )
-    
+
+    result = select_products(user_profile=profile, catalog=[], partner_code="test_123")
+
     # Результат должен быть пустым, но структура должна сохраниться
     assert "skincare" in result
     assert "makeup" in result
-    
+
     skincare = result["skincare"]
     assert len(skincare["AM"]) == 0
     assert len(skincare["PM"]) == 0
@@ -255,17 +227,17 @@ def test_affiliate_links():
             name="Test",
             brand="Test",
             category="cleanser",
-            link="https://example.com/product"
+            link="https://example.com/product",
         )
     ]
-    
+
     result = select_products(
         user_profile=profile,
         catalog=catalog,
         partner_code="test_123",
-        redirect_base="https://redirect.com"
+        redirect_base="https://redirect.com",
     )
-    
+
     # Проверяем, что сгенерированы партнерские ссылки
     skincare = result["skincare"]
     if skincare["AM"]:
@@ -273,11 +245,3 @@ def test_affiliate_links():
         assert "ref_link" in product
         assert "test_123" in product["ref_link"]
         assert "redirect.com" in product["ref_link"]
-
-
-
-
-
-
-
-

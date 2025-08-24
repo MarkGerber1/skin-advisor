@@ -45,11 +45,3 @@ class CatalogStore:
     def get(self) -> List[Product]:
         self._load_if_needed(force=False)
         return self._catalog
-
-
-
-
-
-
-
-

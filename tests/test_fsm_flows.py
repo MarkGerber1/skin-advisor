@@ -1,6 +1,11 @@
 from __future__ import annotations
 
-from bot.handlers.flow_skincare import _parse as skin_parse, _kb_skin_types, _kb_concerns, _kb_confirm
+from bot.handlers.flow_skincare import (
+    _parse as skin_parse,
+    _kb_skin_types,
+    _kb_concerns,
+    _kb_confirm,
+)
 from bot.handlers.flow_palette import _parse as pal_parse, _kb_undertone, _kb_value
 
 
@@ -55,11 +60,3 @@ def test_palette_kb_undertone_and_value():
     assert "pal:2:value:light" in datas_v
     assert "pal:2:value:medium" in datas_v
     assert "pal:2:value:deep" in datas_v
-
-
-
-
-
-
-
-

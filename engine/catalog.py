@@ -55,11 +55,3 @@ def load_catalog(path: str) -> List[Product]:
                 },
             )
     return out
-
-
-
-
-
-
-
-

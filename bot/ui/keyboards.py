@@ -1,6 +1,11 @@
 from __future__ import annotations
 
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import (
+    ReplyKeyboardMarkup,
+    KeyboardButton,
+    InlineKeyboardMarkup,
+    InlineKeyboardButton,
+)
 from typing import List
 
 
@@ -38,14 +43,17 @@ def back_button() -> ReplyKeyboardMarkup:
 
 def confirm_buttons(yes_text: str = "✅ Да", no_text: str = "❌ Нет") -> InlineKeyboardMarkup:
     """Кнопки подтверждения"""
-    return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text=yes_text, callback_data="confirm:yes")],
-        [InlineKeyboardButton(text=no_text, callback_data="confirm:no")],
-    ])
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text=yes_text, callback_data="confirm:yes")],
+            [InlineKeyboardButton(text=no_text, callback_data="confirm:no")],
+        ]
+    )
 
 
-def navigation_buttons(prev_callback: str = None, next_callback: str = None,
-                      back_callback: str = None) -> InlineKeyboardMarkup:
+def navigation_buttons(
+    prev_callback: str = None, next_callback: str = None, back_callback: str = None
+) -> InlineKeyboardMarkup:
     """Кнопки навигации"""
     buttons: List[List[InlineKeyboardButton]] = []
     row: List[InlineKeyboardButton] = []
@@ -73,10 +81,3 @@ def loading_message() -> str:
 def error_message() -> str:
     """Сообщение об ошибке"""
     return "❌ Произошла ошибка. Попробуйте еще раз."
-
-
-
-
-
-
-

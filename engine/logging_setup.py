@@ -35,11 +35,3 @@ def get_catalog_logger() -> logging.Logger:
     logger.setLevel(logging.INFO)
     logger.addHandler(handler)
     return logger
-
-
-
-
-
-
-
-

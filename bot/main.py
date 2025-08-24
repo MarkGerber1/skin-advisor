@@ -9,6 +9,7 @@ print("Starting imports...")
 
 try:
     from aiogram import Bot, Dispatcher
+
     print("✓ aiogram imported")
 except ImportError as e:
     print(f"✗ Failed to import aiogram: {e}")
@@ -16,6 +17,7 @@ except ImportError as e:
 
 try:
     from engine.catalog_store import CatalogStore
+
     print("✓ CatalogStore imported")
 except ImportError as e:
     print(f"✗ Failed to import CatalogStore: {e}")
@@ -24,6 +26,7 @@ except ImportError as e:
 # Routers
 try:
     from bot.handlers.start import router as start_router
+
     print("✓ start router imported")
 except ImportError as e:
     print(f"✗ Failed to import start router: {e}")
@@ -31,6 +34,7 @@ except ImportError as e:
 
 try:
     from bot.handlers.flow_skincare import router as skincare_router
+
     print("✓ skincare router imported")
 except ImportError as e:
     print(f"✗ Failed to import skincare router: {e}")
@@ -38,6 +42,7 @@ except ImportError as e:
 
 try:
     from bot.handlers.flow_palette import router as palette_router
+
     print("✓ palette router imported")
 except ImportError as e:
     print(f"✗ Failed to import palette router: {e}")
@@ -45,6 +50,7 @@ except ImportError as e:
 
 try:
     from bot.handlers.cart import router as cart_router
+
     print("✓ cart router imported")
 except ImportError as e:
     print(f"✗ Failed to import cart router: {e}")
@@ -52,6 +58,7 @@ except ImportError as e:
 
 try:
     from bot.handlers.report import router as report_router
+
     print("✓ report router imported")
 except ImportError as e:
     print(f"✗ Failed to import report router: {e}")
@@ -67,15 +74,17 @@ async def main() -> None:
     if not os.path.exists(CATALOG_PATH):
         print(f"WARNING: Catalog file not found at {CATALOG_PATH}")
         print(f"Current directory: {os.getcwd()}")
-        print(f"Files in assets/: {os.listdir('assets/') if os.path.exists('assets/') else 'assets/ not found'}")
-    
+        print(
+            f"Files in assets/: {os.listdir('assets/') if os.path.exists('assets/') else 'assets/ not found'}"
+        )
+
     try:
         CatalogStore.instance(CATALOG_PATH)
         print("Catalog loaded successfully")
     except Exception as e:
         print(f"ERROR loading catalog: {e}")
         # Продолжаем работу даже без каталога
-    
+
     token = os.getenv("BOT_TOKEN")
     if not token:
         raise RuntimeError("BOT_TOKEN is not set")
@@ -95,8 +104,3 @@ async def main() -> None:
 
 if __name__ == "__main__":
     asyncio.run(main())
-
-
-
-
-

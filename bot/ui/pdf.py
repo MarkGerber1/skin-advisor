@@ -28,7 +28,9 @@ def _setup_font(pdf: FPDF) -> None:
     pdf.set_font("helvetica", size=12)
 
 
-def save_text_pdf(user_id: int, title: str, body_text: str, *, base_dir: str = "data/reports") -> str:
+def save_text_pdf(
+    user_id: int, title: str, body_text: str, *, base_dir: str = "data/reports"
+) -> str:
     out_dir = os.path.join(base_dir, str(user_id))
     _ensure_dir(out_dir)
     pdf_path = os.path.join(out_dir, "last.pdf")
@@ -60,7 +62,3 @@ def save_last_json(user_id: int, payload: Dict, *, base_dir: str = "data/reports
     with open(json_path, "w", encoding="utf-8") as f:
         json.dump(payload, f, ensure_ascii=False, indent=2)
     return json_path
-
-
-
-

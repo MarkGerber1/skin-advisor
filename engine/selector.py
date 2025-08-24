@@ -89,13 +89,17 @@ def select_products(
     am_cleanser = _pick_top(_filter_catalog(catalog, category="cleanser"), 1)
     am_toner = _pick_top(_filter_catalog(catalog, category="toner", actives=wanted_actives), 1)
     am_serum = _pick_top(_filter_catalog(catalog, category="serum", actives=wanted_actives), 2)
-    am_moist = _pick_top(_filter_catalog(catalog, category="moisturizer", actives=wanted_actives), 1)
+    am_moist = _pick_top(
+        _filter_catalog(catalog, category="moisturizer", actives=wanted_actives), 1
+    )
     am_spf = _pick_top(_filter_catalog(catalog, category="sunscreen"), 1)
 
     # PM routine
     pm_cleanser = _pick_top(_filter_catalog(catalog, category="cleanser"), 1)
     pm_treatment = _pick_top(_filter_catalog(catalog, category="serum", actives=wanted_actives), 2)
-    pm_moist = _pick_top(_filter_catalog(catalog, category="moisturizer", actives=wanted_actives), 1)
+    pm_moist = _pick_top(
+        _filter_catalog(catalog, category="moisturizer", actives=wanted_actives), 1
+    )
 
     # Weekly
     weekly_exf = _pick_top(_filter_catalog(catalog, category="peeling", actives=wanted_actives), 1)
@@ -109,7 +113,9 @@ def select_products(
         brow_products = _pick_top(_filter_catalog(catalog, category="brow"), 1)
         eye_products = _pick_top(_filter_catalog(catalog, category="eyeshadow"), 1)
         mascara_products = _pick_top(_filter_catalog(catalog, category="mascara"), 1)
-        lip_products = _pick_top(_filter_catalog(catalog, category="lipstick", undertone=undertone), 2)
+        lip_products = _pick_top(
+            _filter_catalog(catalog, category="lipstick", undertone=undertone), 2
+        )
     else:
         face_products = _pick_top(_filter_catalog(catalog, category="foundation"), 2)
         brow_products = _pick_top(_filter_catalog(catalog, category="brow"), 1)
@@ -126,7 +132,9 @@ def select_products(
             "price": p.price,
             "price_currency": p.price_currency,
             "link": str(p.link) if p.link else None,
-            "ref_link": _with_affiliate(str(p.link) if p.link else None, partner_code, redirect_base),
+            "ref_link": _with_affiliate(
+                str(p.link) if p.link else None, partner_code, redirect_base
+            ),
         }
 
     # Fill skincare
@@ -141,5 +149,3 @@ def select_products(
     makeup["lips"] = [_as_dict(p) for p in lip_products]
 
     return {"skincare": skincare, "makeup": makeup}
-
-

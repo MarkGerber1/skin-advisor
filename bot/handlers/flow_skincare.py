@@ -11,12 +11,17 @@ from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, C
 from engine.catalog_store import CatalogStore
 from engine.models import UserProfile
 from engine.selector import select_products
+
 try:
     from bot.ui.pdf import save_text_pdf, save_last_json
 except ImportError as e:
     print(f"Warning: Could not import pdf module: {e}")
-    def save_text_pdf(*args, **kwargs): return ""
-    def save_last_json(*args, **kwargs): pass
+
+    def save_text_pdf(*args, **kwargs):
+        return ""
+
+    def save_last_json(*args, **kwargs):
+        pass
 
 
 router = Router()
@@ -31,9 +36,15 @@ class SkincareFlow(StatesGroup):
 
 def _kb_skin_types() -> InlineKeyboardMarkup:
     rows = [
-        [InlineKeyboardButton(text="Сухая", callback_data="skin:1:type:dry"), InlineKeyboardButton(text="Жирная", callback_data="skin:1:type:oily")],
+        [
+            InlineKeyboardButton(text="Сухая", callback_data="skin:1:type:dry"),
+            InlineKeyboardButton(text="Жирная", callback_data="skin:1:type:oily"),
+        ],
         [InlineKeyboardButton(text="Комбинированная", callback_data="skin:1:type:combo")],
-        [InlineKeyboardButton(text="Чувствительная", callback_data="skin:1:type:sensitive"), InlineKeyboardButton(text="Нормальная", callback_data="skin:1:type:normal")],
+        [
+            InlineKeyboardButton(text="Чувствительная", callback_data="skin:1:type:sensitive"),
+            InlineKeyboardButton(text="Нормальная", callback_data="skin:1:type:normal"),
+        ],
     ]
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
@@ -50,7 +61,9 @@ def _kb_concerns(selected: List[str]) -> InlineKeyboardMarkup:
     rows: List[List[InlineKeyboardButton]] = []
     for title, code in options:
         flag = "✓ " if code in selected else ""
-        rows.append([InlineKeyboardButton(text=f"{flag}{title}", callback_data=f"skin:2:concern:{code}")])
+        rows.append(
+            [InlineKeyboardButton(text=f"{flag}{title}", callback_data=f"skin:2:concern:{code}")]
+        )
     rows.append([InlineKeyboardButton(text="Дальше", callback_data="skin:2:next:go")])
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
@@ -60,9 +73,13 @@ def _kb_confirm(enabled: bool) -> InlineKeyboardMarkup:
         [InlineKeyboardButton(text="Назад", callback_data="skin:3:back:1")],
     ]
     if enabled:
-        btns[0].append(InlineKeyboardButton(text="Сформировать отчёт", callback_data="skin:3:confirm:ok"))
+        btns[0].append(
+            InlineKeyboardButton(text="Сформировать отчёт", callback_data="skin:3:confirm:ok")
+        )
     else:
-        btns[0].append(InlineKeyboardButton(text="Сформировать отчёт", callback_data="skin:3:confirm:disabled"))
+        btns[0].append(
+            InlineKeyboardButton(text="Сформировать отчёт", callback_data="skin:3:confirm:disabled")
+        )
     return InlineKeyboardMarkup(inline_keyboard=btns)
 
 
@@ -175,7 +192,9 @@ async def on_confirm(cb: CallbackQuery, state: FSMContext) -> None:
         await state.set_state(SkincareFlow.B2_CONCERNS)
         d = await state.get_data()
         await msg.edit_text("Шаг 2/3 — Выберите проблемы кожи (можно несколько):")
-        await msg.edit_reply_markup(reply_markup=_kb_concerns(selected=list(d.get("concerns") or [])))
+        await msg.edit_reply_markup(
+            reply_markup=_kb_concerns(selected=list(d.get("concerns") or []))
+        )
         await cb.answer()
         return
     if field == "confirm" and value == "ok":
@@ -201,11 +220,18 @@ async def on_confirm(cb: CallbackQuery, state: FSMContext) -> None:
         text, kb = render_skincare_report(result)
         # AnswerExpander (TL;DR/FULL)
         from engine.answer_expander import expand
+
         enriched = expand(profile.model_dump(), text, result)
         text_to_pdf = enriched.get("full_text") or text
         # Save JSON + PDF
         uid = int(cb.from_user.id) if cb.from_user and cb.from_user.id else 0
-        snapshot = {"type": "skincare", "profile": profile.model_dump(), "result": result, "tl_dr": enriched.get("tl_dr"), "full_text": enriched.get("full_text")}
+        snapshot = {
+            "type": "skincare",
+            "profile": profile.model_dump(),
+            "result": result,
+            "tl_dr": enriched.get("tl_dr"),
+            "full_text": enriched.get("full_text"),
+        }
         save_last_json(uid, snapshot)
         save_text_pdf(uid, title="Отчёт по уходу", body_text=text_to_pdf)
         await msg.edit_text(text, disable_web_page_preview=True)
@@ -213,5 +239,3 @@ async def on_confirm(cb: CallbackQuery, state: FSMContext) -> None:
         await state.clear()
         return
     await cb.answer()
-
-

@@ -51,11 +51,3 @@ class UserProfile(BaseModel):
     skin_type: Optional[Literal["dry", "oily", "combo", "sensitive", "normal"]] = None
     concerns: List[str] = Field(default_factory=list)
     goals: List[str] = Field(default_factory=list)
-
-
-
-
-
-
-
-

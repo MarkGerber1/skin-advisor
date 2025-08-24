@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 from aiogram import Router, F
 from aiogram.types import CallbackQuery
+
 try:
     from aiogram.types import FSInputFile
 except ImportError:
@@ -34,7 +35,3 @@ async def send_latest_report(cb: CallbackQuery) -> None:
     except Exception as e:
         print(f"Error in send_latest_report: {e}")
         await cb.answer("Ошибка при отправке отчёта", show_alert=True)
-
-
-
-
