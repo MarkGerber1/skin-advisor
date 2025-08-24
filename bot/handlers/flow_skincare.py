@@ -9,8 +9,9 @@ from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 
 from engine.catalog_store import CatalogStore
-from engine.models import UserProfile
-from engine.selector import select_products
+from engine.models import UserProfile, SkinType, Sensitivity, ReportData
+from engine.selector import select_products, SelectorV2
+from engine.answer_expander import AnswerExpanderV2
 
 try:
     from bot.ui.pdf import save_text_pdf, save_last_json
@@ -203,37 +204,70 @@ async def on_confirm(cb: CallbackQuery, state: FSMContext) -> None:
         await cb.answer()
 
         d = await state.get_data()
-        profile = UserProfile(skin_type=d.get("skin_type"), concerns=list(d.get("concerns") or []))
+        uid = int(cb.from_user.id) if cb.from_user and cb.from_user.id else 1
+        
+        # Create Engine v2 UserProfile
+        profile = UserProfile(
+            user_id=uid,
+            skin_type=SkinType(d.get("skin_type", "normal")),
+            concerns=list(d.get("concerns") or [])
+        )
 
         catalog_path = os.getenv("CATALOG_PATH", "assets/fixed_catalog.yaml")
         catalog = CatalogStore.instance(catalog_path).get()
-        result = select_products(
-            user_profile=profile,
+        
+        # Use Engine v2 Selector
+        selector = SelectorV2()
+        result = selector.select_products_v2(
+            profile=profile,
             catalog=catalog,
             partner_code=os.getenv("PARTNER_CODE", "aff_123"),
-            redirect_base=os.getenv("REDIRECT_BASE"),
+            redirect_base=os.getenv("REDIRECT_BASE")
         )
 
-        # Render
+        # Extract products for ReportData
+        skincare_products = []
+        for category_products in result.get("skincare", {}).values():
+            for prod_dict in category_products:
+                # Convert dict back to Product for report
+                from engine.models import Product
+                product = Product(
+                    key=prod_dict["id"],
+                    title=prod_dict["name"],
+                    brand=prod_dict["brand"],
+                    category=prod_dict["category"],
+                    price=prod_dict.get("price"),
+                    actives=prod_dict.get("actives", []),
+                    tags=prod_dict.get("tags", []),
+                    buy_url=prod_dict.get("link")
+                )
+                skincare_products.append(product)
+
+        # Generate Engine v2 reports
+        report_data = ReportData(
+            user_profile=profile,
+            skincare_products=skincare_products,
+            makeup_products=[]
+        )
+        
+        expander = AnswerExpanderV2()
+        tldr_report = expander.generate_tldr_report(report_data)
+        full_report = expander.generate_full_report(report_data)
+
+        # Render for UI
         from bot.ui.render import render_skincare_report
-
         text, kb = render_skincare_report(result)
-        # AnswerExpander (TL;DR/FULL)
-        from engine.answer_expander import expand
-
-        enriched = expand(profile.model_dump(), text, result)
-        text_to_pdf = enriched.get("full_text") or text
+        
         # Save JSON + PDF
-        uid = int(cb.from_user.id) if cb.from_user and cb.from_user.id else 0
         snapshot = {
             "type": "skincare",
             "profile": profile.model_dump(),
             "result": result,
-            "tl_dr": enriched.get("tl_dr"),
-            "full_text": enriched.get("full_text"),
+            "tl_dr": tldr_report,
+            "full_text": full_report,
         }
         save_last_json(uid, snapshot)
-        save_text_pdf(uid, title="Отчёт по уходу", body_text=text_to_pdf)
+        save_text_pdf(uid, title="📊 Skin Advisor - Отчёт по уходу", body_text=full_report)
         await msg.edit_text(text, disable_web_page_preview=True)
         await msg.edit_reply_markup(reply_markup=kb)
         await state.clear()

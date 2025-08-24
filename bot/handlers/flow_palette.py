@@ -9,8 +9,9 @@ from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 
 from engine.catalog_store import CatalogStore
-from engine.models import UserProfile
-from engine.selector import select_products
+from engine.models import UserProfile, Season, Undertone, ReportData
+from engine.selector import select_products, SelectorV2
+from engine.answer_expander import AnswerExpanderV2
 
 try:
     from bot.ui.pdf import save_text_pdf, save_last_json
@@ -25,6 +26,26 @@ except ImportError as e:
 
 
 router = Router()
+
+
+def _determine_season(data: dict) -> Season:
+    """Determine season based on palette data"""
+    undertone = data.get("undertone", "unknown")
+    value = data.get("value", "medium")
+    
+    # Simple season determination logic
+    if undertone == "warm":
+        if value in ["light", "medium"]:
+            return Season.SPRING
+        else:
+            return Season.AUTUMN
+    elif undertone == "cool":
+        if value in ["light", "medium"]:
+            return Season.SUMMER
+        else:
+            return Season.WINTER
+    else:
+        return None  # Neutral/unknown
 
 
 class PaletteFlow(StatesGroup):
@@ -322,30 +343,62 @@ async def a7(cb: CallbackQuery, state: FSMContext) -> None:
         await cb.answer()
 
         d = await state.get_data()
+        uid = int(cb.from_user.id) if cb.from_user and cb.from_user.id else 1
+        
+        # Create Engine v2 UserProfile with color analysis
         profile = UserProfile(
-            undertone=d.get("undertone"),
-            value=d.get("value"),
-            hair_depth=d.get("hair_depth"),
-            eye_color=d.get("eye_color"),
+            user_id=uid,
+            undertone=Undertone(d.get("undertone", "unknown")),
+            season=_determine_season(d),
             contrast=d.get("contrast"),
+            hair_color=d.get("hair_depth"),
+            eye_color=d.get("eye_color")
         )
 
         catalog_path = os.getenv("CATALOG_PATH", "assets/fixed_catalog.yaml")
         catalog = CatalogStore.instance(catalog_path).get()
-        result = select_products(
-            user_profile=profile,
+        
+        # Use Engine v2 Selector for makeup
+        selector = SelectorV2()
+        result = selector.select_products_v2(
+            profile=profile,
             catalog=catalog,
             partner_code=os.getenv("PARTNER_CODE", "aff_123"),
-            redirect_base=os.getenv("REDIRECT_BASE"),
+            redirect_base=os.getenv("REDIRECT_BASE")
         )
 
+        # Extract makeup products for ReportData
+        makeup_products = []
+        for category_products in result.get("makeup", {}).values():
+            for prod_dict in category_products:
+                from engine.models import Product
+                product = Product(
+                    key=prod_dict["id"],
+                    title=prod_dict["name"],
+                    brand=prod_dict["brand"],
+                    category=prod_dict["category"],
+                    price=prod_dict.get("price"),
+                    actives=prod_dict.get("actives", []),
+                    tags=prod_dict.get("tags", []),
+                    buy_url=prod_dict.get("link")
+                )
+                makeup_products.append(product)
+
+        # Generate Engine v2 reports
+        report_data = ReportData(
+            user_profile=profile,
+            skincare_products=[],
+            makeup_products=makeup_products
+        )
+        
+        expander = AnswerExpanderV2()
+        tldr_report = expander.generate_tldr_report(report_data)
+        full_report = expander.generate_full_report(report_data)
+
         from bot.ui.render import render_makeup_report
-
         text, kb = render_makeup_report(result)
-        # AnswerExpander (TL;DR/FULL)
-        from engine.answer_expander import expand
-
-        enriched = expand(profile.model_dump(), text, result)
+        
+        enriched = {"tl_dr": tldr_report, "full_text": full_report}
         text_to_pdf = enriched.get("full_text") or text
         # Save JSON + PDF
         uid = int(cb.from_user.id) if cb.from_user and cb.from_user.id else 0
