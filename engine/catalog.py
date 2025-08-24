@@ -27,9 +27,10 @@ def load_catalog(path: str) -> List[Product]:
     try:
         text = _read_text_with_fallback(path)
         data = yaml.load(text) or {}
-    except FileNotFoundError:
-        # Пробросим дальше: это ожидаемое поведение тестов
-        raise
+    except FileNotFoundError as e:
+        logger.warning(f"Catalog file not found: {path}")
+        # Возвращаем пустой список вместо краша
+        return []
     except Exception as e:  # noqa: BLE001
         logger.error("catalog_yaml_load_error", extra={"path": path, "error": str(e)})
         return []
