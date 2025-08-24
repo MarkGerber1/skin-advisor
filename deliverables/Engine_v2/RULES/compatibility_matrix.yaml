@@ -1,0 +1,27 @@
+legend: { DO: "совместимо", CAUTION: "с осторожностью/разносить", DONT: "не сочетать в одно применение" }
+
+pairs:
+  retinoids:
+    with:
+      aha:     CAUTION
+      bha:     CAUTION
+      benzoyl_peroxide: DO
+      vitC_laa: CAUTION
+      niacinamide: DO
+      copper_peptides: CAUTION
+  vitamin_c:
+    with:
+      niacinamide: DO
+      aha: DO
+      bha: DO
+  acids:
+    with:
+      peptides: DO
+      copper_peptides: CAUTION
+      sunscreen: DO
+rules:
+  introduce_slowly:
+    - "Начинайте активы по одному (2–3 раза в неделю) → увеличивайте частоту при переносимости."
+  patch_test_48h: true
+
+

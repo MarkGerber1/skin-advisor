@@ -10,9 +10,11 @@ from engine.catalog_store import CatalogStore
 from bot.handlers.start import router as start_router
 from bot.handlers.flow_skincare import router as skincare_router
 from bot.handlers.flow_palette import router as palette_router
+from bot.handlers.cart import router as cart_router
+from bot.handlers.report import router as report_router
 
 
-CATALOG_PATH = os.getenv("CATALOG_PATH", "data/fixed_catalog.yaml")
+CATALOG_PATH = os.getenv("CATALOG_PATH", "assets/fixed_catalog.yaml")
 
 
 async def main() -> None:
@@ -28,11 +30,16 @@ async def main() -> None:
     dp.include_router(start_router)
     dp.include_router(skincare_router)
     dp.include_router(palette_router)
+    dp.include_router(cart_router)
+    dp.include_router(report_router)
 
     await dp.start_polling(bot)
 
 
 if __name__ == "__main__":
     asyncio.run(main())
+
+
+
 
 

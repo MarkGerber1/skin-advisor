@@ -1,6 +1,35 @@
-BOT_TOKEN = "your_telegram_bot_token"
-CATALOG_PATH = "data/fixed_catalog.yaml"
-PARTNER_CODE = "aff_123"
-REDIRECT_BASE = ""
+# Конфигурация Skin Advisor Bot
+
+[bot]
+token = "your_telegram_bot_token_here"
+webhook_secret = "your_webhook_secret_here"
+webapp_port = 8080
+
+[catalog]
+path = "data/fixed_catalog.yaml"
+auto_reload = true
+
+[affiliate]
+partner_code = "aff_123"
+redirect_base = "https://your-domain.com/redirect"
+user_discount = 0.05
+owner_commission = 0.10
+
+[logging]
+level = "INFO"
+catalog_errors_file = "logs/catalog_errors.jsonl"
+max_file_size = "10MB"
+backup_count = 5
+
+[features]
+enable_hot_reload = true
+enable_backup = true
+enable_validation_logging = true
+
+
+
+
+
+
 
 

@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AnswerExpanderV2",
+  "type": "object",
+  "required": ["profile", "priorities", "routines", "products", "warnings", "tl_dr", "full_text"],
+  "properties": {
+    "profile": { "type": "object" },
+    "priorities": { "type": "array", "items": { "type": "string" } },
+    "routines":  { "type": "object" },
+    "compatibility": { "type": "object" },
+    "products": { "type": "object" },
+    "warnings": { "type": "array", "items": { "type": "string" } },
+    "tl_dr": { "type": "string" },
+    "full_text": { "type": "string" }
+  }
+}
+
+

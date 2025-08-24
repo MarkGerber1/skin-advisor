@@ -1,0 +1,39 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+title: UserProfile
+type: object
+required: [user_id]
+properties:
+  user_id: { type: integer }
+  name: { type: string }
+  age:  { type: integer, minimum: 0, maximum: 120 }
+  sex:  { enum: [female, male, other] }
+  pregnant_or_lactating: { type: boolean }
+  sensitivity: { enum: [low, mid, high, null], default: null }
+  allergies: { type: array, items: { type: string } }
+  triggers:  { type: array, items: { type: string } }
+  climate_profile:
+    type: object
+    properties:
+      humidity: { enum: [low, medium, high, unknown], default: unknown }
+      uv_index: { type: number, minimum: 0, maximum: 15 }
+  # Skin
+  fitzpatrick: { enum: [I, II, III, IV, V, VI, null], default: null }
+  baumann:     { type: string, pattern: "^[OD][SR][PN][WT]$" }
+  skin_type:   { enum: [dry, normal, combo, oily, null], default: null }
+  dehydrated:  { type: boolean }
+  concerns:
+    type: array
+    items: { enum: [blackheads, acne, pigmentation, redness, wrinkles, barrier, texture, pores] }
+    default: []
+  uses_retinoids: { type: boolean }
+  # Palette
+  undertone: { enum: [warm, cool, neutral, unknown], default: unknown }
+  season:     { enum: [spring, summer, autumn, winter, null], default: null }
+  season_alt: { enum: [spring, summer, autumn, winter, null], default: null }
+  contrast:   { enum: [low, medium, high, null], default: null }
+  hair_color: { type: string }
+  brow_color: { type: string }
+  eye_color:  { enum: [brown, green, blue, gray, hazel, other, null], default: null }
+
+
+

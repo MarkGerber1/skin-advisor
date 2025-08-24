@@ -53,3 +53,9 @@ class UserProfile(BaseModel):
     goals: List[str] = Field(default_factory=list)
 
 
+
+
+
+
+
+

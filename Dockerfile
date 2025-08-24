@@ -10,8 +10,14 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-ENV CATALOG_PATH=data/fixed_catalog.yaml
+ENV CATALOG_PATH=assets/fixed_catalog.yaml
 
 CMD ["python", "-m", "bot.main"]
+
+
+
+
+
+
 
 

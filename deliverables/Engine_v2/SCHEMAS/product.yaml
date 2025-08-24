@@ -1,0 +1,35 @@
+title: Product
+type: object
+required: [key, title, category]
+properties:
+  key:    { type: string }
+  title:  { type: string }
+  brand:  { type: string }
+  category: { type: string }
+  subcategory: { type: string }
+  price:  { type: number, minimum: 0 }
+  display_price: { type: string }
+  in_stock: { type: boolean, default: false }
+  buy_url: { type: string, pattern: "^URL_PLACEHOLDER|https?://.*$" }
+  source:  { enum: [gp, gp_like, wb, ozon] }
+  image_url: { type: string, pattern: "^IMG_PLACEHOLDER|https?://.*$" }
+  tags: { type: array, items: { type: string } }
+  allergenic_flags: { type: array, items: { type: string } }
+  actives:
+    type: array
+    items:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string }
+        concentration_range: { type: string }
+        pH_range: { type: string }
+        notes: { type: string }
+  tone_family: { enum: [warm, cool, neutral, null], default: null }
+  depth: { type: integer, minimum: 1, maximum: 10 }
+  finish: { type: string }
+  usage: { enum: [AM, PM, weekly, SOS, null], default: null }
+  contraindications: { type: array, items: { type: string } }
+  price_tier: { enum: [econom, middle, premium, unknown], default: unknown }
+
+

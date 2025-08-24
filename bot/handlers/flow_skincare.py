@@ -11,6 +11,7 @@ from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, C
 from engine.catalog_store import CatalogStore
 from engine.models import UserProfile
 from engine.selector import select_products
+from bot.ui.pdf import save_text_pdf, save_last_json
 
 
 router = Router()
@@ -138,7 +139,7 @@ async def on_concerns(cb: CallbackQuery, state: FSMContext) -> None:
             "Шаг 3/3 — Подтверждение\n\n"
             f"Тип кожи: {skin_type}\n"
             f"Проблемы: {', '.join(concerns) if concerns else '—'}\n\n"
-            "Нажмите ‘Сформировать отчёт’."
+            "Нажмите 'Сформировать отчёт'."
         )
         await msg.edit_text(text)
         await msg.edit_reply_markup(reply_markup=_kb_confirm(enabled=ready))
@@ -180,7 +181,7 @@ async def on_confirm(cb: CallbackQuery, state: FSMContext) -> None:
         d = await state.get_data()
         profile = UserProfile(skin_type=d.get("skin_type"), concerns=list(d.get("concerns") or []))
 
-        catalog_path = os.getenv("CATALOG_PATH", "data/fixed_catalog.yaml")
+        catalog_path = os.getenv("CATALOG_PATH", "assets/fixed_catalog.yaml")
         catalog = CatalogStore.instance(catalog_path).get()
         result = select_products(
             user_profile=profile,
@@ -193,6 +194,15 @@ async def on_confirm(cb: CallbackQuery, state: FSMContext) -> None:
         from bot.ui.render import render_skincare_report
 
         text, kb = render_skincare_report(result)
+        # AnswerExpander (TL;DR/FULL)
+        from engine.answer_expander import expand
+        enriched = expand(profile.model_dump(), text, result)
+        text_to_pdf = enriched.get("full_text") or text
+        # Save JSON + PDF
+        uid = int(cb.from_user.id) if cb.from_user and cb.from_user.id else 0
+        snapshot = {"type": "skincare", "profile": profile.model_dump(), "result": result, "tl_dr": enriched.get("tl_dr"), "full_text": enriched.get("full_text")}
+        save_last_json(uid, snapshot)
+        save_text_pdf(uid, title="Отчёт по уходу", body_text=text_to_pdf)
         await msg.edit_text(text, disable_web_page_preview=True)
         await msg.edit_reply_markup(reply_markup=kb)
         await state.clear()

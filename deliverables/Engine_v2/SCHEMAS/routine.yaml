@@ -1,0 +1,20 @@
+title: Routine
+type: object
+properties:
+  AM: { $ref: "#/$defs/steps" }
+  PM: { $ref: "#/$defs/steps" }
+  WEEKLY: { $ref: "#/$defs/steps" }
+  SOS: { $ref: "#/$defs/steps" }
+$defs:
+  steps:
+    type: array
+    items:
+      type: object
+      required: [step]
+      properties:
+        step: { enum: [cleanser, toner, essence, treatment, moisturizer, eye_cream, spf, makeup, remover, mask] }
+        actives: { type: array, items: { type: string } }
+        freq: { enum: [daily, 2-3x_week, 1-2x_week, alternate_nights, as_needed] }
+        note: { type: string }
+
+

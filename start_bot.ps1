@@ -3,10 +3,32 @@
 
 Write-Host "🧴 Skin Advisor Bot - Запуск..." -ForegroundColor Green
 
-# Проверяем наличие виртуального окружения
+# Пути к виртуальному окружению
 $venvPath = ".venv\Scripts\python.exe"
 $altVenvPath = "venv\Scripts\python.exe"
 
+# Функция загрузки .env (если есть)
+function Load-DotEnv {
+    param([string]$path = ".env")
+    if (Test-Path $path) {
+        Get-Content $path | ForEach-Object {
+            if ($_ -match '^(\s*#|\s*$)') { return }
+            if ($_ -match '^(?<k>[^=\s]+)\s*=\s*(?<v>.*)$') {
+                $k = $Matches['k']
+                $v = $Matches['v'].Trim().Trim('"').Trim("'")
+                [System.Environment]::SetEnvironmentVariable($k, $v, 'Process')
+            }
+        }
+        Write-Host "✓ Загружены переменные из .env" -ForegroundColor Green
+    }
+}
+
+# Останавливаем предыдущие процессы Python
+Write-Host "🛑 Остановка предыдущих процессов..." -ForegroundColor Yellow
+Get-Process python -ErrorAction SilentlyContinue | Stop-Process -Force
+
+# Определяем Python
+$pythonPath = $null
 if (Test-Path $venvPath) {
     $pythonPath = $venvPath
     Write-Host "✓ Найдено виртуальное окружение: .venv" -ForegroundColor Green
@@ -14,34 +36,51 @@ if (Test-Path $venvPath) {
     $pythonPath = $altVenvPath
     Write-Host "✓ Найдено виртуальное окружение: venv" -ForegroundColor Green
 } else {
-    Write-Host "⚠ Виртуальное окружение не найдено. Используем системный Python." -ForegroundColor Yellow
-    $pythonPath = "python"
+    # Пытаемся создать .venv автоматически
+    Write-Host "⚙ Создаю виртуальное окружение (.venv)..." -ForegroundColor Yellow
+    try {
+        python -m venv .venv
+        if (Test-Path $venvPath) {
+            $pythonPath = $venvPath
+            & $pythonPath -m pip install -U pip
+            & $pythonPath -m pip install -r requirements.txt
+            Write-Host "✓ .venv создано и зависимости установлены" -ForegroundColor Green
+        } else {
+            Write-Host "⚠ Не удалось создать .venv — используем системный Python" -ForegroundColor Yellow
+            $pythonPath = "python"
+        }
+    } catch {
+        Write-Host "⚠ Ошибка создания .venv — используем системный Python" -ForegroundColor Yellow
+        $pythonPath = "python"
+    }
 }
 
-# Останавливаем предыдущие процессы Python
-Write-Host "🛑 Остановка предыдущих процессов..." -ForegroundColor Yellow
-Get-Process python -ErrorAction SilentlyContinue | Stop-Process -Force
+# Загружаем .env (если есть)
+Load-DotEnv
 
-# Переходим в директорию бота
-Set-Location -LiteralPath ".skin-advisor"
-
-# Устанавливаем переменные окружения
+# Дефолты окружения
+if (-not $env:CATALOG_PATH) {
+    $env:CATALOG_PATH = "assets\fixed_catalog.yaml"
+}
 $env:PYTHONIOENCODING = "utf-8"
 $env:PYTHONPATH = "."
 
+# Проверка токена
+if (-not $env:BOT_TOKEN) {
+    Write-Host "❌ BOT_TOKEN не задан. Укажи в .env или перед запуском: $env:BOT_TOKEN=..." -ForegroundColor Red
+    exit 1
+}
+
 # Запускаем бота
 Write-Host "🚀 Запуск бота в режиме polling..." -ForegroundColor Green
-Write-Host "📁 Рабочая директория: $(Get-Location)" -ForegroundColor Cyan
 Write-Host "🐍 Python: $pythonPath" -ForegroundColor Cyan
+Write-Host "📁 Каталог: $(Get-Location)" -ForegroundColor Cyan
 
 try {
-    & $pythonPath -m app.main --mode=polling
+    & $pythonPath -m bot.main
 } catch {
     Write-Host "❌ Ошибка запуска: $_" -ForegroundColor Red
-    Write-Host "💡 Попробуйте:" -ForegroundColor Yellow
-    Write-Host "   1. Активировать виртуальное окружение: .venv\Scripts\Activate.ps1" -ForegroundColor Yellow
-    Write-Host "   2. Установить зависимости: pip install -r requirements.txt" -ForegroundColor Yellow
-    Write-Host "   3. Проверить токен бота в переменных окружения" -ForegroundColor Yellow
+    Write-Host "💡 Проверь: .venv активирован, зависимости установлены, BOT_TOKEN в .env" -ForegroundColor Yellow
 }
 
 Write-Host "👋 Бот остановлен." -ForegroundColor Green

@@ -2,39 +2,22 @@ from __future__ import annotations
 
 from aiogram import Router, F
 from aiogram.filters import CommandStart, StateFilter
-from aiogram.types import Message, ReplyKeyboardMarkup, KeyboardButton
+from aiogram.types import Message
 from aiogram.fsm.context import FSMContext
+
+from bot.ui.keyboards import main_menu, BTN_PALETTE, BTN_SKINCARE, BTN_ABOUT, BTN_PICK, BTN_SETTINGS, BTN_REPORT
 
 
 router = Router()
-
-
-BTN_PALETTE = "Палитрометр — мой идеальный цвет"
-BTN_SKINCARE = "Диагностика кожи PRO"
-BTN_ABOUT = "ⓘ О боте"
-BTN_PICK = "🛒 Моя подборка"
-BTN_SETTINGS = "⚙️ Настройки"
-
-
-def build_main_menu() -> ReplyKeyboardMarkup:
-    return ReplyKeyboardMarkup(
-        keyboard=
-        [
-            [KeyboardButton(text=BTN_PALETTE)],
-            [KeyboardButton(text=BTN_SKINCARE)],
-            [KeyboardButton(text=BTN_ABOUT), KeyboardButton(text=BTN_PICK), KeyboardButton(text=BTN_SETTINGS)],
-        ],
-        resize_keyboard=True,
-        input_field_placeholder="Выберите действие…",
-    )
 
 
 @router.message(CommandStart())
 async def on_start(m: Message, state: FSMContext) -> None:
     await state.clear()
     await m.answer(
-        "Привет! Я подберу уход и идеальные оттенки. Выберите режим:",
-        reply_markup=build_main_menu(),
+        "Привет! ✨ Я подберу персональный уход и идеальные оттенки макияжа по вашему профилю.\n\n"
+        "Выберите режим:",
+        reply_markup=main_menu(),
     )
 
 
@@ -56,8 +39,60 @@ async def start_palette(m: Message, state: FSMContext) -> None:
 async def about(m: Message, state: FSMContext) -> None:
     await state.clear()
     await m.answer(
-        "О боте: подбор ухода и макияжа по профилю. Пройдите один из потоков и получите отчёт с ссылками.",
-        reply_markup=build_main_menu(),
+        "🤖 О боте:\n\n"
+        "Я - ваш персональный косметолог! ✨\n\n"
+        "🔹 Анализ типа кожи и проблем\n"
+        "🔹 Определение цветовой палитры (undertone)\n"
+        "🔹 Персональные рекомендации по уходу и макияжу\n"
+        "🔹 Прямые ссылки на проверенные продукты\n\n"
+        "💡 Пройдите диагностику и получите персонализированный отчет!",
+        reply_markup=main_menu(),
     )
+
+
+@router.message(F.text == BTN_PICK, StateFilter(None))
+async def my_picks(m: Message, state: FSMContext) -> None:
+    await state.clear()
+    await m.answer(
+        "🛒 Моя подборка\n\n"
+        "Здесь будут отображаться ваши сохраненные продукты.\n"
+        "Сначала пройдите диагностику кожи или определение палитры!",
+        reply_markup=main_menu(),
+    )
+
+
+@router.message(F.text == BTN_SETTINGS, StateFilter(None))
+async def settings(m: Message, state: FSMContext) -> None:
+    await state.clear()
+    await m.answer(
+        "⚙️ Настройки\n\n"
+        "Настройки бота:\n"
+        "• Язык: Русский 🇷🇺\n"
+        "• Уведомления: Включены 🔔\n"
+        "• Темная тема: Авто 🌙\n\n"
+        "Функция в разработке...",
+        reply_markup=main_menu(),
+    )
+
+
+@router.message(F.text == BTN_REPORT, StateFilter(None))
+async def report_latest(m: Message, state: FSMContext) -> None:
+    await state.clear()
+    from aiogram.types import CallbackQuery
+    # Имитация нажатия кнопки для переиспользования логики report:latest
+    class _FakeCb(CallbackQuery):
+        pass
+    # Вызовем хендлер отправки отчёта напрямую
+    from bot.handlers.report import send_latest_report
+    cb = _FakeCb(id="0", from_user=m.from_user, chat_instance="0", data="report:latest", message=m)
+    try:
+        await send_latest_report(cb)
+    except Exception:
+        await m.answer("Отчёт ещё не сформирован. Пройдите диагностику или палитрометр.")
+
+
+
+
+
 
 

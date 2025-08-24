@@ -1,0 +1,12 @@
+general:
+  patch_test: "Сделайте патч-тест 24–48 ч."
+  photosensitivity: "Кислоты (особенно AHA) повышают чувствительность к солнцу → обязательна дневная защита SPF."
+special_groups:
+  pregnancy_lactation:
+    avoid: [high_strength_retinoids, hydroquinone, high_salicylic_systemic]
+    note: "При беременности/ГВ избегайте сильных ретиноидов; уточняйте с врачом."
+  high_sensitivity:
+    prefer: [fragrance_free, ceramides, panthenol]
+    avoid: [multiple_strong_actives_same_night]
+
+

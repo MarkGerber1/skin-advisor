@@ -1,0 +1,14 @@
+# Порядок нанесения (база): очищение → лечение → увлажнение → SPF днём → макияж
+base_order: [cleanser, treatment, moisturizer, spf, makeup]
+night_order: [remover, cleanser, treatment, moisturizer]
+notes:
+  treatment: "Лекарства и активы наносятся сразу после умывания на сухую кожу."
+  spf: "SPF наносится только днём как финальный слой перед макияжем."
+branching:
+  - if: { sensitivity: [high] }
+    then:
+      replace:
+        night_order: [remover, cleanser, moisturizer]
+      add_note: "При высокой чувствительности вводите активы постепенно, буферизуйте кремом."
+
+

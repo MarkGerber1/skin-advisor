@@ -11,6 +11,7 @@ from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, C
 from engine.catalog_store import CatalogStore
 from engine.models import UserProfile
 from engine.selector import select_products
+from bot.ui.pdf import save_text_pdf, save_last_json
 
 
 router = Router()
@@ -23,7 +24,8 @@ class PaletteFlow(StatesGroup):
     A4_BROWS = State()
     A5_EYES = State()
     A6_CONTRAST = State()
-    A7_REPORT = State()
+    A7_CONFIRM = State()
+    A8_REPORT = State()
 
 
 def _kb_undertone() -> InlineKeyboardMarkup:
@@ -39,14 +41,41 @@ def _kb_value() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
-def _kb_next() -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="Дальше", callback_data="pal:next")]])
+def _kb_hair() -> InlineKeyboardMarkup:
+    rows = [[InlineKeyboardButton(text=t, callback_data=f"pal:3:hair:{c}") for t, c in [("Светлые", "light"), ("Средние", "medium"), ("Тёмные", "dark")]]]
+    return InlineKeyboardMarkup(inline_keyboard=rows)
+
+
+def _kb_brows() -> InlineKeyboardMarkup:
+    rows = [[InlineKeyboardButton(text=t, callback_data=f"pal:4:brows:{c}") for t, c in [("Светлые", "light"), ("Средние", "medium"), ("Тёмные", "dark")]]]
+    return InlineKeyboardMarkup(inline_keyboard=rows)
+
+
+def _kb_eyes() -> InlineKeyboardMarkup:
+    rows = [[InlineKeyboardButton(text=t, callback_data=f"pal:5:eyes:{c}") for t, c in [("Голубые", "blue"), ("Зелёные", "green"), ("Карие", "brown")]]]
+    return InlineKeyboardMarkup(inline_keyboard=rows)
+
+
+def _kb_contrast() -> InlineKeyboardMarkup:
+    rows = [[InlineKeyboardButton(text=t, callback_data=f"pal:6:contrast:{c}") for t, c in [("Низкий", "low"), ("Средний", "medium"), ("Высокий", "high")]]]
+    return InlineKeyboardMarkup(inline_keyboard=rows)
+
+
+def _kb_confirm(enabled: bool) -> InlineKeyboardMarkup:
+    btns = [
+        [InlineKeyboardButton(text="Назад", callback_data="pal:7:back:6")],
+    ]
+    if enabled:
+        btns[0].append(InlineKeyboardButton(text="Сформировать отчёт", callback_data="pal:7:confirm:ok"))
+    else:
+        btns[0].append(InlineKeyboardButton(text="Сформировать отчёт", callback_data="pal:7:confirm:disabled"))
+    return InlineKeyboardMarkup(inline_keyboard=btns)
 
 
 async def start_flow(m: Message, state: FSMContext) -> None:
     await state.clear()
     await state.set_state(PaletteFlow.A1_UNDERTONE)
-    await m.answer("Шаг 1/6 — Определим подтон кожи:", reply_markup=_kb_undertone())
+    await m.answer("Шаг 1/7 — Определим подтон кожи:", reply_markup=_kb_undertone())
 
 
 def _parse(data: str) -> List[str]:
@@ -82,7 +111,7 @@ async def a1(cb: CallbackQuery, state: FSMContext) -> None:
         return
     await state.update_data(undertone=value)
     await state.set_state(PaletteFlow.A2_VALUE)
-    await msg.edit_text("Шаг 2/6 — Светлота кожи (value):")
+    await msg.edit_text("Шаг 2/7 — Светлота кожи (value):")
     await msg.edit_reply_markup(reply_markup=_kb_value())
     await cb.answer()
 
@@ -104,8 +133,8 @@ async def a2(cb: CallbackQuery, state: FSMContext) -> None:
         return
     await state.update_data(value=value)
     await state.set_state(PaletteFlow.A3_HAIR)
-    await msg.edit_text("Шаг 3/6 — Глубина волос:")
-    await msg.edit_reply_markup(reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text=t, callback_data=f"pal:3:hair:{c}") for t, c in [("Светлые", "light"), ("Средние", "medium"), ("Тёмные", "dark")]]]))
+    await msg.edit_text("Шаг 3/7 — Глубина волос:")
+    await msg.edit_reply_markup(reply_markup=_kb_hair())
     await cb.answer()
 
 
@@ -126,8 +155,8 @@ async def a3(cb: CallbackQuery, state: FSMContext) -> None:
         return
     await state.update_data(hair_depth=value)
     await state.set_state(PaletteFlow.A4_BROWS)
-    await msg.edit_text("Шаг 4/6 — Брови:")
-    await msg.edit_reply_markup(reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text=t, callback_data=f"pal:4:brows:{c}") for t, c in [("Светлые", "light"), ("Средние", "medium"), ("Тёмные", "dark")]]]))
+    await msg.edit_text("Шаг 4/7 — Брови:")
+    await msg.edit_reply_markup(reply_markup=_kb_brows())
     await cb.answer()
 
 
@@ -148,8 +177,8 @@ async def a4(cb: CallbackQuery, state: FSMContext) -> None:
         return
     await state.update_data(brows=value)
     await state.set_state(PaletteFlow.A5_EYES)
-    await msg.edit_text("Шаг 5/6 — Цвет глаз:")
-    await msg.edit_reply_markup(reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text=t, callback_data=f"pal:5:eyes:{c}") for t, c in [("Голубые", "blue"), ("Зелёные", "green"), ("Карие", "brown")]]]))
+    await msg.edit_text("Шаг 5/7 — Цвет глаз:")
+    await msg.edit_reply_markup(reply_markup=_kb_eyes())
     await cb.answer()
 
 
@@ -170,8 +199,8 @@ async def a5(cb: CallbackQuery, state: FSMContext) -> None:
         return
     await state.update_data(eye_color=value)
     await state.set_state(PaletteFlow.A6_CONTRAST)
-    await msg.edit_text("Шаг 6/6 — Контраст внешности:")
-    await msg.edit_reply_markup(reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text=t, callback_data=f"pal:6:contrast:{c}") for t, c in [("Низкий", "low"), ("Средний", "medium"), ("Высокий", "high")]]]))
+    await msg.edit_text("Шаг 6/7 — Контраст внешности:")
+    await msg.edit_reply_markup(reply_markup=_kb_contrast())
     await cb.answer()
 
 
@@ -191,33 +220,96 @@ async def a6(cb: CallbackQuery, state: FSMContext) -> None:
         await cb.answer()
         return
     await state.update_data(contrast=value)
-    await state.set_state(PaletteFlow.A7_REPORT)
-    await msg.edit_text("🔄 Собираю макияж по палитре…")
+    await state.set_state(PaletteFlow.A7_CONFIRM)
+    
+    d = await state.get_data()
+    undertone = d.get("undertone")
+    value = d.get("value")
+    hair_depth = d.get("hair_depth")
+    brows = d.get("brows")
+    eye_color = d.get("eye_color")
+    contrast = d.get("contrast")
+    
+    ready = bool(undertone and value and hair_depth and brows and eye_color and contrast)
+    
+    text = (
+        "Шаг 7/7 — Подтверждение\n\n"
+        f"Подтон: {undertone}\n"
+        f"Светлота: {value}\n"
+        f"Волосы: {hair_depth}\n"
+        f"Брови: {brows}\n"
+        f"Глаза: {eye_color}\n"
+        f"Контраст: {contrast}\n\n"
+        "Нажмите 'Сформировать отчёт'."
+    )
+    await msg.edit_text(text)
+    await msg.edit_reply_markup(reply_markup=_kb_confirm(enabled=ready))
     await cb.answer()
 
-    d = await state.get_data()
-    profile = UserProfile(
-        undertone=d.get("undertone"),
-        value=d.get("value"),
-        hair_depth=d.get("hair_depth"),
-        eye_color=d.get("eye_color"),
-        contrast=d.get("contrast"),
-    )
 
-    catalog_path = os.getenv("CATALOG_PATH", "data/fixed_catalog.yaml")
-    catalog = CatalogStore.instance(catalog_path).get()
-    result = select_products(
-        user_profile=profile,
-        catalog=catalog,
-        partner_code=os.getenv("PARTNER_CODE", "aff_123"),
-        redirect_base=os.getenv("REDIRECT_BASE"),
-    )
+@router.callback_query(F.data.startswith("pal:"), PaletteFlow.A7_CONFIRM)
+async def a7(cb: CallbackQuery, state: FSMContext) -> None:
+    if await _debounce(cb, state):
+        return
+    if not cb.data:
+        await cb.answer()
+        return
+    msg = cb.message
+    if not isinstance(msg, Message):
+        await cb.answer()
+        return
+    _, step, field, value = _parse(cb.data)
+    if step != "7":
+        await cb.answer()
+        return
+    if field == "confirm" and value == "disabled":
+        await cb.answer("Заполните обязательные поля", show_alert=True)
+        return
+    if field == "back":
+        await state.set_state(PaletteFlow.A6_CONTRAST)
+        await msg.edit_text("Шаг 6/7 — Контраст внешности:")
+        await msg.edit_reply_markup(reply_markup=_kb_contrast())
+        await cb.answer()
+        return
+    if field == "confirm" and value == "ok":
+        await state.set_state(PaletteFlow.A8_REPORT)
+        await msg.edit_text("🔄 Собираю макияж по палитре…")
+        await cb.answer()
 
-    from bot.ui.render import render_makeup_report
+        d = await state.get_data()
+        profile = UserProfile(
+            undertone=d.get("undertone"),
+            value=d.get("value"),
+            hair_depth=d.get("hair_depth"),
+            eye_color=d.get("eye_color"),
+            contrast=d.get("contrast"),
+        )
 
-    text, kb = render_makeup_report(result)
-    await msg.edit_text(text, disable_web_page_preview=True)
-    await msg.edit_reply_markup(reply_markup=kb)
-    await state.clear()
+        catalog_path = os.getenv("CATALOG_PATH", "assets/fixed_catalog.yaml")
+        catalog = CatalogStore.instance(catalog_path).get()
+        result = select_products(
+            user_profile=profile,
+            catalog=catalog,
+            partner_code=os.getenv("PARTNER_CODE", "aff_123"),
+            redirect_base=os.getenv("REDIRECT_BASE"),
+        )
+
+        from bot.ui.render import render_makeup_report
+
+        text, kb = render_makeup_report(result)
+        # AnswerExpander (TL;DR/FULL)
+        from engine.answer_expander import expand
+        enriched = expand(profile.model_dump(), text, result)
+        text_to_pdf = enriched.get("full_text") or text
+        # Save JSON + PDF
+        uid = int(cb.from_user.id) if cb.from_user and cb.from_user.id else 0
+        snapshot = {"type": "palette", "profile": profile.model_dump(), "result": result, "tl_dr": enriched.get("tl_dr"), "full_text": enriched.get("full_text")}
+        save_last_json(uid, snapshot)
+        save_text_pdf(uid, title="Отчёт по палитре", body_text=text_to_pdf)
+        await msg.edit_text(text, disable_web_page_preview=True)
+        await msg.edit_reply_markup(reply_markup=kb)
+        await state.clear()
+        return
+    await cb.answer()
 
 

@@ -1,0 +1,596 @@
+products:
+  # === ОЧИЩЕНИЕ ===
+  - id: "cerave-001"
+    brand: CeraVe
+    name: Увлажняющий очищающий гель для нормальной и жирной кожи
+    category: Очищение
+    texture: gel
+    tags: [gentle, non-comedogenic]
+    actives: [ceramide, niacinamide, hyaluronic]
+    volume_ml: 236
+    price: 899
+    price_currency: RUB
+    link: https://www.letu.ru/product/cerave-gel-dlya-umyvaniya/100300184
+    in_stock: true
+    
+  - id: "lrp-001"
+    brand: La Roche-Posay
+    name: Effaclar Очищающий пенящийся гель
+    category: Очищение
+    texture: gel
+    tags: [oily-skin, anti-acne]
+    actives: [zinc]
+    volume_ml: 400
+    price: 1599
+    price_currency: RUB
+    link: https://www.letu.ru/product/la-roche-posay-effaclar-gel/100000085
+    in_stock: true
+    
+  - id: "bioderma-001"
+    brand: Bioderma
+    name: Sensibio H2O Мицеллярная вода
+    category: Очищение
+    texture: water
+    tags: [sensitive, micellar]
+    actives: []
+    volume_ml: 500
+    price: 1299
+    price_currency: RUB
+    link: https://www.letu.ru/product/bioderma-sensibio-h2o/100000124
+    in_stock: true
+
+  # === ТОНИКИ ===
+  - id: "cosrx-001"
+    brand: COSRX
+    name: AHA/BHA Clarifying Treatment Toner
+    category: Тоник
+    texture: liquid
+    tags: [exfoliating, clarifying]
+    actives: [aha, bha, glycolic, salicylic]
+    volume_ml: 150
+    price: 1290
+    price_currency: RUB
+    link: https://goldapple.ru/19000082592-aha-bha-clarifying-treatment-toner
+    in_stock: true
+    
+  - id: "klairs-001"
+    brand: Klairs
+    name: Supple Preparation Unscented Toner
+    category: Тоник
+    texture: liquid
+    tags: [hydrating, soothing]
+    actives: [hyaluronic, centella, panthenol]
+    volume_ml: 180
+    price: 1590
+    price_currency: RUB
+    link: https://goldapple.ru/19000073245-supple-preparation-unscented-toner
+    in_stock: true
+    
+  - id: "purito-001"
+    brand: Purito
+    name: Centella Unscented Toner
+    category: Тоник
+    texture: liquid
+    tags: [calming, sensitive]
+    actives: [centella, panthenol, niacinamide]
+    volume_ml: 200
+    price: 1390
+    price_currency: RUB
+    link: https://goldapple.ru/19000095473-centella-unscented-toner
+    in_stock: true
+
+  # === СЫВОРОТКИ ===
+  - id: "ordinary-001"
+    brand: The Ordinary
+    name: Niacinamide 10% + Zinc 1%
+    category: Сыворотка
+    texture: serum
+    tags: [anti-acne, pore-minimizing]
+    actives: [niacinamide, zinc]
+    volume_ml: 30
+    price: 990
+    price_currency: RUB
+    link: https://goldapple.ru/19000000002-niacinamide-10-zinc-1
+    in_stock: true
+    
+  - id: "ordinary-002"
+    brand: The Ordinary
+    name: Hyaluronic Acid 2% + B5
+    category: Сыворотка
+    texture: serum
+    tags: [hydrating, plumping]
+    actives: [hyaluronic, vitamin-b5, panthenol]
+    volume_ml: 30
+    price: 1190
+    price_currency: RUB
+    link: https://goldapple.ru/19000000003-hyaluronic-acid-2-b5
+    in_stock: true
+    
+  - id: "vichy-001"
+    brand: Vichy
+    name: Mineral 89 Fortifying Concentrate
+    category: Сыворотка
+    texture: gel
+    tags: [hydrating, strengthening]
+    actives: [hyaluronic, minerals]
+    volume_ml: 50
+    price: 2299
+    price_currency: RUB
+    link: https://www.letu.ru/product/vichy-mineral-89/100100196
+    in_stock: true
+    
+  - id: "boj-001"
+    brand: Beauty of Joseon
+    name: Glow Deep Serum Rice + Arbutin
+    category: Сыворотка
+    texture: serum
+    tags: [brightening, anti-pigmentation]
+    actives: [arbutin, rice-water, glycerin]
+    volume_ml: 30
+    price: 1490
+    price_currency: RUB
+    link: https://goldapple.ru/19000093847-glow-deep-serum
+    in_stock: true
+    
+  - id: "cosrx-002"
+    brand: COSRX
+    name: Snail 96 Mucin Power Essence
+    category: Сыворотка
+    texture: essence
+    tags: [repair, hydrating]
+    actives: [snail-mucin, panthenol]
+    volume_ml: 100
+    price: 1990
+    price_currency: RUB
+    link: https://goldapple.ru/19000082591-advanced-snail-96-mucin-power-essence
+    in_stock: true
+
+  # === КРЕМЫ ===
+  - id: "cerave-002"
+    brand: CeraVe
+    name: Увлажняющий крем для лица SPF 25
+    category: Крем
+    texture: cream
+    tags: [moisturizing, spf]
+    actives: [ceramide, niacinamide, hyaluronic]
+    spf: 25
+    volume_ml: 52
+    price: 1099
+    price_currency: RUB
+    link: https://www.letu.ru/product/cerave-uvlazhnyayushchii-krem-dlya-litsa/100300188
+    in_stock: true
+    
+  - id: "lrp-002"
+    brand: La Roche-Posay
+    name: Toleriane Sensitive Riche
+    category: Крем
+    texture: cream
+    tags: [sensitive, rich]
+    actives: [niacinamide, ceramide, thermal-water]
+    volume_ml: 40
+    price: 1699
+    price_currency: RUB
+    link: https://www.letu.ru/product/la-roche-posay-toleriane-sensitive-riche/100100243
+    in_stock: true
+    
+  - id: "clinique-001"
+    brand: Clinique
+    name: Moisture Surge 72-Hour
+    category: Крем
+    texture: gel-cream
+    tags: [hydrating, oil-free]
+    actives: [hyaluronic, aloe]
+    volume_ml: 50
+    price: 3490
+    price_currency: RUB
+    link: https://www.letu.ru/product/clinique-moisture-surge/100000456
+    in_stock: true
+    
+  - id: "illiyoon-001"
+    brand: Illiyoon
+    name: Ceramide Ato Concentrate Cream
+    category: Крем
+    texture: cream
+    tags: [barrier-repair, sensitive]
+    actives: [ceramide, squalane, panthenol]
+    volume_ml: 200
+    price: 1890
+    price_currency: RUB
+    link: https://goldapple.ru/19000094562-ceramide-ato-concentrate-cream
+    in_stock: true
+
+  # === СОЛНЦЕЗАЩИТА ===
+  - id: "boj-002"
+    brand: Beauty of Joseon
+    name: Relief Sun Rice + Probiotics SPF50+ PA++++
+    category: Солнцезащита
+    texture: cream
+    tags: [chemical, lightweight]
+    actives: [rice-water, probiotics, niacinamide]
+    spf: 50
+    volume_ml: 50
+    price: 1590
+    price_currency: RUB
+    link: https://goldapple.ru/19000093848-relief-sun-rice-probiotics
+    in_stock: true
+    
+  - id: "lrp-003"
+    brand: La Roche-Posay
+    name: Anthelios Shaka Fluid SPF50+
+    category: Солнцезащита
+    texture: fluid
+    tags: [lightweight, water-resistant]
+    actives: []
+    spf: 50
+    volume_ml: 50
+    price: 1899
+    price_currency: RUB
+    link: https://www.letu.ru/product/la-roche-posay-anthelios-shaka/100100567
+    in_stock: true
+    
+  - id: "isntree-001"
+    brand: Isntree
+    name: Hyaluronic Acid Watery Sun Gel SPF50+
+    category: Солнцезащита
+    texture: gel
+    tags: [hydrating, no-white-cast]
+    actives: [hyaluronic, centella]
+    spf: 50
+    volume_ml: 50
+    price: 1790
+    price_currency: RUB
+    link: https://goldapple.ru/19000095678-hyaluronic-acid-watery-sun-gel
+    in_stock: true
+
+  # === ПИЛИНГИ ===
+  - id: "cosrx-003"
+    brand: COSRX
+    name: BHA Blackhead Power Liquid
+    category: Пилинг
+    texture: liquid
+    tags: [exfoliating, blackheads]
+    actives: [bha, salicylic, niacinamide]
+    volume_ml: 100
+    price: 1890
+    price_currency: RUB
+    link: https://goldapple.ru/19000082593-bha-blackhead-power-liquid
+    in_stock: true
+    
+  - id: "ordinary-003"
+    brand: The Ordinary
+    name: AHA 30% + BHA 2% Peeling Solution
+    category: Пилинг
+    texture: liquid
+    tags: [intensive, weekly]
+    actives: [aha, bha, glycolic, salicylic, lactic]
+    volume_ml: 30
+    price: 1390
+    price_currency: RUB
+    link: https://goldapple.ru/19000000007-aha-30-bha-2-peeling-solution
+    in_stock: true
+    
+  - id: "paulas-001"
+    brand: Paula's Choice
+    name: Skin Perfecting 2% BHA Liquid
+    category: Пилинг
+    texture: liquid
+    tags: [daily, gentle]
+    actives: [bha, salicylic]
+    volume_ml: 118
+    price: 2990
+    price_currency: RUB
+    link: https://goldapple.ru/19000078234-skin-perfecting-2-bha-liquid
+    in_stock: true
+
+  # === МАСКИ ===
+  - id: "laneige-001"
+    brand: Laneige
+    name: Water Sleeping Mask
+    category: Маска
+    texture: gel
+    tags: [overnight, hydrating]
+    actives: [hyaluronic, minerals]
+    volume_ml: 70
+    price: 2490
+    price_currency: RUB
+    link: https://goldapple.ru/19000067890-water-sleeping-mask
+    in_stock: true
+    
+  - id: "innisfree-001"
+    brand: Innisfree
+    name: Volcanic Clusters Pore Clearing Clay Mask
+    category: Маска
+    texture: clay
+    tags: [pore-clearing, detox]
+    actives: [volcanic-ash, kaolin]
+    volume_ml: 100
+    price: 1290
+    price_currency: RUB
+    link: https://goldapple.ru/19000084567-volcanic-clusters-pore-clearing-clay-mask
+    in_stock: true
+    
+  - id: "mediheal-001"
+    brand: Mediheal
+    name: N.M.F Aquaring Ampoule Mask
+    category: Маска
+    texture: sheet
+    tags: [hydrating, sheet-mask]
+    actives: [hyaluronic, ceramide, peptides]
+    weight_g: 25
+    price: 190
+    price_currency: RUB
+    link: https://goldapple.ru/19000089012-nmf-aquaring-ampoule-mask
+    in_stock: true
+
+  # === ТОНАЛЬНЫЕ КРЕМЫ ===
+  - id: "maybelline-001"
+    brand: Maybelline
+    name: Fit Me Matte + Poreless Foundation
+    category: Тональный крем
+    texture: liquid
+    finish: matte
+    shade:
+      name: "120 Classic Ivory"
+      code: "120"
+      undertone: warm
+      color_family: light
+    tags: [matte, oil-free]
+    actives: []
+    volume_ml: 30
+    price: 749
+    price_currency: RUB
+    link: https://www.letu.ru/product/maybelline-fit-me-matte-poreless/100200345
+    in_stock: true
+    
+  - id: "loreal-001"
+    brand: L'Oreal Paris
+    name: True Match Foundation
+    category: Тональный крем
+    texture: liquid
+    finish: natural
+    shade:
+      name: "2N Vanilla"
+      code: "2N"
+      undertone: neutral
+      color_family: light
+    tags: [natural, buildable]
+    actives: []
+    volume_ml: 30
+    price: 899
+    price_currency: RUB
+    link: https://www.letu.ru/product/loreal-paris-true-match/100200678
+    in_stock: true
+    
+  - id: "nyx-001"
+    brand: NYX Professional Makeup
+    name: Can't Stop Won't Stop Foundation
+    category: Тональный крем
+    texture: liquid
+    finish: matte
+    shade:
+      name: "Vanilla"
+      code: "06"
+      undertone: cool
+      color_family: light-medium
+    tags: [full-coverage, long-wear]
+    actives: []
+    volume_ml: 30
+    price: 1190
+    price_currency: RUB
+    link: https://www.letu.ru/product/nyx-cant-stop-wont-stop/100300789
+    in_stock: true
+
+  # === ТЕНИ ===
+  - id: "nyx-002"
+    brand: NYX Professional Makeup
+    name: Ultimate Shadow Palette Warm Neutrals
+    category: Тени
+    texture: powder
+    finish: mixed
+    tags: [palette, versatile]
+    actives: []
+    weight_g: 13
+    price: 1490
+    price_currency: RUB
+    link: https://www.letu.ru/product/nyx-ultimate-shadow-palette/100300123
+    in_stock: true
+    
+  - id: "maybelline-002"
+    brand: Maybelline
+    name: The Nudes Palette
+    category: Тени
+    texture: powder
+    finish: mixed
+    tags: [nude, everyday]
+    actives: []
+    weight_g: 10
+    price: 999
+    price_currency: RUB
+    link: https://www.letu.ru/product/maybelline-the-nudes/100200456
+    in_stock: true
+    
+  - id: "essence-001"
+    brand: Essence
+    name: All About Nude Eyeshadow Palette
+    category: Тени
+    texture: powder
+    finish: mixed
+    tags: [affordable, nude]
+    actives: []
+    weight_g: 10
+    price: 399
+    price_currency: RUB
+    link: https://www.letu.ru/product/essence-all-about-nude/100400234
+    in_stock: true
+
+  # === ТУШИ ===
+  - id: "maybelline-003"
+    brand: Maybelline
+    name: Lash Sensational Sky High
+    category: Тушь
+    texture: cream
+    tags: [lengthening, volumizing]
+    actives: []
+    volume_ml: 7.2
+    price: 899
+    price_currency: RUB
+    link: https://www.letu.ru/product/maybelline-sky-high/100200890
+    in_stock: true
+    
+  - id: "loreal-002"
+    brand: L'Oreal Paris
+    name: Telescopic Mascara
+    category: Тушь
+    texture: cream
+    tags: [lengthening, precision]
+    actives: []
+    volume_ml: 8
+    price: 999
+    price_currency: RUB
+    link: https://www.letu.ru/product/loreal-telescopic/100200567
+    in_stock: true
+    
+  - id: "essence-002"
+    brand: Essence
+    name: Lash Princess False Lash Effect
+    category: Тушь
+    texture: cream
+    tags: [volumizing, dramatic]
+    actives: []
+    volume_ml: 12
+    price: 299
+    price_currency: RUB
+    link: https://www.letu.ru/product/essence-lash-princess/100400345
+    in_stock: true
+
+  # === БРОВИ ===
+  - id: "nyx-003"
+    brand: NYX Professional Makeup
+    name: Micro Brow Pencil
+    category: Брови
+    texture: pencil
+    shade:
+      name: "Taupe"
+      code: "03"
+      undertone: cool
+      color_family: medium
+    tags: [precise, natural]
+    actives: []
+    weight_g: 0.09
+    price: 690
+    price_currency: RUB
+    link: https://www.letu.ru/product/nyx-micro-brow/100300456
+    in_stock: true
+    
+  - id: "maybelline-004"
+    brand: Maybelline
+    name: Brow Fast Sculpt
+    category: Брови
+    texture: gel
+    shade:
+      name: "Medium Brown"
+      code: "02"
+      undertone: neutral
+      color_family: medium
+    tags: [sculpting, tinted]
+    actives: []
+    volume_ml: 2.8
+    price: 549
+    price_currency: RUB
+    link: https://www.letu.ru/product/maybelline-brow-fast/100200789
+    in_stock: true
+    
+  - id: "essence-003"
+    brand: Essence
+    name: Make Me Brow Eyebrow Gel
+    category: Брови
+    texture: gel
+    shade:
+      name: "Browny Brows"
+      code: "02"
+      undertone: warm
+      color_family: medium
+    tags: [natural, fiber]
+    actives: []
+    volume_ml: 3.8
+    price: 249
+    price_currency: RUB
+    link: https://www.letu.ru/product/essence-make-me-brow/100400567
+    in_stock: true
+
+  # === ПОМАДЫ ===
+  - id: "maybelline-005"
+    brand: Maybelline
+    name: SuperStay Matte Ink
+    category: Помада
+    texture: liquid
+    finish: matte
+    shade:
+      name: "Pioneer"
+      code: "20"
+      undertone: warm
+      color_family: nude
+    tags: [long-lasting, matte]
+    actives: []
+    volume_ml: 5
+    price: 799
+    price_currency: RUB
+    link: https://www.letu.ru/product/maybelline-superstay-matte-ink/100200234
+    in_stock: true
+    
+  - id: "nyx-004"
+    brand: NYX Professional Makeup
+    name: Soft Matte Lip Cream
+    category: Помада
+    texture: cream
+    finish: matte
+    shade:
+      name: "Stockholm"
+      code: "08"
+      undertone: cool
+      color_family: nude-pink
+    tags: [soft-matte, comfortable]
+    actives: []
+    volume_ml: 8
+    price: 590
+    price_currency: RUB
+    link: https://www.letu.ru/product/nyx-soft-matte/100300678
+    in_stock: true
+    
+  - id: "loreal-003"
+    brand: L'Oreal Paris
+    name: Color Riche Satin
+    category: Помада
+    texture: stick
+    finish: satin
+    shade:
+      name: "Nude Demoiselle"
+      code: "630"
+      undertone: neutral
+      color_family: nude
+    tags: [satin, moisturizing]
+    actives: [vitamin-e]
+    weight_g: 4.8
+    price: 699
+    price_currency: RUB
+    link: https://www.letu.ru/product/loreal-color-riche/100200901
+    in_stock: true
+    
+  - id: "essence-004"
+    brand: Essence
+    name: This Is Nude Lipstick
+    category: Помада
+    texture: stick
+    finish: natural
+    shade:
+      name: "Perfect Match"
+      code: "02"
+      undertone: warm
+      color_family: nude
+    tags: [nude, everyday]
+    actives: []
+    weight_g: 3.5
+    price: 199
+    price_currency: RUB
+    link: https://www.letu.ru/product/essence-this-is-nude/100400789
+    in_stock: true
