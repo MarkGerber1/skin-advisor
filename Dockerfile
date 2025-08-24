@@ -1,17 +1,26 @@
 FROM python:3.11-slim
 
-# Use the path Railway expects
 WORKDIR /usr/src/app
 
-# Copy requirements and install dependencies
-COPY requirements.txt .
+# First, copy only requirements to leverage Docker cache
+COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy all application files
-COPY . .
+# Copy specific directories and files
+COPY bot/ ./bot/
+COPY engine/ ./engine/
+COPY assets/ ./assets/
+COPY start.py ./
+COPY *.toml ./
+COPY *.json ./
 
-# Debug: List files to verify structure
-RUN ls -la && ls -la bot/ || echo "bot/ directory not found"
+# Verify files were copied
+RUN echo "=== Listing /usr/src/app ===" && \
+    ls -la /usr/src/app/ && \
+    echo "=== Checking start.py ===" && \
+    test -f /usr/src/app/start.py && echo "start.py EXISTS" || echo "start.py NOT FOUND" && \
+    echo "=== Checking bot/ ===" && \
+    ls -la /usr/src/app/bot/ || echo "bot/ NOT FOUND"
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -19,8 +28,12 @@ ENV PYTHONUNBUFFERED=1
 ENV PYTHONPATH=/usr/src/app
 ENV CATALOG_PATH=assets/fixed_catalog.yaml
 
-# Run the bot
-CMD ["python", "start.py"]
+# Copy entrypoint script
+COPY entrypoint.sh ./
+RUN chmod +x entrypoint.sh
+
+# Use entrypoint for flexible startup
+ENTRYPOINT ["/bin/sh", "/usr/src/app/entrypoint.sh"]
 
 
 
