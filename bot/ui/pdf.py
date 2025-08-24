@@ -5,7 +5,10 @@ import json
 from pathlib import Path
 from typing import Dict, Optional
 
-from fpdf import FPDF
+try:
+    from fpdf import FPDF
+except ImportError:
+    from fpdf2 import FPDF
 
 
 def _ensure_dir(path: str) -> None:

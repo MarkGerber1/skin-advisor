@@ -11,7 +11,12 @@ from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, C
 from engine.catalog_store import CatalogStore
 from engine.models import UserProfile
 from engine.selector import select_products
-from bot.ui.pdf import save_text_pdf, save_last_json
+try:
+    from bot.ui.pdf import save_text_pdf, save_last_json
+except ImportError as e:
+    print(f"Warning: Could not import pdf module: {e}")
+    def save_text_pdf(*args, **kwargs): return ""
+    def save_last_json(*args, **kwargs): pass
 
 
 router = Router()

@@ -2,16 +2,60 @@ from __future__ import annotations
 
 import asyncio
 import os
-from aiogram import Bot, Dispatcher
+import sys
 
-from engine.catalog_store import CatalogStore
+print("Python version:", sys.version)
+print("Starting imports...")
+
+try:
+    from aiogram import Bot, Dispatcher
+    print("✓ aiogram imported")
+except ImportError as e:
+    print(f"✗ Failed to import aiogram: {e}")
+    raise
+
+try:
+    from engine.catalog_store import CatalogStore
+    print("✓ CatalogStore imported")
+except ImportError as e:
+    print(f"✗ Failed to import CatalogStore: {e}")
+    raise
 
 # Routers
-from bot.handlers.start import router as start_router
-from bot.handlers.flow_skincare import router as skincare_router
-from bot.handlers.flow_palette import router as palette_router
-from bot.handlers.cart import router as cart_router
-from bot.handlers.report import router as report_router
+try:
+    from bot.handlers.start import router as start_router
+    print("✓ start router imported")
+except ImportError as e:
+    print(f"✗ Failed to import start router: {e}")
+    raise
+
+try:
+    from bot.handlers.flow_skincare import router as skincare_router
+    print("✓ skincare router imported")
+except ImportError as e:
+    print(f"✗ Failed to import skincare router: {e}")
+    raise
+
+try:
+    from bot.handlers.flow_palette import router as palette_router
+    print("✓ palette router imported")
+except ImportError as e:
+    print(f"✗ Failed to import palette router: {e}")
+    raise
+
+try:
+    from bot.handlers.cart import router as cart_router
+    print("✓ cart router imported")
+except ImportError as e:
+    print(f"✗ Failed to import cart router: {e}")
+    raise
+
+try:
+    from bot.handlers.report import router as report_router
+    print("✓ report router imported")
+except ImportError as e:
+    print(f"✗ Failed to import report router: {e}")
+    raise
 
 
 CATALOG_PATH = os.getenv("CATALOG_PATH", "assets/fixed_catalog.yaml")
