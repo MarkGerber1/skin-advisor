@@ -32,12 +32,12 @@ data/
 *.sqlite
 
 # Documentation
-*.md
-*.txt
 docs/
+README.md
+PROMPT_FULL.md
+РЕЗУЛЬТАТЫ_РАБОТЫ.md
 
-# Tests
-tests/
+# Tests (keep for now, might be needed)
 pytest_cache/
 .coverage
 htmlcov/
