@@ -165,22 +165,28 @@ async def a1(cb: CallbackQuery, state: FSMContext) -> None:
     try:
         if await _debounce(cb, state):
             return
-    if not cb.data:
+        if not cb.data:
+            await cb.answer()
+            return
+        msg = cb.message
+        if not isinstance(msg, Message):
+            await cb.answer()
+            return
+        _, step, field, value = _parse(cb.data)
+        if step != "1" or field != "undertone":
+            await cb.answer()
+            return
+        await state.update_data(undertone=value)
+        await state.set_state(PaletteFlow.A2_VALUE)
+        await msg.edit_text("Шаг 2/7 — Светлота кожи (value):")
+        await msg.edit_reply_markup(reply_markup=_kb_value())
         await cb.answer()
-        return
-    msg = cb.message
-    if not isinstance(msg, Message):
-        await cb.answer()
-        return
-    _, step, field, value = _parse(cb.data)
-    if step != "1" or field != "undertone":
-        await cb.answer()
-        return
-    await state.update_data(undertone=value)
-    await state.set_state(PaletteFlow.A2_VALUE)
-    await msg.edit_text("Шаг 2/7 — Светлота кожи (value):")
-    await msg.edit_reply_markup(reply_markup=_kb_value())
-    await cb.answer()
+    except Exception as e:
+        print(f"❌ Error in palette a1 handler: {e}")
+        try:
+            await cb.answer("⚠️ Произошла ошибка, попробуйте снова", show_alert=True)
+        except:
+            pass
 
 
 @router.callback_query(F.data.startswith("pal:"), PaletteFlow.A2_VALUE)
