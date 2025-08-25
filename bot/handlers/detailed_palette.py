@@ -315,10 +315,102 @@ async def q8_lip_color(cb: CallbackQuery, state: FSMContext) -> None:
         data = await state.get_data()
         season = determine_season(data)
         
-        # Сохраняем результат
-        await state.update_data(season=season)
+        # Создаем UserProfile для системы рекомендаций
+        from engine.models import UserProfile, Season, Undertone
+        from engine.selector import SelectorV2
+        from engine.catalog_store import CatalogStore
+        from engine.answer_expander import AnswerExpanderV2
+        from engine.models import ReportData
+        from bot.ui.pdf import save_last_json, save_text_pdf
+        from bot.ui.render import render_makeup_report
+        import os
         
-        # Показываем результат
+        # Определяем цветотип для Engine
+        season_mapping = {
+            "spring": Season.SPRING,
+            "summer": Season.SUMMER,
+            "autumn": Season.AUTUMN,
+            "winter": Season.WINTER
+        }
+        
+        # Определяем подтон на основе ответов
+        undertone_answer = data.get("undertone", "")
+        if undertone_answer == "a":  # Теплый
+            undertone = Undertone.WARM
+        elif undertone_answer == "b":  # Холодный
+            undertone = Undertone.COOL
+        else:  # Нейтральный или сложно определить
+            undertone = Undertone.NEUTRAL
+        
+        profile = UserProfile(
+            season=season_mapping[season],
+            undertone=undertone,
+            age=25,  # Примерный возраст
+            hair_color=data.get("hair", ""),
+            eye_color=data.get("eyes", ""),
+            face_shape=data.get("face_shape", ""),
+            makeup_style=data.get("makeup_style", ""),
+            lip_color=data.get("lips", "")
+        )
+        
+        # Получаем каталог продуктов
+        catalog_path = os.getenv("CATALOG_PATH", "assets/fixed_catalog.yaml")
+        catalog_store = CatalogStore.instance(catalog_path)
+        catalog = catalog_store.get()
+        
+        # Генерируем рекомендации через SelectorV2
+        selector = SelectorV2()
+        result = selector.select_products_v2(
+            profile=profile,
+            catalog=catalog,
+            partner_code="S1",
+            redirect_base="https://skin-advisor.example.com"
+        )
+        
+        # Извлекаем макияж продукты для отчета
+        makeup_products = []
+        makeup_data = result.get("makeup", {})
+        for category_products in makeup_data.values():
+            if isinstance(category_products, list):
+                makeup_products.extend(category_products[:2])  # Первые 2 из каждой категории
+        
+        # Генерируем отчет
+        report_data = ReportData(
+            user_profile=profile,
+            skincare_products=[],
+            makeup_products=makeup_products
+        )
+        
+        expander = AnswerExpanderV2()
+        tldr_report = expander.generate_tldr_report(report_data)
+        full_report = expander.generate_full_report(report_data)
+        
+        # Рендерим UI с продуктами
+        text, kb = render_makeup_report(result)
+        
+        # Сохраняем результат для пользователя
+        uid = int(cb.from_user.id) if cb.from_user and cb.from_user.id else 0
+        if uid:
+            snapshot = {
+                "type": "detailed_palette",
+                "profile": profile.model_dump(),
+                "result": result,
+                "tl_dr": tldr_report,
+                "full_text": full_report,
+                "answers": data
+            }
+            save_last_json(uid, snapshot)
+            save_text_pdf(uid, title="🎨 Отчёт по цветотипу", body_text=full_report)
+        
+        # Сохраняем результат в состояние
+        await state.update_data(
+            season=season,
+            profile=profile.model_dump(),
+            result=result,
+            makeup_products=makeup_products
+        )
+        
+        # Показываем результат с продуктами
         season_names = {
             "spring": "🌸 Яркая Весна",
             "summer": "🌊 Мягкое Лето", 
@@ -326,22 +418,15 @@ async def q8_lip_color(cb: CallbackQuery, state: FSMContext) -> None:
             "winter": "❄️ Холодная Зима"
         }
         
-        season_descriptions = {
-            "spring": "Ваша внешность отличается теплым подтоном и средним контрастом. Вам идеально подходят чистые, яркие и теплые оттенки.",
-            "summer": "Ваша внешность характеризуется холодным подтоном и мягкими переходами. Вам подходят приглушенные, холодные тона.",
-            "autumn": "Ваша внешность имеет теплый подтон и глубокие, насыщенные цвета. Вам идут землистые, теплые оттенки.",
-            "winter": "Ваша внешность отличается высоким контрастом между цветом кожи, волос и глаз. Вам подходят чистые, яркие и холодные оттенки."
-        }
-        
         await cb.message.edit_text(
             f"🎉 **РЕЗУЛЬТАТ ТЕСТА**\n\n"
             f"**Ваш цветотип:** {season_names[season]}\n\n"
-            f"**Описание:** {season_descriptions[season]}\n\n"
+            f"📊 **Краткий анализ:**\n{tldr_report}\n\n"
             f"Что вы хотите увидеть?",
             reply_markup=InlineKeyboardMarkup(inline_keyboard=[
-                [InlineKeyboardButton(text="ℹ️ Описание моего цветотипа", callback_data="result:description")],
-                [InlineKeyboardButton(text="💆 Рекомендации по нанесению", callback_data="result:application")],
-                [InlineKeyboardButton(text="🛍️ Что купить?", callback_data="result:products")],
+                [InlineKeyboardButton(text="ℹ️ Полное описание цветотипа", callback_data="result:description")],
+                [InlineKeyboardButton(text="💄 Рекомендуемые продукты", callback_data="result:products")],
+                [InlineKeyboardButton(text="📄 Получить отчёт", callback_data="report:latest")],
                 [InlineKeyboardButton(text="🏠 Главное меню", callback_data="universal:home")]
             ])
         )
@@ -384,12 +469,62 @@ async def show_description(cb: CallbackQuery, state: FSMContext) -> None:
         await cb.answer("⚠️ Ошибка при показе описания")
 
 
+@router.callback_query(F.data == "result:products", DetailedPaletteFlow.RESULT)
+async def show_products(cb: CallbackQuery, state: FSMContext) -> None:
+    """Показать рекомендованные продукты с кнопками покупки"""
+    try:
+        data = await state.get_data()
+        result = data.get("result", {})
+        
+        # Используем реальные продукты из системы рекомендаций
+        from bot.ui.render import render_makeup_report
+        
+        if result and result.get("makeup"):
+            text, kb = render_makeup_report(result)
+            
+            # Добавляем кнопку возврата
+            buttons = kb.inline_keyboard if kb else []
+            buttons.append([InlineKeyboardButton(text="⬅️ Назад к результатам", callback_data="back:results")])
+            kb = InlineKeyboardMarkup(inline_keyboard=buttons)
+            
+            await cb.message.edit_text(
+                f"💄 **РЕКОМЕНДОВАННЫЕ ПРОДУКТЫ**\n\n{text}",
+                reply_markup=kb
+            )
+        else:
+            # Fallback если нет продуктов
+            season = data.get("season", "spring")
+            season_names = {
+                "spring": "🌸 Яркой Весны",
+                "summer": "🌊 Мягкого Лета", 
+                "autumn": "🍂 Глубокой Осени",
+                "winter": "❄️ Холодной Зимы"
+            }
+            
+            await cb.message.edit_text(
+                f"💄 **ПРОДУКТЫ ДЛЯ {season_names[season].upper()}**\n\n"
+                f"К сожалению, в данный момент подходящие продукты недоступны в каталоге.\n\n"
+                f"Попробуйте позже или обратитесь к консультанту.",
+                reply_markup=InlineKeyboardMarkup(inline_keyboard=[
+                    [InlineKeyboardButton(text="⬅️ Назад к результатам", callback_data="back:results")],
+                    [InlineKeyboardButton(text="🏠 Главное меню", callback_data="universal:home")]
+                ])
+            )
+        
+        await cb.answer()
+        
+    except Exception as e:
+        print(f"❌ Error in show_products: {e}")
+        await cb.answer("⚠️ Ошибка при показе продуктов")
+
+
 @router.callback_query(F.data == "back:results", DetailedPaletteFlow.RESULT)
 async def back_to_results(cb: CallbackQuery, state: FSMContext) -> None:
     """Вернуться к результатам теста"""
     try:
         data = await state.get_data()
         season = data.get("season", "spring")
+        tldr_report = data.get("tldr_report", "")
         
         season_names = {
             "spring": "🌸 Яркая Весна",
@@ -398,14 +533,17 @@ async def back_to_results(cb: CallbackQuery, state: FSMContext) -> None:
             "winter": "❄️ Холодная Зима"
         }
         
+        # Показываем краткий анализ если он есть
+        analysis_text = f"\n\n📊 **Краткий анализ:**\n{tldr_report}" if tldr_report else ""
+        
         await cb.message.edit_text(
             f"🎉 **РЕЗУЛЬТАТ ТЕСТА**\n\n"
-            f"**Ваш цветотип:** {season_names[season]}\n\n"
+            f"**Ваш цветотип:** {season_names[season]}{analysis_text}\n\n"
             f"Что вы хотите увидеть?",
             reply_markup=InlineKeyboardMarkup(inline_keyboard=[
-                [InlineKeyboardButton(text="ℹ️ Описание моего цветотипа", callback_data="result:description")],
-                [InlineKeyboardButton(text="💆 Рекомендации по нанесению", callback_data="result:application")],
-                [InlineKeyboardButton(text="🛍️ Что купить?", callback_data="result:products")],
+                [InlineKeyboardButton(text="ℹ️ Полное описание цветотипа", callback_data="result:description")],
+                [InlineKeyboardButton(text="💄 Рекомендуемые продукты", callback_data="result:products")],
+                [InlineKeyboardButton(text="📄 Получить отчёт", callback_data="report:latest")],
                 [InlineKeyboardButton(text="🏠 Главное меню", callback_data="universal:home")]
             ])
         )

@@ -361,8 +361,103 @@ async def q8_desired_effect(cb: CallbackQuery, state: FSMContext) -> None:
         data = await state.get_data()
         skin_analysis = determine_skin_type(data)
         
-        # Сохраняем результат
-        await state.update_data(skin_analysis=skin_analysis)
+        # Создаем UserProfile для системы рекомендаций
+        from engine.models import UserProfile, SkinType, Sensitivity
+        from engine.selector import SelectorV2
+        from engine.catalog_store import CatalogStore
+        from engine.answer_expander import AnswerExpanderV2
+        from engine.models import ReportData
+        from bot.ui.pdf import save_last_json, save_text_pdf
+        from bot.ui.render import render_skincare_report
+        import os
+        
+        # Определяем тип кожи для Engine
+        skin_type_mapping = {
+            "dry": SkinType.DRY,
+            "oily": SkinType.OILY,
+            "combination": SkinType.COMBINATION,
+            "normal": SkinType.NORMAL
+        }
+        
+        # Определяем чувствительность
+        sensitivity_mapping = {
+            "normal": Sensitivity.LOW,
+            "sensitive": Sensitivity.MEDIUM,
+            "very_sensitive": Sensitivity.HIGH
+        }
+        
+        skin_type = skin_analysis["type"]
+        sensitivity = skin_analysis["sensitivity"]
+        concerns = skin_analysis["concerns"]
+        
+        # Создаем профиль пользователя
+        profile = UserProfile(
+            skin_type=skin_type_mapping.get(skin_type, SkinType.NORMAL),
+            sensitivity=sensitivity_mapping.get(sensitivity, Sensitivity.LOW),
+            age=25,  # Примерный возраст
+            acne_prone="acne" in concerns,
+            dehydrated="dehydration" in concerns or "hydration_needed" in concerns,
+            enlarged_pores="enlarged_pores" in concerns,
+            pigmentation="pigmentation" in concerns,
+            anti_aging="aging" in concerns,
+            couperose="couperose" in concerns
+        )
+        
+        # Получаем каталог продуктов
+        catalog_path = os.getenv("CATALOG_PATH", "assets/fixed_catalog.yaml")
+        catalog_store = CatalogStore.instance(catalog_path)
+        catalog = catalog_store.get()
+        
+        # Генерируем рекомендации через SelectorV2
+        selector = SelectorV2()
+        result = selector.select_products_v2(
+            profile=profile,
+            catalog=catalog,
+            partner_code="S1",
+            redirect_base="https://skin-advisor.example.com"
+        )
+        
+        # Извлекаем продукты для ухода за кожей
+        skincare_products = []
+        skincare_data = result.get("skincare", {})
+        for time_products in skincare_data.values():
+            if isinstance(time_products, list):
+                skincare_products.extend(time_products[:2])  # Первые 2 из каждой категории
+        
+        # Генерируем отчет
+        report_data = ReportData(
+            user_profile=profile,
+            skincare_products=skincare_products,
+            makeup_products=[]
+        )
+        
+        expander = AnswerExpanderV2()
+        tldr_report = expander.generate_tldr_report(report_data)
+        full_report = expander.generate_full_report(report_data)
+        
+        # Сохраняем результат для пользователя
+        uid = int(cb.from_user.id) if cb.from_user and cb.from_user.id else 0
+        if uid:
+            snapshot = {
+                "type": "detailed_skincare",
+                "profile": profile.model_dump(),
+                "result": result,
+                "skin_analysis": skin_analysis,
+                "tl_dr": tldr_report,
+                "full_text": full_report,
+                "answers": data
+            }
+            save_last_json(uid, snapshot)
+            save_text_pdf(uid, title="🧴 Отчёт по уходу за кожей", body_text=full_report)
+        
+        # Сохраняем результат в состояние
+        await state.update_data(
+            skin_analysis=skin_analysis,
+            profile=profile.model_dump(),
+            result=result,
+            skincare_products=skincare_products,
+            tldr_report=tldr_report
+        )
         
         # Показываем результат
         skin_type_names = {
@@ -371,10 +466,6 @@ async def q8_desired_effect(cb: CallbackQuery, state: FSMContext) -> None:
             "combination": "⚖️ Комбинированная кожа",
             "normal": "✨ Нормальная кожа"
         }
-        
-        skin_type = skin_analysis["type"]
-        concerns = skin_analysis["concerns"]
-        sensitivity = skin_analysis["sensitivity"]
         
         # Формируем описание состояния
         concerns_text = ""
@@ -406,11 +497,12 @@ async def q8_desired_effect(cb: CallbackQuery, state: FSMContext) -> None:
         await cb.message.edit_text(
             f"🎉 **РЕЗУЛЬТАТ ДИАГНОСТИКИ**\n\n"
             f"**Ваш тип кожи:** {skin_type_names[skin_type]}{concerns_text}{sensitivity_text}\n\n"
+            f"📊 **Краткий анализ:**\n{tldr_report}\n\n"
             f"Что вы хотите увидеть?",
             reply_markup=InlineKeyboardMarkup(inline_keyboard=[
-                [InlineKeyboardButton(text="ℹ️ Описание моего типа кожи", callback_data="skincare_result:description")],
-                [InlineKeyboardButton(text="💆 Рекомендации по уходу", callback_data="skincare_result:care")],
-                [InlineKeyboardButton(text="🛍️ Что купить?", callback_data="skincare_result:products")],
+                [InlineKeyboardButton(text="ℹ️ Полное описание типа кожи", callback_data="skincare_result:description")],
+                [InlineKeyboardButton(text="🧴 Рекомендуемые продукты", callback_data="skincare_result:products")],
+                [InlineKeyboardButton(text="📄 Получить отчёт", callback_data="report:latest")],
                 [InlineKeyboardButton(text="🏠 Главное меню", callback_data="universal:home")]
             ])
         )
@@ -454,6 +546,57 @@ async def show_skin_description(cb: CallbackQuery, state: FSMContext) -> None:
         await cb.answer("⚠️ Ошибка при показе описания")
 
 
+@router.callback_query(F.data == "skincare_result:products", DetailedSkincareFlow.RESULT)
+async def show_skincare_products(cb: CallbackQuery, state: FSMContext) -> None:
+    """Показать рекомендованные продукты для ухода с кнопками покупки"""
+    try:
+        data = await state.get_data()
+        result = data.get("result", {})
+        
+        # Используем реальные продукты из системы рекомендаций
+        from bot.ui.render import render_skincare_report
+        
+        if result and result.get("skincare"):
+            text, kb = render_skincare_report(result)
+            
+            # Добавляем кнопку возврата
+            buttons = kb.inline_keyboard if kb else []
+            buttons.append([InlineKeyboardButton(text="⬅️ Назад к результатам", callback_data="back:skincare_results")])
+            kb = InlineKeyboardMarkup(inline_keyboard=buttons)
+            
+            await cb.message.edit_text(
+                f"🧴 **РЕКОМЕНДОВАННЫЕ ПРОДУКТЫ**\n\n{text}",
+                reply_markup=kb
+            )
+        else:
+            # Fallback если нет продуктов
+            skin_analysis = data.get("skin_analysis", {})
+            skin_type = skin_analysis.get("type", "normal")
+            
+            skin_type_names = {
+                "dry": "🏜️ сухой кожи",
+                "oily": "🛢️ жирной кожи",
+                "combination": "⚖️ комбинированной кожи",
+                "normal": "✨ нормальной кожи"
+            }
+            
+            await cb.message.edit_text(
+                f"🧴 **ПРОДУКТЫ ДЛЯ {skin_type_names[skin_type].upper()}**\n\n"
+                f"К сожалению, в данный момент подходящие продукты недоступны в каталоге.\n\n"
+                f"Попробуйте позже или обратитесь к консультанту.",
+                reply_markup=InlineKeyboardMarkup(inline_keyboard=[
+                    [InlineKeyboardButton(text="⬅️ Назад к результатам", callback_data="back:skincare_results")],
+                    [InlineKeyboardButton(text="🏠 Главное меню", callback_data="universal:home")]
+                ])
+            )
+        
+        await cb.answer()
+        
+    except Exception as e:
+        print(f"❌ Error in show_skincare_products: {e}")
+        await cb.answer("⚠️ Ошибка при показе продуктов")
+
+
 @router.callback_query(F.data == "back:skincare_results", DetailedSkincareFlow.RESULT)
 async def back_to_skincare_results(cb: CallbackQuery, state: FSMContext) -> None:
     """Вернуться к результатам диагностики кожи"""
@@ -461,6 +604,7 @@ async def back_to_skincare_results(cb: CallbackQuery, state: FSMContext) -> None
         data = await state.get_data()
         skin_analysis = data.get("skin_analysis", {})
         skin_type = skin_analysis.get("type", "normal")
+        tldr_report = data.get("tldr_report", "")
         
         skin_type_names = {
             "dry": "🏜️ Сухая кожа",
@@ -469,14 +613,47 @@ async def back_to_skincare_results(cb: CallbackQuery, state: FSMContext) -> None
             "normal": "✨ Нормальная кожа"
         }
         
+        concerns = skin_analysis.get("concerns", [])
+        sensitivity = skin_analysis.get("sensitivity", "normal")
+        
+        # Формируем описание состояния
+        concerns_text = ""
+        if concerns:
+            concerns_readable = {
+                "dehydration": "обезвоженность",
+                "pigmentation": "пигментация", 
+                "acne": "акне",
+                "enlarged_pores": "расширенные поры",
+                "aging": "возрастные изменения",
+                "couperose": "купероз",
+                "redness": "покраснения",
+                "puffiness": "отечность",
+                "dark_circles": "темные круги",
+                "seasonal_changes": "сезонные изменения",
+                "hydration_needed": "нужно увлажнение"
+            }
+            concerns_list = [concerns_readable.get(c, c) for c in concerns[:3]]
+            concerns_text = f"\n**Основные проблемы:** {', '.join(concerns_list)}"
+            
+        sensitivity_text = ""
+        if sensitivity != "normal":
+            sensitivity_names = {
+                "sensitive": "чувствительная",
+                "very_sensitive": "очень чувствительная"
+            }
+            sensitivity_text = f"\n**Чувствительность:** {sensitivity_names[sensitivity]}"
+        
+        # Показываем краткий анализ если он есть
+        analysis_text = f"\n\n📊 **Краткий анализ:**\n{tldr_report}" if tldr_report else ""
+        
         await cb.message.edit_text(
             f"🎉 **РЕЗУЛЬТАТ ДИАГНОСТИКИ**\n\n"
-            f"**Ваш тип кожи:** {skin_type_names[skin_type]}\n\n"
+            f"**Ваш тип кожи:** {skin_type_names[skin_type]}{concerns_text}{sensitivity_text}{analysis_text}\n\n"
             f"Что вы хотите увидеть?",
             reply_markup=InlineKeyboardMarkup(inline_keyboard=[
-                [InlineKeyboardButton(text="ℹ️ Описание моего типа кожи", callback_data="skincare_result:description")],
-                [InlineKeyboardButton(text="💆 Рекомендации по уходу", callback_data="skincare_result:care")],
-                [InlineKeyboardButton(text="🛍️ Что купить?", callback_data="skincare_result:products")],
+                [InlineKeyboardButton(text="ℹ️ Полное описание типа кожи", callback_data="skincare_result:description")],
+                [InlineKeyboardButton(text="🧴 Рекомендуемые продукты", callback_data="skincare_result:products")],
+                [InlineKeyboardButton(text="📄 Получить отчёт", callback_data="report:latest")],
                 [InlineKeyboardButton(text="🏠 Главное меню", callback_data="universal:home")]
             ])
         )
