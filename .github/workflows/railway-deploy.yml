@@ -2,7 +2,7 @@ name: Deploy to Railway
 
 on:
   push:
-    branches: ["main"]
+    branches: ["master"]  # Fixed: using master branch
   workflow_dispatch: {}
 
 env:
