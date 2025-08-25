@@ -92,6 +92,33 @@ async def main() -> None:
     print(f"Starting bot with token: {token[:10]}...")
     bot = Bot(token)
     dp = Dispatcher()
+    
+    # Add global error handler
+    @dp.error()
+    async def error_handler(event, exception):
+        import traceback
+        print(f"❌ Global error: {exception}")
+        print(f"📍 Traceback: {traceback.format_exc()}")
+        
+        # Log callback data for debugging
+        if hasattr(event, 'callback_query') and event.callback_query:
+            cb = event.callback_query
+            print(f"🔗 Callback data: {cb.data}")
+            print(f"👤 User: {cb.from_user.id if cb.from_user else 'Unknown'}")
+            try:
+                await cb.answer("⚠️ Произошла ошибка, попробуйте снова", show_alert=True)
+            except Exception as e:
+                print(f"❌ Could not answer callback: {e}")
+        elif hasattr(event, 'message') and event.message:
+            msg = event.message
+            print(f"💬 Message text: {msg.text}")
+            print(f"👤 User: {msg.from_user.id if msg.from_user else 'Unknown'}")
+            try:
+                await msg.answer("⚠️ Произошла ошибка. Попробуйте /start для перезапуска")
+            except Exception as e:
+                print(f"❌ Could not send error message: {e}")
+        return True  # Mark as handled
+    
     dp.include_router(start_router)
     dp.include_router(skincare_router)
     dp.include_router(palette_router)

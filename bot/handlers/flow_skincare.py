@@ -101,6 +101,8 @@ async def _debounce(cb: CallbackQuery, state: FSMContext) -> bool:
     if last_cb == cb.data:
         try:
             await cb.answer()
+        except Exception:
+            pass  # Ignore callback answer errors
         finally:
             return True
     await state.update_data(last_cb=cb.data)

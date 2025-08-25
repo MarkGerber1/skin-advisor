@@ -14,7 +14,7 @@ from engine.selector import select_products, SelectorV2
 from engine.answer_expander import AnswerExpanderV2
 
 try:
-    from bot.ui.pdf import save_text_pdf, save_last_json
+    from bot.ui.pdf import save_text_pdf, save_last_json # type: ignore
 except ImportError as e:
     print(f"Warning: Could not import pdf module: {e}")
 
@@ -162,8 +162,9 @@ async def _debounce(cb: CallbackQuery, state: FSMContext) -> bool:
 
 @router.callback_query(F.data.startswith("pal:"), PaletteFlow.A1_UNDERTONE)
 async def a1(cb: CallbackQuery, state: FSMContext) -> None:
-    if await _debounce(cb, state):
-        return
+    try:
+        if await _debounce(cb, state):
+            return
     if not cb.data:
         await cb.answer()
         return
