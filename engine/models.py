@@ -85,7 +85,7 @@ class UserProfile(BaseModel):
     
     # Skin (Fitzpatrick + Baumann + Traditional)
     fitzpatrick: Optional[Fitzpatrick] = None
-    baumann: Optional[str] = Field(None, regex=r"^[OD][SR][PN][WT]$")  # 16 types
+    baumann: Optional[str] = Field(None, pattern=r"^[OD][SR][PN][WT]$")  # 16 types
     skin_type: Optional[SkinType] = None
     dehydrated: Optional[bool] = None
     concerns: List[str] = Field(default_factory=list)  # blackheads, acne, pigmentation, etc.
