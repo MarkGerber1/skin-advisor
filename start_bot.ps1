@@ -8,7 +8,7 @@ $venvPath = ".venv\Scripts\python.exe"
 $altVenvPath = "venv\Scripts\python.exe"
 
 # Функция загрузки .env (если есть)
-function Load-DotEnv {
+function Import-DotEnv {
     param([string]$path = ".env")
     if (Test-Path $path) {
         Get-Content $path | ForEach-Object {
@@ -56,7 +56,7 @@ if (Test-Path $venvPath) {
 }
 
 # Загружаем .env (если есть)
-Load-DotEnv
+Import-DotEnv
 
 # Дефолты окружения
 if (-not $env:CATALOG_PATH) {
