@@ -33,3 +33,5 @@ properties:
   price_tier: { enum: [econom, middle, premium, unknown], default: unknown }
 
 
+
+

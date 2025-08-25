@@ -1,0 +1,10 @@
+[33m9f556f4[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m, [m[1;31morigin/master[m[33m)[m force: rebuild Docker cache v2
+[33mfb81243[m fix: add entrypoint.sh and explicit file copying with debug output
+[33me9db678[m fix: use correct WORKDIR path /usr/src/app for Railway
+[33md12bfe4[m fix: add railway.json and nixpacks.toml for explicit deployment config
+[33m3e91d95[m fix: add explicit file copying and start.py entry point for Railway
+[33mef97035[m fix: simplify Railway deployment config, remove volumes
+[33md5450fb[m fix: add Railway deployment config and root init
+[33m0fed6e7[m style: format all files with black
+[33md7901e4[m fix: add comprehensive error handling and import diagnostics
+[33mc5904af[m fix: handle missing catalog file and add diagnostics for Railway crash
