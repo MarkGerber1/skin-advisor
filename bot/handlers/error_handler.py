@@ -50,3 +50,4 @@ def message_error_handler(func: Callable) -> Callable:
                 print(f"❌ Could not send error message: {msg_error}")
                 
     return wrapper
+

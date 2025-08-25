@@ -17,3 +17,4 @@ ENV CATALOG_PATH=assets/fixed_catalog.yaml
 
 # Simple start command
 CMD ["python", "-m", "bot.main"]
+

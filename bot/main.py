@@ -126,7 +126,50 @@ async def main() -> None:
     dp.include_router(report_router)
 
     print("Starting polling...")
-    await dp.start_polling(bot)
+    
+    # Add graceful shutdown handler
+    import signal
+    import asyncio
+    
+    async def graceful_shutdown(bot: Bot):
+        print("🛑 Graceful shutdown initiated...")
+        try:
+            await bot.delete_webhook(drop_pending_updates=True)
+            print("✅ Webhook deleted and pending updates dropped")
+        except Exception as e:
+            print(f"⚠️ Error during shutdown: {e}")
+        finally:
+            await bot.session.close()
+            print("✅ Bot session closed")
+    
+    # Setup signal handlers
+    def signal_handler(signum, frame):
+        print(f"📡 Received signal {signum}")
+        raise KeyboardInterrupt()
+    
+    signal.signal(signal.SIGTERM, signal_handler)
+    signal.signal(signal.SIGINT, signal_handler)
+    
+    try:
+        # Clear any existing webhook first
+        try:
+            await bot.delete_webhook(drop_pending_updates=True)
+            print("🧹 Cleared existing webhook and pending updates")
+        except Exception as e:
+            print(f"⚠️ Could not clear webhook: {e}")
+        
+        # Start polling with proper error handling
+        await dp.start_polling(
+            bot,
+            skip_updates=True,  # Skip pending updates to avoid conflicts
+            handle_signals=False  # We handle signals manually
+        )
+    except KeyboardInterrupt:
+        print("🛑 Received shutdown signal")
+    except Exception as e:
+        print(f"❌ Polling error: {e}")
+    finally:
+        await graceful_shutdown(bot)
 
 
 if __name__ == "__main__":

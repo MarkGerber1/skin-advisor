@@ -30,7 +30,20 @@ async def send_latest_report(cb: CallbackQuery) -> None:
         if not os.path.exists(path):
             await cb.answer("Отчёт ещё не сформирован", show_alert=True)
             return
-        await cb.message.answer_document(document=FSInputFile(path), caption="Ваш последний отчёт")
+        
+        # Use callback.bot to send document
+        from aiogram import Bot
+        bot = cb.bot if hasattr(cb, 'bot') else None
+        if bot and cb.message:
+            await bot.send_document(
+                chat_id=cb.message.chat.id,
+                document=FSInputFile(path),
+                caption="Ваш последний отчёт"
+            )
+        else:
+            await cb.answer("Ошибка: не удалось получить bot instance", show_alert=True)
+            return
+            
         await cb.answer()
     except Exception as e:
         print(f"Error in send_latest_report: {e}")
