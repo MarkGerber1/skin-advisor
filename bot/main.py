@@ -64,6 +64,30 @@ except ImportError as e:
     print(f"✗ Failed to import report router: {e}")
     raise
 
+try:
+    from bot.handlers.universal import router as universal_router
+
+    print("✓ universal router imported")
+except ImportError as e:
+    print(f"✗ Failed to import universal router: {e}")
+    raise
+
+try:
+    from bot.handlers.detailed_palette import router as detailed_palette_router
+
+    print("✓ detailed palette router imported")
+except ImportError as e:
+    print(f"✗ Failed to import detailed palette router: {e}")
+    raise
+
+try:
+    from bot.handlers.detailed_skincare import router as detailed_skincare_router
+
+    print("✓ detailed skincare router imported")
+except ImportError as e:
+    print(f"✗ Failed to import detailed skincare router: {e}")
+    raise
+
 
 CATALOG_PATH = os.getenv("CATALOG_PATH", "assets/fixed_catalog.yaml")
 
@@ -106,19 +130,43 @@ async def main() -> None:
             print(f"🔗 Callback data: {cb.data}")
             print(f"👤 User: {cb.from_user.id if cb.from_user else 'Unknown'}")
             try:
-                await cb.answer("⚠️ Произошла ошибка, попробуйте снова", show_alert=True)
+                # Use emergency keyboard for better recovery
+                from bot.ui.keyboards import emergency_keyboard
+                if cb.message:
+                    await cb.message.edit_text(
+                        "⚠️ Произошла ошибка\n\n"
+                        "Выберите действие для восстановления:",
+                        reply_markup=emergency_keyboard()
+                    )
+                await cb.answer("⚠️ Ошибка исправлена")
             except Exception as e:
-                print(f"❌ Could not answer callback: {e}")
+                print(f"❌ Could not handle callback error: {e}")
+                try:
+                    await cb.answer("⚠️ Ошибка. Нажмите /start")
+                except:
+                    pass
         elif hasattr(event, 'message') and event.message:
             msg = event.message
             print(f"💬 Message text: {msg.text}")
             print(f"👤 User: {msg.from_user.id if msg.from_user else 'Unknown'}")
             try:
-                await msg.answer("⚠️ Произошла ошибка. Попробуйте /start для перезапуска")
+                from bot.ui.keyboards import main_menu
+                await msg.answer(
+                    "⚠️ Произошла ошибка\n\n"
+                    "Возврат в главное меню:",
+                    reply_markup=main_menu()
+                )
             except Exception as e:
                 print(f"❌ Could not send error message: {e}")
+                try:
+                    await msg.answer("⚠️ Ошибка. Нажмите /start")
+                except:
+                    pass
         return True  # Mark as handled
     
+    dp.include_router(universal_router)  # Universal handlers first (highest priority)
+    dp.include_router(detailed_palette_router)  # Detailed palette test
+    dp.include_router(detailed_skincare_router)  # Detailed skincare test  
     dp.include_router(start_router)
     dp.include_router(skincare_router)
     dp.include_router(palette_router)

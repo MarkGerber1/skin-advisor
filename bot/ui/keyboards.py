@@ -17,6 +17,7 @@ BTN_PICK = "🛒 Моя подборка"
 BTN_SETTINGS = "⚙️ Настройки"
 BTN_REPORT = "📄 Отчёт"
 BTN_BACK = "⬅️ Назад"
+BTN_HOME = "🏠 Главное меню"
 
 
 def main_menu() -> ReplyKeyboardMarkup:
@@ -52,7 +53,8 @@ def confirm_buttons(yes_text: str = "✅ Да", no_text: str = "❌ Нет") -> 
 
 
 def navigation_buttons(
-    prev_callback: str = None, next_callback: str = None, back_callback: str = None
+    prev_callback: str = None, next_callback: str = None, back_callback: str = None,
+    include_home: bool = True
 ) -> InlineKeyboardMarkup:
     """Кнопки навигации"""
     buttons: List[List[InlineKeyboardButton]] = []
@@ -69,6 +71,10 @@ def navigation_buttons(
 
     if row:
         buttons.append(row)
+    
+    # Add universal home button for emergency exit
+    if include_home:
+        buttons.append([InlineKeyboardButton(text="🏠 Главное меню", callback_data="universal:home")])
 
     return InlineKeyboardMarkup(inline_keyboard=buttons) if buttons else None
 
@@ -81,3 +87,25 @@ def loading_message() -> str:
 def error_message() -> str:
     """Сообщение об ошибке"""
     return "❌ Произошла ошибка. Попробуйте еще раз."
+
+
+def emergency_keyboard() -> InlineKeyboardMarkup:
+    """Emergency keyboard for error recovery"""
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="🏠 Главное меню", callback_data="universal:home")],
+            [InlineKeyboardButton(text="🔄 Попробовать снова", callback_data="universal:retry")]
+        ]
+    )
+
+
+def add_home_button(keyboard: InlineKeyboardMarkup) -> InlineKeyboardMarkup:
+    """Add home button to any existing keyboard"""
+    if not keyboard or not keyboard.inline_keyboard:
+        return emergency_keyboard()
+    
+    # Create new keyboard with existing buttons plus home button
+    new_buttons = list(keyboard.inline_keyboard)
+    new_buttons.append([InlineKeyboardButton(text="🏠 Главное меню", callback_data="universal:home")])
+    
+    return InlineKeyboardMarkup(inline_keyboard=new_buttons)

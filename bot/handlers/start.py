@@ -31,16 +31,16 @@ async def on_start(m: Message, state: FSMContext) -> None:
 
 @router.message(F.text == BTN_SKINCARE, StateFilter(None))
 async def start_skincare(m: Message, state: FSMContext) -> None:
-    from .flow_skincare import start_flow
+    from .detailed_skincare import start_detailed_skincare_flow
 
-    await start_flow(m, state)
+    await start_detailed_skincare_flow(m, state)
 
 
 @router.message(F.text == BTN_PALETTE, StateFilter(None))
 async def start_palette(m: Message, state: FSMContext) -> None:
-    from .flow_palette import start_flow
+    from .detailed_palette import start_detailed_palette_flow
 
-    await start_flow(m, state)
+    await start_detailed_palette_flow(m, state)
 
 
 @router.message(F.text == BTN_ABOUT, StateFilter(None))
