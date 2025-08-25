@@ -15,13 +15,15 @@ COPY start.py ./start.py
 COPY *.toml ./
 COPY *.json ./
 
-# Verify files were copied
-RUN echo "=== Listing /usr/src/app ===" && \
+# Verify critical files were copied
+RUN echo "=== Build verification ===" && \
     ls -la /usr/src/app/ && \
     echo "=== Checking start.py ===" && \
-    test -f /usr/src/app/start.py && echo "start.py EXISTS" || echo "start.py NOT FOUND" && \
-    echo "=== Checking bot/ ===" && \
-    ls -la /usr/src/app/bot/ || echo "bot/ NOT FOUND"
+    test -f /usr/src/app/start.py && echo "✓ start.py EXISTS" || echo "✗ start.py NOT FOUND" && \
+    echo "=== Checking bot/main.py ===" && \
+    test -f /usr/src/app/bot/main.py && echo "✓ bot/main.py EXISTS" || echo "✗ bot/main.py NOT FOUND" && \
+    echo "=== Checking assets/ ===" && \
+    test -d /usr/src/app/assets && echo "✓ assets/ EXISTS" || echo "✗ assets/ NOT FOUND"
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
