@@ -11,7 +11,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY bot/ ./bot/
 COPY engine/ ./engine/
 COPY assets/ ./assets/
-COPY start.py ./
+COPY start.py ./start.py
 COPY *.toml ./
 COPY *.json ./
 
