@@ -1,4 +1,4 @@
-﻿aiogram==3.7.0
+﻿aiogram==3.7.0  # force rebuild 123
 sqlalchemy[asyncio]==2.0.30
 aiosqlite==0.20.0
 pydantic-settings==2.3.1
