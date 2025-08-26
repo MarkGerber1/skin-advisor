@@ -104,8 +104,8 @@ def render_makeup_report(result: Dict) -> Tuple[str, InlineKeyboardMarkup]:
     
     # Collect products by display groups - DIRECT KEY MAPPING
     face = []
-    # Direct mapping to exact SelectorV2 keys
-    direct_face_keys = ['Тональный крем']  # Exact key from SelectorV2
+    # Direct mapping to exact SelectorV2 keys (ENGLISH!)
+    direct_face_keys = ['foundation']  # Exact English key from SelectorV2
     for cat in direct_face_keys:
         products = m.get(cat, [])
         print(f"📦 DIRECT KEY '{cat}': {len(products)} products")
@@ -118,8 +118,8 @@ def render_makeup_report(result: Dict) -> Tuple[str, InlineKeyboardMarkup]:
         face.extend(products)
     
     brows = []
-    # Direct mapping to exact SelectorV2 keys
-    direct_brows_keys = ['Брови']  # Exact key from SelectorV2
+    # Direct mapping to exact SelectorV2 keys (ENGLISH!)
+    direct_brows_keys = ['eyebrow']  # Exact English key from SelectorV2
     for cat in direct_brows_keys:
         products = m.get(cat, [])
         print(f"📦 DIRECT KEY '{cat}': {len(products)} products")
@@ -132,8 +132,8 @@ def render_makeup_report(result: Dict) -> Tuple[str, InlineKeyboardMarkup]:
         brows.extend(products)
         
     eyes = []
-    # Direct mapping to exact SelectorV2 keys
-    direct_eyes_keys = ['Тушь', 'Тени для век']  # Exact keys from SelectorV2
+    # Direct mapping to exact SelectorV2 keys (ENGLISH!)
+    direct_eyes_keys = ['mascara', 'eyeshadow']  # Exact English keys from SelectorV2
     for cat in direct_eyes_keys:
         products = m.get(cat, [])
         print(f"📦 DIRECT KEY '{cat}': {len(products)} products")
@@ -146,8 +146,8 @@ def render_makeup_report(result: Dict) -> Tuple[str, InlineKeyboardMarkup]:
         eyes.extend(products)
         
     lips = []
-    # Direct mapping to exact SelectorV2 keys
-    direct_lips_keys = ['Помада']  # Exact key from SelectorV2
+    # Direct mapping to exact SelectorV2 keys (ENGLISH!)
+    direct_lips_keys = ['lipstick']  # Exact English key from SelectorV2
     for cat in direct_lips_keys:
         products = m.get(cat, [])
         print(f"📦 DIRECT KEY '{cat}': {len(products)} products")
