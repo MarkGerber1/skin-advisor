@@ -147,3 +147,44 @@ async def state_recovery_middleware(message: Message, state: FSMContext) -> bool
     return False
 
 
+# ========================================
+# CATCH-ALL CALLBACK HANDLER (LOW PRIORITY)
+# ========================================
+
+@router.callback_query()
+async def handle_any_unhandled_callback(cb: CallbackQuery, state: FSMContext) -> None:
+    """Catch-all for unhandled callbacks - LOWEST priority"""
+    print(f"❓ TRULY UNHANDLED callback: '{cb.data}' from user {cb.from_user.id if cb.from_user else 'Unknown'}")
+    print(f"🔍 Current state: {await state.get_state()}")
+    
+    # Don't handle test-related callbacks - let them be processed by test routers
+    if cb.data and any(prefix in cb.data for prefix in ['hair:', 'eye:', 'skin:', 'lips:', 'face:', 'contrast:', 'style:']):
+        print(f"🧪 Test callback detected: {cb.data} - should be handled by test router")
+        try:
+            await cb.answer("⚠️ Кнопка теста не обработана. Попробуйте снова или /start")
+        except:
+            pass
+        return
+    
+    try:
+        # Always answer to prevent loading state
+        await cb.answer("⚠️ Кнопка не обработана. Используйте боковое меню или /start")
+        
+        # Send recovery options  
+        if cb.message:
+            await cb.message.answer(
+                "⚠️ Произошла ошибка с кнопкой\n\n"
+                "Попробуйте:\n"
+                "• Использовать кнопки ниже\n"
+                "• Нажать /start для сброса",
+                reply_markup=main_menu()
+            )
+            
+    except Exception as e:
+        print(f"❌ Error in catch-all callback handler: {e}")
+        try:
+            await cb.answer("❌ Ошибка. Нажмите /start")
+        except:
+            pass
+
+
