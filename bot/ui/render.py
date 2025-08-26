@@ -37,7 +37,21 @@ def _noop_keyboard() -> InlineKeyboardMarkup:
 
 
 def render_skincare_report(result: Dict) -> Tuple[str, InlineKeyboardMarkup]:
+    print(f"🧴 render_skincare_report called with result keys: {list(result.keys())}")
     s = result.get("skincare", {})
+    print(f"🧴 Skincare data keys: {list(s.keys()) if s else 'No skincare data'}")
+    
+    # CRITICAL DEBUG: Show all skincare categories and their content counts
+    if s:
+        print("🔍 DETAILED SKINCARE ANALYSIS:")
+        for key, products in s.items():
+            count = len(products) if products else 0
+            print(f"  📦 '{key}': {count} products")
+            if products and count > 0:
+                print(f"      First product: {products[0].get('name', 'No name')}")
+    else:
+        print("❌ No skincare data to analyze")
+    
     am = s.get("AM", [])
     pm = s.get("PM", [])
     wk = s.get("weekly", [])
