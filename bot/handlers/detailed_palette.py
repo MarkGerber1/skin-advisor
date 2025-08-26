@@ -342,12 +342,24 @@ async def q8_lip_color(cb: CallbackQuery, state: FSMContext) -> None:
         else:  # Нейтральный или сложно определить
             undertone = Undertone.NEUTRAL
         
+        # Конвертируем цвет глаз из ответов теста в enum
+        from engine.models import EyeColor
+        eye_answer = data.get("eyes", "")
+        eye_color_mapping = {
+            "a": EyeColor.BLUE,    # Голубые, светло-зеленые
+            "b": EyeColor.GRAY,    # Серо-голубые, светло-карие  
+            "c": EyeColor.BROWN,   # Темные оттенки
+            "d": EyeColor.BLUE     # Ярко-синие, изумрудные, темно-карие
+        }
+        eye_color = eye_color_mapping.get(eye_answer, EyeColor.BROWN)
+        
         profile = UserProfile(
+            user_id=uid,  # Добавлено обязательное поле
             season=season_mapping[season],
             undertone=undertone,
             age=25,  # Примерный возраст
             hair_color=data.get("hair", ""),
-            eye_color=data.get("eyes", ""),
+            eye_color=eye_color,  # Используем enum
             face_shape=data.get("face_shape", ""),
             makeup_style=data.get("makeup_style", ""),
             lip_color=data.get("lips", "")

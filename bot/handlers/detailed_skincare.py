@@ -390,8 +390,12 @@ async def q8_desired_effect(cb: CallbackQuery, state: FSMContext) -> None:
         sensitivity = skin_analysis["sensitivity"]
         concerns = skin_analysis["concerns"]
         
+        # Получаем uid пользователя
+        uid = int(cb.from_user.id) if cb.from_user and cb.from_user.id else 0
+        
         # Создаем профиль пользователя
         profile = UserProfile(
+            user_id=uid,  # Добавлено обязательное поле
             skin_type=skin_type_mapping.get(skin_type, SkinType.NORMAL),
             sensitivity=sensitivity_mapping.get(sensitivity, Sensitivity.LOW),
             age=25,  # Примерный возраст
