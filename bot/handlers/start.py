@@ -181,34 +181,9 @@ async def handle_noop_callback(cb: CallbackQuery, state: FSMContext) -> None:
     await cb.answer("🔄 Обновлено")
 
 
-# Last resort callback handler for any unhandled callbacks
-@router.callback_query()
-async def handle_any_unhandled_callback(cb: CallbackQuery, state: FSMContext) -> None:
-    """Catch-all for unhandled callbacks to prevent hanging"""
-    print(f"❓ Unhandled callback: '{cb.data}' from user {cb.from_user.id if cb.from_user else 'Unknown'}")
-    print(f"🔍 Current state: {await state.get_state()}")
-    
-    try:
-        # Always answer to prevent loading state
-        await cb.answer("⚠️ Кнопка не обработана. Используйте боковое меню или /start")
-        
-        # Send recovery options
-        if cb.message:
-            from bot.ui.keyboards import main_menu
-            await cb.message.answer(
-                "⚠️ Произошла ошибка с кнопкой\n\n"
-                "Попробуйте:\n"
-                "• Использовать кнопки ниже\n"
-                "• Нажать /start для сброса",
-                reply_markup=main_menu()
-            )
-            
-    except Exception as e:
-        print(f"❌ Error in unhandled callback handler: {e}")
-        try:
-            await cb.answer("❌ Ошибка. Нажмите /start")
-        except:
-            pass
+# REMOVED: Catch-all callback handler moved to separate router
+# This handler was intercepting test callbacks (hair:a, eye:b, etc.)
+# Now handled by universal router with lower priority
 
 
 # ========================================
