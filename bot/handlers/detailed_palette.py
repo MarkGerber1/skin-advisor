@@ -307,18 +307,23 @@ async def q7_makeup_style(cb: CallbackQuery, state: FSMContext) -> None:
 @router.callback_query(F.data.startswith("lips:"), DetailedPaletteFlow.Q8_LIP_COLOR)
 async def q8_lip_color(cb: CallbackQuery, state: FSMContext) -> None:
     try:
+        print("🎨 Starting q8_lip_color handler...")
         answer = cb.data.split(":")[1]  # a, b, c, d
         await state.update_data(lips=answer)
         await state.set_state(DetailedPaletteFlow.RESULT)
         
         # Анализируем результаты
         data = await state.get_data()
+        print(f"🔍 Test data: {data}")
         season = determine_season(data)
+        print(f"🌸 Determined season: {season}")
         
         # Получаем uid пользователя
         uid = int(cb.from_user.id) if cb.from_user and cb.from_user.id else 0
+        print(f"👤 User ID: {uid}")
         
         # Создаем UserProfile для системы рекомендаций
+        print("📦 Importing modules...")
         from engine.models import UserProfile, Season, Undertone
         from engine.selector import SelectorV2
         from engine.catalog_store import CatalogStore
@@ -329,6 +334,7 @@ async def q8_lip_color(cb: CallbackQuery, state: FSMContext) -> None:
         import os
         
         # Определяем цветотип для Engine
+        print("🗺️ Mapping season...")
         season_mapping = {
             "spring": Season.SPRING,
             "summer": Season.SUMMER,
@@ -337,6 +343,7 @@ async def q8_lip_color(cb: CallbackQuery, state: FSMContext) -> None:
         }
         
         # Определяем подтон на основе ответов
+        print("🎨 Processing undertone...")
         undertone_answer = data.get("undertone", "")
         if undertone_answer == "a":  # Теплый
             undertone = Undertone.WARM
@@ -344,8 +351,10 @@ async def q8_lip_color(cb: CallbackQuery, state: FSMContext) -> None:
             undertone = Undertone.COOL
         else:  # Нейтральный или сложно определить
             undertone = Undertone.NEUTRAL
+        print(f"💄 Undertone: {undertone}")
         
         # Конвертируем цвет глаз из ответов теста в enum
+        print("👁️ Processing eye color...")
         from engine.models import EyeColor
         eye_answer = data.get("eyes", "")
         eye_color_mapping = {
@@ -355,7 +364,9 @@ async def q8_lip_color(cb: CallbackQuery, state: FSMContext) -> None:
             "d": EyeColor.BLUE     # Ярко-синие, изумрудные, темно-карие
         }
         eye_color = eye_color_mapping.get(eye_answer, EyeColor.BROWN)
+        print(f"👁️ Eye color: {eye_color}")
         
+        print("👤 Creating UserProfile...")
         profile = UserProfile(
             user_id=uid,  # Добавлено обязательное поле
             season=season_mapping[season],
@@ -367,6 +378,7 @@ async def q8_lip_color(cb: CallbackQuery, state: FSMContext) -> None:
             makeup_style=data.get("makeup_style", ""),
             lip_color=data.get("lips", "")
         )
+        print("✅ UserProfile created successfully!")
         
         # Получаем каталог продуктов
         catalog_path = os.getenv("CATALOG_PATH", "assets/fixed_catalog.yaml")

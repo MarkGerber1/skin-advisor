@@ -32,16 +32,15 @@ async def send_latest_report(cb: CallbackQuery) -> None:
             return
         
         # Use callback.bot to send document
-        from aiogram import Bot
-        bot = cb.bot if hasattr(cb, 'bot') else None
-        if bot and cb.message:
-            await bot.send_document(
+        try:
+            await cb.bot.send_document(
                 chat_id=cb.message.chat.id,
                 document=FSInputFile(path),
                 caption="Ваш последний отчёт"
             )
-        else:
-            await cb.answer("Ошибка: не удалось получить bot instance", show_alert=True)
+        except Exception as send_error:
+            print(f"❌ Error sending document: {send_error}")
+            await cb.answer("Ошибка при отправке отчёта", show_alert=True)
             return
             
         await cb.answer()

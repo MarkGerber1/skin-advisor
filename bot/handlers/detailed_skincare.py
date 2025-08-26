@@ -375,14 +375,14 @@ async def q8_desired_effect(cb: CallbackQuery, state: FSMContext) -> None:
         skin_type_mapping = {
             "dry": SkinType.DRY,
             "oily": SkinType.OILY,
-            "combination": SkinType.COMBINATION,
+            "combination": SkinType.COMBO,  # Исправлено: COMBO, не COMBINATION
             "normal": SkinType.NORMAL
         }
         
         # Определяем чувствительность
         sensitivity_mapping = {
             "normal": Sensitivity.LOW,
-            "sensitive": Sensitivity.MEDIUM,
+            "sensitive": Sensitivity.MID,  # Исправлено: MID, не MEDIUM
             "very_sensitive": Sensitivity.HIGH
         }
         
