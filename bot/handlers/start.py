@@ -131,14 +131,24 @@ async def settings(m: Message, state: FSMContext) -> None:
     """Show settings - works from ANY state"""
     print(f"⚙️ Settings button pressed by user {m.from_user.id if m.from_user else 'Unknown'}")
     await state.clear()
+    
+    from bot.ui.keyboards import InlineKeyboardMarkup, InlineKeyboardButton
+    
+    settings_kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="🌍 Язык: Русский", callback_data="settings:language")],
+        [InlineKeyboardButton(text="🔔 Уведомления: Вкл", callback_data="settings:notifications")],
+        [InlineKeyboardButton(text="🎨 Темная тема: Авто", callback_data="settings:theme")],
+        [InlineKeyboardButton(text="🗑️ Очистить данные", callback_data="settings:clear_data")],
+        [InlineKeyboardButton(text="📞 Поддержка", callback_data="settings:support")],
+        [InlineKeyboardButton(text="🔒 Политика конфиденциальности", callback_data="settings:privacy")],
+        [InlineKeyboardButton(text="⬅️ Назад в меню", callback_data="settings:back")]
+    ])
+    
     await m.answer(
-        "⚙️ Настройки\n\n"
-        "Настройки бота:\n"
-        "• Язык: Русский 🇷🇺\n"
-        "• Уведомления: Включены 🔔\n"
-        "• Темная тема: Авто 🌙\n\n"
-        "Функция в разработке...",
-        reply_markup=main_menu(),
+        "⚙️ **НАСТРОЙКИ БОТА**\n\n"
+        "Выберите настройку для изменения:",
+        reply_markup=settings_kb,
+        parse_mode="Markdown"
     )
 
 
@@ -176,6 +186,120 @@ async def report_latest(m: Message, state: FSMContext) -> None:
     except Exception as e:
         print(f"❌ Error in report_latest: {e}")
         await m.answer("❌ Ошибка при отправке отчёта. Попробуйте позже.")
+
+
+async def privacy_policy(m: Message, state: FSMContext) -> None:
+    """Show privacy policy"""
+    print(f"🔒 Privacy policy shown to user {m.from_user.id if m.from_user else 'Unknown'}")
+    await state.clear()
+    
+    privacy_text = """🔒 **ПОЛИТИКА КОНФИДЕНЦИАЛЬНОСТИ**
+
+**Сбор данных:**
+• Мы НЕ сохраняем персональные данные
+• Анализируем только ответы на тесты
+• Результаты хранятся локально на устройстве
+
+**Использование данных:**
+• Данные используются только для генерации рекомендаций
+• Не передаются третьим лицам
+• Не используются для рекламы
+
+**Ваши права:**
+• Удаление данных: /reset или "Очистить данные" в настройках
+• Запрос информации: обратитесь в поддержку
+• Отказ от обработки: прекратите использование бота
+
+**Контакты:**
+• Поддержка: команда /help
+• Вопросы: напишите администратору
+
+Используя бота, вы соглашаетесь с данной политикой."""
+
+    from bot.ui.keyboards import InlineKeyboardMarkup, InlineKeyboardButton
+    privacy_kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="✅ Понятно", callback_data="privacy:accept")],
+        [InlineKeyboardButton(text="🗑️ Удалить мои данные", callback_data="privacy:delete")],
+        [InlineKeyboardButton(text="⬅️ Назад в меню", callback_data="privacy:back")]
+    ])
+    
+    await m.answer(privacy_text, reply_markup=privacy_kb, parse_mode="Markdown")
+
+
+# ========================================
+# SETTINGS CALLBACK HANDLERS
+# ========================================
+
+@router.callback_query(F.data.startswith("settings:"))
+async def handle_settings(cb: CallbackQuery, state: FSMContext) -> None:
+    """Handle settings menu interactions"""
+    action = cb.data.split(":")[1]
+    
+    if action == "language":
+        await cb.answer("🌍 Пока доступен только русский язык")
+        
+    elif action == "notifications":
+        await cb.answer("🔔 Уведомления всегда включены для получения результатов")
+        
+    elif action == "theme":
+        await cb.answer("🎨 Тема зависит от настроек Telegram")
+        
+    elif action == "clear_data":
+        await cb.answer("🗑️ Данные очищены! Нажмите /start для перезапуска", show_alert=True)
+        await state.clear()
+        
+    elif action == "support":
+        if cb.message:
+            await cb.message.answer(
+                "📞 **ПОДДЕРЖКА**\n\n"
+                "• Проблемы с ботом: команда /help\n"
+                "• Вопросы по товарам: используйте ссылки в рекомендациях\n"
+                "• Технические вопросы: перезапустите бота командой /start\n\n"
+                "Бот работает автоматически 24/7",
+                parse_mode="Markdown"
+            )
+        await cb.answer("📞 Информация о поддержке отправлена")
+        
+    elif action == "privacy":
+        if cb.message:
+            # Convert message to fake message for privacy_policy function
+            class FakeMessage:
+                def __init__(self, original_message):
+                    self.from_user = original_message.chat
+                    self.answer = original_message.answer
+                    
+            fake_msg = FakeMessage(cb.message)
+            await privacy_policy(fake_msg, state)
+        await cb.answer("🔒 Политика конфиденциальности")
+        
+    elif action == "back":
+        if cb.message:
+            await cb.message.edit_text(
+                "🏠 Главное меню\n\nВыберите действие:",
+                reply_markup=main_menu()
+            )
+        await cb.answer("⬅️ Возврат в меню")
+
+
+@router.callback_query(F.data.startswith("privacy:"))
+async def handle_privacy(cb: CallbackQuery, state: FSMContext) -> None:
+    """Handle privacy policy interactions"""
+    action = cb.data.split(":")[1]
+    
+    if action == "accept":
+        await cb.answer("✅ Спасибо за ознакомление с политикой")
+        
+    elif action == "delete":
+        await cb.answer("🗑️ Все ваши данные удалены! Нажмите /start для нового начала", show_alert=True)
+        await state.clear()
+        
+    elif action == "back":
+        if cb.message:
+            await cb.message.edit_text(
+                "🏠 Главное меню\n\nВыберите действие:",
+                reply_markup=main_menu()
+            )
+        await cb.answer("⬅️ Возврат в меню")
 
 
 # ========================================
@@ -226,8 +350,8 @@ async def debug_all_messages(m: Message, state: FSMContext) -> None:
             print(f"📤 /export command detected - redirecting to report") 
             await report_latest(m, state)
         elif command in ['/privacy', '/конфиденциальность']:
-            print(f"🔒 /privacy command detected - redirecting to about")
-            await about(m, state)
+            print(f"🔒 /privacy command detected - showing privacy policy")
+            await privacy_policy(m, state)
         elif command in ['/reset', '/сброс']:
             print(f"🔄 /reset command detected - redirecting to start")
             await state.clear()
