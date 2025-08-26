@@ -315,6 +315,9 @@ async def q8_lip_color(cb: CallbackQuery, state: FSMContext) -> None:
         data = await state.get_data()
         season = determine_season(data)
         
+        # Получаем uid пользователя
+        uid = int(cb.from_user.id) if cb.from_user and cb.from_user.id else 0
+        
         # Создаем UserProfile для системы рекомендаций
         from engine.models import UserProfile, Season, Undertone
         from engine.selector import SelectorV2
@@ -401,7 +404,6 @@ async def q8_lip_color(cb: CallbackQuery, state: FSMContext) -> None:
         text, kb = render_makeup_report(result)
         
         # Сохраняем результат для пользователя
-        uid = int(cb.from_user.id) if cb.from_user and cb.from_user.id else 0
         if uid:
             snapshot = {
                 "type": "detailed_palette",
