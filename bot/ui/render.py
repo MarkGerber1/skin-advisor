@@ -78,10 +78,30 @@ def render_makeup_report(result: Dict) -> Tuple[str, InlineKeyboardMarkup]:
     print(f"🎨 render_makeup_report called with result keys: {list(result.keys())}")
     m = result.get("makeup", {})
     print(f"💄 Makeup data keys: {list(m.keys()) if m else 'No makeup data'}")
-    face = m.get("face", [])
-    brows = m.get("brows", [])
-    eyes = m.get("eyes", [])
-    lips = m.get("lips", [])
+    
+    # Map SelectorV2 categories to display groups
+    face_categories = ['основа', 'консилер', 'корректор', 'пудра', 'румяна', 'бронзатор', 'контур', 'хайлайтер']
+    brows_categories = ['брови']
+    eyes_categories = ['тушь для ресниц', 'тени для век', 'подводка для глаз']
+    lips_categories = ['помада', 'блеск для губ', 'lip_liner']
+    
+    # Collect products by display groups
+    face = []
+    for cat in face_categories:
+        face.extend(m.get(cat, []))
+    
+    brows = []
+    for cat in brows_categories:
+        brows.extend(m.get(cat, []))
+        
+    eyes = []
+    for cat in eyes_categories:
+        eyes.extend(m.get(cat, []))
+        
+    lips = []
+    for cat in lips_categories:
+        lips.extend(m.get(cat, []))
+    
     print(f"🛍️ Products count: face={len(face)}, brows={len(brows)}, eyes={len(eyes)}, lips={len(lips)}")
 
     text_lines: List[str] = [
