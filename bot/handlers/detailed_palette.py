@@ -422,17 +422,28 @@ async def q8_lip_color(cb: CallbackQuery, state: FSMContext) -> None:
         if result and result.get("makeup"):
             makeup = result["makeup"]
             print(f"💄 Makeup categories in result: {list(makeup.keys())}")
+            
+            # CRITICAL: Show which categories have products vs which are empty
+            print("📊 MAKEUP PRODUCTS BREAKDOWN:")
             total_makeup_products = 0
+            populated_categories = []
+            empty_categories = []
+            
             for cat, products in makeup.items():
                 count = len(products) if products else 0
                 total_makeup_products += count
                 if count > 0:
+                    populated_categories.append(f"{cat}({count})")
                     print(f"  ✅ {cat}: {count} products")
                     for prod in products[:1]:  # Show 1 example
                         print(f"    📦 Example: {prod.get('name', 'No name')}")
                 else:
+                    empty_categories.append(cat)
                     print(f"  ❌ {cat}: EMPTY")
+            
             print(f"💄 Total makeup products found: {total_makeup_products}")
+            print(f"✅ POPULATED: {populated_categories}")
+            print(f"❌ EMPTY: {empty_categories}")
         else:
             print("❌ No makeup products in result")
         
