@@ -164,15 +164,15 @@ async def main() -> None:
                     pass
         return True  # Mark as handled
     
-    # CRITICAL: start_router MUST be first for side menu to work!
+    # ROUTER PRIORITY ORDER (CRITICAL!)
     dp.include_router(start_router)  # Side menu handlers - HIGHEST PRIORITY
-    dp.include_router(universal_router)  # Universal handlers 
-    dp.include_router(detailed_palette_router)  # Detailed palette test
-    dp.include_router(detailed_skincare_router)  # Detailed skincare test  
+    dp.include_router(detailed_palette_router)  # Detailed palette test - BEFORE universal
+    dp.include_router(detailed_skincare_router)  # Detailed skincare test - BEFORE universal
     dp.include_router(skincare_router)
-    dp.include_router(palette_router)
+    dp.include_router(palette_router) 
     dp.include_router(cart_router)
     dp.include_router(report_router)
+    dp.include_router(universal_router)  # Universal catch-all - LOWEST PRIORITY
 
     # Fallback handler removed - was intercepting all callbacks before routers!
     
