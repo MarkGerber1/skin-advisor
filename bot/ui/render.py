@@ -80,11 +80,16 @@ def render_makeup_report(result: Dict) -> Tuple[str, InlineKeyboardMarkup]:
     print(f"💄 Makeup data keys: {list(m.keys()) if m else 'No makeup data'}")
     
     # Map SelectorV2 categories to display groups
-    # Based on catalog categories: ['Брови', 'Помада', 'Тени', 'Тональный крем', 'Тушь']
+    # CRITICAL: Based on catalog categories: ['Брови', 'Помада', 'Тени', 'Тональный крем', 'Тушь']
     face_categories = ['основа', 'консилер', 'корректор', 'пудра', 'румяна', 'бронзатор', 'контур', 'хайлайтер', 'Тональный крем']
-    brows_categories = ['брови', 'Брови']
+    brows_categories = ['брови', 'Брови']  
     eyes_categories = ['тушь для ресниц', 'тени для век', 'подводка для глаз', 'Тушь', 'Тени']
     lips_categories = ['помада', 'блеск для губ', 'lip_liner', 'Помада']
+    
+    print(f"🔍 Looking for face categories: {face_categories}")
+    print(f"🔍 Looking for brows categories: {brows_categories}")
+    print(f"🔍 Looking for eyes categories: {eyes_categories}")
+    print(f"🔍 Looking for lips categories: {lips_categories}")
     
     # Collect products by display groups
     face = []
