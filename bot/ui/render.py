@@ -79,6 +79,17 @@ def render_makeup_report(result: Dict) -> Tuple[str, InlineKeyboardMarkup]:
     m = result.get("makeup", {})
     print(f"💄 Makeup data keys: {list(m.keys()) if m else 'No makeup data'}")
     
+    # CRITICAL DEBUG: Show all makeup categories and their content counts
+    if m:
+        print("🔍 DETAILED MAKEUP ANALYSIS:")
+        for key, products in m.items():
+            count = len(products) if products else 0
+            print(f"  📦 '{key}': {count} products")
+            if products and count > 0:
+                print(f"      First product: {products[0].get('name', 'No name')}")
+    else:
+        print("❌ No makeup data to analyze")
+    
     # Map SelectorV2 categories to display groups
     # CRITICAL: SelectorV2 returns in Russian keys like "тональный крем", "брови", "помада"
     face_categories = ['основа', 'консилер', 'корректор', 'пудра', 'румяна', 'бронзатор', 'контур', 'хайлайтер', 'тональный крем']
