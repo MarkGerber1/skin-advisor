@@ -388,6 +388,15 @@ async def q8_lip_color(cb: CallbackQuery, state: FSMContext) -> None:
         catalog_path = os.getenv("CATALOG_PATH", "assets/fixed_catalog.yaml")
         catalog_store = CatalogStore.instance(catalog_path)
         catalog = catalog_store.get()
+        print(f"📚 Catalog loaded: {len(catalog) if catalog else 0} products total")
+        if catalog:
+            makeup_categories = set()
+            for product in catalog:
+                if hasattr(product, 'category'):
+                    makeup_categories.add(product.category)
+            print(f"🎨 Available product categories: {sorted(makeup_categories)}")
+        else:
+            print("❌ No catalog loaded!")
         
         # Генерируем рекомендации через SelectorV2
         print(f"🔧 Profile: season={profile.season}, undertone={profile.undertone}, age={profile.age}")
