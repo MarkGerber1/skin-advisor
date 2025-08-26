@@ -88,19 +88,27 @@ def render_makeup_report(result: Dict) -> Tuple[str, InlineKeyboardMarkup]:
     # Collect products by display groups
     face = []
     for cat in face_categories:
-        face.extend(m.get(cat, []))
+        products = m.get(cat, [])
+        print(f"📦 Category '{cat}': {len(products)} products")
+        face.extend(products)
     
     brows = []
     for cat in brows_categories:
-        brows.extend(m.get(cat, []))
+        products = m.get(cat, [])
+        print(f"📦 Category '{cat}': {len(products)} products")
+        brows.extend(products)
         
     eyes = []
     for cat in eyes_categories:
-        eyes.extend(m.get(cat, []))
+        products = m.get(cat, [])
+        print(f"📦 Category '{cat}': {len(products)} products")
+        eyes.extend(products)
         
     lips = []
     for cat in lips_categories:
-        lips.extend(m.get(cat, []))
+        products = m.get(cat, [])
+        print(f"📦 Category '{cat}': {len(products)} products")
+        lips.extend(products)
     
     print(f"🛍️ Products count: face={len(face)}, brows={len(brows)}, eyes={len(eyes)}, lips={len(lips)}")
 

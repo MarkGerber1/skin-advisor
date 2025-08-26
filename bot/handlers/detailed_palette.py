@@ -390,6 +390,7 @@ async def q8_lip_color(cb: CallbackQuery, state: FSMContext) -> None:
         catalog = catalog_store.get()
         
         # Генерируем рекомендации через SelectorV2
+        print(f"🔧 Profile: season={profile.season}, undertone={profile.undertone}, age={profile.age}")
         selector = SelectorV2()
         result = selector.select_products_v2(
             profile=profile,
@@ -397,6 +398,12 @@ async def q8_lip_color(cb: CallbackQuery, state: FSMContext) -> None:
             partner_code="S1",
             redirect_base="https://skin-advisor.example.com"
         )
+        print(f"🛍️ Selector result keys: {list(result.keys()) if result else 'No result'}")
+        if result and result.get("makeup"):
+            total_makeup_products = sum(len(products) for products in result["makeup"].values())
+            print(f"💄 Total makeup products found: {total_makeup_products}")
+        else:
+            print("❌ No makeup products in result")
         
         # Извлекаем макияж продукты для отчета
         makeup_products = []
