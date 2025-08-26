@@ -413,8 +413,8 @@ async def q8_lip_color(cb: CallbackQuery, state: FSMContext) -> None:
         result = selector.select_products_v2(
             profile=profile,
             catalog=catalog,
-            partner_code="S1",
-            redirect_base="https://skin-advisor.example.com"
+            partner_code=os.getenv("PARTNER_CODE", "aff_skinbot"),
+            redirect_base=os.getenv("REDIRECT_BASE")  # None = direct links with aff param
         )
         print(f"🛍️ Selector result keys: {list(result.keys()) if result else 'No result'}")
         
