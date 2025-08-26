@@ -21,12 +21,29 @@ router = Router()
 
 @router.message(CommandStart())
 async def on_start(m: Message, state: FSMContext) -> None:
+    print(f"🏁 /start command from user {m.from_user.id if m.from_user else 'Unknown'}")
     await state.clear()
+    
+    # Clear any webhook conflicts
+    try:
+        from aiogram import Bot
+        bot = m.bot
+        await bot.delete_webhook(drop_pending_updates=True)
+        print("🧹 Webhook cleared for conflict resolution")
+    except Exception as e:
+        print(f"⚠️ Could not clear webhook: {e}")
+    
+    main_menu_kb = main_menu()
+    print(f"📋 Sending main menu with {len(main_menu_kb.keyboard)} rows")
+    
     await m.answer(
+        "🏠 **ГЛАВНОЕ МЕНЮ**\n\n"
         "Привет! ✨ Я подберу персональный уход и идеальные оттенки макияжа по вашему профилю.\n\n"
-        "Выберите режим:",
-        reply_markup=main_menu(),
+        "**👇 ИСПОЛЬЗУЙТЕ КНОПКИ НИЖЕ:**",
+        reply_markup=main_menu_kb,
+        parse_mode="Markdown"
     )
+    print("✅ Main menu sent successfully")
 
 
 @router.message(F.text == BTN_SKINCARE)
@@ -209,6 +226,32 @@ async def debug_all_messages(m: Message, state: FSMContext) -> None:
     if m.text in [BTN_PALETTE, BTN_SKINCARE, BTN_ABOUT, BTN_PICK, BTN_SETTINGS, BTN_REPORT]:
         print(f"🚨 CRITICAL: Side menu button '{m.text}' not handled by specific handlers!")
         await m.answer(f"⚠️ Кнопка '{m.text}' обнаружена, но не обработана. Проверьте логи.")
+    # Handle common commands user is sending
+    elif m.text and m.text.startswith('/'):
+        command = m.text.lower()
+        if command in ['/results', '/результаты']:
+            print(f"📊 /results command detected - redirecting to report")
+            await report_latest(m, state)
+        elif command in ['/export', '/экспорт']:
+            print(f"📤 /export command detected - redirecting to report") 
+            await report_latest(m, state)
+        elif command in ['/privacy', '/конфиденциальность']:
+            print(f"🔒 /privacy command detected - redirecting to about")
+            await about(m, state)
+        elif command in ['/reset', '/сброс']:
+            print(f"🔄 /reset command detected - redirecting to start")
+            await state.clear()
+            await m.answer("🔄 Состояние сброшено", reply_markup=main_menu())
+        elif command in ['/help', '/помощь']:
+            print(f"❓ /help command detected - redirecting to about")
+            await about(m, state)
+        else:
+            print(f"❓ Unknown command: '{m.text}'")
+            await m.answer(
+                f"❓ Неизвестная команда: {m.text}\n\n"
+                "Используйте кнопки ниже или /start",
+                reply_markup=main_menu()
+            )
     else:
         print(f"❓ Unknown message: '{m.text}'")
         # Don't respond to avoid spam
