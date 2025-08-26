@@ -102,29 +102,61 @@ def render_makeup_report(result: Dict) -> Tuple[str, InlineKeyboardMarkup]:
     print(f"🔍 Looking for eyes categories: {eyes_categories}")
     print(f"🔍 Looking for lips categories: {lips_categories}")
     
-    # Collect products by display groups
+    # Collect products by display groups - DIRECT KEY MAPPING
     face = []
+    # Direct mapping to exact SelectorV2 keys
+    direct_face_keys = ['Тональный крем']  # Exact key from SelectorV2
+    for cat in direct_face_keys:
+        products = m.get(cat, [])
+        print(f"📦 DIRECT KEY '{cat}': {len(products)} products")
+        face.extend(products)
+    
+    # Fallback to old categories if direct keys don't work
     for cat in face_categories:
         products = m.get(cat, [])
-        print(f"📦 Category '{cat}': {len(products)} products")
+        print(f"📦 FALLBACK '{cat}': {len(products)} products")
         face.extend(products)
     
     brows = []
+    # Direct mapping to exact SelectorV2 keys
+    direct_brows_keys = ['Брови']  # Exact key from SelectorV2
+    for cat in direct_brows_keys:
+        products = m.get(cat, [])
+        print(f"📦 DIRECT KEY '{cat}': {len(products)} products")
+        brows.extend(products)
+    
+    # Fallback
     for cat in brows_categories:
         products = m.get(cat, [])
-        print(f"📦 Category '{cat}': {len(products)} products")
+        print(f"📦 FALLBACK '{cat}': {len(products)} products")
         brows.extend(products)
         
     eyes = []
+    # Direct mapping to exact SelectorV2 keys
+    direct_eyes_keys = ['Тушь', 'Тени для век']  # Exact keys from SelectorV2
+    for cat in direct_eyes_keys:
+        products = m.get(cat, [])
+        print(f"📦 DIRECT KEY '{cat}': {len(products)} products")
+        eyes.extend(products)
+    
+    # Fallback
     for cat in eyes_categories:
         products = m.get(cat, [])
-        print(f"📦 Category '{cat}': {len(products)} products")
+        print(f"📦 FALLBACK '{cat}': {len(products)} products")
         eyes.extend(products)
         
     lips = []
+    # Direct mapping to exact SelectorV2 keys
+    direct_lips_keys = ['Помада']  # Exact key from SelectorV2
+    for cat in direct_lips_keys:
+        products = m.get(cat, [])
+        print(f"📦 DIRECT KEY '{cat}': {len(products)} products")
+        lips.extend(products)
+    
+    # Fallback
     for cat in lips_categories:
         products = m.get(cat, [])
-        print(f"📦 Category '{cat}': {len(products)} products")
+        print(f"📦 FALLBACK '{cat}': {len(products)} products")
         lips.extend(products)
     
     print(f"🛍️ Products count: face={len(face)}, brows={len(brows)}, eyes={len(eyes)}, lips={len(lips)}")
