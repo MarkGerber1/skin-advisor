@@ -32,21 +32,37 @@ async def on_start(m: Message, state: FSMContext) -> None:
 @router.message(F.text == BTN_SKINCARE)
 async def start_skincare(m: Message, state: FSMContext) -> None:
     """Start skincare test - works from ANY state"""
-    print(f"🧴 Skincare button pressed by user {m.from_user.id if m.from_user else 'Unknown'}")
+    print(f"🧴 SKINCARE BUTTON PRESSED! User: {m.from_user.id if m.from_user else 'Unknown'}")
+    print(f"🧴 Message text: '{m.text}'")
+    print(f"🧴 BTN_SKINCARE constant: '{BTN_SKINCARE}'")
+    print(f"🧴 Text match: {m.text == BTN_SKINCARE}")
     await state.clear()  # Clear any existing state
     
-    from .detailed_skincare import start_detailed_skincare_flow
-    await start_detailed_skincare_flow(m, state)
+    try:
+        from .detailed_skincare import start_detailed_skincare_flow
+        await start_detailed_skincare_flow(m, state)
+        print("🧴 Skincare flow started successfully!")
+    except Exception as e:
+        print(f"❌ Error starting skincare flow: {e}")
+        await m.answer("❌ Ошибка запуска диагностики. Попробуйте /start")
 
 
 @router.message(F.text == BTN_PALETTE)
 async def start_palette(m: Message, state: FSMContext) -> None:
     """Start palette test - works from ANY state"""
-    print(f"🎨 Palette button pressed by user {m.from_user.id if m.from_user else 'Unknown'}")
+    print(f"🎨 PALETTE BUTTON PRESSED! User: {m.from_user.id if m.from_user else 'Unknown'}")
+    print(f"🎨 Message text: '{m.text}'")
+    print(f"🎨 BTN_PALETTE constant: '{BTN_PALETTE}'")
+    print(f"🎨 Text match: {m.text == BTN_PALETTE}")
     await state.clear()  # Clear any existing state
     
-    from .detailed_palette import start_detailed_palette_flow
-    await start_detailed_palette_flow(m, state)
+    try:
+        from .detailed_palette import start_detailed_palette_flow
+        await start_detailed_palette_flow(m, state)
+        print("🎨 Palette flow started successfully!")
+    except Exception as e:
+        print(f"❌ Error starting palette flow: {e}")
+        await m.answer("❌ Ошибка запуска палитомера. Попробуйте /start")
 
 
 @router.message(F.text == BTN_ABOUT)
@@ -176,3 +192,23 @@ async def handle_any_unhandled_callback(cb: CallbackQuery, state: FSMContext) ->
             await cb.answer("❌ Ошибка. Нажмите /start")
         except:
             pass
+
+
+# ========================================
+# DEBUG CATCH-ALL MESSAGE HANDLER
+# ========================================
+
+@router.message()
+async def debug_all_messages(m: Message, state: FSMContext) -> None:
+    """Debug handler to catch ALL unhandled messages"""
+    print(f"🔍 UNHANDLED MESSAGE from user {m.from_user.id if m.from_user else 'Unknown'}")
+    print(f"📝 Message text: '{m.text}'")
+    print(f"🔍 Current state: {await state.get_state()}")
+    
+    # Check if it's a side menu button
+    if m.text in [BTN_PALETTE, BTN_SKINCARE, BTN_ABOUT, BTN_PICK, BTN_SETTINGS, BTN_REPORT]:
+        print(f"🚨 CRITICAL: Side menu button '{m.text}' not handled by specific handlers!")
+        await m.answer(f"⚠️ Кнопка '{m.text}' обнаружена, но не обработана. Проверьте логи.")
+    else:
+        print(f"❓ Unknown message: '{m.text}'")
+        # Don't respond to avoid spam
