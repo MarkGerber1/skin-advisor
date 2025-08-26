@@ -29,22 +29,30 @@ async def on_start(m: Message, state: FSMContext) -> None:
     )
 
 
-@router.message(F.text == BTN_SKINCARE, StateFilter(None))
+@router.message(F.text == BTN_SKINCARE)
 async def start_skincare(m: Message, state: FSMContext) -> None:
+    """Start skincare test - works from ANY state"""
+    print(f"🧴 Skincare button pressed by user {m.from_user.id if m.from_user else 'Unknown'}")
+    await state.clear()  # Clear any existing state
+    
     from .detailed_skincare import start_detailed_skincare_flow
-
     await start_detailed_skincare_flow(m, state)
 
 
-@router.message(F.text == BTN_PALETTE, StateFilter(None))
+@router.message(F.text == BTN_PALETTE)
 async def start_palette(m: Message, state: FSMContext) -> None:
+    """Start palette test - works from ANY state"""
+    print(f"🎨 Palette button pressed by user {m.from_user.id if m.from_user else 'Unknown'}")
+    await state.clear()  # Clear any existing state
+    
     from .detailed_palette import start_detailed_palette_flow
-
     await start_detailed_palette_flow(m, state)
 
 
-@router.message(F.text == BTN_ABOUT, StateFilter(None))
+@router.message(F.text == BTN_ABOUT)
 async def about(m: Message, state: FSMContext) -> None:
+    """Show about info - works from ANY state"""
+    print(f"ℹ️ About button pressed by user {m.from_user.id if m.from_user else 'Unknown'}")
     await state.clear()
     await m.answer(
         "🤖 О боте:\n\n"
@@ -58,8 +66,10 @@ async def about(m: Message, state: FSMContext) -> None:
     )
 
 
-@router.message(F.text == BTN_PICK, StateFilter(None))
+@router.message(F.text == BTN_PICK)
 async def my_picks(m: Message, state: FSMContext) -> None:
+    """Show user picks - works from ANY state"""
+    print(f"🛒 Picks button pressed by user {m.from_user.id if m.from_user else 'Unknown'}")
     await state.clear()
     
     # Проверяем, есть ли сохраненные отчеты пользователя
@@ -83,8 +93,10 @@ async def my_picks(m: Message, state: FSMContext) -> None:
     )
 
 
-@router.message(F.text == BTN_SETTINGS, StateFilter(None))
+@router.message(F.text == BTN_SETTINGS)
 async def settings(m: Message, state: FSMContext) -> None:
+    """Show settings - works from ANY state"""
+    print(f"⚙️ Settings button pressed by user {m.from_user.id if m.from_user else 'Unknown'}")
     await state.clear()
     await m.answer(
         "⚙️ Настройки\n\n"
@@ -97,8 +109,10 @@ async def settings(m: Message, state: FSMContext) -> None:
     )
 
 
-@router.message(F.text == BTN_REPORT, StateFilter(None))
+@router.message(F.text == BTN_REPORT)
 async def report_latest(m: Message, state: FSMContext) -> None:
+    """Show latest report - works from ANY state"""
+    print(f"📊 Report button pressed by user {m.from_user.id if m.from_user else 'Unknown'}")
     await state.clear()
     from aiogram.types import CallbackQuery
 
