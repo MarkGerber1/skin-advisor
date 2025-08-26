@@ -74,8 +74,39 @@ def save_text_pdf(uid: int, title: str, body_text: str) -> str:
                         clean_text = paragraph.strip()
                         # Remove markdown formatting
                         clean_text = clean_text.replace('**', '').replace('*', '')
-                        pdf.multi_cell(0, 6, clean_text)
-                        pdf.ln(2)
+                        
+                        # Remove emojis and unsupported Unicode characters for helvetica
+                        import re
+                        # Replace common emojis with text equivalents
+                        emoji_replacements = {
+                            '🎨': '[ПАЛИТРА]',
+                            '🧴': '[УХОД]',
+                            '✨': '[*]',
+                            '🌸': '[ВЕСНА]',
+                            '🌊': '[ЛЕТО]',
+                            '🍂': '[ОСЕНЬ]',
+                            '❄️': '[ЗИМА]',
+                            '💄': '[МАКИЯЖ]',
+                            '👁️': '[ГЛАЗА]',
+                            '💡': '[!]',
+                            '🏠': '[МЕНЮ]',
+                            '📄': '[ОТЧЕТ]',
+                            '🛍️': '[ТОВАРЫ]',
+                            '🔥': '[*]',
+                            '⚠️': '[!]',
+                            '❌': '[X]',
+                            '✅': '[OK]'
+                        }
+                        
+                        for emoji, replacement in emoji_replacements.items():
+                            clean_text = clean_text.replace(emoji, replacement)
+                        
+                        # Remove any remaining emojis/unicode symbols
+                        clean_text = re.sub(r'[^\x00-\x7F]+', '', clean_text)
+                        
+                        if clean_text.strip():  # Only add if text remains
+                            pdf.multi_cell(0, 6, clean_text)
+                            pdf.ln(2)
                     except Exception as e:
                         print(f"Warning: Skipping paragraph due to encoding: {e}")
                         continue
