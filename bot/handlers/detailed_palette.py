@@ -421,7 +421,9 @@ async def q8_lip_color(cb: CallbackQuery, state: FSMContext) -> None:
             season=season,
             profile=profile.model_dump(),
             result=result,
-            makeup_products=makeup_products
+            makeup_products=makeup_products,
+            tldr_report=tldr_report,
+            full_report=full_report
         )
         
         # Показываем результат с продуктами

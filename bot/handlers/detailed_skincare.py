@@ -460,7 +460,8 @@ async def q8_desired_effect(cb: CallbackQuery, state: FSMContext) -> None:
             profile=profile.model_dump(),
             result=result,
             skincare_products=skincare_products,
-            tldr_report=tldr_report
+            tldr_report=tldr_report,
+            full_report=full_report
         )
         
         # Показываем результат
