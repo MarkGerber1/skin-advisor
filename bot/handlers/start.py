@@ -61,6 +61,20 @@ async def about(m: Message, state: FSMContext) -> None:
 @router.message(F.text == BTN_PICK, StateFilter(None))
 async def my_picks(m: Message, state: FSMContext) -> None:
     await state.clear()
+    
+    # Проверяем, есть ли сохраненные отчеты пользователя
+    from bot.ui.pdf import load_last_report_json
+    
+    uid = int(m.from_user.id) if m.from_user and m.from_user.id else 0
+    if uid:
+        report_data = load_last_report_json(uid)
+        if report_data:
+            # Пользователь прошел тест, показываем корзину
+            from bot.handlers.cart import show_cart
+            await show_cart(m, state)
+            return
+    
+    # Если нет данных, показываем приглашение пройти тест
     await m.answer(
         "🛒 Моя подборка\n\n"
         "Здесь будут отображаться ваши сохраненные продукты.\n"

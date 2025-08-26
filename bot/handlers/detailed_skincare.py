@@ -509,8 +509,13 @@ async def q8_desired_effect(cb: CallbackQuery, state: FSMContext) -> None:
         await cb.answer("🎊 Диагностика завершена!")
         
     except Exception as e:
+        import traceback
         print(f"❌ Error in q8_desired_effect: {e}")
-        await cb.answer("⚠️ Ошибка при обработке результата")
+        print(f"📍 Traceback: {traceback.format_exc()}")
+        try:
+            await cb.answer("⚠️ Ошибка при обработке результата", show_alert=True)
+        except:
+            pass
 
 
 # Result handlers

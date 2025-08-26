@@ -134,3 +134,5 @@ def load_last_report_json(uid: int) -> Optional[Dict[str, Any]]:
     except Exception as e:
         print(f"❌ Error loading JSON report for user {uid}: {e}")
         return None
+
+
