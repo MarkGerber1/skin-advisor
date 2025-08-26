@@ -173,6 +173,13 @@ async def main() -> None:
     dp.include_router(cart_router)
     dp.include_router(report_router)
 
+    # Add fallback callback debug handler (catches unhandled callbacks)
+    @dp.callback_query()
+    async def debug_unhandled_callbacks(cb: CallbackQuery, state: FSMContext):
+        current_state = await state.get_state()
+        print(f"❗ UNHANDLED CALLBACK: '{cb.data}' | State: '{current_state}' | User: {cb.from_user.id if cb.from_user else 'Unknown'}")
+        await cb.answer("⚠️ Кнопка не обработана. Попробуйте /start")
+    
     print("Starting polling...")
     
     # Add graceful shutdown handler

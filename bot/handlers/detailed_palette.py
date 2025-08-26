@@ -437,6 +437,8 @@ async def q8_lip_color(cb: CallbackQuery, state: FSMContext) -> None:
             tldr_report=tldr_report,
             full_report=full_report
         )
+        print(f"💾 Saved to state: season={season}, result_keys={list(result.keys()) if result else 'No result'}")
+        print(f"📝 Reports: tldr={len(tldr_report)} chars, full={len(full_report)} chars")
         
         # Показываем результат с продуктами
         season_names = {
@@ -446,6 +448,7 @@ async def q8_lip_color(cb: CallbackQuery, state: FSMContext) -> None:
             "winter": "❄️ Холодная Зима"
         }
         
+        print(f"🎭 About to show result buttons with state: {await state.get_state()}")
         await cb.message.edit_text(
             f"🎉 **РЕЗУЛЬТАТ ТЕСТА**\n\n"
             f"**Ваш цветотип:** {season_names[season]}\n\n"
@@ -458,6 +461,7 @@ async def q8_lip_color(cb: CallbackQuery, state: FSMContext) -> None:
                 [InlineKeyboardButton(text="🏠 Главное меню", callback_data="universal:home")]
             ])
         )
+        print(f"✅ Result buttons displayed for state: {await state.get_state()}")
         await cb.answer("🎊 Тест завершен!")
         
     except Exception as e:
