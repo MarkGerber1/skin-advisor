@@ -147,20 +147,35 @@ async def report_latest(m: Message, state: FSMContext) -> None:
     """Show latest report - works from ANY state"""
     print(f"📊 Report button pressed by user {m.from_user.id if m.from_user else 'Unknown'}")
     await state.clear()
-    from aiogram.types import CallbackQuery
-
-    # Имитация нажатия кнопки для переиспользования логики report:latest
-    class _FakeCb(CallbackQuery):
-        pass
-
-    # Вызовем хендлер отправки отчёта напрямую
-    from bot.handlers.report import send_latest_report
-
-    cb = _FakeCb(id="0", from_user=m.from_user, chat_instance="0", data="report:latest", message=m)
+    
+    # Direct report sending without fake callback
     try:
-        await send_latest_report(cb)
-    except Exception:
-        await m.answer("Отчёт ещё не сформирован. Пройдите диагностику или палитрометр.")
+        import os
+        try:
+            from aiogram.types import FSInputFile
+        except ImportError:
+            from aiogram.types import InputFile as FSInputFile
+            
+        uid = int(m.from_user.id) if m.from_user and m.from_user.id else 0
+        if not uid:
+            await m.answer("❌ Ошибка идентификации пользователя")
+            return
+            
+        path = os.path.join("data", "reports", str(uid), "last.pdf")
+        if not os.path.exists(path):
+            await m.answer("📄 Отчёт ещё не сформирован.\nПройдите диагностику или палитомер!")
+            return
+        
+        # Direct document sending
+        await m.answer_document(
+            document=FSInputFile(path),
+            caption="📄 Ваш последний отчёт"
+        )
+        print("✅ Report sent successfully!")
+        
+    except Exception as e:
+        print(f"❌ Error in report_latest: {e}")
+        await m.answer("❌ Ошибка при отправке отчёта. Попробуйте позже.")
 
 
 # ========================================
