@@ -41,20 +41,22 @@ def render_skincare_report(result: Dict) -> Tuple[str, InlineKeyboardMarkup]:
     s = result.get("skincare", {})
     print(f"🧴 Skincare data keys: {list(s.keys()) if s else 'No skincare data'}")
     
-    # CRITICAL DEBUG: Show all skincare categories and their content counts
-    if s:
-        print("🔍 DETAILED SKINCARE ANALYSIS:")
-        for key, products in s.items():
-            count = len(products) if products else 0
-            print(f"  📦 '{key}': {count} products")
-            if products and count > 0:
-                print(f"      First product: {products[0].get('name', 'No name')}")
-    else:
-        print("❌ No skincare data to analyze")
+    # CRITICAL FIX: Use English keys from SelectorV2
+    # SelectorV2 returns: cleanser, toner, serum, moisturizer, eye_cream, sunscreen, mask
+    cleanser = s.get("cleanser", [])
+    toner = s.get("toner", [])
+    serum = s.get("serum", [])
+    moisturizer = s.get("moisturizer", [])
+    eye_cream = s.get("eye_cream", [])
+    sunscreen = s.get("sunscreen", [])
+    mask = s.get("mask", [])
     
-    am = s.get("AM", [])
-    pm = s.get("PM", [])
-    wk = s.get("weekly", [])
+    print(f"🧴 Found products: cleanser={len(cleanser)}, toner={len(toner)}, serum={len(serum)}, moisturizer={len(moisturizer)}, eye_cream={len(eye_cream)}, sunscreen={len(sunscreen)}, mask={len(mask)}")
+    
+    # Organize into AM/PM/Weekly for display
+    am = cleanser + toner + serum + moisturizer + sunscreen  # Morning routine
+    pm = cleanser + serum + moisturizer + eye_cream  # Evening routine  
+    wk = mask  # Weekly treatments
 
     text_lines: List[str] = [
         "📋 Персональный уход",
