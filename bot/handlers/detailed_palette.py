@@ -401,6 +401,15 @@ async def q8_lip_color(cb: CallbackQuery, state: FSMContext) -> None:
         # Генерируем рекомендации через SelectorV2
         print(f"🔧 Profile: season={profile.season}, undertone={profile.undertone}, age={profile.age}")
         selector = SelectorV2()
+        # Детальная диагностика каталога
+        print(f"📊 Catalog products: {len(catalog) if catalog else 0}")
+        if catalog:
+            cat_stats = {}
+            for prod in catalog:
+                cat = getattr(prod, 'category', 'Unknown')
+                cat_stats[cat] = cat_stats.get(cat, 0) + 1
+            print(f"📈 Category stats: {cat_stats}")
+        
         result = selector.select_products_v2(
             profile=profile,
             catalog=catalog,
@@ -408,8 +417,21 @@ async def q8_lip_color(cb: CallbackQuery, state: FSMContext) -> None:
             redirect_base="https://skin-advisor.example.com"
         )
         print(f"🛍️ Selector result keys: {list(result.keys()) if result else 'No result'}")
+        
+        # Детальный анализ результата макияжа
         if result and result.get("makeup"):
-            total_makeup_products = sum(len(products) for products in result["makeup"].values())
+            makeup = result["makeup"]
+            print(f"💄 Makeup categories in result: {list(makeup.keys())}")
+            total_makeup_products = 0
+            for cat, products in makeup.items():
+                count = len(products) if products else 0
+                total_makeup_products += count
+                if count > 0:
+                    print(f"  ✅ {cat}: {count} products")
+                    for prod in products[:1]:  # Show 1 example
+                        print(f"    📦 Example: {prod.get('name', 'No name')}")
+                else:
+                    print(f"  ❌ {cat}: EMPTY")
             print(f"💄 Total makeup products found: {total_makeup_products}")
         else:
             print("❌ No makeup products in result")
