@@ -543,7 +543,9 @@ async def show_products(cb: CallbackQuery, state: FSMContext) -> None:
         from bot.ui.render import render_makeup_report
         
         if result and result.get("makeup"):
+            print("🎨 Found makeup in result, calling render_makeup_report")
             text, kb = render_makeup_report(result)
+            print(f"📝 Rendered text length: {len(text)}, buttons: {len(kb.inline_keyboard) if kb else 0}")
             
             # Добавляем кнопку возврата
             buttons = kb.inline_keyboard if kb else []
@@ -554,8 +556,10 @@ async def show_products(cb: CallbackQuery, state: FSMContext) -> None:
                 f"💄 **РЕКОМЕНДОВАННЫЕ ПРОДУКТЫ**\n\n{text}",
                 reply_markup=kb
             )
+            print("✅ Products displayed successfully")
         else:
             # Fallback если нет продуктов
+            print("⚠️ No makeup found in result, showing fallback")
             season = data.get("season", "spring")
             season_names = {
                 "spring": "🌸 Яркой Весны",
@@ -585,9 +589,11 @@ async def show_products(cb: CallbackQuery, state: FSMContext) -> None:
 async def back_to_results(cb: CallbackQuery, state: FSMContext) -> None:
     """Вернуться к результатам теста"""
     try:
+        print(f"🔙 back:results called by user {cb.from_user.id if cb.from_user else 'Unknown'}")
         data = await state.get_data()
         season = data.get("season", "spring")
         tldr_report = data.get("tldr_report", "")
+        print(f"🌸 Returning to results for season: {season}")
         
         season_names = {
             "spring": "🌸 Яркая Весна",
@@ -610,7 +616,8 @@ async def back_to_results(cb: CallbackQuery, state: FSMContext) -> None:
                 [InlineKeyboardButton(text="🏠 Главное меню", callback_data="universal:home")]
             ])
         )
-        await cb.answer()
+        await cb.answer("🔙 Возврат к результатам")
+        print("✅ Back to results displayed successfully")
         
     except Exception as e:
         print(f"❌ Error in back_to_results: {e}")
