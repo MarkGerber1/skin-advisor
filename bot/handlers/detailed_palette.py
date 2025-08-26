@@ -162,8 +162,10 @@ def determine_season(answers: Dict[str, str]) -> str:
 
 async def start_detailed_palette_flow(message: Message, state: FSMContext) -> None:
     """Запуск детального теста на цветотип"""
+    print(f"🎨 Starting detailed palette flow for user {message.from_user.id if message.from_user else 'Unknown'}")
     await state.clear()
     await state.set_state(DetailedPaletteFlow.Q1_HAIR_COLOR)
+    print(f"✅ Set state to Q1_HAIR_COLOR")
     
     await message.answer(
         "🎨 **ПРОФЕССИОНАЛЬНЫЙ ТЕСТ НА ЦВЕТОТИП**\n\n"
@@ -178,8 +180,10 @@ async def start_detailed_palette_flow(message: Message, state: FSMContext) -> No
 # Handlers for each question
 @router.callback_query(F.data.startswith("hair:"), DetailedPaletteFlow.Q1_HAIR_COLOR)
 async def q1_hair_color(cb: CallbackQuery, state: FSMContext) -> None:
+    print(f"🎯 q1_hair_color called! data={cb.data}, user={cb.from_user.id if cb.from_user else 'Unknown'}")
     try:
         answer = cb.data.split(":")[1]  # a, b, c, d
+        print(f"💡 Processing hair color answer: {answer}")
         await state.update_data(hair=answer)
         await state.set_state(DetailedPaletteFlow.Q2_EYE_COLOR)
         
