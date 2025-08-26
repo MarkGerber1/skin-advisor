@@ -75,11 +75,14 @@ def render_skincare_report(result: Dict) -> Tuple[str, InlineKeyboardMarkup]:
 
 
 def render_makeup_report(result: Dict) -> Tuple[str, InlineKeyboardMarkup]:
+    print(f"🎨 render_makeup_report called with result keys: {list(result.keys())}")
     m = result.get("makeup", {})
+    print(f"💄 Makeup data keys: {list(m.keys()) if m else 'No makeup data'}")
     face = m.get("face", [])
     brows = m.get("brows", [])
     eyes = m.get("eyes", [])
     lips = m.get("lips", [])
+    print(f"🛍️ Products count: face={len(face)}, brows={len(brows)}, eyes={len(eyes)}, lips={len(lips)}")
 
     text_lines: List[str] = [
         "🎨 Макияж по палитре",
@@ -98,8 +101,12 @@ def render_makeup_report(result: Dict) -> Tuple[str, InlineKeyboardMarkup]:
     ]
 
     links = [*(face or []), *(brows or []), *(eyes or []), *(lips or [])]
+    print(f"🔗 Total links found: {len(links)}")
     # Если нет партнерских ссылок — показать только noop-кнопку
+    ref_links_count = sum(1 for it in links if bool(it.get("ref_link")))
+    print(f"🌐 Products with ref_link: {ref_links_count}")
     if not any(bool(it.get("ref_link")) for it in links):
+        print("⚠️ No ref_links found, returning noop keyboard")
         return "\n".join(text_lines), _noop_keyboard()
 
     buttons: List[List[InlineKeyboardButton]] = []

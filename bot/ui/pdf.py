@@ -57,9 +57,38 @@ def save_text_pdf(uid: int, title: str, body_text: str) -> str:
                 # Fallback to Arial
                 pdf.set_font("Arial", size=12)
             
-            # Add title
+            # Add title (clean emojis first)
             pdf.set_font_size(16)
-            pdf.multi_cell(0, 8, title)
+            clean_title = title
+            # Remove emojis from title too
+            emoji_replacements = {
+                '🎨': '[ПАЛИТРА]',
+                '🧴': '[УХОД]',
+                '✨': '',
+                '🌸': '',
+                '🌊': '',
+                '🍂': '',
+                '❄️': '',
+                '💄': '',
+                '👁️': '',
+                '💡': '',
+                '🏠': '',
+                '📄': '',
+                '🛍️': '',
+                '🔥': '',
+                '⚠️': '',
+                '❌': '',
+                '✅': ''
+            }
+            for emoji, replacement in emoji_replacements.items():
+                clean_title = clean_title.replace(emoji, replacement)
+            
+            # Remove any remaining unicode
+            import re
+            clean_title = re.sub(r'[^\x00-\x7F]+', '', clean_title)
+            
+            if clean_title.strip():
+                pdf.multi_cell(0, 8, clean_title)
             pdf.ln(5)
             
             # Add body text
