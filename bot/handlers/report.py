@@ -31,19 +31,21 @@ async def send_latest_report(cb: CallbackQuery) -> None:
             await cb.answer("Отчёт ещё не сформирован", show_alert=True)
             return
         
-        # Use callback.bot to send document
-        try:
-            await cb.bot.send_document(
-                chat_id=cb.message.chat.id,
-                document=FSInputFile(path),
-                caption="Ваш последний отчёт"
-            )
-        except Exception as send_error:
-            print(f"❌ Error sending document: {send_error}")
-            await cb.answer("Ошибка при отправке отчёта", show_alert=True)
-            return
+        # Simplified document sending
+        if cb.message:
+            try:
+                # Use message.answer_document instead of bot.send_document
+                await cb.message.answer_document(
+                    document=FSInputFile(path),
+                    caption="📄 Ваш последний отчёт"
+                )
+                await cb.answer("📄 Отчёт отправлен!")
+            except Exception as send_error:
+                print(f"❌ Error sending document: {send_error}")
+                await cb.answer("❌ Ошибка при отправке отчёта", show_alert=True)
+        else:
+            await cb.answer("❌ Ошибка: не найдено сообщение", show_alert=True)
             
-        await cb.answer()
     except Exception as e:
-        print(f"Error in send_latest_report: {e}")
-        await cb.answer("Ошибка при отправке отчёта", show_alert=True)
+        print(f"❌ Error in send_latest_report: {e}")
+        await cb.answer("❌ Ошибка при отправке отчёта", show_alert=True)

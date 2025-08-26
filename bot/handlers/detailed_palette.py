@@ -475,8 +475,11 @@ async def q8_lip_color(cb: CallbackQuery, state: FSMContext) -> None:
 async def show_description(cb: CallbackQuery, state: FSMContext) -> None:
     """Показать подробное описание цветотипа"""
     try:
+        print(f"🔥 result:description called by user {cb.from_user.id if cb.from_user else 'Unknown'}")
         data = await state.get_data()
+        print(f"🔍 State data keys: {list(data.keys())}")
         season = data.get("season", "spring")
+        print(f"🌸 Season from state: {season}")
         
         descriptions = {
             "spring": "🌸 **ЯРКАЯ ВЕСНА**\n\nВы обладатель теплого цветотипа с золотистым подтоном кожи. Ваши волосы имеют медовые или пшеничные оттенки, а глаза яркие и чистые.\n\n**Ваши особенности:**\n• Кожа с персиковым или золотистым подтоном\n• Волосы теплых светлых оттенков\n• Яркие, чистые глаза\n• Средний контраст внешности\n\n**Украшения:** Золото подчеркивает вашу естественную красоту",
@@ -506,8 +509,11 @@ async def show_description(cb: CallbackQuery, state: FSMContext) -> None:
 async def show_products(cb: CallbackQuery, state: FSMContext) -> None:
     """Показать рекомендованные продукты с кнопками покупки"""
     try:
+        print(f"🛍️ result:products called by user {cb.from_user.id if cb.from_user else 'Unknown'}")
         data = await state.get_data()
+        print(f"🔍 State data keys: {list(data.keys())}")
         result = data.get("result", {})
+        print(f"🎯 Product result keys: {list(result.keys()) if result else 'No result'}")
         
         # Используем реальные продукты из системы рекомендаций
         from bot.ui.render import render_makeup_report

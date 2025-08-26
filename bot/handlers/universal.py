@@ -7,6 +7,9 @@ from bot.ui.keyboards import main_menu, BTN_HOME
 router = Router()
 
 
+# Debug handler moved to end of router chain
+
+
 @router.callback_query(F.data == "universal:home")
 async def universal_home_callback(cb: CallbackQuery, state: FSMContext) -> None:
     """Universal home button - always works from any state"""
