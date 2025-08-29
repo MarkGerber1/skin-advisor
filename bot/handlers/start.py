@@ -309,6 +309,27 @@ async def handle_privacy(cb: CallbackQuery, state: FSMContext) -> None:
 # Text handlers above handle: BTN_PALETTE, BTN_SKINCARE, BTN_ABOUT, etc.
 
 
+async def help_command(m: Message, state: FSMContext) -> None:
+    """Show help information - works from ANY state"""
+    print(f"❓ Help requested by user {m.from_user.id if m.from_user else 'Unknown'}")
+    await state.clear()
+    await m.answer(
+        "❓ **Как пользоваться ботом:**\n\n"
+        "1. **🧴 Уход за кожей** — пройдите тест для определения типа кожи и получите персональные рекомендации\n"
+        "2. **🎨 Палитометр** — определите свой цветотип и подберите идеальные оттенки макияжа\n"
+        "3. **📄 Отчёт** — просмотрите результаты последней диагностики\n"
+        "4. **🛍 Моя подборка** — сохраненные рекомендованные продукты\n"
+        "5. **⚙️ Настройки** — настройки бота и профиля\n\n"
+        "**Команды:**\n"
+        "• `/start` — перезапуск бота\n"
+        "• `/help` — эта справка\n"
+        "• `/privacy` — политика конфиденциальности\n\n"
+        "💡 **Совет:** Начните с тестов для получения персональных рекомендаций!",
+        reply_markup=main_menu(),
+        parse_mode="Markdown"
+    )
+
+
 # ========================================
 # UNIVERSAL ANTI-HANG PROTECTION  
 # ========================================
@@ -357,8 +378,8 @@ async def debug_all_messages(m: Message, state: FSMContext) -> None:
             await state.clear()
             await m.answer("🔄 Состояние сброшено", reply_markup=main_menu())
         elif command in ['/help', '/помощь']:
-            print(f"❓ /help command detected - redirecting to about")
-            await about(m, state)
+            print(f"❓ /help command detected - showing help")
+            await help_command(m, state)
         else:
             print(f"❓ Unknown command: '{m.text}'")
             await m.answer(
