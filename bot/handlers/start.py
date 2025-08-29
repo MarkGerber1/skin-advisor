@@ -88,14 +88,20 @@ async def about(m: Message, state: FSMContext) -> None:
     print(f"ℹ️ About button pressed by user {m.from_user.id if m.from_user else 'Unknown'}")
     await state.clear()
     await m.answer(
-        "🤖 О боте:\n\n"
+        "🤖 **О боте:**\n\n"
         "Я - ваш персональный косметолог! ✨\n\n"
         "🔹 Анализ типа кожи и проблем\n"
         "🔹 Определение цветовой палитры (undertone)\n"
         "🔹 Персональные рекомендации по уходу и макияжу\n"
         "🔹 Прямые ссылки на проверенные продукты\n\n"
-        "💡 Пройдите диагностику и получите персонализированный отчет!",
+        "💡 Пройдите диагностику и получите персонализированный отчет!\n\n"
+        "═══════════════════════\n"
+        "👨‍💻 **Разработчик:** Laboratory from Larin R.R\n"
+        "📱 **Telegram:** @GerberMark\n"
+        "🌐 **Сайт:** stasya-makeuphair.ru\n"
+        "═══════════════════════",
         reply_markup=main_menu(),
+        parse_mode="Markdown"
     )
 
 
@@ -135,18 +141,16 @@ async def settings(m: Message, state: FSMContext) -> None:
     from bot.ui.keyboards import InlineKeyboardMarkup, InlineKeyboardButton
     
     settings_kb = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🌍 Язык: Русский", callback_data="settings:language")],
-        [InlineKeyboardButton(text="🔔 Уведомления: Вкл", callback_data="settings:notifications")],
-        [InlineKeyboardButton(text="🎨 Темная тема: Авто", callback_data="settings:theme")],
         [InlineKeyboardButton(text="🗑️ Очистить данные", callback_data="settings:clear_data")],
         [InlineKeyboardButton(text="📞 Поддержка", callback_data="settings:support")],
         [InlineKeyboardButton(text="🔒 Политика конфиденциальности", callback_data="settings:privacy")],
+        [InlineKeyboardButton(text="ℹ️ О боте", callback_data="settings:about")],
         [InlineKeyboardButton(text="⬅️ Назад в меню", callback_data="settings:back")]
     ])
     
     await m.answer(
         "⚙️ **НАСТРОЙКИ БОТА**\n\n"
-        "Выберите настройку для изменения:",
+        "Доступные функции:",
         reply_markup=settings_kb,
         parse_mode="Markdown"
     )
@@ -235,16 +239,7 @@ async def handle_settings(cb: CallbackQuery, state: FSMContext) -> None:
     """Handle settings menu interactions"""
     action = cb.data.split(":")[1]
     
-    if action == "language":
-        await cb.answer("🌍 Пока доступен только русский язык")
-        
-    elif action == "notifications":
-        await cb.answer("🔔 Уведомления всегда включены для получения результатов")
-        
-    elif action == "theme":
-        await cb.answer("🎨 Тема зависит от настроек Telegram")
-        
-    elif action == "clear_data":
+    if action == "clear_data":
         await cb.answer("🗑️ Данные очищены! Нажмите /start для перезапуска", show_alert=True)
         await state.clear()
         
@@ -271,6 +266,25 @@ async def handle_settings(cb: CallbackQuery, state: FSMContext) -> None:
             fake_msg = FakeMessage(cb.message)
             await privacy_policy(fake_msg, state)
         await cb.answer("🔒 Политика конфиденциальности")
+        
+    elif action == "about":
+        if cb.message:
+            await cb.message.answer(
+                "🤖 **О боте:**\n\n"
+                "Я - ваш персональный косметолог! ✨\n\n"
+                "🔹 Анализ типа кожи и проблем\n"
+                "🔹 Определение цветовой палитры (undertone)\n"
+                "🔹 Персональные рекомендации по уходу и макияжу\n"
+                "🔹 Прямые ссылки на проверенные продукты\n\n"
+                "💡 Пройдите диагностику и получите персонализированный отчет!\n\n"
+                "═══════════════════════\n"
+                "👨‍💻 **Разработчик:** Laboratory from Larin R.R\n"
+                "📱 **Telegram:** @GerberMark\n"
+                "🌐 **Сайт:** stasya-makeuphair.ru\n"
+                "═══════════════════════",
+                parse_mode="Markdown"
+            )
+        await cb.answer("ℹ️ Информация о боте отправлена")
         
     elif action == "back":
         if cb.message:
