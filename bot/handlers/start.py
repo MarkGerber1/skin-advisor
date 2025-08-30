@@ -14,6 +14,7 @@ from bot.ui.keyboards import (
     BTN_SETTINGS,
     BTN_REPORT,
 )
+from .fsm_coordinator import get_fsm_coordinator, require_single_flow
 
 
 router = Router()
@@ -48,37 +49,95 @@ async def on_start(m: Message, state: FSMContext) -> None:
 
 @router.message(F.text == BTN_SKINCARE)
 async def start_skincare(m: Message, state: FSMContext) -> None:
-    """Start skincare test - works from ANY state"""
+    """Start skincare test with FSM coordination"""
     print(f"🧴 SKINCARE BUTTON PRESSED! User: {m.from_user.id if m.from_user else 'Unknown'}")
-    print(f"🧴 Message text: '{m.text}'")
-    print(f"🧴 BTN_SKINCARE constant: '{BTN_SKINCARE}'")
-    print(f"🧴 Text match: {m.text == BTN_SKINCARE}")
+    
+    coordinator = get_fsm_coordinator()
+    user_id = m.from_user.id if m.from_user else 0
+    
+    # Check for flow conflicts
+    can_start, conflict_msg = await coordinator.can_start_flow(user_id, "detailed_skincare")
+    if not can_start:
+        from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+        kb = InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text="🔄 Продолжить текущий", callback_data="recovery:continue")],
+            [InlineKeyboardButton(text="🔄 Начать заново", callback_data="recovery:restart:detailed_skincare")],
+            [InlineKeyboardButton(text="🏠 Домой", callback_data="recovery:home")]
+        ])
+        await m.answer(conflict_msg, reply_markup=kb, parse_mode="Markdown")
+        return
+    
+    # Check for session recovery
+    recovery_msg = await coordinator.get_recovery_message(user_id)
+    if recovery_msg:
+        from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+        kb = InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text="🔄 Продолжить", callback_data="recovery:continue")],
+            [InlineKeyboardButton(text="🔄 Начать заново", callback_data="recovery:restart:detailed_skincare")],
+            [InlineKeyboardButton(text="🏠 Домой", callback_data="recovery:home")]
+        ])
+        await m.answer(recovery_msg, reply_markup=kb, parse_mode="Markdown")
+        return
+    
     await state.clear()  # Clear any existing state
     
     try:
+        # Start new coordinated flow
+        await coordinator.start_flow(user_id, "detailed_skincare", state)
+        
         from .detailed_skincare import start_detailed_skincare_flow
         await start_detailed_skincare_flow(m, state)
         print("🧴 Skincare flow started successfully!")
     except Exception as e:
         print(f"❌ Error starting skincare flow: {e}")
+        await coordinator.abandon_flow(user_id, state)
         await m.answer("❌ Ошибка запуска диагностики. Попробуйте /start")
 
 
 @router.message(F.text == BTN_PALETTE)
 async def start_palette(m: Message, state: FSMContext) -> None:
-    """Start palette test - works from ANY state"""
+    """Start palette test with FSM coordination"""
     print(f"🎨 PALETTE BUTTON PRESSED! User: {m.from_user.id if m.from_user else 'Unknown'}")
-    print(f"🎨 Message text: '{m.text}'")
-    print(f"🎨 BTN_PALETTE constant: '{BTN_PALETTE}'")
-    print(f"🎨 Text match: {m.text == BTN_PALETTE}")
+    
+    coordinator = get_fsm_coordinator()
+    user_id = m.from_user.id if m.from_user else 0
+    
+    # Check for flow conflicts
+    can_start, conflict_msg = await coordinator.can_start_flow(user_id, "detailed_palette")
+    if not can_start:
+        from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+        kb = InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text="🔄 Продолжить текущий", callback_data="recovery:continue")],
+            [InlineKeyboardButton(text="🔄 Начать заново", callback_data="recovery:restart:detailed_palette")],
+            [InlineKeyboardButton(text="🏠 Домой", callback_data="recovery:home")]
+        ])
+        await m.answer(conflict_msg, reply_markup=kb, parse_mode="Markdown")
+        return
+    
+    # Check for session recovery
+    recovery_msg = await coordinator.get_recovery_message(user_id)
+    if recovery_msg:
+        from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+        kb = InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text="🔄 Продолжить", callback_data="recovery:continue")],
+            [InlineKeyboardButton(text="🔄 Начать заново", callback_data="recovery:restart:detailed_palette")],
+            [InlineKeyboardButton(text="🏠 Домой", callback_data="recovery:home")]
+        ])
+        await m.answer(recovery_msg, reply_markup=kb, parse_mode="Markdown")
+        return
+    
     await state.clear()  # Clear any existing state
     
     try:
+        # Start new coordinated flow
+        await coordinator.start_flow(user_id, "detailed_palette", state)
+        
         from .detailed_palette import start_detailed_palette_flow
         await start_detailed_palette_flow(m, state)
         print("🎨 Palette flow started successfully!")
     except Exception as e:
         print(f"❌ Error starting palette flow: {e}")
+        await coordinator.abandon_flow(user_id, state)
         await m.answer("❌ Ошибка запуска палитомера. Попробуйте /start")
 
 
@@ -314,6 +373,92 @@ async def handle_privacy(cb: CallbackQuery, state: FSMContext) -> None:
                 reply_markup=main_menu()
             )
         await cb.answer("⬅️ Возврат в меню")
+
+
+@router.callback_query(F.data.startswith("recovery:"))
+async def handle_recovery(cb: CallbackQuery, state: FSMContext) -> None:
+    """Handle session recovery interactions"""
+    from aiogram.types import CallbackQuery
+    
+    coordinator = get_fsm_coordinator()
+    user_id = cb.from_user.id if cb.from_user else 0
+    
+    action = cb.data.split(":")[1]
+    
+    if action == "continue":
+        # Continue existing session
+        session = await coordinator.get_session(user_id)
+        if not session:
+            await cb.answer("❌ Сеанс истек, начните заново", show_alert=True)
+            if cb.message:
+                await cb.message.edit_text(
+                    "🏠 Главное меню\n\nВыберите действие:",
+                    reply_markup=main_menu()
+                )
+            return
+        
+        # Resume flow based on current flow
+        try:
+            if session.current_flow == "detailed_palette":
+                from .detailed_palette import resume_palette_flow
+                await resume_palette_flow(cb, state, session)
+            elif session.current_flow == "detailed_skincare":
+                from .detailed_skincare import resume_skincare_flow
+                await resume_skincare_flow(cb, state, session)
+            else:
+                await cb.answer("❌ Неизвестный тип потока", show_alert=True)
+                await coordinator.abandon_flow(user_id, state)
+                
+        except ImportError:
+            # Fallback if resume functions don't exist yet
+            await cb.answer("🔄 Сеанс восстановлен, продолжайте с текущего шага")
+            
+    elif action == "restart":
+        # Start new flow, abandon current
+        await coordinator.abandon_flow(user_id, state)
+        
+        # Get new flow type
+        parts = cb.data.split(":")
+        if len(parts) >= 3:
+            new_flow = parts[2]
+            
+            # Start new flow
+            await coordinator.start_flow(user_id, new_flow, state)
+            
+            if new_flow == "detailed_palette":
+                from .detailed_palette import start_detailed_palette_flow
+                # Convert callback to message for compatibility
+                fake_message = type('obj', (object,), {
+                    'from_user': cb.from_user,
+                    'answer': cb.message.answer if cb.message else lambda *a, **k: None
+                })()
+                await start_detailed_palette_flow(fake_message, state)
+                
+            elif new_flow == "detailed_skincare":
+                from .detailed_skincare import start_detailed_skincare_flow
+                # Convert callback to message for compatibility
+                fake_message = type('obj', (object,), {
+                    'from_user': cb.from_user,
+                    'answer': cb.message.answer if cb.message else lambda *a, **k: None
+                })()
+                await start_detailed_skincare_flow(fake_message, state)
+        
+        await cb.answer("🔄 Новый тест запущен")
+        
+    elif action == "home":
+        # Go to main menu, abandon flow
+        await coordinator.abandon_flow(user_id, state)
+        
+        if cb.message:
+            await cb.message.edit_text(
+                "🏠 **ГЛАВНОЕ МЕНЮ**\n\n"
+                "Привет! ✨ Я подберу персональный уход и идеальные оттенки макияжа по вашему профилю.\n\n"
+                "**👇 ИСПОЛЬЗУЙТЕ КНОПКИ НИЖЕ:**",
+                reply_markup=main_menu(),
+                parse_mode="Markdown"
+            )
+        
+        await cb.answer("🏠 Возврат в главное меню")
 
 
 # ========================================

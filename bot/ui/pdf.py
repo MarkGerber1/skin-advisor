@@ -47,13 +47,30 @@ def save_text_pdf(uid: int, title: str, body_text: str) -> str:
             
             # Try to add Unicode font for Russian text
             try:
-                font_path = "assets/fonts/DejaVuSans.ttf"
-                if os.path.exists(font_path):
-                    pdf.add_font("DejaVu", "", font_path, uni=True)
-                    pdf.set_font("DejaVu", size=12)
-                else:
-                    raise Exception("DejaVu font not found")
-            except Exception:
+                # Check multiple possible font locations
+                font_paths = [
+                    ".skin-advisor/assets/DejaVuSans.ttf",  # Actual location
+                    "assets/fonts/DejaVuSans.ttf",
+                    "assets/DejaVuSans.ttf",
+                    "fonts/DejaVuSans.ttf",
+                    os.path.join(os.path.dirname(__file__), "..", "..", ".skin-advisor", "assets", "DejaVuSans.ttf"),
+                    os.path.join(os.path.dirname(__file__), "..", "..", "assets", "fonts", "DejaVuSans.ttf"),
+                ]
+                
+                font_found = False
+                for font_path in font_paths:
+                    if os.path.exists(font_path):
+                        pdf.add_font("DejaVu", "", font_path, uni=True)
+                        pdf.set_font("DejaVu", size=12)
+                        font_found = True
+                        print(f"✅ Using DejaVu font from: {font_path}")
+                        break
+                
+                if not font_found:
+                    raise Exception("DejaVu font not found in any location")
+                    
+            except Exception as e:
+                print(f"⚠️ DejaVu font issue: {e}, falling back to Arial")
                 # Fallback to Arial
                 pdf.set_font("Arial", size=12)
             

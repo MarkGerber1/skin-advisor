@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import urllib.parse
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Optional
+from .shade_normalization import get_shade_normalizer
+from .explain_generator import get_explain_generator
 from pathlib import Path
 import yaml
 
@@ -27,6 +29,7 @@ def _filter_catalog(
     finish: List[str] | None = None,
     undertone: str | None = None,
 ) -> List[Product]:
+    """Original filter function - excludes OOS products"""
     result: List[Product] = []
     for p in catalog:
         if category and (str(p.category).lower() != category.lower()):
@@ -50,6 +53,98 @@ def _filter_catalog(
             continue
         result.append(p)
     return result
+
+
+def _filter_catalog_with_fallback(
+    catalog: List[Product],
+    *,
+    category: str | None = None,
+    subcategory: str | None = None,
+    tags: List[str] | None = None,
+    actives: List[str] | None = None,
+    finish: List[str] | None = None,
+    undertone: str | None = None,
+    target_shade: str | None = None,
+    season: str | None = None,
+    limit: int = 3,
+) -> List[Product]:
+    """Enhanced filter with OOS fallback logic"""
+    
+    # First try: exact match with in_stock products only
+    in_stock_results = []
+    all_matches = []
+    
+    normalizer = get_shade_normalizer()
+    target_shade_info = normalizer.normalize_shade(target_shade) if target_shade else None
+    
+    for p in catalog:
+        # Basic filters
+        if category and (str(p.category).lower() != category.lower()):
+            continue
+        if subcategory and (str(p.subcategory or "").lower() != subcategory.lower()):
+            continue
+        if tags:
+            if not set(map(str.lower, p.tags or [])).intersection(set(map(str.lower, tags))):
+                continue
+        if actives:
+            if not set(map(str.lower, p.actives or [])).intersection(set(map(str.lower, actives))):
+                continue
+        if finish:
+            if not p.finish or (str(p.finish).lower() not in [f.lower() for f in finish]):
+                continue
+        if undertone and p.shade:
+            if str(p.shade.undertone).lower() != undertone.lower():
+                continue
+        
+        all_matches.append(p)
+        if p.in_stock:
+            in_stock_results.append(p)
+    
+    # If we have enough in-stock results, return them
+    if len(in_stock_results) >= limit:
+        return in_stock_results[:limit]
+    
+    # Fallback logic for OOS products
+    result = in_stock_results.copy()
+    
+    if target_shade_info and target_shade_info.shade_id != "unknown":
+        # Step 1: Try neighboring shades
+        neighbors = normalizer.get_shade_neighbors(target_shade_info.shade_id)
+        for neighbor_id in neighbors:
+            if len(result) >= limit:
+                break
+            
+            neighbor_products = [p for p in all_matches 
+                               if p.in_stock and 
+                               normalizer.normalize_shade(p.shade_name).shade_id == neighbor_id]
+            result.extend(neighbor_products)
+        
+        # Step 2: Try same category/finish alternatives
+        if len(result) < limit:
+            same_category = [p for p in all_matches 
+                           if p.in_stock and 
+                           (not target_shade_info.depth or 
+                            normalizer.normalize_shade(p.shade_name).depth == target_shade_info.depth)]
+            result.extend(same_category)
+        
+        # Step 3: Try season universals
+        if len(result) < limit and season:
+            universals = normalizer.get_season_universals(season)
+            for universal_id in universals:
+                if len(result) >= limit:
+                    break
+                
+                universal_products = [p for p in all_matches 
+                                    if p.in_stock and 
+                                    normalizer.normalize_shade(p.shade_name).shade_id == universal_id]
+                result.extend(universal_products)
+    
+    # Final fallback: any in-stock product from same category
+    if len(result) < limit:
+        remaining = [p for p in all_matches if p.in_stock and p not in result]
+        result.extend(remaining)
+    
+    return result[:limit]
 
 
 class SelectorV2:
@@ -86,6 +181,49 @@ class SelectorV2:
             "eye_cream": ["eye_cream", "крем_глаз"],
             "sunscreen": ["sunscreen", "spf", "санскрин"],
             "mask": ["mask", "маска"]
+        }
+        
+        # Season-specific makeup preferences
+        self.season_preferences = {
+            "spring": {
+                "colors": ["coral", "peach", "bright pink", "warm beige", "golden"],
+                "intensity": {"high": "bright", "medium": "moderate", "low": "subtle"},
+                "finishes": ["dewy", "natural", "luminous"]
+            },
+            "summer": {
+                "colors": ["berry", "plum", "dusty rose", "mauve", "soft pink"],
+                "intensity": {"high": "muted bright", "medium": "medium", "low": "very soft"},
+                "finishes": ["matte", "satin", "semi-matte"]
+            },
+            "autumn": {
+                "colors": ["rust", "bronze", "deep orange", "warm brown", "golden"],
+                "intensity": {"high": "rich", "medium": "warm", "low": "earthy"},
+                "finishes": ["matte", "velvet", "semi-matte"]
+            },
+            "winter": {
+                "colors": ["deep red", "burgundy", "cool pink", "icy blue", "silver"],
+                "intensity": {"high": "dramatic", "medium": "bold", "low": "classic"},
+                "finishes": ["matte", "metallic", "satin"]
+            }
+        }
+        
+        # Enhanced category priorities and rules
+        self.category_rules = {
+            "foundation": {"priority": 1, "required_match": ["undertone", "season"]},
+            "concealer": {"priority": 2, "required_match": ["undertone"]},
+            "corrector": {"priority": 3, "required_match": ["concerns"]},
+            "powder": {"priority": 4, "required_match": ["skin_type"]},
+            "blush": {"priority": 5, "required_match": ["season", "contrast"]},
+            "bronzer": {"priority": 6, "required_match": ["season", "undertone"]},
+            "contour": {"priority": 7, "required_match": ["contrast"]},
+            "highlighter": {"priority": 8, "required_match": ["season", "contrast"]},
+            "eyebrow": {"priority": 9, "required_match": ["hair_color"]},
+            "mascara": {"priority": 10, "required_match": ["eye_color"]},
+            "eyeshadow": {"priority": 11, "required_match": ["season", "eye_color", "contrast"]},
+            "eyeliner": {"priority": 12, "required_match": ["eye_color", "contrast"]},
+            "lipstick": {"priority": 13, "required_match": ["season", "undertone", "contrast"]},
+            "lip_gloss": {"priority": 14, "required_match": ["season", "undertone"]},
+            "lip_liner": {"priority": 15, "required_match": ["undertone"]}
         }
     
     def _load_compatibility_rules(self) -> Dict:
@@ -140,6 +278,104 @@ class SelectorV2:
             priorities.append("anti_aging")
         
         return priorities
+    
+    def _get_season_makeup_intensity(self, season: str, contrast: str) -> str:
+        """Get makeup intensity based on season and contrast"""
+        season_prefs = self.season_preferences.get(season.lower(), {})
+        intensities = season_prefs.get("intensity", {})
+        return intensities.get(contrast.lower(), "medium")
+    
+    def _get_season_colors(self, season: str) -> List[str]:
+        """Get recommended colors for season"""
+        season_prefs = self.season_preferences.get(season.lower(), {})
+        return season_prefs.get("colors", [])
+    
+    def _get_season_finishes(self, season: str) -> List[str]:
+        """Get recommended finishes for season"""
+        season_prefs = self.season_preferences.get(season.lower(), {})
+        return season_prefs.get("finishes", ["natural"])
+    
+    def _select_by_category_rules(self, category: str, profile: UserProfile, products: List[Product]) -> List[Product]:
+        """Enhanced category-specific selection with season/contrast rules"""
+        category_rule = self.category_rules.get(category, {})
+        required_matches = category_rule.get("required_match", [])
+        
+        filtered_products = []
+        season_colors = self._get_season_colors(profile.season) if profile.season else []
+        season_finishes = self._get_season_finishes(profile.season) if profile.season else []
+        
+        for product in products:
+            score = 0
+            
+            # Basic in-stock filter
+            if not product.in_stock:
+                continue
+                
+            # Season color matching
+            if "season" in required_matches and profile.season:
+                product_tags = [tag.lower() for tag in product.tags or []]
+                if any(color.lower() in " ".join(product_tags) for color in season_colors):
+                    score += 2
+                elif category in ["foundation", "concealer"]:  # Always include base products
+                    score += 1
+            
+            # Undertone matching
+            if "undertone" in required_matches and profile.undertone:
+                if hasattr(product, 'undertone_match') and product.undertone_match:
+                    if str(product.undertone_match).lower() == profile.undertone.lower():
+                        score += 3
+                    elif str(product.undertone_match).lower() == "neutral":
+                        score += 1  # Neutral is generally compatible
+            
+            # Contrast matching (intensity)
+            if "contrast" in required_matches and profile.contrast:
+                intensity = self._get_season_makeup_intensity(profile.season or "autumn", profile.contrast)
+                product_tags = [tag.lower() for tag in product.tags or []]
+                
+                if intensity == "bright" and any(tag in product_tags for tag in ["bright", "vibrant", "bold"]):
+                    score += 2
+                elif intensity == "subtle" and any(tag in product_tags for tag in ["subtle", "soft", "natural"]):
+                    score += 2
+                elif intensity == "medium":
+                    score += 1  # Medium works for most
+            
+            # Eye color matching for eye products
+            if "eye_color" in required_matches and profile.eye_color:
+                if category in ["eyeshadow", "eyeliner", "mascara"]:
+                    eye_color = str(profile.eye_color).lower()
+                    product_tags = [tag.lower() for tag in product.tags or []]
+                    
+                    # Complementary color rules
+                    complementary_map = {
+                        "blue": ["bronze", "copper", "warm brown", "orange"],
+                        "green": ["purple", "plum", "pink", "red"],
+                        "brown": ["blue", "purple", "green", "gold"],
+                        "hazel": ["purple", "green", "bronze", "gold"],
+                        "gray": ["purple", "pink", "plum"]
+                    }
+                    
+                    if eye_color in complementary_map:
+                        if any(comp_color in " ".join(product_tags) for comp_color in complementary_map[eye_color]):
+                            score += 2
+            
+            # Skin type matching for base products
+            if category in ["foundation", "powder", "primer"] and profile.skin_type:
+                skin_type = str(profile.skin_type).lower()
+                product_tags = [tag.lower() for tag in product.tags or []]
+                
+                if skin_type == "oily" and any(tag in product_tags for tag in ["matte", "oil-free", "long-wear"]):
+                    score += 2
+                elif skin_type == "dry" and any(tag in product_tags for tag in ["dewy", "hydrating", "luminous"]):
+                    score += 2
+                elif skin_type in ["combo", "normal"]:
+                    score += 1  # Most products work
+            
+            if score > 0:
+                filtered_products.append((product, score))
+        
+        # Sort by score and return top products
+        filtered_products.sort(key=lambda x: x[1], reverse=True)
+        return [product for product, score in filtered_products[:3]]
     
     def _get_color_preferences(self, profile: UserProfile) -> Dict[str, str]:
         """Get color preferences based on season and undertone"""
@@ -236,7 +472,7 @@ class SelectorV2:
         skincare_results = self._select_skincare_v2(profile, skincare_products, partner_code, redirect_base)
         
         # Generate makeup recommendations (15 categories)
-        makeup_results = self._select_makeup_v2(profile, makeup_products, partner_code, redirect_base)
+        makeup_results = self._select_makeup_v2_enhanced(profile, makeup_products, partner_code, redirect_base)
         
         return {
             "skincare": skincare_results,
@@ -320,8 +556,10 @@ class SelectorV2:
         product_cat_lower = product_category.lower()
         return any(variant in product_cat_lower for variant in category_variants)
     
-    def _product_to_dict(self, product: Product, partner_code: str, redirect_base: Optional[str], profile: UserProfile) -> Dict:
-        """Convert product to dict with affiliate links"""
+    def _product_to_dict(self, product: Product, partner_code: str, redirect_base: Optional[str], profile: UserProfile, is_fallback: bool = False, fallback_reason: Optional[str] = None) -> Dict:
+        """Convert product to dict with affiliate links and explanation"""
+        explain_generator = get_explain_generator()
+        
         return {
             "id": getattr(product, 'key', getattr(product, 'id', '')),
             "brand": product.brand,
@@ -337,6 +575,8 @@ class SelectorV2:
             ),
             "actives": product.actives,
             "tags": product.tags,
+            "in_stock": product.in_stock,
+            "explain": explain_generator.generate_explain(product, profile, is_fallback, fallback_reason),
             "match_reason": self._get_match_reason(product, profile)
         }
     
@@ -364,6 +604,50 @@ class SelectorV2:
             reasons.append("лёгкая текстура для жирной кожи")
         
         return "; ".join(reasons) or "соответствует вашему профилю"
+    
+    def _select_makeup_v2_enhanced(self, profile: UserProfile, products: List[Product], partner_code: str, redirect_base: Optional[str]) -> Dict:
+        """Enhanced makeup selection with comprehensive category coverage"""
+        makeup_results = {
+            "base": [],      # foundation, concealer, corrector, powder
+            "face": [],      # blush, bronzer, contour, highlighter  
+            "eyes": [],      # eyebrow, eyeshadow, eyeliner, mascara
+            "lips": []       # lipstick, lip_gloss, lip_liner
+        }
+        
+        # Group categories by sections
+        category_groups = {
+            "base": ["foundation", "concealer", "corrector", "powder"],
+            "face": ["blush", "bronzer", "contour", "highlighter"],
+            "eyes": ["eyebrow", "eyeshadow", "eyeliner", "mascara"],
+            "lips": ["lipstick", "lip_gloss", "lip_liner"]
+        }
+        
+        for section, categories in category_groups.items():
+            section_products = []
+            
+            for category in categories:
+                # Use enhanced category-specific selection
+                category_products = [p for p in products if self._matches_category(p.category, self.makeup_categories.get(category, [category]))]
+                
+                if category_products:
+                    selected = self._select_by_category_rules(category, profile, category_products)
+                    
+                    # Convert to dict format with enhanced info
+                    for product in selected:
+                        product_dict = self._product_to_dict(product, partner_code, redirect_base, profile)
+                        product_dict["section"] = section
+                        product_dict["category_priority"] = self.category_rules.get(category, {}).get("priority", 99)
+                        section_products.append(product_dict)
+            
+            # Sort by priority and limit per section
+            section_products.sort(key=lambda x: x.get("category_priority", 99))
+            makeup_results[section] = section_products[:5]  # Max 5 per section
+        
+        return makeup_results
+    
+    def _select_makeup_v2(self, profile: UserProfile, products: List[Product], partner_code: str, redirect_base: Optional[str]) -> Dict:
+        """Fallback to enhanced method"""
+        return self._select_makeup_v2_enhanced(profile, products, partner_code, redirect_base)
     
     def _check_compatibility(self, products: List[Product]) -> List[str]:
         """Check for incompatible ingredient combinations"""
@@ -474,17 +758,22 @@ def select_products(
         lip_products = _pick_top(_filter_catalog(catalog, category="lipstick"), 2)
 
     def _as_dict(p: Product) -> Dict:
+        explain_generator = get_explain_generator()
+        
         return {
-            "id": p.id,
+            "id": getattr(p, 'key', getattr(p, 'id', '')),
             "brand": p.brand,
-            "name": p.name,
+            "name": getattr(p, 'title', getattr(p, 'name', '')),
             "category": p.category,
             "price": p.price,
-            "price_currency": p.price_currency,
-            "link": str(p.link) if p.link else None,
+            "price_currency": getattr(p, 'price_currency', 'RUB'),
+            "link": getattr(p, 'buy_url', getattr(p, 'link', None)),
             "ref_link": _with_affiliate(
-                str(p.link) if p.link else None, partner_code, redirect_base
+                getattr(p, 'buy_url', getattr(p, 'link', None)), 
+                partner_code, redirect_base
             ),
+            "in_stock": p.in_stock,
+            "explain": explain_generator.generate_explain(p, user_profile)
         }
 
     # Fill skincare
