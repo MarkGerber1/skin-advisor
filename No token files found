@@ -1,0 +1,24 @@
+[33mcommit b8526927aaf178240ff693c59f5d5272bc4e2f35[m
+Author: MarkGerber <magnumbest7@gmail.com>
+Date:   Sun Aug 24 12:58:57 2025 +0300
+
+    feat: Engine v2 with PDF reports and 5-button menu
+
+[33mcommit fd3b471be3ac2ef23ac6e2e88edbf300ed001bd2[m
+Author: MarkGerber <magnumbest7@gmail.com>
+Date:   Wed Aug 20 10:30:44 2025 +0300
+
+    feat: FSM flows, engine models/catalog/cache/selector, catalog linter with backup+JSONL logging, UI render, tests, Docker setup, and README/PROMPT_FULL
+
+[33mcommit 4915f579a7670749b31b5b6f27307b65f2c9972f[m
+Merge: 4fc9f22 bdbcf47
+Author: MarkGerber <magnumbest7@gmail.com>
+Date:   Thu Aug 14 11:09:59 2025 +0300
+
+    Merge remote main into local with ours strategy
+
+[33mcommit 2753b2b1281a312145cb10984198f4796948b606[m
+Author: MarkGerber <magnumbest7@gmail.com>
+Date:   Wed Aug 13 10:44:43 2025 +0300
+
+    Skin-Advisor: only_in_stock + live pricing + PDF + webhook/ngrok + CI + tests

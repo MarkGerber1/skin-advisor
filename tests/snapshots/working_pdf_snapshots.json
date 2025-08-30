@@ -1,0 +1,44 @@
+{
+  "simple_text_report": {
+    "test_name": "simple_text_report",
+    "signature": {
+      "exists": true,
+      "file_size": 24552,
+      "content_hash": "a5c47a4db6a7e2c157dc48e02905ba2b",
+      "size_category": "large"
+    },
+    "created_at": 1756498317.7338164,
+    "tolerances": {
+      "size_tolerance": 0.2,
+      "allow_size_category_change": false
+    }
+  },
+  "medium_text_report": {
+    "test_name": "medium_text_report",
+    "signature": {
+      "exists": true,
+      "file_size": 31393,
+      "content_hash": "549c83c96ce4e47313752bbb632eeb6c",
+      "size_category": "large"
+    },
+    "created_at": 1756498317.8207927,
+    "tolerances": {
+      "size_tolerance": 0.2,
+      "allow_size_category_change": false
+    }
+  },
+  "large_report_with_products": {
+    "test_name": "large_report_with_products",
+    "signature": {
+      "exists": true,
+      "file_size": 34682,
+      "content_hash": "92eff61384b95f39a36374c61112d783",
+      "size_category": "large"
+    },
+    "created_at": 1756498317.9369462,
+    "tolerances": {
+      "size_tolerance": 0.2,
+      "allow_size_category_change": false
+    }
+  }
+}

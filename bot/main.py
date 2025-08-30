@@ -10,82 +10,82 @@ print("Starting imports...")
 try:
     from aiogram import Bot, Dispatcher
 
-    print("✓ aiogram imported")
+    print("OK aiogram imported")
 except ImportError as e:
-    print(f"✗ Failed to import aiogram: {e}")
+    print(f"ERROR Failed to import aiogram: {e}")
     raise
 
 try:
     from engine.catalog_store import CatalogStore
 
-    print("✓ CatalogStore imported")
+    print("OK CatalogStore imported")
 except ImportError as e:
-    print(f"✗ Failed to import CatalogStore: {e}")
+    print(f"ERROR Failed to import CatalogStore: {e}")
     raise
 
 # Routers
 try:
     from bot.handlers.start import router as start_router
 
-    print("✓ start router imported")
+    print("OK start router imported")
 except ImportError as e:
-    print(f"✗ Failed to import start router: {e}")
+    print(f"ERROR Failed to import start router: {e}")
     raise
 
 try:
     from bot.handlers.flow_skincare import router as skincare_router
 
-    print("✓ skincare router imported")
+    print("OK skincare router imported")
 except ImportError as e:
-    print(f"✗ Failed to import skincare router: {e}")
+    print(f"ERROR Failed to import skincare router: {e}")
     raise
 
 try:
     from bot.handlers.flow_palette import router as palette_router
 
-    print("✓ palette router imported")
+    print("OK palette router imported")
 except ImportError as e:
-    print(f"✗ Failed to import palette router: {e}")
+    print(f"ERROR Failed to import palette router: {e}")
     raise
 
 try:
     from bot.handlers.cart import router as cart_router
 
-    print("✓ cart router imported")
+    print("OK cart router imported")
 except ImportError as e:
-    print(f"✗ Failed to import cart router: {e}")
+    print(f"ERROR Failed to import cart router: {e}")
     raise
 
 try:
     from bot.handlers.report import router as report_router
 
-    print("✓ report router imported")
+    print("OK report router imported")
 except ImportError as e:
-    print(f"✗ Failed to import report router: {e}")
+    print(f"ERROR Failed to import report router: {e}")
     raise
 
 try:
     from bot.handlers.universal import router as universal_router
 
-    print("✓ universal router imported")
+    print("OK universal router imported")
 except ImportError as e:
-    print(f"✗ Failed to import universal router: {e}")
+    print(f"ERROR Failed to import universal router: {e}")
     raise
 
 try:
     from bot.handlers.detailed_palette import router as detailed_palette_router
 
-    print("✓ detailed palette router imported")
+    print("OK detailed palette router imported")
 except ImportError as e:
-    print(f"✗ Failed to import detailed palette router: {e}")
+    print(f"ERROR Failed to import detailed palette router: {e}")
     raise
 
 try:
     from bot.handlers.detailed_skincare import router as detailed_skincare_router
 
-    print("✓ detailed skincare router imported")
+    print("OK detailed skincare router imported")
 except ImportError as e:
-    print(f"✗ Failed to import detailed skincare router: {e}")
+    print(f"ERROR Failed to import detailed skincare router: {e}")
     raise
 
 
