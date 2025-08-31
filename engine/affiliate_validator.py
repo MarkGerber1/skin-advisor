@@ -277,3 +277,7 @@ if __name__ == "__main__":
     if affiliate_url.issues:
         print(f"Issues: {affiliate_url.issues}")
 
+
+
+
+

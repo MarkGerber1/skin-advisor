@@ -15,6 +15,11 @@ class CartItem:
     name: Optional[str] = None
     price: Optional[float] = None
     price_currency: Optional[str] = None
+    ref_link: Optional[str] = None
+    explain: Optional[str] = None
+    category: Optional[str] = None
+    in_stock: bool = True
+    added_at: Optional[str] = None
 
 
 class CartStore:

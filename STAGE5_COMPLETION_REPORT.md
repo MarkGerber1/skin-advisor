@@ -172,3 +172,7 @@ verification = tester.verify_snapshot("test_name", pdf_path)
 
 *Статус: ЭТАП 5 УСПЕШНО ЗАВЕРШЕН ✅*
 
+
+
+
+

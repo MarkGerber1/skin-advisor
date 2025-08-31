@@ -176,3 +176,7 @@ if __name__ == "__main__":
     else:
         print("❌ Minimal PDF generation failed")
 
+
+
+
+
