@@ -414,19 +414,30 @@ async def q8_desired_effect(cb: CallbackQuery, state: FSMContext) -> None:
         
         # Генерируем рекомендации через SelectorV2
         selector = SelectorV2()
+        print(f"🔧 DETAILED SKINCARE: Calling selector with profile: skin_type={profile.skin_type}, concerns={[c for c in concerns]}")
         result = selector.select_products_v2(
             profile=profile,
             catalog=catalog,
             partner_code=os.getenv("PARTNER_CODE", "aff_skinbot"),
             redirect_base=os.getenv("REDIRECT_BASE")  # None = direct links with aff param
         )
+        print(f"📦 DETAILED SKINCARE result: {list(result.keys()) if result else 'None'}")
+        if result and result.get("skincare"):
+            for step, products in result["skincare"].items():
+                print(f"  🧴 Step {step}: {len(products)} products")
         
         # Извлекаем продукты для ухода за кожей
         skincare_products = []
         skincare_data = result.get("skincare", {})
-        for time_products in skincare_data.values():
+        print(f"📊 DETAILED SKINCARE: skincare_data keys: {list(skincare_data.keys())}")
+        for step_name, time_products in skincare_data.items():
             if isinstance(time_products, list):
+                print(f"  ✅ Step {step_name}: {len(time_products)} products available")
                 skincare_products.extend(time_products[:2])  # Первые 2 из каждой категории
+            else:
+                print(f"  ⚠️ Step {step_name}: unexpected type {type(time_products)}")
+        
+        print(f"📦 DETAILED SKINCARE: Total extracted {len(skincare_products)} products")
         
         # Генерируем отчет
         report_data = ReportData(
