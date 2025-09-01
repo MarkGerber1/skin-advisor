@@ -30,6 +30,9 @@ class FSMCoordinator:
         self._active_sessions: Dict[int, SessionData] = {}
         self._session_timeout = 1800  # 30 минут
         
+        # ПРИНУДИТЕЛЬНАЯ ОЧИСТКА при инициализации
+        self._active_sessions.clear()  # Force clear all sessions on init
+        
         # Определение потоков и их шагов
         self.flow_definitions = {
             "palette": {
@@ -61,8 +64,21 @@ class FSMCoordinator:
     async def can_start_flow(self, user_id: int, requested_flow: str) -> Tuple[bool, Optional[str]]:
         """Проверяет можно ли запустить новый поток"""
         
-        # Очистка истекших сеансов
-        await self._cleanup_expired_sessions()
+        # АГРЕССИВНАЯ очистка истекших сеансов
+        print(f"🔍 can_start_flow: user={user_id}, flow={requested_flow}")
+        print(f"📊 Sessions before cleanup: {len(self._active_sessions)}")
+        await self.force_cleanup_expired_sessions()
+        print(f"📊 Sessions after cleanup: {len(self._active_sessions)}")
+        
+        # Дополнительно: очистить конкретного пользователя если старая сессия
+        if user_id in self._active_sessions:
+            old_session = self._active_sessions[user_id]
+            import time
+            age = time.time() - old_session.last_activity
+            print(f"⚠️ Found existing session for user {user_id}, age: {age:.0f}s")
+            if age > 60:  # 1 минута - принудительно очищаем
+                print(f"🧹 Force clearing old session for user {user_id}")
+                await self.clear_user_session(user_id)
         
         # Проверка активного сеанса
         if user_id in self._active_sessions:
