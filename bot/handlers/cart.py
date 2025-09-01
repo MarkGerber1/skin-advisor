@@ -102,7 +102,7 @@ async def _find_product_in_recommendations(user_id: int, product_id: str) -> Opt
 
 @router.callback_query(F.data.startswith("cart:add:"))
 async def add_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
-    """Улучшенное добавление товара в корзину с полной информацией"""
+    """Улучшенное добавление товара в корзину с полной валидацией и защитой от дублей"""
     if not cb.data:
         await cb.answer()
         return
@@ -116,64 +116,85 @@ async def add_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
     if not user_id:
         await cb.answer("Неизвестный пользователь", show_alert=True)
         return
+    
+    try:
+        # Парсим callback data: cart:add:product_id или cart:add:product_id:variant_id
+        parts = cb.data.split(":", 3)
+        product_id = parts[2] if len(parts) > 2 else ""
+        variant_id = parts[3] if len(parts) > 3 else None
         
-    product_id = cb.data.split(":", 2)[2]
-    print(f"🛒 Adding product {product_id} to cart for user {user_id}")
-    
-    # Ищем полную информацию о товаре
-    print(f"🔍 Searching for product {product_id} in recommendations...")
-    product = await _find_product_in_recommendations(user_id, product_id)
-    print(f"🔍 Found product: {product is not None}")
-    
-    if not product:
-        # Товар не найден в рекомендациях
-        await cb.answer("⚠️ Товар недоступен. Обновите рекомендации", show_alert=True)
-        # Метрика: товар не найден
-        metrics.track_event("cart_add_failed", user_id, {"reason": "product_not_found", "product_id": product_id})
-        return
-    
-    # Проверяем доступность товара
-    if not product.get("in_stock", True):
-        await cb.answer("⚠️ Товар временно недоступен", show_alert=True)
-        # Метрика: товар не в наличии
-        metrics.track_event("cart_add_failed", user_id, {"reason": "out_of_stock", "product_id": product_id})
-        return
-    
-    # Создаем полный объект CartItem
-    cart_item = CartItem(
-        product_id=product_id,
-        qty=1,
-        brand=product.get("brand", ""),
-        name=product.get("name", ""),
-        price=product.get("price", 0.0),
-        price_currency=product.get("price_currency", "₽"),
-        ref_link=product.get("ref_link", ""),
-        explain=product.get("explain", ""),
-        category=product.get("category", ""),
-        in_stock=product.get("in_stock", True),
-        added_at=datetime.now().isoformat()
-    )
-    
-    # Добавляем в корзину
-    store.add(user_id, cart_item)
-    
-    # Метрика: успешное добавление
-    metrics.track_event("cart_add_success", user_id, {
-        "product_id": product_id,
-        "category": product.get("category", ""),
-        "price": product.get("price", 0.0)
-    })
-    
-    # Формируем красивое уведомление
-    brand_name = f"{product.get('brand', '')} {product.get('name', '')}"
-    explain = product.get("explain", "")
-    price_text = f"{product.get('price', 0)} {product.get('price_currency', '₽')}"
-    
-    message = f"✅ Добавлено в корзину!\n\n🛍️ {brand_name}\n💰 {price_text}"
-    if explain:
-        message += f"\n💡 {explain}"
-    
-    await cb.answer(message, show_alert=True)
+        print(f"🛒 Adding product {product_id} (variant: {variant_id}) to cart for user {user_id}")
+        
+        # Используем улучшенный сервис корзины
+        from services.cart_service import get_cart_service, CartServiceError, CartErrorCode
+        cart_service = get_cart_service()
+        
+        # Добавляем товар с полной валидацией
+        cart_item = await cart_service.add_item(
+            user_id=user_id,
+            product_id=product_id,
+            variant_id=variant_id,
+            qty=1
+        )
+        
+        # Метрика: успешное добавление
+        metrics.track_event("cart_add_success", user_id, {
+            "product_id": product_id,
+            "variant_id": variant_id,
+            "category": cart_item.category,
+            "price": cart_item.price
+        })
+        
+        # Формируем красивое уведомление
+        brand_name = f"{cart_item.brand or ''} {cart_item.name or ''}".strip()
+        price_text = f"{cart_item.price} {cart_item.price_currency}"
+        
+        message = f"✅ Добавлено в корзину!\n\n🛍️ {brand_name}"
+        if cart_item.variant_name:
+            message += f" ({cart_item.variant_name})"
+        message += f"\n💰 {price_text}"
+        
+        if cart_item.explain:
+            message += f"\n💡 {cart_item.explain}"
+        
+        await cb.answer(message, show_alert=True)
+        
+    except CartServiceError as e:
+        print(f"❌ Cart service error: {e}")
+        
+        # Метрика: ошибка добавления
+        metrics.track_event("cart_add_failed", user_id, {
+            "reason": e.code.value,
+            "product_id": parts[2] if len(parts) > 2 else "",
+            "variant_id": parts[3] if len(parts) > 3 else None,
+            "error_message": e.message
+        })
+        
+        # Пользовательские сообщения об ошибках
+        error_messages = {
+            CartErrorCode.INVALID_PRODUCT_ID: "⚠️ Некорректный ID товара",
+            CartErrorCode.INVALID_VARIANT_ID: "⚠️ Некорректный вариант товара", 
+            CartErrorCode.PRODUCT_NOT_FOUND: "⚠️ Товар не найден в каталоге",
+            CartErrorCode.OUT_OF_STOCK: "⚠️ Товар временно недоступен",
+            CartErrorCode.VARIANT_NOT_SUPPORTED: "⚠️ Этот товар не поддерживает варианты",
+            CartErrorCode.VARIANT_MISMATCH: "⚠️ Неподходящий вариант для данного товара",
+            CartErrorCode.DUPLICATE_REQUEST: "⚠️ Подождите, товар уже добавляется...",
+        }
+        
+        user_message = error_messages.get(e.code, "⚠️ Не удалось добавить товар в корзину")
+        await cb.answer(user_message, show_alert=True)
+        
+    except Exception as e:
+        print(f"❌ Unexpected error in add_to_cart: {e}")
+        
+        # Метрика: неожиданная ошибка
+        metrics.track_event("cart_add_failed", user_id, {
+            "reason": "unexpected_error",
+            "product_id": parts[2] if len(parts) > 2 else "",
+            "error_message": str(e)
+        })
+        
+        await cb.answer("⚠️ Произошла ошибка. Попробуйте позже", show_alert=True)
 
 
 @router.message(F.text == "🛒 Моя подборка")
@@ -466,7 +487,7 @@ async def handle_unavailable_product(cb: CallbackQuery, state: FSMContext) -> No
         lines.append(f"   💰 {price_text}")
         if explain:
             lines.append(f"   💡 {explain}")
-        lines.append("")
+    lines.append("")
         
         # Кнопки для добавления альтернативы
         alt_id = str(alt.get('id', ''))
