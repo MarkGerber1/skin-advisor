@@ -109,13 +109,22 @@ async def main() -> None:
         print(f"ERROR loading catalog: {e}")
         # Продолжаем работу даже без каталога
 
-    # Загружаем конфигурацию
-    from config.env import get_settings
-    settings = get_settings()
-    token = settings.bot_token
+    # Загружаем конфигурацию с fallback для Railway
+    token = None
+    try:
+        from config.env import get_settings
+        settings = get_settings()
+        token = settings.bot_token
+        print("✅ Config loaded from config.env")
+    except (ImportError, ModuleNotFoundError) as e:
+        print(f"⚠️ Config module not found: {e}")
+        print("🔄 Falling back to os.getenv...")
+        token = os.getenv("BOT_TOKEN")
+        if token:
+            print("✅ BOT_TOKEN loaded from environment")
     
     if not token:
-        raise RuntimeError("BOT_TOKEN is not set")
+        raise RuntimeError("BOT_TOKEN is not set - check environment variables")
 
     print(f"Starting bot with token: {token[:10]}...")
     bot = Bot(token)
