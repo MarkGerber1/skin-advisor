@@ -34,6 +34,20 @@ def main_menu() -> ReplyKeyboardMarkup:
     )
 
 
+def main_menu_inline() -> InlineKeyboardMarkup:
+    """Главное меню бота (inline версия для edit_text)"""
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text=BTN_PALETTE, callback_data="start_palette")],
+            [InlineKeyboardButton(text=BTN_SKINCARE, callback_data="start_skincare")],
+            [InlineKeyboardButton(text=BTN_ABOUT, callback_data="about"), 
+             InlineKeyboardButton(text=BTN_PICK, callback_data="show_cart")],
+            [InlineKeyboardButton(text=BTN_REPORT, callback_data="show_report"), 
+             InlineKeyboardButton(text=BTN_SETTINGS, callback_data="settings")],
+        ]
+    )
+
+
 def back_button() -> ReplyKeyboardMarkup:
     """Кнопка возврата"""
     return ReplyKeyboardMarkup(

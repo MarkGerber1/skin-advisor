@@ -158,10 +158,15 @@ async def handle_any_unhandled_callback(cb: CallbackQuery, state: FSMContext) ->
     print(f"🔍 Current state: {await state.get_state()}")
     
     # Don't handle test-related callbacks - let them be processed by test routers
-    if cb.data and any(prefix in cb.data for prefix in ['hair:', 'eye:', 'skin:', 'lips:', 'face:', 'contrast:', 'style:']):
+    if cb.data and any(prefix in cb.data for prefix in ['hair:', 'eye:', 'skin:', 'lips:', 'face:', 'contrast:', 'style:', 'undertone:']):
         print(f"🧪 Test callback detected: {cb.data} - should be handled by test router")
+        print(f"⚠️ State mismatch - resetting to allow proper handling")
+        
+        # Clear state to allow proper handling
+        await state.clear()
+        
         try:
-            await cb.answer("⚠️ Кнопка теста не обработана. Попробуйте снова или /start")
+            await cb.answer("⚠️ Состояние сброшено. Начните тест заново с /start")
         except:
             pass
         return

@@ -391,9 +391,11 @@ async def handle_recovery(cb: CallbackQuery, state: FSMContext) -> None:
         if not session:
             await cb.answer("❌ Сеанс истек, начните заново", show_alert=True)
             if cb.message:
+                # Используем inline версию для edit_text
+                from bot.ui.keyboards import main_menu_inline
                 await cb.message.edit_text(
                     "🏠 Главное меню\n\nВыберите действие:",
-                    reply_markup=main_menu()
+                    reply_markup=main_menu_inline()
                 )
             return
         
