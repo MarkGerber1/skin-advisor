@@ -382,7 +382,7 @@ async def handle_privacy(cb: CallbackQuery, state: FSMContext) -> None:
         if cb.message:
             await cb.message.edit_text(
                 "🏠 Главное меню\n\nВыберите действие:",
-                reply_markup=main_menu()
+                reply_markup=main_menu_inline()
             )
         await cb.answer("⬅️ Возврат в меню")
 
