@@ -49,7 +49,7 @@ async def _find_product_in_recommendations(user_id: int, product_id: str) -> Opt
     try:
         # Получаем профиль пользователя
         from engine.models import UserProfile
-        from engine.catalog import get_catalog_manager
+        from engine.catalog_store import CatalogStore
         
         # Получаем реальный профиль пользователя из FSM coordinator
         from bot.handlers.fsm_coordinator import get_fsm_coordinator
@@ -84,7 +84,7 @@ async def _find_product_in_recommendations(user_id: int, product_id: str) -> Opt
             print(f"🔄 Using fallback profile: skin_type={user_profile.skin_type}, season={user_profile.season}")
         
         # Получаем каталог и строим рекомендации
-        catalog_manager = get_catalog_manager()
+        catalog_store = CatalogStore()
         catalog = catalog_manager.get_catalog()
         
         # Используем селектор для получения рекомендаций
@@ -451,7 +451,7 @@ async def _find_product_alternatives(user_id: int, unavailable_product_id: str) 
     """Найти альтернативы для недоступного товара"""
     try:
         from engine.models import UserProfile
-        from engine.catalog import get_catalog_manager
+        from engine.catalog_store import CatalogStore
         
         # Получаем профиль пользователя (тестовый)
         test_profile = UserProfile(
@@ -464,7 +464,7 @@ async def _find_product_alternatives(user_id: int, unavailable_product_id: str) 
         )
         
         # Получаем каталог и строим рекомендации с fallback
-        catalog_manager = get_catalog_manager()
+        catalog_store = CatalogStore()
         catalog = catalog_manager.get_catalog()
         
         # Используем fallback селектор
