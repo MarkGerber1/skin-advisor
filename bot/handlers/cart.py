@@ -503,6 +503,22 @@ async def back_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
     await show_cart(cb.message, state)
 
 
+@router.callback_query(F.data == "get_recommendations")
+async def get_recommendations(cb: CallbackQuery, state: FSMContext) -> None:
+    """Обработчик кнопки 'Получить рекомендации' в корзине"""
+    user_id = _user_id(cb.message)
+    if not user_id:
+        await cb.answer("Ошибка пользователя")
+        return
+    
+    print(f"🎯 get_recommendations: user {user_id} wants recommendations for cart")
+    
+    # Показываем текущую корзину
+    await show_cart(cb, state)
+    
+    await cb.answer("Открываю корзину с рекомендациями")
+
+
 @router.callback_query(F.data == "cart:details")
 async def show_cart_details(cb: CallbackQuery, state: FSMContext) -> None:
     """Показать подробную информацию о товарах в корзине"""
