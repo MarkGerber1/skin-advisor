@@ -84,8 +84,10 @@ async def _find_product_in_recommendations(user_id: int, product_id: str) -> Opt
             print(f"🔄 Using fallback profile: skin_type={user_profile.skin_type}, season={user_profile.season}")
         
         # Получаем каталог и строим рекомендации
-        catalog_store = CatalogStore()
-        catalog = catalog_manager.get_catalog()
+        import os
+        catalog_path = os.getenv("CATALOG_PATH", "assets/fixed_catalog.yaml")
+        catalog_store = CatalogStore.instance(catalog_path)
+        catalog = catalog_store.get()
         
         # Используем селектор для получения рекомендаций
         print(f"🔧 Calling selector.select_products_v2 with profile...")
