@@ -26,7 +26,21 @@ def _price_row(it: Dict) -> str:
 def _rows(items: List[Dict]) -> List[str]:
     lines: List[str] = []
     for it in items:
-        lines.append(f"— {it.get('brand','')} {it.get('name','')} — {_price_row(it)}")
+        # Получаем информацию об источнике
+        source_name = it.get('source_name', '')
+        source_mark = f" 🏪 {source_name}" if source_name else ""
+        
+        # Проверяем альтернативу
+        alt_reason = it.get('alternative_reason', '')
+        alt_mark = ""
+        if alt_reason == "другой_вариант_товара":
+            alt_mark = " 🔄"
+        elif alt_reason == "аналог_категории":
+            alt_mark = " 🔀"
+        elif alt_reason == "универсальный_вариант":
+            alt_mark = " ⭐"
+        
+        lines.append(f"— {it.get('brand','')} {it.get('name','')}{alt_mark} — {_price_row(it)}{source_mark}")
     return lines
 
 
@@ -53,22 +67,40 @@ def render_skincare_report(result: Dict) -> Tuple[str, InlineKeyboardMarkup]:
     
     print(f"🧴 Found products: cleanser={len(cleanser)}, toner={len(toner)}, serum={len(serum)}, moisturizer={len(moisturizer)}, eye_cream={len(eye_cream)}, sunscreen={len(sunscreen)}, mask={len(mask)}")
     
+    # Применяем приоритизацию источников и поиск альтернатив
+    from engine.source_resolver import enhance_product_with_source_info
+    
+    # Enhance products with source info and alternatives
+    enhanced_cleanser = [enhance_product_with_source_info(p) for p in cleanser]
+    enhanced_toner = [enhance_product_with_source_info(p) for p in toner]
+    enhanced_serum = [enhance_product_with_source_info(p) for p in serum]
+    enhanced_moisturizer = [enhance_product_with_source_info(p) for p in moisturizer]
+    enhanced_eye_cream = [enhance_product_with_source_info(p) for p in eye_cream]
+    enhanced_sunscreen = [enhance_product_with_source_info(p) for p in sunscreen]
+    enhanced_mask = [enhance_product_with_source_info(p) for p in mask]
+    
     # Organize into AM/PM/Weekly for display
-    am = cleanser + toner + serum + moisturizer + sunscreen  # Morning routine
-    pm = cleanser + serum + moisturizer + eye_cream  # Evening routine  
-    wk = mask  # Weekly treatments
+    am = enhanced_cleanser + enhanced_toner + enhanced_serum + enhanced_moisturizer + enhanced_sunscreen  # Morning routine
+    pm = enhanced_cleanser + enhanced_serum + enhanced_moisturizer + enhanced_eye_cream  # Evening routine  
+    wk = enhanced_mask  # Weekly treatments
 
     text_lines: List[str] = [
         "📋 Персональный уход",
         "",
-        "AM:",
+        "🌅 **УТРОМ (AM):**",
         *(_rows(am) or ["— Нет подходящих продуктов"]),
         "",
-        "PM:",
+        "🌙 **ВЕЧЕРОМ (PM):**",
         *(_rows(pm) or ["— Нет подходящих продуктов"]),
         "",
-        "Weekly:",
+        "📅 **ЕЖЕНЕДЕЛЬНО:**",
         *(_rows(wk) or ["— Нет подходящих продуктов"]),
+        "",
+        "**Символы:**",
+        "🏪 — источник товара",
+        "🔄 — другой вариант",
+        "🔀 — аналог категории", 
+        "⭐ — универсальный вариант"
     ]
 
     links = [*(am or []), *(pm or []), *(wk or [])]
@@ -160,23 +192,32 @@ def render_makeup_report(result: Dict) -> Tuple[str, InlineKeyboardMarkup]:
                 face.append(product)
     
     # Products already distributed above in the simplified approach
+    else:
+        # No makeup data available
+        print("❌ No makeup data - using empty lists")
     
     print(f"🛍️ Products count: face={len(face)}, brows={len(brows)}, eyes={len(eyes)}, lips={len(lips)}")
 
     text_lines: List[str] = [
         "🎨 Макияж по палитре",
         "",
-        "Лицо:",
+        "💋 **ЛИЦО:**",
         *(_rows(face) or ["— Нет подходящих продуктов"]),
         "",
-        "Брови:",
+        "🤨 **БРОВИ:**",
         *(_rows(brows) or ["— Нет подходящих продуктов"]),
         "",
-        "Глаза:",
+        "👁️ **ГЛАЗА:**",
         *(_rows(eyes) or ["— Нет подходящих продуктов"]),
         "",
-        "Губы:",
+        "💄 **ГУБЫ:**",
         *(_rows(lips) or ["— Нет подходящих продуктов"]),
+        "",
+        "**Символы:**",
+        "🏪 — источник товара",
+        "🔄 — другой вариант",
+        "🔀 — аналог категории", 
+        "⭐ — универсальный вариант"
     ]
 
     links = [*(face or []), *(brows or []), *(eyes or []), *(lips or [])]
