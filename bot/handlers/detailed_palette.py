@@ -17,6 +17,16 @@ from engine.selector import SelectorV2
 from engine.answer_expander import AnswerExpanderV2
 from bot.ui.keyboards import add_home_button
 
+# Analytics import with fallback
+try:
+    from engine.analytics import get_analytics_tracker
+    ANALYTICS_AVAILABLE = True
+except ImportError:
+    print("⚠️ analytics not available in detailed_palette")
+    ANALYTICS_AVAILABLE = False
+    def get_analytics_tracker():
+        return None
+
 router = Router()
 
 class DetailedPaletteFlow(StatesGroup):
@@ -166,8 +176,10 @@ async def start_detailed_palette_flow(message: Message, state: FSMContext) -> No
     print(f"🎨 Starting detailed palette flow for user {user_id}")
     
     # Analytics: Track test start
-    analytics = get_analytics_tracker()
-    analytics.user_started_test(user_id, "palette")
+    if ANALYTICS_AVAILABLE:
+        analytics = get_analytics_tracker()
+        if analytics:
+            analytics.user_started_test(user_id, "palette")
     
     # Store test start time for completion analytics
     import time
@@ -527,13 +539,15 @@ async def q8_lip_color(cb: CallbackQuery, state: FSMContext) -> None:
         print(f"✅ Result buttons displayed for state: {await state.get_state()}")
         
         # Analytics: Track test completion
-        user_id = cb.from_user.id if cb.from_user else 0
-        analytics = get_analytics_tracker()
-        test_start_time = data.get("test_start_time")
-        duration = None
-        if test_start_time:
-            duration = time.time() - test_start_time
-        analytics.user_completed_test(user_id, "palette", duration)
+        if ANALYTICS_AVAILABLE:
+            user_id = cb.from_user.id if cb.from_user else 0
+            analytics = get_analytics_tracker()
+            if analytics:
+                test_start_time = data.get("test_start_time")
+                duration = None
+                if test_start_time:
+                    duration = time.time() - test_start_time
+                analytics.user_completed_test(user_id, "palette", duration)
         
         await cb.answer("🎊 Тест завершен!")
         
@@ -599,11 +613,13 @@ async def show_products(cb: CallbackQuery, state: FSMContext) -> None:
             print("🎨 Found makeup in result, calling render_makeup_report")
             
             # Analytics: Track recommendations viewed
-            user_id = cb.from_user.id if cb.from_user else 0
-            analytics = get_analytics_tracker()
-            makeup_products = result.get("makeup", {})
-            total_products = sum(len(products) for products in makeup_products.values() if products)
-            analytics.recommendations_viewed(user_id, "makeup", total_products)
+            if ANALYTICS_AVAILABLE:
+                user_id = cb.from_user.id if cb.from_user else 0
+                analytics = get_analytics_tracker()
+                if analytics:
+                    makeup_products = result.get("makeup", {})
+                    total_products = sum(len(products) for products in makeup_products.values() if products)
+                    analytics.recommendations_viewed(user_id, "makeup", total_products)
             
             text, kb = render_makeup_report(result)
             print(f"📝 Rendered text length: {len(text)}, buttons: {len(kb.inline_keyboard) if kb else 0}")
