@@ -26,8 +26,9 @@ def main_menu() -> ReplyKeyboardMarkup:
         keyboard=[
             [KeyboardButton(text=BTN_PALETTE)],
             [KeyboardButton(text=BTN_SKINCARE)],
-            [KeyboardButton(text=BTN_ABOUT), KeyboardButton(text=BTN_PICK)],
-            [KeyboardButton(text=BTN_REPORT), KeyboardButton(text=BTN_SETTINGS)],
+            [KeyboardButton(text=BTN_PICK)],  # Корзина отдельной строкой
+            [KeyboardButton(text=BTN_ABOUT), KeyboardButton(text=BTN_REPORT)],
+            [KeyboardButton(text=BTN_SETTINGS)],
         ],
         resize_keyboard=True,
         input_field_placeholder="Выберите действие…",
@@ -40,10 +41,10 @@ def main_menu_inline() -> InlineKeyboardMarkup:
         inline_keyboard=[
             [InlineKeyboardButton(text=BTN_PALETTE, callback_data="start_palette")],
             [InlineKeyboardButton(text=BTN_SKINCARE, callback_data="start_skincare")],
+            [InlineKeyboardButton(text=BTN_PICK, callback_data="show_cart")],  # Корзина отдельной строкой
             [InlineKeyboardButton(text=BTN_ABOUT, callback_data="about"), 
-             InlineKeyboardButton(text=BTN_PICK, callback_data="show_cart")],
-            [InlineKeyboardButton(text=BTN_REPORT, callback_data="show_report"), 
-             InlineKeyboardButton(text=BTN_SETTINGS, callback_data="settings")],
+             InlineKeyboardButton(text=BTN_REPORT, callback_data="show_report")],
+            [InlineKeyboardButton(text=BTN_SETTINGS, callback_data="settings")],
         ]
     )
 
