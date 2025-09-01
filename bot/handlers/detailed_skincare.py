@@ -15,8 +15,17 @@ from engine.catalog_store import CatalogStore
 from engine.models import UserProfile, SkinType, ReportData
 from engine.selector import SelectorV2
 from engine.answer_expander import AnswerExpanderV2
-from engine.analytics import get_analytics_tracker
 from bot.ui.keyboards import add_home_button
+
+# Analytics import with fallback
+try:
+    from engine.analytics import get_analytics_tracker
+    ANALYTICS_AVAILABLE = True
+except ImportError:
+    print("⚠️ analytics not available in detailed_skincare")
+    ANALYTICS_AVAILABLE = False
+    def get_analytics_tracker():
+        return None
 
 router = Router()
 
@@ -215,8 +224,10 @@ async def start_detailed_skincare_flow(message: Message, state: FSMContext) -> N
     print(f"🧴 Starting detailed skincare flow for user {user_id}")
     
     # Analytics: Track test start
-    analytics = get_analytics_tracker()
-    analytics.user_started_test(user_id, "skin")
+    if ANALYTICS_AVAILABLE:
+        analytics = get_analytics_tracker()
+        if analytics:
+            analytics.user_started_test(user_id, "skin")
     
     # Store test start time for completion analytics
     import time
@@ -556,14 +567,16 @@ async def q8_desired_effect(cb: CallbackQuery, state: FSMContext) -> None:
             ])
         )
         # Analytics: Track test completion
-        user_id = cb.from_user.id if cb.from_user else 0
-        analytics = get_analytics_tracker()
-        test_start_time = data.get("test_start_time")
-        duration = None
-        if test_start_time:
-            import time
-            duration = time.time() - test_start_time
-        analytics.user_completed_test(user_id, "skin", duration)
+        if ANALYTICS_AVAILABLE:
+            user_id = cb.from_user.id if cb.from_user else 0
+            analytics = get_analytics_tracker()
+            if analytics:
+                test_start_time = data.get("test_start_time")
+                duration = None
+                if test_start_time:
+                    import time
+                    duration = time.time() - test_start_time
+                analytics.user_completed_test(user_id, "skin", duration)
         
         await cb.answer("🎊 Диагностика завершена!")
         
@@ -622,11 +635,13 @@ async def show_skincare_products(cb: CallbackQuery, state: FSMContext) -> None:
         
         if result and result.get("skincare"):
             # Analytics: Track recommendations viewed
-            user_id = cb.from_user.id if cb.from_user else 0
-            analytics = get_analytics_tracker()
-            skincare_products = result.get("skincare", {})
-            total_products = sum(len(products) for products in skincare_products.values() if products)
-            analytics.recommendations_viewed(user_id, "skincare", total_products)
+            if ANALYTICS_AVAILABLE:
+                user_id = cb.from_user.id if cb.from_user else 0
+                analytics = get_analytics_tracker()
+                if analytics:
+                    skincare_products = result.get("skincare", {})
+                    total_products = sum(len(products) for products in skincare_products.values() if products)
+                    analytics.recommendations_viewed(user_id, "skincare", total_products)
             
             text, kb = render_skincare_report(result)
             
