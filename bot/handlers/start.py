@@ -55,6 +55,11 @@ async def start_skincare(m: Message, state: FSMContext) -> None:
     coordinator = get_fsm_coordinator()
     user_id = m.from_user.id if m.from_user else 0
     
+    # АГРЕССИВНАЯ очистка - принудительно удаляем ЛЮБУЮ существующую сессию
+    print(f"🧹 SKINCARE: Force clearing any existing session for user {user_id}")
+    await coordinator.clear_user_session(user_id)
+    await coordinator.force_cleanup_expired_sessions()
+    
     # Check for flow conflicts
     can_start, conflict_msg = await coordinator.can_start_flow(user_id, "detailed_skincare")
     if not can_start:
@@ -67,10 +72,10 @@ async def start_skincare(m: Message, state: FSMContext) -> None:
         await m.answer(conflict_msg, reply_markup=kb, parse_mode="Markdown")
         return
     
-    # Check for session recovery - force cleanup first
-    await coordinator.force_cleanup_expired_sessions()
+    # Check for session recovery - НЕ ДОЛЖНО срабатывать после принудительной очистки
     recovery_msg = await coordinator.get_recovery_message(user_id)
     if recovery_msg:
+        print(f"⚠️ UNEXPECTED: Recovery message still exists after cleanup!")
         from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
         kb = InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(text="🔄 Продолжить", callback_data="recovery:continue")],
@@ -103,6 +108,11 @@ async def start_palette(m: Message, state: FSMContext) -> None:
     coordinator = get_fsm_coordinator()
     user_id = m.from_user.id if m.from_user else 0
     
+    # АГРЕССИВНАЯ очистка - принудительно удаляем ЛЮБУЮ существующую сессию
+    print(f"🧹 PALETTE: Force clearing any existing session for user {user_id}")
+    await coordinator.clear_user_session(user_id)
+    await coordinator.force_cleanup_expired_sessions()
+    
     # Check for flow conflicts
     can_start, conflict_msg = await coordinator.can_start_flow(user_id, "detailed_palette")
     if not can_start:
@@ -115,10 +125,10 @@ async def start_palette(m: Message, state: FSMContext) -> None:
         await m.answer(conflict_msg, reply_markup=kb, parse_mode="Markdown")
         return
     
-    # Check for session recovery - force cleanup first
-    await coordinator.force_cleanup_expired_sessions()
+    # Check for session recovery - НЕ ДОЛЖНО срабатывать после принудительной очистки
     recovery_msg = await coordinator.get_recovery_message(user_id)
     if recovery_msg:
+        print(f"⚠️ UNEXPECTED: Recovery message still exists after cleanup!")
         from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
         kb = InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(text="🔄 Продолжить", callback_data="recovery:continue")],
