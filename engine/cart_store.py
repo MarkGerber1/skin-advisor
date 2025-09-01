@@ -20,6 +20,17 @@ class CartItem:
     category: Optional[str] = None
     in_stock: bool = True
     added_at: Optional[str] = None
+    
+    # NEW: Support for product variants (shade, volume, size)
+    variant_id: Optional[str] = None  # e.g., "shade-01-fair", "volume-30ml", "size-medium"
+    variant_name: Optional[str] = None  # e.g., "Fair", "30ml", "Medium"
+    variant_type: Optional[str] = None  # e.g., "shade", "volume", "size"
+    
+    def get_composite_key(self) -> str:
+        """Returns composite key for idempotent operations: product_id:variant_id"""
+        if self.variant_id:
+            return f"{self.product_id}:{self.variant_id}"
+        return f"{self.product_id}:default"
 
 
 class CartStore:
@@ -40,42 +51,85 @@ class CartStore:
         with open(path, "r", encoding="utf-8") as f:
             raw: Dict[str, Dict] = json.load(f) or {}
         out: Dict[str, CartItem] = {}
-        for pid, payload in raw.items():
-            out[pid] = CartItem(**payload)
+        for composite_key, payload in raw.items():
+            # Handle legacy items without variant fields
+            if 'variant_id' not in payload:
+                payload['variant_id'] = None
+                payload['variant_name'] = None
+                payload['variant_type'] = None
+            out[composite_key] = CartItem(**payload)
         return out
 
     def _save(self, user_id: int, items: Dict[str, CartItem]) -> None:
         path = self._path(user_id)
         with open(path, "w", encoding="utf-8") as f:
             json.dump(
-                {pid: asdict(ci) for pid, ci in items.items()}, f, ensure_ascii=False, indent=2
+                {composite_key: asdict(ci) for composite_key, ci in items.items()}, f, ensure_ascii=False, indent=2
             )
 
     def add(self, user_id: int, item: CartItem) -> None:
+        """Add item to cart with variant support and idempotency"""
         with self._lock:
             items = self._load(user_id)
-            if item.product_id in items:
-                items[item.product_id].qty += item.qty
+            composite_key = item.get_composite_key()
+            
+            if composite_key in items:
+                # Same product + variant = increase quantity
+                items[composite_key].qty += item.qty
+                print(f"🔄 Cart: Increased qty for {composite_key}: {items[composite_key].qty}")
             else:
-                items[item.product_id] = item
+                # New product or new variant = add new item
+                items[composite_key] = item
+                print(f"✅ Cart: Added new item {composite_key}: qty={item.qty}")
+            
             self._save(user_id, items)
 
-    def remove(self, user_id: int, product_id: str) -> None:
+    def remove(self, user_id: int, product_id: str, variant_id: Optional[str] = None) -> None:
+        """Remove item by product_id and optional variant_id"""
         with self._lock:
             items = self._load(user_id)
-            if product_id in items:
-                del items[product_id]
+            
+            if variant_id:
+                composite_key = f"{product_id}:{variant_id}"
+            else:
+                # If no variant specified, find and remove the default or any variant
+                composite_key = f"{product_id}:default"
+                if composite_key not in items:
+                    # Look for any variant of this product
+                    for key in list(items.keys()):
+                        if key.startswith(f"{product_id}:"):
+                            composite_key = key
+                            break
+            
+            if composite_key in items:
+                del items[composite_key]
                 self._save(user_id, items)
+                print(f"🗑️ Cart: Removed item {composite_key}")
 
-    def set_qty(self, user_id: int, product_id: str, qty: int) -> None:
+    def set_qty(self, user_id: int, product_id: str, qty: int, variant_id: Optional[str] = None) -> None:
+        """Set quantity for specific product variant"""
         if qty <= 0:
-            self.remove(user_id, product_id)
+            self.remove(user_id, product_id, variant_id)
             return
+            
         with self._lock:
             items = self._load(user_id)
-            if product_id in items:
-                items[product_id].qty = qty
+            
+            if variant_id:
+                composite_key = f"{product_id}:{variant_id}"
+            else:
+                composite_key = f"{product_id}:default"
+                if composite_key not in items:
+                    # Look for any variant of this product
+                    for key in list(items.keys()):
+                        if key.startswith(f"{product_id}:"):
+                            composite_key = key
+                            break
+            
+            if composite_key in items:
+                items[composite_key].qty = qty
                 self._save(user_id, items)
+                print(f"📊 Cart: Set qty for {composite_key}: {qty}")
 
     def clear(self, user_id: int) -> None:
         with self._lock:
