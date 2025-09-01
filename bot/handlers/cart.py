@@ -31,22 +31,42 @@ async def _find_product_in_recommendations(user_id: int, product_id: str) -> Opt
         from engine.models import UserProfile
         from engine.catalog import get_catalog_manager
         
-        # Формируем тестовый профиль (в реальности нужно получать из базы)
-        test_profile = UserProfile(
-            user_id=user_id,
-            skin_type="normal",
-            concerns=[],
-            season="spring",
-            undertone="neutral",
-            contrast="medium"
-        )
+        # Получаем реальный профиль пользователя из FSM coordinator
+        from bot.handlers.fsm_coordinator import get_fsm_coordinator
+        coordinator = get_fsm_coordinator()
+        session = await coordinator.get_session(user_id)
+        
+        # Если есть активная сессия с данными теста, используем их
+        if session and session.flow_data:
+            profile_data = session.flow_data
+            print(f"🔍 Found session profile data: {profile_data}")
+            
+            user_profile = UserProfile(
+                user_id=user_id,
+                skin_type=profile_data.get("skin_type", "normal"),
+                concerns=profile_data.get("concerns", []),
+                season=profile_data.get("season", "spring"),
+                undertone=profile_data.get("undertone", "neutral"),
+                contrast=profile_data.get("contrast", "medium")
+            )
+        else:
+            # Fallback: используем универсальный профиль
+            print(f"⚠️ No session found for user {user_id}, using fallback profile")
+            user_profile = UserProfile(
+                user_id=user_id,
+                skin_type="normal",
+                concerns=[],
+                season="spring",
+                undertone="neutral",
+                contrast="medium"
+            )
         
         # Получаем каталог и строим рекомендации
         catalog_manager = get_catalog_manager()
         catalog = catalog_manager.get_catalog()
         
         # Используем селектор для получения рекомендаций
-        result = selector.select_products_v2(test_profile, catalog, partner_code="S1")
+        result = selector.select_products_v2(user_profile, catalog, partner_code="S1")
         
         # Ищем товар во всех категориях
         all_products = []

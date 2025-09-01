@@ -234,6 +234,31 @@ class FSMCoordinator:
         
         for user_id in expired_users:
             del self._active_sessions[user_id]
+            
+    async def force_cleanup_expired_sessions(self):
+        """Принудительная очистка истекших сессий с более агрессивным timeout"""
+        current_time = time.time()
+        expired_users = []
+        
+        # Более агрессивный timeout: 5 минут (300 секунд)
+        aggressive_timeout = 300
+        
+        for user_id, session in self._active_sessions.items():
+            if current_time - session.last_activity > aggressive_timeout:
+                expired_users.append(user_id)
+                print(f"🧹 Force cleaning expired session for user {user_id} (inactive for {current_time - session.last_activity:.0f}s)")
+        
+        for user_id in expired_users:
+            del self._active_sessions[user_id]
+            
+        if expired_users:
+            print(f"🧹 Cleaned {len(expired_users)} expired sessions")
+            
+    async def clear_user_session(self, user_id: int):
+        """Принудительная очистка сессии конкретного пользователя"""
+        if user_id in self._active_sessions:
+            del self._active_sessions[user_id]
+            print(f"🧹 Manually cleared session for user {user_id}")
     
     def _format_time_ago(self, timestamp: float) -> str:
         """Форматирует время 'назад'"""
