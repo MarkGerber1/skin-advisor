@@ -8,7 +8,25 @@ from aiogram import Router, F
 from aiogram.types import CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.fsm.context import FSMContext
 
-from services.cart_service import get_cart_service, CartServiceError, CartErrorCode
+# Temporary fallback: import cart_service with try/except
+try:
+    from services.cart_service import get_cart_service, CartServiceError, CartErrorCode
+    CART_SERVICE_AVAILABLE = True
+except ImportError:
+    print("⚠️ services.cart_service not available in cart_enhanced, disabling advanced features")
+    CART_SERVICE_AVAILABLE = False
+    # Define fallback classes
+    class CartServiceError(Exception):
+        def __init__(self, message, code=None):
+            self.message = message
+            self.code = code
+            super().__init__(message)
+    
+    class CartErrorCode:
+        INVALID_PRODUCT_ID = "invalid_product_id"
+        PRODUCT_NOT_FOUND = "product_not_found"
+        OUT_OF_STOCK = "out_of_stock"
+
 from engine.business_metrics import get_metrics_tracker
 from engine.analytics import get_analytics_tracker
 
