@@ -399,21 +399,54 @@ async def handle_recovery(cb: CallbackQuery, state: FSMContext) -> None:
                 )
             return
         
-        # Resume flow based on current flow
+        # Resume flow - restart from beginning since resume functions cause loops
         try:
+            await cb.answer("🔄 Перезапускаем тест с начала...")
+            await coordinator.abandon_flow(user_id, state)
+            
             if session.current_flow == "detailed_palette":
-                from .detailed_palette import resume_palette_flow
-                await resume_palette_flow(cb, state, session)
+                await coordinator.start_flow(user_id, "detailed_palette", state)
+                from .detailed_palette import start_detailed_palette_flow
+                # Convert callback to message for compatibility
+                fake_message = type('obj', (object,), {
+                    'from_user': cb.from_user,
+                    'answer': cb.message.answer if cb.message else lambda *a, **k: None
+                })()
+                await start_detailed_palette_flow(fake_message, state)
+                
             elif session.current_flow == "detailed_skincare":
-                from .detailed_skincare import resume_skincare_flow
-                await resume_skincare_flow(cb, state, session)
+                await coordinator.start_flow(user_id, "detailed_skincare", state)
+                from .detailed_skincare import start_detailed_skincare_flow
+                # Convert callback to message for compatibility
+                fake_message = type('obj', (object,), {
+                    'from_user': cb.from_user,
+                    'answer': cb.message.answer if cb.message else lambda *a, **k: None
+                })()
+                await start_detailed_skincare_flow(fake_message, state)
+                
             else:
                 await cb.answer("❌ Неизвестный тип потока", show_alert=True)
                 await coordinator.abandon_flow(user_id, state)
+                # Go to main menu
+                from bot.ui.keyboards import main_menu_inline
+                if cb.message:
+                    await cb.message.edit_text(
+                        "🏠 Главное меню\n\nВыберите действие:",
+                        reply_markup=main_menu_inline()
+                    )
                 
-        except ImportError:
-            # Fallback if resume functions don't exist yet
-            await cb.answer("🔄 Сеанс восстановлен, продолжайте с текущего шага")
+        except Exception as e:
+            print(f"❌ Error in recovery restart: {e}")
+            await cb.answer("❌ Ошибка. Переходим в главное меню", show_alert=True)
+            await coordinator.abandon_flow(user_id, state)
+            
+            # Go to main menu
+            from bot.ui.keyboards import main_menu_inline  
+            if cb.message:
+                await cb.message.edit_text(
+                    "🏠 Главное меню\n\nВыберите действие:",
+                    reply_markup=main_menu_inline()
+                )
             
     elif action == "restart":
         # Start new flow, abandon current
