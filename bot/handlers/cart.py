@@ -9,13 +9,13 @@ from aiogram.fsm.context import FSMContext
 
 from engine.cart_store import CartStore, CartItem
 from engine.selector import SelectorV2
-from engine.business_metrics import get_business_metrics
+from engine.business_metrics import get_metrics_tracker
 
 
 router = Router()
 store = CartStore()
 selector = SelectorV2()
-metrics = get_business_metrics()
+metrics = get_metrics_tracker()
 
 
 def _user_id(msg: Message | None) -> int | None:

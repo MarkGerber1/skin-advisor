@@ -109,7 +109,11 @@ async def main() -> None:
         print(f"ERROR loading catalog: {e}")
         # Продолжаем работу даже без каталога
 
-    token = os.getenv("BOT_TOKEN")
+    # Загружаем конфигурацию
+    from config.env import get_settings
+    settings = get_settings()
+    token = settings.bot_token
+    
     if not token:
         raise RuntimeError("BOT_TOKEN is not set")
 
