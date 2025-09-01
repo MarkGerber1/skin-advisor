@@ -558,7 +558,13 @@ class SelectorV2:
     
     def _product_to_dict(self, product: Product, partner_code: str, redirect_base: Optional[str], profile: UserProfile, is_fallback: bool = False, fallback_reason: Optional[str] = None) -> Dict:
         """Convert product to dict with affiliate links and explanation"""
+        from engine.source_prioritizer import get_source_prioritizer
         explain_generator = get_explain_generator()
+        source_prioritizer = get_source_prioritizer()
+        
+        # Get source prioritization info
+        original_link = getattr(product, 'buy_url', getattr(product, 'link', None))
+        source_info = source_prioritizer.get_source_info(original_link) if original_link else None
         
         return {
             "id": getattr(product, 'key', getattr(product, 'id', '')),
@@ -567,17 +573,17 @@ class SelectorV2:
             "category": product.category,
             "price": product.price,
             "price_currency": getattr(product, 'price_currency', 'RUB'),
-            "link": getattr(product, 'buy_url', getattr(product, 'link', None)),
-            "ref_link": _with_affiliate(
-                getattr(product, 'buy_url', getattr(product, 'link', None)),
-                partner_code,
-                redirect_base
-            ),
+            "link": original_link,
+            "ref_link": _with_affiliate(original_link, partner_code, redirect_base),
             "actives": product.actives,
             "tags": product.tags,
             "in_stock": product.in_stock,
             "explain": explain_generator.generate_explain(product, profile, is_fallback, fallback_reason),
-            "match_reason": self._get_match_reason(product, profile)
+            "match_reason": self._get_match_reason(product, profile),
+            # NEW: Source prioritization info
+            "source_priority": source_info.priority if source_info else 999,
+            "source_name": source_info.name if source_info else "Неизвестный источник",
+            "source_category": source_info.category if source_info else "unknown"
         }
     
     def _get_match_reason(self, product: Product, profile: UserProfile) -> str:
@@ -685,7 +691,28 @@ class SelectorV2:
         }
 
 def _pick_top(products: List[Product], limit: int = 3) -> List[Product]:
-    return products[:limit]
+    """Pick top products with source prioritization"""
+    if not products:
+        return []
+    
+    from engine.source_prioritizer import get_source_prioritizer
+    prioritizer = get_source_prioritizer()
+    
+    # Convert to dict format for prioritization
+    product_dicts = []
+    for p in products:
+        product_dict = {
+            'link': getattr(p, 'buy_url', getattr(p, 'link', None)),
+            'product': p  # Keep reference to original product
+        }
+        product_dicts.append(product_dict)
+    
+    # Sort by source priority
+    sorted_dicts = prioritizer.sort_products_by_source_priority(product_dicts)
+    
+    # Extract original products and limit
+    sorted_products = [pd['product'] for pd in sorted_dicts]
+    return sorted_products[:limit]
 
 
 def select_products(
@@ -758,7 +785,13 @@ def select_products(
         lip_products = _pick_top(_filter_catalog(catalog, category="lipstick"), 2)
 
     def _as_dict(p: Product) -> Dict:
+        from engine.source_prioritizer import get_source_prioritizer
         explain_generator = get_explain_generator()
+        source_prioritizer = get_source_prioritizer()
+        
+        # Get prioritized links for this product
+        original_link = getattr(p, 'buy_url', getattr(p, 'link', None))
+        source_info = source_prioritizer.get_source_info(original_link) if original_link else None
         
         return {
             "id": getattr(p, 'key', getattr(p, 'id', '')),
@@ -767,13 +800,14 @@ def select_products(
             "category": p.category,
             "price": p.price,
             "price_currency": getattr(p, 'price_currency', 'RUB'),
-            "link": getattr(p, 'buy_url', getattr(p, 'link', None)),
-            "ref_link": _with_affiliate(
-                getattr(p, 'buy_url', getattr(p, 'link', None)), 
-                partner_code, redirect_base
-            ),
+            "link": original_link,
+            "ref_link": _with_affiliate(original_link, partner_code, redirect_base),
             "in_stock": p.in_stock,
-            "explain": explain_generator.generate_explain(p, user_profile)
+            "explain": explain_generator.generate_explain(p, user_profile),
+            # NEW: Source prioritization info
+            "source_priority": source_info.priority if source_info else 999,
+            "source_name": source_info.name if source_info else "Неизвестный источник",
+            "source_category": source_info.category if source_info else "unknown"
         }
 
     # Fill skincare
