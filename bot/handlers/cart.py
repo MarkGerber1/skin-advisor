@@ -10,6 +10,7 @@ from aiogram.fsm.context import FSMContext
 from engine.cart_store import CartStore, CartItem
 from engine.selector import SelectorV2
 from engine.business_metrics import get_metrics_tracker
+from services.cart_service import get_cart_service, CartServiceError, CartErrorCode
 
 
 router = Router()
