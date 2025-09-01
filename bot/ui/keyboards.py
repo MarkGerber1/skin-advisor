@@ -10,10 +10,10 @@ from typing import List
 
 
 # Константы для кнопок главного меню
-BTN_PALETTE = "🎨 Палитомеp — мой идеальный цвет"
-BTN_SKINCARE = "✨ Диагностика кожи PRO"
+BTN_PALETTE = "🎨 Палитрометр — мой идеальный цвет"
+BTN_SKINCARE = "💧 Диагностика кожи PRO"
 BTN_ABOUT = "ⓘ О боте"
-BTN_PICK = "🛒 Моя подборка"
+BTN_PICK = "🛒 Корзина"
 BTN_SETTINGS = "⚙️ Настройки"
 BTN_REPORT = "📄 Отчёт"
 BTN_BACK = "⬅️ Назад"
