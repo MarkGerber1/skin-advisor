@@ -307,6 +307,25 @@ class BusinessMetricsTracker:
         
         return interactions
 
+    def track_event(self, event_type: str, user_id: int, additional_data: Dict[str, Any] = None):
+        """Простой синхронный метод для отслеживания событий корзины"""
+        # Создаем фейковый session_id для совместимости с track_interaction
+        session_id = f"cart_{user_id}_{int(time.time())}"
+        
+        # Определяем product_id и category из additional_data
+        product_id = additional_data.get('product_id', 'unknown') if additional_data else 'unknown'
+        category = additional_data.get('category', 'cart') if additional_data else 'cart'
+        
+        # Вызываем существующий track_interaction
+        self.track_interaction(
+            user_id=user_id,
+            session_id=session_id,
+            product_id=product_id,
+            product_category=category,
+            interaction_type=event_type,
+            additional_data=additional_data or {}
+        )
+
 
 # Глобальный трекер метрик
 _metrics_tracker = None

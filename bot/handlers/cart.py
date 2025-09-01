@@ -95,14 +95,14 @@ async def add_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
         # Товар не найден в рекомендациях
         await cb.answer("⚠️ Товар недоступен. Обновите рекомендации", show_alert=True)
         # Метрика: товар не найден
-        await metrics.track_event("cart_add_failed", user_id, {"reason": "product_not_found", "product_id": product_id})
+        metrics.track_event("cart_add_failed", user_id, {"reason": "product_not_found", "product_id": product_id})
         return
     
     # Проверяем доступность товара
     if not product.get("in_stock", True):
         await cb.answer("⚠️ Товар временно недоступен", show_alert=True)
         # Метрика: товар не в наличии
-        await metrics.track_event("cart_add_failed", user_id, {"reason": "out_of_stock", "product_id": product_id})
+        metrics.track_event("cart_add_failed", user_id, {"reason": "out_of_stock", "product_id": product_id})
         return
     
     # Создаем полный объект CartItem
@@ -124,7 +124,7 @@ async def add_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
     store.add(user_id, cart_item)
     
     # Метрика: успешное добавление
-    await metrics.track_event("cart_add_success", user_id, {
+    metrics.track_event("cart_add_success", user_id, {
         "product_id": product_id,
         "category": product.get("category", ""),
         "price": product.get("price", 0.0)
@@ -159,7 +159,7 @@ async def show_cart(m: Message, state: FSMContext) -> None:
         return
     
     # Метрика: просмотр корзины
-    await metrics.track_event("cart_view", user_id, {"items_count": len(items)})
+    metrics.track_event("cart_view", user_id, {"items_count": len(items)})
     
     # Формируем сообщение с полной информацией
     lines = ["🛒 **ВАША КОРЗИНА**\n"]
@@ -239,7 +239,7 @@ async def clear_cart(cb: CallbackQuery, state: FSMContext) -> None:
         return
     
     store.clear(user_id)
-    await metrics.track_event("cart_clear", user_id, {})
+    metrics.track_event("cart_clear", user_id, {})
     await cb.message.edit_text("🗑️ Корзина очищена")
     await cb.answer("Корзина очищена")
 
@@ -284,7 +284,7 @@ async def refresh_cart(cb: CallbackQuery, state: FSMContext) -> None:
             store.add(user_id, updated_item)
             updated_count += 1
     
-    await metrics.track_event("cart_refresh", user_id, {
+    metrics.track_event("cart_refresh", user_id, {
         "updated": updated_count,
         "removed": removed_count
     })
@@ -329,7 +329,7 @@ async def buy_all_items(cb: CallbackQuery, state: FSMContext) -> None:
     
     kb = InlineKeyboardMarkup(inline_keyboard=buttons)
     
-    await metrics.track_event("cart_buy_all_clicked", user_id, {
+    metrics.track_event("cart_buy_all_clicked", user_id, {
         "items_count": len(available_items)
     })
     
@@ -408,7 +408,7 @@ async def handle_unavailable_product(cb: CallbackQuery, state: FSMContext) -> No
     # Ищем альтернативы
     alternatives = await _find_product_alternatives(user_id, product_id)
     
-    await metrics.track_event("cart_unavailable_viewed", user_id, {
+    metrics.track_event("cart_unavailable_viewed", user_id, {
         "product_id": product_id,
         "alternatives_found": len(alternatives)
     })
@@ -571,7 +571,7 @@ async def remove_from_cart(cb: CallbackQuery, state: FSMContext) -> None:
     product_id = cb.data.split(":", 2)[2]
     store.remove(user_id, product_id)
     
-    await metrics.track_event("cart_remove", user_id, {"product_id": product_id})
+    metrics.track_event("cart_remove", user_id, {"product_id": product_id})
     await cb.answer("Товар удален из корзины")
     await show_cart(cb.message, state)
 
@@ -592,7 +592,7 @@ async def increase_quantity(cb: CallbackQuery, state: FSMContext) -> None:
             new_qty = min(item.qty + 1, 10)  # Максимум 10 штук
             store.set_qty(user_id, product_id, new_qty)
             
-            await metrics.track_event("cart_qty_change", user_id, {
+            metrics.track_event("cart_qty_change", user_id, {
                 "product_id": product_id,
                 "new_qty": new_qty,
                 "action": "increase"
@@ -620,7 +620,7 @@ async def decrease_quantity(cb: CallbackQuery, state: FSMContext) -> None:
             new_qty = max(item.qty - 1, 1)  # Минимум 1 штука
             store.set_qty(user_id, product_id, new_qty)
             
-            await metrics.track_event("cart_qty_change", user_id, {
+            metrics.track_event("cart_qty_change", user_id, {
                 "product_id": product_id,
                 "new_qty": new_qty,
                 "action": "decrease"
