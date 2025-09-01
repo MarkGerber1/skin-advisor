@@ -636,7 +636,7 @@ async def show_skincare_products(cb: CallbackQuery, state: FSMContext) -> None:
             kb = InlineKeyboardMarkup(inline_keyboard=buttons)
             
             await cb.message.edit_text(
-                f"🧴 **РЕКОМЕНДОВАННЫЕ ПРОДУКТЫ**\n\n{text}",
+                f"🛍️ **ЧТО КУПИТЬ**\n\n{text}",
                 reply_markup=kb
             )
         else:
