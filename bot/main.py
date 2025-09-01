@@ -132,8 +132,9 @@ async def main() -> None:
     
     # Add global error handler
     @dp.error()
-    async def error_handler(event, exception):
+    async def error_handler(event):
         import traceback
+        exception = event.exception
         print(f"❌ Global error: {exception}")
         print(f"📍 Traceback: {traceback.format_exc()}")
         
@@ -143,13 +144,13 @@ async def main() -> None:
             print(f"🔗 Callback data: {cb.data}")
             print(f"👤 User: {cb.from_user.id if cb.from_user else 'Unknown'}")
             try:
-                # Use emergency keyboard for better recovery
-                from bot.ui.keyboards import emergency_keyboard
+                # Use inline menu for better recovery (emergency_keyboard may cause same issue)
+                from bot.ui.keyboards import main_menu_inline
                 if cb.message:
                     await cb.message.edit_text(
                         "⚠️ Произошла ошибка\n\n"
                         "Выберите действие для восстановления:",
-                        reply_markup=emergency_keyboard()
+                        reply_markup=main_menu_inline()
                     )
                 await cb.answer("⚠️ Ошибка исправлена")
             except Exception as e:

@@ -208,3 +208,4 @@ if __name__ == "__main__":
     print("✅ test_cart_affiliate_links - PASSED")
     
     print("\n🎉 Все тесты корзины прошли успешно!")
+
