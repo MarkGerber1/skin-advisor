@@ -96,7 +96,7 @@ class SimplePDFGenerator:
             title_map = {
                 'detailed_palette': 'ОТЧЕТ ПО ЦВЕТОТИПУ',
                 'palette': 'ОТЧЕТ ПО ПАЛИТРЕ',
-                'detailed_skincare': 'ДИАГНОСТИКА КОЖИ',
+                'detailed_skincare': 'ПОРТРЕТ ЛИЦА',
                 'skincare': 'УХОД ЗА КОЖЕЙ'
             }
             title = self._clean_text(title_map.get(report_type, 'ПЕРСОНАЛЬНЫЙ ОТЧЕТ'))
@@ -116,7 +116,7 @@ class SimplePDFGenerator:
             summary_parts = []
             
             if profile.get('undertone'):
-                summary_parts.append(f"Подтон кожи: {profile['undertone']}")
+                summary_parts.append(f"Подтон лица: {profile['undertone']}")
             
             if profile.get('season'):
                 season_names = {
@@ -129,7 +129,7 @@ class SimplePDFGenerator:
                 summary_parts.append(f"Контрастность: {profile['contrast']}")
                 
             if profile.get('skin_type'):
-                summary_parts.append(f"Тип кожи: {profile['skin_type']}")
+                summary_parts.append(f"Тип лица: {profile['skin_type']}")
             
             if profile.get('concerns'):
                 concerns = ', '.join(profile['concerns'])

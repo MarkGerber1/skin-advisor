@@ -221,15 +221,15 @@ class StructuredPDFGenerator:
         pdf.set_text_color(*self.color_text)
         
         summary_data = [
-            ("Подтон кожи", profile.get('undertone', 'Не определен')),
+            ("Подтон лица", profile.get('undertone', 'Не определен')),
             ("Сезон", profile.get('season', 'Не определен')),
             ("Контрастность", profile.get('contrast', 'Не определена')),
-            ("Тип кожи", profile.get('skin_type', 'Не определен')),
+            ("Тип лица", profile.get('skin_type', 'Не определен')),
         ]
         
         if profile.get('concerns'):
             concerns = ', '.join(profile.get('concerns', []))
-            summary_data.append(("Проблемы кожи", concerns))
+            summary_data.append(("Особенности лица", concerns))
         
         # Таблица характеристик
         for label, value in summary_data:
@@ -271,7 +271,7 @@ class StructuredPDFGenerator:
             title_map = {
                 'detailed_palette': 'ОТЧЕТ ПО ЦВЕТОТИПУ И ПАЛИТРЕ',
                 'palette': 'ОТЧЕТ ПО ПАЛИТРЕ',
-                'detailed_skincare': 'ОТЧЕТ ПО ДИАГНОСТИКЕ КОЖИ',
+                'detailed_skincare': 'ОТЧЕТ ПО ПОРТРЕТУ ЛИЦА',
                 'skincare': 'ОТЧЕТ ПО УХОДУ ЗА КОЖЕЙ'
             }
             
@@ -317,7 +317,7 @@ class StructuredPDFGenerator:
         skin_type = profile.get('skin_type', '')
         
         if undertone:
-            summary_parts.append(f"Ваш подтон кожи: {undertone}")
+            summary_parts.append(f"Ваш подтон лица: {undertone}")
         
         if season:
             season_names = {
@@ -330,9 +330,9 @@ class StructuredPDFGenerator:
             summary_parts.append(f"Контрастность: {contrast}")
         
         if skin_type:
-            summary_parts.append(f"Тип кожи: {skin_type}")
+            summary_parts.append(f"Тип лица: {skin_type}")
         
-        # Проблемы кожи
+        # Особенности лица
         concerns = profile.get('concerns', [])
         if concerns:
             summary_parts.append(f"Основные проблемы: {', '.join(concerns)}")
@@ -353,7 +353,7 @@ class StructuredPDFGenerator:
         
         elif report_type in ['detailed_skincare', 'skincare']:
             recommendation = (
-                "Программа ухода составлена с учетом особенностей вашей кожи "
+                "Программа ухода составлена с учетом особенностей вашего лица "
                 "для достижения здорового и сияющего вида."
             )
             self._add_text_block(pdf, recommendation)

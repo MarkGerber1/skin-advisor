@@ -141,7 +141,7 @@ def _kb_confirm(enabled: bool) -> InlineKeyboardMarkup:
 async def start_flow(m: Message, state: FSMContext) -> None:
     await state.clear()
     await state.set_state(PaletteFlow.A1_UNDERTONE)
-    await m.answer("Шаг 1/7 — Определим подтон кожи:", reply_markup=_kb_undertone())
+    await m.answer("Шаг 1/7 — Определим подтон лица:", reply_markup=_kb_undertone())
 
 
 def _parse(data: str) -> List[str]:
@@ -178,7 +178,7 @@ async def a1(cb: CallbackQuery, state: FSMContext) -> None:
             return
         await state.update_data(undertone=value)
         await state.set_state(PaletteFlow.A2_VALUE)
-        await msg.edit_text("Шаг 2/7 — Светлота кожи (value):")
+        await msg.edit_text("Шаг 2/7 — Светлота лица (value):")
         await msg.edit_reply_markup(reply_markup=_kb_value())
         await cb.answer()
     except Exception as e:
