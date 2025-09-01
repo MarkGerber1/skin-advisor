@@ -49,6 +49,7 @@ async def _find_product_in_recommendations(user_id: int, product_id: str) -> Opt
                 undertone=profile_data.get("undertone", "neutral"),
                 contrast=profile_data.get("contrast", "medium")
             )
+            print(f"✅ Using real profile: skin_type={user_profile.skin_type}, season={user_profile.season}")
         else:
             # Fallback: используем универсальный профиль
             print(f"⚠️ No session found for user {user_id}, using fallback profile")
@@ -60,13 +61,24 @@ async def _find_product_in_recommendations(user_id: int, product_id: str) -> Opt
                 undertone="neutral",
                 contrast="medium"
             )
+            print(f"🔄 Using fallback profile: skin_type={user_profile.skin_type}, season={user_profile.season}")
         
         # Получаем каталог и строим рекомендации
         catalog_manager = get_catalog_manager()
         catalog = catalog_manager.get_catalog()
         
         # Используем селектор для получения рекомендаций
+        print(f"🔧 Calling selector.select_products_v2 with profile...")
         result = selector.select_products_v2(user_profile, catalog, partner_code="S1")
+        print(f"📦 Selector result keys: {list(result.keys()) if result else 'None'}")
+        
+        # Логируем количество товаров в каждой категории
+        if result and result.get("makeup"):
+            for category, products in result["makeup"].items():
+                print(f"  💄 Makeup {category}: {len(products)} products")
+        if result and result.get("skincare"):
+            for step, products in result["skincare"].items():
+                print(f"  🧴 Skincare {step}: {len(products)} products")
         
         # Ищем товар во всех категориях
         all_products = []
@@ -109,7 +121,9 @@ async def add_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
     print(f"🛒 Adding product {product_id} to cart for user {user_id}")
     
     # Ищем полную информацию о товаре
+    print(f"🔍 Searching for product {product_id} in recommendations...")
     product = await _find_product_in_recommendations(user_id, product_id)
+    print(f"🔍 Found product: {product is not None}")
     
     if not product:
         # Товар не найден в рекомендациях
