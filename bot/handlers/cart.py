@@ -11,6 +11,7 @@ from engine.cart_store import CartStore, CartItem
 from engine.selector import SelectorV2
 from engine.business_metrics import get_metrics_tracker
 from services.cart_service import get_cart_service, CartServiceError, CartErrorCode
+from engine.analytics import get_analytics_tracker
 
 
 router = Router()
@@ -136,6 +137,17 @@ async def add_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
             product_id=product_id,
             variant_id=variant_id,
             qty=1
+        )
+        
+        # Analytics: Product added to cart
+        analytics = get_analytics_tracker()
+        analytics.product_added_to_cart(
+            user_id=user_id,
+            product_id=product_id,
+            variant_id=variant_id,
+            source=cart_item.ref_link,
+            price=cart_item.price,
+            category=cart_item.category
         )
         
         # Метрика: успешное добавление
