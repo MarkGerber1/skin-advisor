@@ -15,6 +15,7 @@ from engine.catalog_store import CatalogStore
 from engine.models import UserProfile, SkinType, ReportData
 from engine.selector import SelectorV2
 from engine.answer_expander import AnswerExpanderV2
+from engine.analytics import get_analytics_tracker
 from bot.ui.keyboards import add_home_button
 
 router = Router()
@@ -210,6 +211,17 @@ def determine_skin_type(answers: Dict[str, str]) -> Dict[str, str]:
 
 async def start_detailed_skincare_flow(message: Message, state: FSMContext) -> None:
     """Запуск детального теста на тип кожи"""
+    user_id = message.from_user.id if message.from_user else 0
+    print(f"🧴 Starting detailed skincare flow for user {user_id}")
+    
+    # Analytics: Track test start
+    analytics = get_analytics_tracker()
+    analytics.user_started_test(user_id, "skin")
+    
+    # Store test start time for completion analytics
+    import time
+    await state.update_data(test_start_time=time.time())
+    
     await state.clear()
     await state.set_state(DetailedSkincareFlow.Q1_TIGHTNESS)
     
@@ -439,6 +451,27 @@ async def q8_desired_effect(cb: CallbackQuery, state: FSMContext) -> None:
         
         print(f"📦 DETAILED SKINCARE: Total extracted {len(skincare_products)} products")
         
+        # КРИТИЧЕСКИ ВАЖНО: Сохраняем профиль в FSM coordinator для корзины
+        from bot.handlers.fsm_coordinator import get_fsm_coordinator
+        coordinator = get_fsm_coordinator()
+        
+        # Обновляем сессию с данными профиля для корзины
+        try:
+            session = await coordinator.get_session(uid)
+            if session:
+                # Добавляем профиль пользователя в flow_data
+                session.flow_data.update({
+                    "skin_type": skin_type,
+                    "sensitivity": sensitivity, 
+                    "concerns": concerns,
+                    "test_type": "detailed_skincare"
+                })
+                print(f"✅ SAVED profile to FSM coordinator: skin_type={skin_type}, concerns={concerns}")
+            else:
+                print(f"⚠️ No FSM session found for user {uid} - creating new session for cart")
+        except Exception as session_error:
+            print(f"❌ Error saving profile to FSM: {session_error}")
+        
         # Генерируем отчет
         report_data = ReportData(
             user_profile=profile,
@@ -522,6 +555,16 @@ async def q8_desired_effect(cb: CallbackQuery, state: FSMContext) -> None:
                 [InlineKeyboardButton(text="🏠 Главное меню", callback_data="universal:home")]
             ])
         )
+        # Analytics: Track test completion
+        user_id = cb.from_user.id if cb.from_user else 0
+        analytics = get_analytics_tracker()
+        test_start_time = data.get("test_start_time")
+        duration = None
+        if test_start_time:
+            import time
+            duration = time.time() - test_start_time
+        analytics.user_completed_test(user_id, "skin", duration)
+        
         await cb.answer("🎊 Диагностика завершена!")
         
     except Exception as e:
@@ -578,6 +621,13 @@ async def show_skincare_products(cb: CallbackQuery, state: FSMContext) -> None:
         from bot.ui.render import render_skincare_report
         
         if result and result.get("skincare"):
+            # Analytics: Track recommendations viewed
+            user_id = cb.from_user.id if cb.from_user else 0
+            analytics = get_analytics_tracker()
+            skincare_products = result.get("skincare", {})
+            total_products = sum(len(products) for products in skincare_products.values() if products)
+            analytics.recommendations_viewed(user_id, "skincare", total_products)
+            
             text, kb = render_skincare_report(result)
             
             # Добавляем кнопку возврата

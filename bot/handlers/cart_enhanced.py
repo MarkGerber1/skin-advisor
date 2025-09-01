@@ -10,6 +10,7 @@ from aiogram.fsm.context import FSMContext
 
 from services.cart_service import get_cart_service, CartServiceError, CartErrorCode
 from engine.business_metrics import get_metrics_tracker
+from engine.analytics import get_analytics_tracker
 
 router = Router()
 metrics = get_metrics_tracker()
@@ -48,6 +49,10 @@ async def change_item_variant(cb: CallbackQuery, state: FSMContext) -> None:
             old_variant_id=old_variant_id,
             new_variant_id=new_variant_id
         )
+        
+        # Analytics: Cart item updated (variant changed)
+        analytics = get_analytics_tracker()
+        analytics.cart_item_updated(user_id, product_id, old_variant_id, 1, 1)
         
         metrics.track_event("cart_variant_changed", user_id, {
             "product_id": product_id,
@@ -100,7 +105,12 @@ async def set_item_quantity(cb: CallbackQuery, state: FSMContext) -> None:
             qty=qty
         )
         
+        # Analytics: Cart item updated or removed
+        analytics = get_analytics_tracker()
+        
         if result_item:
+            analytics.cart_item_updated(user_id, product_id, variant_id, qty_before=0, qty_after=qty)
+            
             metrics.track_event("cart_quantity_changed", user_id, {
                 "product_id": product_id,
                 "variant_id": variant_id,
@@ -108,6 +118,8 @@ async def set_item_quantity(cb: CallbackQuery, state: FSMContext) -> None:
             })
             await cb.answer(f"✅ Количество изменено: {qty}")
         else:
+            analytics.cart_item_removed(user_id, product_id, variant_id)
+            
             metrics.track_event("cart_item_removed", user_id, {
                 "product_id": product_id,
                 "variant_id": variant_id,
@@ -159,6 +171,10 @@ async def remove_exact_item(cb: CallbackQuery, state: FSMContext) -> None:
         )
         
         if success:
+            # Analytics: Cart item removed  
+            analytics = get_analytics_tracker()
+            analytics.cart_item_removed(user_id, product_id, variant_id)
+            
             metrics.track_event("cart_item_removed", user_id, {
                 "product_id": product_id,
                 "variant_id": variant_id,

@@ -162,7 +162,17 @@ def determine_season(answers: Dict[str, str]) -> str:
 
 async def start_detailed_palette_flow(message: Message, state: FSMContext) -> None:
     """Запуск детального теста на цветотип"""
-    print(f"🎨 Starting detailed palette flow for user {message.from_user.id if message.from_user else 'Unknown'}")
+    user_id = message.from_user.id if message.from_user else 0
+    print(f"🎨 Starting detailed palette flow for user {user_id}")
+    
+    # Analytics: Track test start
+    analytics = get_analytics_tracker()
+    analytics.user_started_test(user_id, "palette")
+    
+    # Store test start time for completion analytics
+    import time
+    await state.update_data(test_start_time=time.time())
+    
     await state.clear()
     await state.set_state(DetailedPaletteFlow.Q1_HAIR_COLOR)
     print(f"✅ Set state to Q1_HAIR_COLOR")
@@ -515,6 +525,16 @@ async def q8_lip_color(cb: CallbackQuery, state: FSMContext) -> None:
             ])
         )
         print(f"✅ Result buttons displayed for state: {await state.get_state()}")
+        
+        # Analytics: Track test completion
+        user_id = cb.from_user.id if cb.from_user else 0
+        analytics = get_analytics_tracker()
+        test_start_time = data.get("test_start_time")
+        duration = None
+        if test_start_time:
+            duration = time.time() - test_start_time
+        analytics.user_completed_test(user_id, "palette", duration)
+        
         await cb.answer("🎊 Тест завершен!")
         
     except Exception as e:
@@ -577,6 +597,14 @@ async def show_products(cb: CallbackQuery, state: FSMContext) -> None:
         
         if result and result.get("makeup"):
             print("🎨 Found makeup in result, calling render_makeup_report")
+            
+            # Analytics: Track recommendations viewed
+            user_id = cb.from_user.id if cb.from_user else 0
+            analytics = get_analytics_tracker()
+            makeup_products = result.get("makeup", {})
+            total_products = sum(len(products) for products in makeup_products.values() if products)
+            analytics.recommendations_viewed(user_id, "makeup", total_products)
+            
             text, kb = render_makeup_report(result)
             print(f"📝 Rendered text length: {len(text)}, buttons: {len(kb.inline_keyboard) if kb else 0}")
             
