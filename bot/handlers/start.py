@@ -67,7 +67,8 @@ async def start_skincare(m: Message, state: FSMContext) -> None:
         await m.answer(conflict_msg, reply_markup=kb, parse_mode="Markdown")
         return
     
-    # Check for session recovery
+    # Check for session recovery - force cleanup first
+    await coordinator.force_cleanup_expired_sessions()
     recovery_msg = await coordinator.get_recovery_message(user_id)
     if recovery_msg:
         from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
@@ -114,7 +115,8 @@ async def start_palette(m: Message, state: FSMContext) -> None:
         await m.answer(conflict_msg, reply_markup=kb, parse_mode="Markdown")
         return
     
-    # Check for session recovery
+    # Check for session recovery - force cleanup first
+    await coordinator.force_cleanup_expired_sessions()
     recovery_msg = await coordinator.get_recovery_message(user_id)
     if recovery_msg:
         from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
