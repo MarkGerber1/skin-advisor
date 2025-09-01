@@ -10,8 +10,26 @@ from aiogram.fsm.context import FSMContext
 from engine.cart_store import CartStore, CartItem
 from engine.selector import SelectorV2
 from engine.business_metrics import get_metrics_tracker
-from services.cart_service import get_cart_service, CartServiceError, CartErrorCode
 from engine.analytics import get_analytics_tracker
+
+# Temporary fallback: import cart_service with try/except
+try:
+    from services.cart_service import get_cart_service, CartServiceError, CartErrorCode
+    CART_SERVICE_AVAILABLE = True
+except ImportError:
+    print("⚠️ services.cart_service not available, using fallback")
+    CART_SERVICE_AVAILABLE = False
+    # Define fallback classes
+    class CartServiceError(Exception):
+        def __init__(self, message, code=None):
+            self.message = message
+            self.code = code
+            super().__init__(message)
+    
+    class CartErrorCode:
+        INVALID_PRODUCT_ID = "invalid_product_id"
+        PRODUCT_NOT_FOUND = "product_not_found"
+        OUT_OF_STOCK = "out_of_stock"
 
 
 router = Router()
@@ -127,17 +145,36 @@ async def add_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
         
         print(f"🛒 Adding product {product_id} (variant: {variant_id}) to cart for user {user_id}")
         
-        # Используем улучшенный сервис корзины
-        from services.cart_service import get_cart_service, CartServiceError, CartErrorCode
-        cart_service = get_cart_service()
-        
-        # Добавляем товар с полной валидацией
-        cart_item = await cart_service.add_item(
-            user_id=user_id,
-            product_id=product_id,
-            variant_id=variant_id,
-            qty=1
-        )
+        # Используем улучшенный сервис корзины если доступен
+        if CART_SERVICE_AVAILABLE:
+            cart_service = get_cart_service()
+            cart_item = await cart_service.add_item(
+                user_id=user_id,
+                product_id=product_id,
+                variant_id=variant_id,
+                qty=1
+            )
+        else:
+            # Fallback: simple add to cart using existing store
+            print(f"🔄 Using fallback cart method for {product_id}")
+            product_data = await _find_product_in_recommendations(user_id, product_id)
+            if not product_data:
+                raise CartServiceError("Product not found", CartErrorCode.PRODUCT_NOT_FOUND)
+            
+            cart_item = CartItem(
+                product_id=product_id,
+                qty=1,
+                brand=product_data.get('brand'),
+                name=product_data.get('name'),
+                price=product_data.get('price'),
+                price_currency=product_data.get('price_currency', 'RUB'),
+                ref_link=product_data.get('ref_link'),
+                explain=product_data.get('explain'),
+                category=product_data.get('category'),
+                in_stock=product_data.get('in_stock', True),
+                variant_id=variant_id
+            )
+            store.add(user_id, cart_item)
         
         # Analytics: Product added to cart
         analytics = get_analytics_tracker()
