@@ -87,7 +87,7 @@ def _kb_contrast() -> InlineKeyboardMarkup:
 
 
 def _kb_sun_reaction() -> InlineKeyboardMarkup:
-    """Q5: Как выглядит ваша кожа после пребывания на солнце?"""
+    """Q5: Как выглядит ваше лицо после пребывания на солнце?"""
     buttons = [
         [InlineKeyboardButton(text="a) Быстро загорает, редко обгорает", callback_data="sun:a")],
         [InlineKeyboardButton(text="b) Загорает с трудом, часто обгорает", callback_data="sun:b")],
@@ -266,7 +266,7 @@ async def q4_contrast(cb: CallbackQuery, state: FSMContext) -> None:
         
         await cb.message.edit_text(
             "**Вопрос 5 из 8**\n"
-            "☀️ Как выглядит ваша кожа после пребывания на солнце?",
+            "☀️ Как выглядит ваше лицо после пребывания на солнце?",
             reply_markup=_kb_sun_reaction()
         )
         await cb.answer()

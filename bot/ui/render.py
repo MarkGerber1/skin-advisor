@@ -61,7 +61,7 @@ def render_skincare_report(result: Dict) -> Tuple[str, InlineKeyboardMarkup]:
     toner = s.get("тоник", [])
     serum = s.get("сыворотка", [])
     moisturizer = s.get("увлажняющее средство", [])
-    eye_cream = s.get("крем для кожи вокруг глаз", [])
+    eye_cream = s.get("крем для кожи вокруг глаз", [])  # Keep technical key for data access
     sunscreen = s.get("солнцезащитный крем", [])
     mask = s.get("маска", [])
     
