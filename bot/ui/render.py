@@ -100,9 +100,14 @@ def render_makeup_report(result: Dict) -> Tuple[str, InlineKeyboardMarkup]:
         print("🔍 DETAILED MAKEUP ANALYSIS:")
         for key, products in m.items():
             count = len(products) if products else 0
-            print(f"  📦 '{key}': {count} products")
+            print(f"  📦 EXACT KEY '{key}': {count} products")
             if products and count > 0:
                 print(f"      First product: {products[0].get('name', 'No name')}")
+        
+        # CRITICAL: Let's use the ACTUAL keys that exist in the data
+        print("🎯 USING ACTUAL KEYS FROM SELECTOR:")
+        actual_keys = list(m.keys())
+        print(f"Available keys: {actual_keys}")
     else:
         print("❌ No makeup data to analyze")
     
@@ -118,62 +123,43 @@ def render_makeup_report(result: Dict) -> Tuple[str, InlineKeyboardMarkup]:
     print(f"🔍 Looking for eyes categories: {eyes_categories}")
     print(f"🔍 Looking for lips categories: {lips_categories}")
     
-    # Collect products by display groups - DIRECT KEY MAPPING
+    # SIMPLIFIED: Just use ALL available products from makeup data
     face = []
-    # Direct mapping to exact SelectorV2 keys (ENGLISH!)
-    direct_face_keys = ['foundation']  # Exact English key from SelectorV2
-    for cat in direct_face_keys:
-        products = m.get(cat, [])
-        print(f"📦 DIRECT KEY '{cat}': {len(products)} products")
-        face.extend(products)
-    
-    # Fallback to old categories if direct keys don't work
-    for cat in face_categories:
-        products = m.get(cat, [])
-        print(f"📦 FALLBACK '{cat}': {len(products)} products")
-        face.extend(products)
-    
     brows = []
-    # Direct mapping to exact SelectorV2 keys (ENGLISH!)
-    direct_brows_keys = ['eyebrow']  # Exact English key from SelectorV2
-    for cat in direct_brows_keys:
-        products = m.get(cat, [])
-        print(f"📦 DIRECT KEY '{cat}': {len(products)} products")
-        brows.extend(products)
-    
-    # Fallback
-    for cat in brows_categories:
-        products = m.get(cat, [])
-        print(f"📦 FALLBACK '{cat}': {len(products)} products")
-        brows.extend(products)
-        
     eyes = []
-    # Direct mapping to exact SelectorV2 keys (ENGLISH!)
-    direct_eyes_keys = ['mascara', 'eyeshadow']  # Exact English keys from SelectorV2
-    for cat in direct_eyes_keys:
-        products = m.get(cat, [])
-        print(f"📦 DIRECT KEY '{cat}': {len(products)} products")
-        eyes.extend(products)
-    
-    # Fallback
-    for cat in eyes_categories:
-        products = m.get(cat, [])
-        print(f"📦 FALLBACK '{cat}': {len(products)} products")
-        eyes.extend(products)
-        
     lips = []
-    # Direct mapping to exact SelectorV2 keys (ENGLISH!)
-    direct_lips_keys = ['lipstick']  # Exact English key from SelectorV2
-    for cat in direct_lips_keys:
-        products = m.get(cat, [])
-        print(f"📦 DIRECT KEY '{cat}': {len(products)} products")
-        lips.extend(products)
     
-    # Fallback
-    for cat in lips_categories:
-        products = m.get(cat, [])
-        print(f"📦 FALLBACK '{cat}': {len(products)} products")
-        lips.extend(products)
+    # If we have makeup data, distribute all products to appropriate categories
+    if m:
+        print("🎯 SIMPLIFIED APPROACH: Using all available makeup products")
+        all_makeup_products = []
+        for key, products in m.items():
+            if products:
+                print(f"📦 Adding {len(products)} products from '{key}'")
+                all_makeup_products.extend(products)
+        
+        # Distribute products based on their category field
+        for product in all_makeup_products:
+            category = str(product.get('category', '')).lower()
+            print(f"🔍 Product category: '{category}' -> {product.get('name', 'No name')}")
+            
+            # Face products
+            if any(term in category for term in ['тональн', 'основ', 'консил', 'пудр', 'румян', 'foundation', 'concealer', 'powder', 'blush']):
+                face.append(product)
+            # Brow products  
+            elif any(term in category for term in ['бров', 'eyebrow', 'brow']):
+                brows.append(product)
+            # Eye products
+            elif any(term in category for term in ['тушь', 'тени', 'подводк', 'mascara', 'eyeshadow', 'eyeliner']):
+                eyes.append(product)
+            # Lip products
+            elif any(term in category for term in ['помад', 'блеск', 'lipstick', 'lip']):
+                lips.append(product)
+            else:
+                # Default to face if category unclear
+                face.append(product)
+    
+    # Products already distributed above in the simplified approach
     
     print(f"🛍️ Products count: face={len(face)}, brows={len(brows)}, eyes={len(eyes)}, lips={len(lips)}")
 
