@@ -87,7 +87,7 @@ def _kb_confirm(enabled: bool) -> InlineKeyboardMarkup:
 async def start_flow(m: Message, state: FSMContext) -> None:
     await state.clear()
     await state.set_state(SkincareFlow.B1_TYPE)
-    await m.answer("Шаг 1/3 — Выберите свой тип кожи:", reply_markup=_kb_skin_types())
+    await m.answer("Шаг 1/3 — Выберите свой тип лица:", reply_markup=_kb_skin_types())
 
 
 def _parse(data: str) -> List[str]:
@@ -126,7 +126,7 @@ async def on_type(cb: CallbackQuery, state: FSMContext) -> None:
         return
     await state.update_data(skin_type=value)
     await state.set_state(SkincareFlow.B2_CONCERNS)
-    await msg.edit_text("Шаг 2/3 — Выберите проблемы кожи (можно несколько):")
+    await msg.edit_text("Шаг 2/3 — Выберите особенности лица (можно несколько):")
     await msg.edit_reply_markup(reply_markup=_kb_concerns(selected=[]))
     await cb.answer()
 
@@ -162,7 +162,7 @@ async def on_concerns(cb: CallbackQuery, state: FSMContext) -> None:
         ready = bool(skin_type)
         text = (
             "Шаг 3/3 — Подтверждение\n\n"
-            f"Тип кожи: {skin_type}\n"
+            f"Тип лица: {skin_type}\n"
             f"Проблемы: {', '.join(concerns) if concerns else '—'}\n\n"
             "Нажмите 'Сформировать отчёт'."
         )
@@ -194,7 +194,7 @@ async def on_confirm(cb: CallbackQuery, state: FSMContext) -> None:
     if field == "back":
         await state.set_state(SkincareFlow.B2_CONCERNS)
         d = await state.get_data()
-        await msg.edit_text("Шаг 2/3 — Выберите проблемы кожи (можно несколько):")
+        await msg.edit_text("Шаг 2/3 — Выберите особенности лица (можно несколько):")
         await msg.edit_reply_markup(
             reply_markup=_kb_concerns(selected=list(d.get("concerns") or []))
         )
