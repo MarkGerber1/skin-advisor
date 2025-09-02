@@ -1,0 +1,10 @@
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Shopping cart icon -->
+  <path d="M3 3h2l.4 2m0 0h15.6l-1.5 7H6.4m0 0L5 7m1.4 5v0m0 0l1.6 8h9" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <!-- Cart items -->
+  <circle cx="9" cy="20" r="1" stroke="currentColor" stroke-width="1.75" fill="none"/>
+  <circle cx="18" cy="20" r="1" stroke="currentColor" stroke-width="1.75" fill="none"/>
+  <!-- Count badge -->
+  <circle cx="19" cy="5" r="2.5" fill="currentColor" opacity="0.2"/>
+  <text x="19" y="6" text-anchor="middle" font-size="8" fill="currentColor" font-weight="bold">3</text>
+</svg>

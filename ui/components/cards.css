@@ -1,0 +1,198 @@
+/**
+ * Card Components
+ * Контейнеры для контента с elevation
+ */
+
+/* ===== BASE CARD ===== */
+.card {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  transition: var(--transition-base);
+}
+
+.card-header {
+  padding: var(--space-4) var(--card-padding);
+  border-bottom: 1px solid var(--color-border);
+  background-color: var(--color-bg);
+  
+  .card-title {
+    margin: 0;
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    color: var(--color-fg);
+    line-height: var(--line-height-tight);
+  }
+  
+  .card-subtitle {
+    margin: var(--space-1) 0 0 0;
+    font-size: var(--font-size-sm);
+    color: var(--color-muted);
+    line-height: var(--line-height);
+  }
+}
+
+.card-body {
+  padding: var(--card-padding);
+  flex: 1;
+}
+
+.card-footer {
+  padding: var(--space-4) var(--card-padding);
+  border-top: 1px solid var(--color-border);
+  background-color: var(--color-bg);
+}
+
+/* ===== CARD VARIANTS ===== */
+.card-elevated {
+  box-shadow: var(--shadow-md);
+  
+  &:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-2px);
+  }
+}
+
+.card-flat {
+  box-shadow: none;
+  border: 1px solid var(--color-border);
+}
+
+.card-outlined {
+  box-shadow: none;
+  border: 2px solid var(--color-primary);
+}
+
+/* ===== PRODUCT CARD ===== */
+.product-card {
+  max-width: 280px;
+  transition: var(--transition-base);
+  
+  &:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-4px);
+  }
+  
+  .product-image {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    background-color: var(--color-surface);
+  }
+  
+  .product-info {
+    padding: var(--space-4);
+  }
+  
+  .product-title {
+    margin: 0 0 var(--space-2) 0;
+    font-size: var(--font-size-md);
+    font-weight: 600;
+    color: var(--color-fg);
+    line-height: var(--line-height-tight);
+  }
+  
+  .product-description {
+    margin: 0 0 var(--space-3) 0;
+    font-size: var(--font-size-sm);
+    color: var(--color-muted);
+    line-height: var(--line-height);
+  }
+  
+  .product-price {
+    margin: 0;
+    font-size: var(--font-size-lg);
+    font-weight: 700;
+    color: var(--color-primary);
+  }
+  
+  .product-actions {
+    padding: var(--space-3) var(--space-4);
+    border-top: 1px solid var(--color-border);
+    display: flex;
+    gap: var(--space-2);
+  }
+}
+
+/* ===== RECOMMENDATION CARD ===== */
+.recommendation-card {
+  border-left: 4px solid var(--color-primary);
+  background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-bg) 100%);
+  
+  .recommendation-icon {
+    width: var(--icon-size-lg);
+    height: var(--icon-size-lg);
+    color: var(--color-primary);
+    margin-bottom: var(--space-2);
+  }
+  
+  .recommendation-title {
+    color: var(--color-primary);
+    font-weight: 600;
+  }
+}
+
+/* ===== TEST RESULT CARD ===== */
+.test-result-card {
+  border: 2px solid var(--color-success);
+  background: linear-gradient(135deg, 
+    color-mix(in srgb, var(--color-success) 5%, transparent) 0%, 
+    var(--color-bg) 100%
+  );
+  
+  .result-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    background-color: var(--color-success);
+    color: white;
+    border-radius: var(--radius-pill);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    margin-bottom: var(--space-3);
+  }
+}
+
+/* ===== CARD GRID ===== */
+.card-grid {
+  display: grid;
+  gap: var(--space-5);
+  
+  &.card-grid-2 {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
+  
+  &.card-grid-3 {
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  }
+  
+  &.card-grid-4 {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .card {
+    border-radius: var(--radius-md);
+  }
+  
+  .card-header,
+  .card-body,
+  .card-footer {
+    padding: var(--space-4);
+  }
+  
+  .product-card {
+    max-width: 100%;
+  }
+  
+  .card-grid {
+    grid-template-columns: 1fr;
+  }
+}
