@@ -47,6 +47,18 @@ class AnalyticsTracker:
         
         # Интеграция с существующей системой метрик
         self.metrics_tracker = get_metrics_tracker()
+
+        # События инлайн-потока подбора ухода
+        self.skincare_events = {
+            "recommendations_viewed": "branch=skincare",
+            "category_opened": "name",
+            "product_opened": "pid,source",
+            "variant_selected": "pid,vid",
+            "product_added_to_cart": "pid,vid,source,price",
+            "oos_shown": "pid",
+            "alternatives_shown": "pid,base_category,alternatives_count",
+            "error_shown": "code,place"
+        }
         
     def emit(self, event_type: str, user_id: int, payload: Dict[str, Any] = None, 
              session_id: Optional[str] = None) -> None:
@@ -405,12 +417,54 @@ def track_cart_event(event_type: str, user_id: int, **kwargs) -> None:
     """Отследить событие корзины"""
     tracker = get_analytics_tracker()
     method_name = event_type.replace("cart_", "").replace("product_added_to_", "product_added_to_")
-    
-    if hasattr(tracker, method_name):
-        method = getattr(tracker, method_name)
-        method(user_id, **kwargs)
-    else:
-        tracker.emit(event_type, user_id, kwargs)
+
+
+# События инлайн-потока подбора ухода
+def track_skincare_recommendations_viewed(user_id: int, session_id: Optional[str] = None) -> None:
+    """Отследить просмотр подбора ухода"""
+    tracker = get_analytics_tracker()
+    tracker.emit("recommendations_viewed", user_id, {"branch": "skincare"}, session_id)
+
+
+def track_category_opened(user_id: int, category_name: str, session_id: Optional[str] = None) -> None:
+    """Отследить открытие категории товаров"""
+    tracker = get_analytics_tracker()
+    tracker.emit("category_opened", user_id, {"name": category_name}, session_id)
+
+
+def track_product_opened(user_id: int, product_id: str, source: str, session_id: Optional[str] = None) -> None:
+    """Отследить открытие карточки товара"""
+    tracker = get_analytics_tracker()
+    tracker.emit("product_opened", user_id, {"pid": product_id, "source": source}, session_id)
+
+
+def track_variant_selected(user_id: int, product_id: str, variant_id: str, session_id: Optional[str] = None) -> None:
+    """Отследить выбор варианта товара"""
+    tracker = get_analytics_tracker()
+    tracker.emit("variant_selected", user_id, {"pid": product_id, "vid": variant_id}, session_id)
+
+
+def track_oos_shown(user_id: int, product_id: str, session_id: Optional[str] = None) -> None:
+    """Отследить показ товара 'нет в наличии'"""
+    tracker = get_analytics_tracker()
+    tracker.emit("oos_shown", user_id, {"pid": product_id}, session_id)
+
+
+def track_alternatives_shown(user_id: int, product_id: str, base_category: str, alternatives_count: int,
+                            session_id: Optional[str] = None) -> None:
+    """Отследить показ альтернатив для товара"""
+    tracker = get_analytics_tracker()
+    tracker.emit("alternatives_shown", user_id, {
+        "pid": product_id,
+        "base_category": base_category,
+        "alternatives_count": alternatives_count
+    }, session_id)
+
+
+def track_skincare_error(user_id: int, error_code: str, place: str, session_id: Optional[str] = None) -> None:
+    """Отследить ошибку в инлайн-потоке ухода"""
+    tracker = get_analytics_tracker()
+    tracker.emit("error_shown", user_id, {"code": error_code, "place": place}, session_id)
 
 
 if __name__ == "__main__":
@@ -455,3 +509,4 @@ if __name__ == "__main__":
         print(f"  {key}: {value}")
     
     print("\n✅ Analytics test completed!")
+
