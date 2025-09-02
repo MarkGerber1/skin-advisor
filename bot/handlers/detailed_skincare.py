@@ -435,6 +435,29 @@ async def q8_desired_effect(cb: CallbackQuery, state: FSMContext) -> None:
         catalog_store = CatalogStore.instance(catalog_path)
         catalog = catalog_store.get()
         
+        # ДИАГНОСТИКА: Проверяем каталог перед селектором
+        print(f"📊 CATALOG DIAGNOSTIC:")
+        print(f"  📦 Total products in catalog: {len(catalog)}")
+        
+        # Подсчитываем товары по категориям
+        category_counts = {}
+        skincare_products_found = []
+        for product in catalog:
+            cat = product.category.lower() if product.category else "unknown"
+            category_counts[cat] = category_counts.get(cat, 0) + 1
+            
+            # Проверяем на skincare
+            skincare_keywords = ["очищ", "тоник", "сыв", "крем", "маск", "spf", "санскрин", "cleanser", "serum", "moisturizer"]
+            if any(keyword in cat for keyword in skincare_keywords):
+                skincare_products_found.append(f"{product.brand} {product.title} (category: {cat})")
+        
+        print(f"  📋 Categories found: {dict(sorted(category_counts.items()))}")
+        print(f"  🧴 Potential skincare products found: {len(skincare_products_found)}")
+        for i, prod in enumerate(skincare_products_found[:5]):  # Show first 5
+            print(f"    {i+1}. {prod}")
+        if len(skincare_products_found) > 5:
+            print(f"    ... and {len(skincare_products_found) - 5} more")
+        
         # Генерируем рекомендации через SelectorV2
         selector = SelectorV2()
         print(f"🔧 DETAILED SKINCARE: Calling selector with profile: skin_type={profile.skin_type}, concerns={[c for c in concerns]}")
