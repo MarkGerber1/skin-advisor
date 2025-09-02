@@ -259,7 +259,13 @@ async def on_confirm(cb: CallbackQuery, state: FSMContext) -> None:
         # Render for UI
         from bot.ui.render import render_skincare_report
         text, kb = render_skincare_report(result)
-        
+
+        # Сохраняем профиль пользователя для будущих рекомендаций
+        from bot.handlers.user_profile_store import get_user_profile_store
+        profile_store = get_user_profile_store()
+        profile_store.save_profile(uid, profile, metadata={"test_type": "skincare", "completed_at": "now"})
+        print(f"💾 Profile saved for user {uid} after skincare test completion")
+
         # Save JSON + PDF
         snapshot = {
             "type": "skincare",
