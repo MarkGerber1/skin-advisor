@@ -13,7 +13,7 @@ from enum import Enum
 import threading
 
 from engine.cart_store import CartStore, CartItem
-from engine.catalog import get_catalog_manager
+from engine.catalog_store import CatalogStore
 from engine.models import Product
 
 
@@ -85,8 +85,10 @@ class CartService:
         """Проверка существования товара и соответствия варианта"""
         try:
             # Получаем каталог
-            catalog_manager = get_catalog_manager()
-            catalog = catalog_manager.get_catalog()
+            import os
+            catalog_path = os.getenv("CATALOG_PATH", "assets/fixed_catalog.yaml")
+            catalog_store = CatalogStore.instance(catalog_path)
+            catalog = catalog_store.get()
             
             # Ищем товар в каталоге
             product = None

@@ -490,8 +490,10 @@ async def _find_product_alternatives(user_id: int, unavailable_product_id: str) 
         )
         
         # Получаем каталог и строим рекомендации с fallback
-        catalog_store = CatalogStore()
-        catalog = catalog_manager.get_catalog()
+        import os
+        catalog_path = os.getenv("CATALOG_PATH", "assets/fixed_catalog.yaml")
+        catalog_store = CatalogStore.instance(catalog_path)
+        catalog = catalog_store.get()
         
         # Используем fallback селектор
         result = selector.select_products_v2(test_profile, catalog, partner_code="S1")
