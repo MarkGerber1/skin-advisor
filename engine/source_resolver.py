@@ -10,7 +10,7 @@ from datetime import datetime
 import re
 
 from engine.source_prioritizer import get_source_prioritizer, SourceInfo
-from engine.catalog import get_catalog_manager
+from engine.catalog_store import CatalogStore
 from engine.models import Product, UserProfile
 
 
@@ -29,9 +29,12 @@ class ResolvedProduct:
 class SourceResolver:
     """Разрешение источников с приоритизацией и поиском альтернатив"""
     
-    def __init__(self):
+    def __init__(self, catalog_path: str = None):
         self.source_prioritizer = get_source_prioritizer()
-        self.catalog_manager = get_catalog_manager()
+        if not catalog_path:
+            import os
+            catalog_path = os.getenv("CATALOG_PATH", "assets/fixed_catalog.yaml")
+        self.catalog_store = CatalogStore.instance(catalog_path)
     
     def resolve_source(self, product: Dict[str, Any]) -> ResolvedProduct:
         """
@@ -99,7 +102,7 @@ class SourceResolver:
             (alternative_product, reason): Альтернативный товар и причина замены
         """
         try:
-            catalog = self.catalog_manager.get_catalog()
+            catalog = self.catalog_store.get()
             original_category = product.get("category", "")
             original_price = float(product.get("price", 0))
             
