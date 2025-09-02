@@ -1,0 +1,95 @@
+/**
+ * Theme Skins
+ * Светлая и темная темы для skincare bot
+ */
+
+/* ===== LIGHT THEME (default) ===== */
+:root,
+[data-theme="light"] {
+  /* Основные цвета уже определены в tokens.css */
+  --theme-name: "light";
+}
+
+/* ===== DARK THEME ===== */
+[data-theme="dark"] {
+  --theme-name: "dark";
+  
+  /* ===== OVERRIDES FOR DARK THEME ===== */
+  --color-bg: #121212;          /* Темный фон */
+  --color-fg: #FFFFFF;          /* Светлый текст */
+  --color-muted: #CFCFCF;       /* Приглушенный светлый */
+  --color-surface: #1B1B1B;     /* Темные поверхности */
+  --color-border: #2A2A2A;      /* Темные границы */
+  
+  /* Усиленные тени для темной темы */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.40);
+  --shadow-md: 0 6px 18px rgba(0, 0, 0, 0.50);
+  --shadow-lg: 0 12px 24px rgba(0, 0, 0, 0.60);
+  --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.70);
+  
+  /* Адаптированные состояния для темной темы */
+  --color-success: #4CAF50;     /* Более яркий зеленый */
+  --color-warning: #FF9800;     /* Более яркий оранжевый */
+  --color-danger: #F44336;      /* Более яркий красный */
+  --color-info: #2196F3;       /* Более яркий синий */
+  
+  /* Более светлый акцент для лучшего контраста */
+  --color-accent: #D4C5FF;      /* Светлее lilac для темной темы */
+}
+
+/* ===== THEME UTILITIES ===== */
+.theme-transition {
+  transition: 
+    background-color var(--transition-base),
+    color var(--transition-base),
+    border-color var(--transition-base),
+    box-shadow var(--transition-base);
+}
+
+/* Класс для переключения темы */
+.theme-toggle {
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-2);
+  color: var(--color-fg);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  transition: var(--transition-base);
+}
+
+.theme-toggle:hover {
+  background-color: var(--color-surface);
+  border-color: var(--color-primary);
+}
+
+.theme-toggle:focus {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* Автоматическая тема на основе системных настроек */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --theme-name: "auto-dark";
+    
+    --color-bg: #121212;
+    --color-fg: #FFFFFF;
+    --color-muted: #CFCFCF;
+    --color-surface: #1B1B1B;
+    --color-border: #2A2A2A;
+    
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.40);
+    --shadow-md: 0 6px 18px rgba(0, 0, 0, 0.50);
+    --shadow-lg: 0 12px 24px rgba(0, 0, 0, 0.60);
+    --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.70);
+    
+    --color-success: #4CAF50;
+    --color-warning: #FF9800;
+    --color-danger: #F44336;
+    --color-info: #2196F3;
+    --color-accent: #D4C5FF;
+  }
+}

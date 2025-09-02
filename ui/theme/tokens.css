@@ -1,0 +1,90 @@
+/**
+ * Design System Tokens
+ * Цветовые и размерные токены для skincare bot
+ * Beauty-friendly палитра с контрастностью WCAG AA
+ */
+
+:root {
+  /* ===== BRAND COLORS ===== */
+  --color-primary: #C26A8D;     /* Rose Mauve - основной бренд */
+  --color-secondary: #F4DCE4;   /* Nude Blush - вторичный */
+  --color-accent: #C9B7FF;      /* Soft Lilac - акцент */
+
+  /* ===== NEUTRAL COLORS ===== */
+  --color-bg: #FFFFFF;          /* Основной фон */
+  --color-fg: #121212;          /* Основной текст */
+  --color-muted: #6B6B6B;       /* Приглушенный текст */
+  --color-surface: #FAFAFA;     /* Поверхности карточек */
+  --color-border: #E9E9E9;      /* Границы */
+
+  /* ===== STATE COLORS ===== */
+  --color-success: #2E7D32;     /* Успех */
+  --color-warning: #B26A00;     /* Предупреждение */
+  --color-danger: #B3261E;      /* Ошибка */
+  --color-info: #1976D2;        /* Информация */
+
+  /* ===== BORDER RADIUS ===== */
+  --radius-sm: 8px;             /* Маленький радиус */
+  --radius-md: 12px;            /* Средний радиус */
+  --radius-lg: 16px;            /* Большой радиус */
+  --radius-xl: 20px;            /* Очень большой */
+  --radius-pill: 999px;         /* Округлые элементы */
+
+  /* ===== SPACING (4px grid) ===== */
+  --space-1: 4px;               /* Минимальный отступ */
+  --space-2: 8px;               /* Маленький отступ */
+  --space-3: 12px;              /* Средний отступ */
+  --space-4: 16px;              /* Обычный отступ */
+  --space-5: 24px;              /* Большой отступ */
+  --space-6: 32px;              /* Очень большой отступ */
+  --space-8: 48px;              /* Экстра большой */
+
+  /* ===== TYPOGRAPHY ===== */
+  --font-family: system-ui, -apple-system, "SF Pro Text", Roboto, Arial, sans-serif;
+  --font-family-mono: "SF Mono", Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  
+  --font-size-xs: 12px;         /* Очень мелкий */
+  --font-size-sm: 14px;         /* Подписи, чипы */
+  --font-size-md: 16px;         /* Основной текст */
+  --font-size-lg: 18px;         /* Заголовки маленькие */
+  --font-size-xl: 24px;         /* Заголовки большие */
+  --font-size-2xl: 32px;        /* Главные заголовки */
+  
+  --line-height: 1.4;           /* Базовая высота строки */
+  --line-height-tight: 1.2;     /* Плотная */
+  --line-height-loose: 1.6;     /* Свободная */
+
+  /* ===== ICON & TOUCH TARGETS ===== */
+  --icon-size-sm: 16px;         /* Маленькие иконки */
+  --icon-size: 24px;            /* Стандартный размер глифа */
+  --icon-size-lg: 32px;         /* Большие иконки */
+  --touch-size: 48px;           /* Минимальная кликабельная область */
+
+  /* ===== SHADOWS ===== */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.10);    /* Легкая тень */
+  --shadow-md: 0 6px 16px rgba(0, 0, 0, 0.12);   /* Средняя тень */
+  --shadow-lg: 0 12px 24px rgba(0, 0, 0, 0.15);  /* Большая тень */
+  --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.20);  /* Драматическая тень */
+
+  /* ===== Z-INDEX SCALE ===== */
+  --z-dropdown: 100;
+  --z-modal: 200;
+  --z-toast: 300;
+  --z-tooltip: 400;
+
+  /* ===== TRANSITIONS ===== */
+  --transition-fast: 150ms ease-out;
+  --transition-base: 250ms ease-out;
+  --transition-slow: 350ms ease-out;
+
+  /* ===== COMPONENT SIZES ===== */
+  --button-height-sm: 36px;
+  --button-height: 44px;
+  --button-height-lg: 52px;
+  
+  --input-height: 44px;
+  --input-padding: var(--space-3);
+  
+  --card-padding: var(--space-5);
+  --badge-height: 28px;
+}
