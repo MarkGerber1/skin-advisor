@@ -310,7 +310,18 @@ async def show_cart_callback(cb: CallbackQuery, state: FSMContext) -> None:
     """Показать корзину через inline кнопку"""
     print(f"🛒 Show cart callback triggered for user {cb.from_user.id if cb.from_user else 'unknown'}")
     print(f"🔍 CALLBACK DIAGNOSTIC: cb.from_user.id = {cb.from_user.id if cb.from_user else 'None'}")
-    await show_cart(cb.message, state)
+
+    # Создаем временное сообщение для совместимости с show_cart
+    from aiogram.types import Message
+    temp_message = Message(
+        message_id=cb.message.message_id if cb.message else 0,
+        from_user=cb.from_user,
+        chat=cb.message.chat if cb.message else None,
+        date=cb.message.date if cb.message else None,
+        text="🛒 Корзина"
+    )
+
+    await show_cart(temp_message, state)
     await cb.answer()
 
 @router.message(F.text == "🛒 Корзина")
