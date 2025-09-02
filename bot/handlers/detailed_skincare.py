@@ -532,6 +532,18 @@ async def q8_desired_effect(cb: CallbackQuery, state: FSMContext) -> None:
             save_last_json(uid, snapshot)
             save_text_pdf(uid, title="🧴 Отчёт по уходу за кожей", body_text=full_report)
         
+        # Сохраняем профиль в FSM coordinator для корзины
+        print(f"💾 Saving profile to FSM coordinator for user {uid}")
+        from bot.handlers.fsm_coordinator import get_fsm_coordinator
+        coordinator = get_fsm_coordinator()
+        await coordinator.save_user_profile(uid, {
+            "user_id": uid,
+            "skin_type": skin_type,
+            "concerns": concerns,
+            "sensitivity": sensitivity,
+            "test_type": "detailed_skincare"
+        })
+        
         # Сохраняем результат в состояние
         await state.update_data(
             skin_analysis=skin_analysis,
@@ -541,6 +553,7 @@ async def q8_desired_effect(cb: CallbackQuery, state: FSMContext) -> None:
             tldr_report=tldr_report,
             full_report=full_report
         )
+        print(f"✅ Profile and results saved successfully")
         
         # Показываем результат
         skin_type_names = {
