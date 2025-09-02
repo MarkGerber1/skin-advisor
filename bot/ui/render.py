@@ -55,15 +55,15 @@ def render_skincare_report(result: Dict) -> Tuple[str, InlineKeyboardMarkup]:
     s = result.get("skincare", {})
     print(f"🧴 Skincare data keys: {list(s.keys()) if s else 'No skincare data'}")
     
-    # CRITICAL FIX: Use RUSSIAN keys that actually come from SelectorV2
-    # Данные приходят с русскими ключами из селектора
-    cleanser = s.get("очищающее средство", [])
-    toner = s.get("тоник", [])
-    serum = s.get("сыворотка", [])
-    moisturizer = s.get("увлажняющее средство", [])
-    eye_cream = s.get("крем для кожи вокруг глаз", [])  # Keep technical key for data access
-    sunscreen = s.get("солнцезащитный крем", [])
-    mask = s.get("маска", [])
+    # CRITICAL FIX: Use ENGLISH keys that actually come from SelectorV2
+    # Данные приходят с английскими ключами из селектора
+    cleanser = s.get("cleanser", [])
+    toner = s.get("toner", [])
+    serum = s.get("serum", [])
+    moisturizer = s.get("moisturizer", [])
+    eye_cream = s.get("eye_cream", [])  # Keep technical key for data access
+    sunscreen = s.get("sunscreen", [])
+    mask = s.get("mask", [])
     
     print(f"🧴 Found products: cleanser={len(cleanser)}, toner={len(toner)}, serum={len(serum)}, moisturizer={len(moisturizer)}, eye_cream={len(eye_cream)}, sunscreen={len(sunscreen)}, mask={len(mask)}")
     
