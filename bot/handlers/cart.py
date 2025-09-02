@@ -39,8 +39,15 @@ metrics = get_metrics_tracker()
 
 
 def _user_id(msg: Message | None) -> int | None:
+    """Extract real user ID, not bot ID"""
     if msg and msg.from_user and msg.from_user.id:
-        return int(msg.from_user.id)
+        user_id = int(msg.from_user.id)
+        print(f"🔍 _user_id: message.from_user.id = {user_id}")
+        # Проверяем что это не bot ID (8345324302)
+        if user_id == 8345324302:
+            print(f"⚠️ WARNING: Got bot ID instead of user ID!")
+        return user_id
+    print(f"❌ _user_id: no message or from_user")
     return None
 
 
