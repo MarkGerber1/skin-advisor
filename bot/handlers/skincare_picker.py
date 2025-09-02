@@ -17,8 +17,49 @@ from engine.selector import SelectorV2
 # Fix import for Railway environment
 import sys
 import os
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-from i18n.ru import *
+
+# Add project root to sys.path for Railway compatibility
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(os.path.dirname(current_dir))
+
+# Try multiple possible paths for Railway
+possible_paths = [
+    project_root,  # Local development
+    '/usr/src/app',  # Railway production
+    os.path.dirname(project_root),  # Fallback
+]
+
+for path in possible_paths:
+    if os.path.exists(path) and path not in sys.path:
+        sys.path.insert(0, path)
+        print(f"Added to sys.path: {path}")
+
+try:
+    from i18n.ru import *
+except ImportError:
+    # Fallback: try to import directly
+    try:
+        import i18n.ru as i18n_module
+        # Copy all attributes from i18n.ru to current namespace
+        import inspect
+        current_module = inspect.currentframe().f_globals
+        for name in dir(i18n_module):
+            if not name.startswith('_'):
+                current_module[name] = getattr(i18n_module, name)
+    except ImportError as e:
+        print(f"CRITICAL: Failed to import i18n.ru: {e}")
+        # Define minimal fallback constants
+        HEAD_SKINCARE_PICK = "Подборка ухода по результатам"
+        SUB_PICK = "Выберите категорию, затем добавьте средства в корзину"
+        BTN_CLEANSE = "Очищение"
+        BTN_TONE = "Тонизирование"
+        BTN_SERUM = "Сыворотки"
+        BTN_MOIST = "Увлажнение"
+        BTN_EYE = "Зона вокруг глаз"
+        BTN_SPF = "Солнцезащита"
+        BTN_ADD_TO_CART = "Добавить в корзину"
+        BTN_CHOOSE_VARIANT = "Выбрать вариант"
+        MSG_ADDED = "Добавлено в корзину: {item}"
 
 from services.cart_service import get_cart_service, CartServiceError
 
