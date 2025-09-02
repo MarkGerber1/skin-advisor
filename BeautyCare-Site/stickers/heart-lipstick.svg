@@ -1,0 +1,62 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="512" height="512" fill="#121212" rx="64"/>
+
+  <!-- Heart with lipstick design -->
+  <g transform="translate(256, 256)">
+    <!-- Main heart shape -->
+    <path d="M 0,-30
+             C -30,-30 -60,0 -60,30
+             C -60,60 -30,90 0,120
+             C 30,90 60,60 60,30
+             C 60,0 30,-30 0,-30 Z"
+          fill="#C26A8D"/>
+
+    <!-- Heart inner shadow/highlight -->
+    <path d="M 0,-25
+             C -25,-25 -50,0 -50,25
+             C -50,50 -25,75 0,105
+             C 25,75 50,50 50,25
+             C 50,0 25,-25 0,-25 Z"
+          fill="none" stroke="#F4DCE4" stroke-width="2" opacity="0.6"/>
+
+    <!-- Lipstick tube in heart -->
+    <g transform="translate(0, 20)">
+      <!-- Lipstick case -->
+      <rect x="-8" y="-40" width="16" height="35" fill="#F4DCE4" rx="2"/>
+      <rect x="-6" y="-38" width="12" height="31" fill="#FFFFFF" rx="1"/>
+      <rect x="-4" y="-36" width="8" height="27" fill="#C9B7FF" rx="1"/>
+
+      <!-- Lipstick tip -->
+      <rect x="-3" y="-45" width="6" height="8" fill="#C26A8D" rx="3"/>
+      <rect x="-2" y="-47" width="4" height="6" fill="#B85C80" rx="2"/>
+
+      <!-- Lipstick cap -->
+      <rect x="-5" y="-55" width="10" height="8" fill="#2A2A2A" rx="1"/>
+      <rect x="-4" y="-54" width="8" height="6" fill="#404040" rx="1"/>
+    </g>
+
+    <!-- Decorative elements -->
+    <g opacity="0.7">
+      <!-- Small hearts around -->
+      <path d="M -80,-60 C -85,-60 -90,-55 -90,-50 C -90,-45 -85,-40 -80,-40 C -75,-40 -70,-45 -70,-50 C -70,-55 -75,-60 -80,-60 Z"
+            fill="#F4DCE4"/>
+      <path d="M 70,50 C 65,50 60,55 60,60 C 60,65 65,70 70,70 C 75,70 80,65 80,60 C 80,55 75,50 70,50 Z"
+            fill="#C9B7FF"/>
+      <path d="M 80,-70 C 75,-70 70,-65 70,-60 C 70,-55 75,-50 80,-50 C 85,-50 90,-55 90,-60 C 90,-65 85,-70 80,-70 Z"
+            fill="#C26A8D"/>
+    </g>
+
+    <!-- Sparkles -->
+    <g opacity="0.8">
+      <circle cx="-90" cy="-20" r="3" fill="#C9B7FF"/>
+      <circle cx="85" cy="30" r="4" fill="#F4DCE4"/>
+      <circle cx="0" cy="-85" r="3" fill="#C26A8D"/>
+    </g>
+  </g>
+
+  <!-- Subtle text -->
+  <text x="256" y="470" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="300" fill="#CCCCCC" opacity="0.7">
+    МАКИЯЖ
+  </text>
+</svg>

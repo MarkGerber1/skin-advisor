@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beauty Care Bot - Brand Assets Preview</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #121212;
+            color: #FFFFFF;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #C26A8D;
+            margin-bottom: 10px;
+            font-size: 2.5rem;
+            font-weight: 300;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #CCCCCC;
+            margin-bottom: 40px;
+            font-size: 1.1rem;
+        }
+
+        .section {
+            margin-bottom: 60px;
+        }
+
+        .section h2 {
+            color: #F4DCE4;
+            margin-bottom: 30px;
+            text-align: center;
+            font-size: 1.8rem;
+            font-weight: 300;
+        }
+
+        .logo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .logo-item {
+            background: #1E1E1E;
+            border-radius: 16px;
+            padding: 30px;
+            text-align: center;
+            border: 1px solid #333333;
+            transition: transform 0.2s ease;
+        }
+
+        .logo-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 32px rgba(194, 106, 141, 0.2);
+        }
+
+        .logo-item img {
+            width: 200px;
+            height: 200px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            object-fit: contain;
+        }
+
+        .logo-item h3 {
+            color: #C26A8D;
+            margin-bottom: 10px;
+            font-size: 1.3rem;
+        }
+
+        .logo-item p {
+            color: #CCCCCC;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .stickers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+        }
+
+        .sticker-item {
+            background: #1E1E1E;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid #333333;
+            transition: transform 0.2s ease;
+        }
+
+        .sticker-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 16px rgba(201, 183, 255, 0.2);
+        }
+
+        .sticker-item img {
+            width: 150px;
+            height: 150px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            object-fit: contain;
+        }
+
+        .sticker-item h3 {
+            color: #C9B7FF;
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+        }
+
+        .sticker-item p {
+            color: #999999;
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+
+        .color-palette {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 40px;
+            flex-wrap: wrap;
+        }
+
+        .color-item {
+            text-align: center;
+        }
+
+        .color-swatch {
+            width: 60px;
+            height: 60px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            border: 2px solid #333333;
+        }
+
+        .color-name {
+            font-size: 0.8rem;
+            color: #CCCCCC;
+            margin-bottom: 4px;
+        }
+
+        .color-hex {
+            font-size: 0.7rem;
+            color: #999999;
+            font-family: 'Monaco', 'Menlo', monospace;
+        }
+
+        .download-section {
+            text-align: center;
+            margin-top: 60px;
+            padding: 40px;
+            background: linear-gradient(135deg, #1E1E1E 0%, #2A2A2A 100%);
+            border-radius: 16px;
+            border: 1px solid #333333;
+        }
+
+        .download-section h3 {
+            color: #C26A8D;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+
+        .download-section p {
+            color: #CCCCCC;
+            margin-bottom: 30px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .download-links {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .download-btn {
+            background: #C26A8D;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: background 0.2s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .download-btn:hover {
+            background: #A8577A;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 15px;
+            }
+
+            .logo-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .stickers-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 15px;
+            }
+
+            .color-palette {
+                gap: 15px;
+            }
+
+            .download-links {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>💄 Beauty Care Bot</h1>
+        <p class="subtitle">Брендовые активы и визуальная идентичность</p>
+
+        <section class="section">
+            <h2>🏷️ Логотипы</h2>
+            <div class="logo-grid">
+                <div class="logo-item">
+                    <img src="logo.svg" alt="Beauty Care Logo Light">
+                    <h3>Светлый логотип</h3>
+                    <p>Для использования на темных фонах. Основные цвета: розовый, лавандовый и нежно-розовый.</p>
+                </div>
+                <div class="logo-item">
+                    <img src="logo-dark.svg" alt="Beauty Care Logo Dark">
+                    <h3>Темный логотип</h3>
+                    <p>Для использования на светлых фонах. Светлые тона на темном фоне для контраста.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>🎭 Стикеры</h2>
+            <div class="stickers-grid">
+                <div class="sticker-item">
+                    <img src="stickers/palette.svg" alt="Palette Sticker">
+                    <h3>🎨 Палитра</h3>
+                    <p>Для определения цветотипа кожи. Символизирует индивидуальный подход к выбору косметики.</p>
+                </div>
+                <div class="sticker-item">
+                    <img src="stickers/heart-lipstick.svg" alt="Heart Lipstick Sticker">
+                    <h3>💄 Сердце с помадой</h3>
+                    <p>Для макияжа и декоративной косметики. Выражает любовь к красоте и стилю.</p>
+                </div>
+                <div class="sticker-item">
+                    <img src="stickers/drop.svg" alt="Drop Sticker">
+                    <h3>💧 Капля</h3>
+                    <p>Для ухода за кожей и косметических средств. Символ чистоты и свежести.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>🎨 Цветовая палитра</h2>
+            <div class="color-palette">
+                <div class="color-item">
+                    <div class="color-swatch" style="background: #C26A8D"></div>
+                    <div class="color-name">Primary</div>
+                    <div class="color-hex">#C26A8D</div>
+                </div>
+                <div class="color-item">
+                    <div class="color-swatch" style="background: #F4DCE4"></div>
+                    <div class="color-name">Secondary</div>
+                    <div class="color-hex">#F4DCE4</div>
+                </div>
+                <div class="color-item">
+                    <div class="color-swatch" style="background: #C9B7FF"></div>
+                    <div class="color-name">Accent</div>
+                    <div class="color-hex">#C9B7FF</div>
+                </div>
+                <div class="color-item">
+                    <div class="color-swatch" style="background: #121212"></div>
+                    <div class="color-name">Dark BG</div>
+                    <div class="color-hex">#121212</div>
+                </div>
+                <div class="color-item">
+                    <div class="color-swatch" style="background: #FFFFFF"></div>
+                    <div class="color-name">Light BG</div>
+                    <div class="color-hex">#FFFFFF</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="download-section">
+            <h3>📥 Скачать активы</h3>
+            <p>Все брендовые активы доступны в форматах SVG (для масштабирования) и PNG (512×512px для использования в Telegram и других платформах).</p>
+            <div class="download-links">
+                <button class="download-btn" onclick="downloadFile('logo.svg')">Логотип SVG</button>
+                <button class="download-btn" onclick="downloadFile('logo-dark.svg')">Темный логотип SVG</button>
+                <button class="download-btn" onclick="downloadFile('stickers/palette.svg')">Палитра SVG</button>
+                <button class="download-btn" onclick="downloadFile('stickers/heart-lipstick.svg')">Сердце SVG</button>
+                <button class="download-btn" onclick="downloadFile('stickers/drop.svg')">Капля SVG</button>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        function downloadFile(filename) {
+            // Создаем ссылку для скачивания
+            const link = document.createElement('a');
+            link.href = filename;
+            link.download = filename.split('/').pop();
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+</body>
+</html>

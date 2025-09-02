@@ -7,6 +7,17 @@ Soft, user-friendly formulations replacing harsh technical terms.
 TEXT_TONE_GLOW = "Тон&Сияние"
 TEXT_SKIN_PORTRAIT = "Портрет лица"
 
+# Test descriptions and subtitles
+PALETTE_TEST_SUBTITLE = "8 вопросов · 1–2 минуты · подберём оттенки и список покупок"
+SKINCARE_TEST_SUBTITLE = "10 вопросов · 2 минуты · соберём уход и SPF по целям"
+
+# Progress indicators
+PROGRESS_PALETTE = "n/8"
+PROGRESS_SKINCARE = "n/10"
+
+# Hair color hint
+HAIR_COLOR_HINT = "Если волосы окрашены — ориентируйтесь на корни"
+
 # Labels
 LABEL_TYPE = "Тип"
 LABEL_STATE = "Состояние"
