@@ -164,6 +164,11 @@ async def add_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
         parts = cb.data.split(":", 3)
         product_id = parts[2] if len(parts) > 2 else ""
         variant_id = parts[3] if len(parts) > 3 else None
+
+        # Валидация входных параметров
+        if not product_id or not isinstance(product_id, str) or len(product_id.strip()) == 0:
+            await cb.answer("❌ Некорректный ID товара", show_alert=True)
+            return
         
         print(f"🛒 DETAILED: Adding product '{product_id}' (variant: {variant_id}) to cart for user {user_id}")
         print(f"🛒 CART_SERVICE_AVAILABLE: {CART_SERVICE_AVAILABLE}")
@@ -641,6 +646,57 @@ async def handle_unavailable_product(cb: CallbackQuery, state: FSMContext) -> No
 @router.callback_query(F.data == "cart:back")
 async def back_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
     """Вернуться к корзине"""
+    await show_cart(cb.message, state)
+
+
+@router.callback_query(F.data.startswith("cart:update_variant:"))
+async def update_item_variant(cb: CallbackQuery, state: FSMContext) -> None:
+    """Обновить вариант товара в корзине"""
+    user_id = _user_id(cb.message)
+    if not user_id:
+        await cb.answer("Неизвестный пользователь")
+        return
+
+    try:
+        # Парсим: cart:update_variant:product_id:old_variant:new_variant
+        parts = cb.data.split(":", 5)
+        if len(parts) < 5:
+            await cb.answer("❌ Некорректные параметры")
+            return
+
+        product_id = parts[2]
+        old_variant = parts[3] if parts[3] != "null" else None
+        new_variant = parts[4] if parts[4] != "null" else None
+
+        if CART_SERVICE_AVAILABLE:
+            cart_service = get_cart_service()
+            updated_item = await cart_service.update_item_variant(
+                user_id=user_id,
+                product_id=product_id,
+                old_variant_id=old_variant,
+                new_variant_id=new_variant
+            )
+
+            # Analytics
+            analytics = get_analytics_tracker()
+            analytics.track_event("cart_variant_updated", user_id, {
+                "product_id": product_id,
+                "old_variant": old_variant,
+                "new_variant": new_variant
+            })
+
+            await cb.answer(f"✅ Вариант обновлен: {updated_item.variant_name or 'Стандарт'}", show_alert=True)
+        else:
+            await cb.answer("❌ Сервис корзины недоступен")
+
+    except CartServiceError as e:
+        print(f"❌ Cart variant update error: {e}")
+        await cb.answer(f"❌ {e.message}", show_alert=True)
+    except Exception as e:
+        print(f"❌ Unexpected error in variant update: {e}")
+        await cb.answer("❌ Произошла ошибка при обновлении варианта", show_alert=True)
+
+    # Показываем обновленную корзину
     await show_cart(cb.message, state)
 
 
