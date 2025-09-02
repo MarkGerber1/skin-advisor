@@ -204,19 +204,71 @@ class CartService:
     async def add_item(self, user_id: int, product_id: str, variant_id: Optional[str] = None, qty: int = 1) -> CartItem:
         """
         Добавить товар в корзину с полной валидацией и идемпотентностью
-        
+
         Args:
             user_id: ID пользователя
-            product_id: ID товара  
+            product_id: ID товара
             variant_id: ID варианта (оттенок, размер, объем)
             qty: Количество (должно быть >= 1)
-            
+
         Returns:
             CartItem: Добавленный/обновленный элемент корзины
-            
+
         Raises:
             CartServiceError: При ошибках валидации или операции
         """
+        # 1. Валидация входных параметров
+        self._validate_parameters(product_id, variant_id, qty)
+
+        # 2. Защита от двойного клика
+        if self._check_duplicate_request(user_id, product_id, variant_id):
+            raise CartServiceError(
+                CartErrorCode.DUPLICATE_REQUEST,
+                "Duplicate request detected. Please wait before trying again.",
+                {"user_id": user_id, "product_id": product_id, "variant_id": variant_id}
+            )
+
+        # 3. Валидация товара и варианта
+        validation_result = await self._validate_product_and_variant(product_id, variant_id)
+        if not validation_result.valid:
+            raise CartServiceError(
+                validation_result.error_code,
+                validation_result.error_message,
+                {"product_id": product_id, "variant_id": variant_id}
+            )
+
+        product = validation_result.product
+
+        # 4. Создание CartItem
+        cart_item = CartItem(
+            product_id=product_id,
+            qty=qty,
+            brand=product.brand,
+            name=str(getattr(product, 'title', product.name)),
+            price=float(product.price) if product.price else 0.0,
+            price_currency=getattr(product, 'price_currency', 'RUB'),
+            ref_link=getattr(product, 'buy_url', getattr(product, 'link', '')),
+            explain="",  # Будет заполнено explain_generator при необходимости
+            category=product.category,
+            in_stock=product.in_stock,
+            variant_id=variant_id,
+            variant_name=self._get_variant_display_name(variant_id),
+            variant_type=self._get_variant_type(variant_id),
+            added_at=datetime.now().isoformat()
+        )
+
+        # 5. Добавление в хранилище (с идемпотентностью)
+        try:
+            self.cart_store.add(user_id, cart_item)
+            print(f"✅ Cart service: Added {product_id}:{variant_id or 'default'} for user {user_id}")
+            return cart_item
+
+        except Exception as e:
+            raise CartServiceError(
+                CartErrorCode.CART_OPERATION_FAILED,
+                f"Failed to add item to cart: {str(e)}",
+                {"user_id": user_id, "product_id": product_id, "variant_id": variant_id}
+            )
         # 1. Валидация входных параметров
         self._validate_parameters(product_id, variant_id, qty)
         
@@ -436,6 +488,76 @@ class CartService:
                 {"user_id": user_id}
             )
     
+    async def update_item_variant(self, user_id: int, product_id: str, old_variant_id: Optional[str], new_variant_id: Optional[str]) -> CartItem:
+        """
+        Обновить вариант товара в корзине
+
+        Args:
+            user_id: ID пользователя
+            product_id: ID товара
+            old_variant_id: Старый ID варианта
+            new_variant_id: Новый ID варианта
+
+        Returns:
+            CartItem: Обновленный элемент корзины
+
+        Raises:
+            CartServiceError: При ошибках валидации или операции
+        """
+        # Валидация нового варианта
+        if new_variant_id:
+            validation_result = await self._validate_product_and_variant(product_id, new_variant_id)
+            if not validation_result.valid:
+                raise CartServiceError(
+                    validation_result.error_code,
+                    validation_result.error_message,
+                    {"product_id": product_id, "new_variant_id": new_variant_id}
+                )
+
+        # Получаем текущую корзину
+        items = self.cart_store.get(user_id)
+        items_dict = {item.get_composite_key(): item for item in items}
+
+        old_key = f"{product_id}:{old_variant_id or 'default'}"
+        new_key = f"{product_id}:{new_variant_id or 'default'}"
+
+        if old_key not in items_dict:
+            raise CartServiceError(
+                CartErrorCode.PRODUCT_NOT_FOUND,
+                f"Item with key {old_key} not found in cart",
+                {"user_id": user_id, "old_key": old_key}
+            )
+
+        # Получаем старый элемент
+        old_item = items_dict[old_key]
+
+        # Удаляем старый элемент
+        self.cart_store.remove(user_id, product_id, old_variant_id)
+
+        # Создаем новый элемент с обновленным вариантом
+        updated_item = CartItem(
+            product_id=old_item.product_id,
+            qty=old_item.qty,
+            brand=old_item.brand,
+            name=old_item.name,
+            price=old_item.price,
+            price_currency=old_item.price_currency,
+            ref_link=old_item.ref_link,
+            explain=old_item.explain,
+            category=old_item.category,
+            in_stock=old_item.in_stock,
+            variant_id=new_variant_id,
+            variant_name=self._get_variant_display_name(new_variant_id),
+            variant_type=self._get_variant_type(new_variant_id),
+            added_at=old_item.added_at
+        )
+
+        # Добавляем обновленный элемент
+        self.cart_store.add(user_id, updated_item)
+
+        print(f"✅ Cart service: Updated variant {old_key} → {new_key} for user {user_id}")
+        return updated_item
+
     def set_item_quantity(self, user_id: int, product_id: str, variant_id: Optional[str], qty: int) -> Optional[CartItem]:
         """
         Установить количество товара в корзине
