@@ -9,15 +9,23 @@ from aiogram.types import (
 from typing import List
 
 
-# Константы для кнопок главного меню
-BTN_PALETTE = "🎨 Тон&Сияние"
-BTN_SKINCARE = "💧 Портрет лица PRO"
-BTN_ABOUT = "ℹ️ О боте"
-BTN_PICK = "🛒 Корзина"
-BTN_SETTINGS = "⚙️ Настройки"
-BTN_REPORT = "📄 Мои рекомендации"
-BTN_BACK = "⬅️ Назад"
-BTN_HOME = "🏠 Главное меню"
+# Design System Button Labels - Эмодзи из дизайн-системы
+BTN_PALETTE = "🎨 Тон&Сияние"          # Primary color theme
+BTN_SKINCARE = "💧 Портрет лица PRO"  # Water/blue theme
+BTN_ABOUT = "ℹ️ О боте"               # Info theme
+BTN_PICK = "🛒 Корзина"               # Shopping theme
+BTN_SETTINGS = "⚙️ Настройки"          # Settings theme
+BTN_REPORT = "📄 Мои рекомендации"     # Document theme
+BTN_BACK = "⬅️ Назад"                 # Navigation theme
+BTN_HOME = "🏠 Главное меню"          # Home theme
+
+# Additional Design System Buttons
+BTN_START_TEST = "🚀 Начать тест"
+BTN_VIEW_RESULTS = "📊 Посмотреть результаты"
+BTN_ADD_TO_CART = "➕ В корзину"
+BTN_SHOW_ALL = "📋 Показать все"
+BTN_GET_REPORT = "📄 Получить отчет"
+BTN_CONTACT_SUPPORT = "💬 Связаться с поддержкой"
 
 
 def main_menu() -> ReplyKeyboardMarkup:

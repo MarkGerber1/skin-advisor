@@ -13,3 +13,5 @@ export const SettingsIcon = memo<SettingsIconProps>((props) => {
 
 SettingsIcon.displayName = 'SettingsIcon';
 
+
+

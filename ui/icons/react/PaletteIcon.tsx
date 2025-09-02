@@ -13,3 +13,5 @@ export const PaletteIcon = memo<PaletteIconProps>((props) => {
 
 PaletteIcon.displayName = 'PaletteIcon';
 
+
+
