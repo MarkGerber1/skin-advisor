@@ -207,10 +207,13 @@ async def main() -> None:
             await bot.session.close()
             print("✅ Bot session closed")
     
-    # Setup signal handlers
+    # Setup graceful shutdown signal handlers
+    shutdown_event = asyncio.Event()
+    
     def signal_handler(signum, frame):
         print(f"📡 Received signal {signum}")
-        raise KeyboardInterrupt()
+        print("🛑 Starting graceful shutdown...")
+        shutdown_event.set()
     
     signal.signal(signal.SIGTERM, signal_handler)
     signal.signal(signal.SIGINT, signal_handler)
