@@ -153,16 +153,16 @@ async def add_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
         await cb.answer()
         return
         
+    user_id = _user_id(cb)
+    if not user_id:
+        print("❌ No user ID found")
+        await cb.answer("Неизвестный пользователь", show_alert=True)
+        return
+
     msg = cb.message
     if not isinstance(msg, Message):
         print("❌ Invalid message type")
         await cb.answer()
-        return
-        
-    user_id = _user_id(msg)
-    if not user_id:
-        print("❌ No user ID found")
-        await cb.answer("Неизвестный пользователь", show_alert=True)
         return
     
     try:
@@ -311,17 +311,74 @@ async def show_cart_callback(cb: CallbackQuery, state: FSMContext) -> None:
     print(f"🛒 Show cart callback triggered for user {cb.from_user.id if cb.from_user else 'unknown'}")
     print(f"🔍 CALLBACK DIAGNOSTIC: cb.from_user.id = {cb.from_user.id if cb.from_user else 'None'}")
 
-    # Создаем временное сообщение для совместимости с show_cart
-    from aiogram.types import Message
-    temp_message = Message(
-        message_id=cb.message.message_id if cb.message else 0,
-        from_user=cb.from_user,
-        chat=cb.message.chat if cb.message else None,
-        date=cb.message.date if cb.message else None,
-        text="🛒 Корзина"
-    )
+    user_id = _user_id(cb)
+    if not user_id:
+        print("❌ No user ID found in callback")
+        await cb.answer("Неизвестный пользователь", show_alert=True)
+        return
 
-    await show_cart(temp_message, state)
+    print(f"🔍 CART DIAGNOSTIC: show_cart called")
+    print(f"  👤 Callback user ID: {cb.from_user.id if cb.from_user else 'None'}")
+    print(f"  🔑 Processed user ID: {user_id}")
+
+    # Диагностируем состояние корзины
+    items: List[CartItem] = store.get(user_id)
+    print(f"  🛒 Cart items for user {user_id}: {len(items)}")
+
+    # Показываем все корзины в store для диагностики
+    all_carts = store._carts if hasattr(store, '_carts') else {}
+    print(f"  📦 All carts in store: {list(all_carts.keys())}")
+    for cart_user_id, cart_items in all_carts.items():
+        print(f"    User {cart_user_id}: {len(cart_items)} items")
+
+    if not items:
+        kb = InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text="🔄 Получить рекомендации", callback_data="get_recommendations")]
+        ])
+        await cb.message.edit_text("🛒 Ваша корзина пуста.\n\nДобавьте товары из рекомендаций!", reply_markup=kb)
+        await cb.answer()
+        return
+
+    # Метрика: просмотр корзины
+    metrics.track_event("cart_view", user_id, {"items_count": len(items)})
+
+    # Формируем сообщение с полной информацией
+    lines = ["🛒 **ВАША КОРЗИНА**\n"]
+    total = 0.0
+    available_items = 0
+
+    for i, item in enumerate(items, 1):
+        price = item.price or 0.0
+        qty = item.qty
+        total += price * qty
+
+        # Формируем название товара
+        brand_name = f"{item.brand or ''} {item.name or item.product_id}".strip()
+        price_text = f"{price} {item.price_currency or '₽'}" if price > 0 else "Цена уточняется"
+
+        # Статус наличия
+        stock_emoji = "✅" if item.in_stock else "❌"
+        if item.in_stock:
+            available_items += 1
+
+        # Строка товара
+        lines.append(f"{i}. {stock_emoji} **{brand_name}**\n   {price_text} × {qty}")
+        if item.explain:
+            lines.append(f"   _{item.explain}_\n")
+
+    # Итоговая информация
+    lines.append(f"\n💰 **Итого:** {total:.0f} ₽")
+    lines.append(f"📦 Доступно: {available_items}/{len(items)} товаров")
+
+    # Кнопки управления
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="🗑️ Очистить корзину", callback_data="cart:clear")],
+        [InlineKeyboardButton(text="📋 Создать заказ", callback_data="cart:checkout")],
+        [InlineKeyboardButton(text="🔙 Назад", callback_data="back:main")]
+    ])
+
+    text = "\n".join(lines)
+    await cb.message.edit_text(text, reply_markup=kb, parse_mode="Markdown")
     await cb.answer()
 
 @router.message(F.text == "🛒 Корзина")
@@ -491,9 +548,9 @@ async def refresh_cart(cb: CallbackQuery, state: FSMContext) -> None:
         message += f"\n• Удалено недоступных: {removed_count}"
     
     await cb.answer(message, show_alert=True)
-    
+
     # Показываем обновленную корзину
-    await show_cart(cb.message, state)
+    await show_cart_callback(cb, state)
 
 
 @router.callback_query(F.data == "cart:buy_all")  
@@ -663,7 +720,7 @@ async def handle_unavailable_product(cb: CallbackQuery, state: FSMContext) -> No
 @router.callback_query(F.data == "cart:back")
 async def back_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
     """Вернуться к корзине"""
-    await show_cart(cb.message, state)
+    await show_cart_callback(cb, state)
 
 
 @router.callback_query(F.data.startswith("cart:update_variant:"))
@@ -714,7 +771,7 @@ async def update_item_variant(cb: CallbackQuery, state: FSMContext) -> None:
         await cb.answer("❌ Произошла ошибка при обновлении варианта", show_alert=True)
 
     # Показываем обновленную корзину
-    await show_cart(cb.message, state)
+    await show_cart_callback(cb, state)
 
 
 @router.callback_query(F.data == "get_recommendations")
@@ -728,7 +785,7 @@ async def get_recommendations(cb: CallbackQuery, state: FSMContext) -> None:
     print(f"🎯 get_recommendations: user {user_id} wants recommendations for cart")
     
     # Показываем текущую корзину
-    await show_cart(cb, state)
+    await show_cart_callback(cb, state)
     
     await cb.answer("Открываю корзину с рекомендациями")
 
@@ -837,7 +894,7 @@ async def remove_from_cart(cb: CallbackQuery, state: FSMContext) -> None:
     
     metrics.track_event("cart_remove", user_id, {"product_id": product_id})
     await cb.answer("Товар удален из корзины")
-    await show_cart(cb.message, state)
+    await show_cart_callback(cb, state)
 
 
 @router.callback_query(F.data.startswith("cart:inc:"))
@@ -861,11 +918,11 @@ async def increase_quantity(cb: CallbackQuery, state: FSMContext) -> None:
                 "new_qty": new_qty,
                 "action": "increase"
             })
-            
+
             await cb.answer(f"Количество: {new_qty}")
             break
-    
-    await show_cart(cb.message, state)
+
+    await show_cart_callback(cb, state)
 
 
 @router.callback_query(F.data.startswith("cart:dec:"))
@@ -892,5 +949,5 @@ async def decrease_quantity(cb: CallbackQuery, state: FSMContext) -> None:
             
             await cb.answer(f"Количество: {new_qty}")
             break
-    
-    await show_cart(cb.message, state)
+
+    await show_cart_callback(cb, state)
