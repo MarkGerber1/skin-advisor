@@ -96,11 +96,11 @@ def render_skincare_report(result: Dict) -> Tuple[str, InlineKeyboardMarkup]:
         "📅 **ЕЖЕНЕДЕЛЬНО:**",
         *(_rows(wk) or ["— Нет подходящих продуктов"]),
         "",
-        "**Выбрать:**",
-        "🏪 — источник товара", 
-        "🔄 — другой вариант",
-        "🔀 — аналог категории",
-        "⭐ — универсальный вариант"
+        "**🛍️ Выбрать товары:**",
+        "• 🏪 источник товара", 
+        "• 🔄 другой вариант",
+        "• 🔀 аналог категории",
+        "• ⭐ универсальный выбор"
     ]
 
     links = [*(am or []), *(pm or []), *(wk or [])]
@@ -213,31 +213,57 @@ def render_makeup_report(result: Dict) -> Tuple[str, InlineKeyboardMarkup]:
         "💄 **ГУБЫ:**",
         *(_rows(lips) or ["— Нет подходящих продуктов"]),
         "",
-        "**Выбрать:**",
-        "🏪 — источник товара", 
-        "🔄 — другой вариант",
-        "🔀 — аналог категории",
-        "⭐ — универсальный вариант"
+        "**🛍️ Выбрать товары:**",
+        "• 🏪 источник товара", 
+        "• 🔄 другой вариант",
+        "• 🔀 аналог категории",
+        "• ⭐ универсальный выбор"
     ]
 
-    links = [*(face or []), *(brows or []), *(eyes or []), *(lips or [])]
-    print(f"🔗 Total links found: {len(links)}")
-    # Если нет партнерских ссылок — показать только noop-кнопку
-    ref_links_count = sum(1 for it in links if bool(it.get("ref_link")))
-    print(f"🌐 Products with ref_link: {ref_links_count}")
-    if not any(bool(it.get("ref_link")) for it in links):
-        print("⚠️ No ref_links found, returning noop keyboard")
-        return "\n".join(text_lines), _noop_keyboard()
-
+    all_products = [*(face or []), *(brows or []), *(eyes or []), *(lips or [])]
+    print(f"🛍️ Total makeup products for buttons: {len(all_products)}")
+    
+    # CRITICAL FIX: Create cart buttons based on product ID, not ref_link
+    # Even if ref_link is missing, we can still add products to cart
+    products_with_id = [p for p in all_products if p.get("id")]
+    print(f"🆔 Products with ID: {len(products_with_id)}")
+    
     buttons: List[List[InlineKeyboardButton]] = []
-    for it in links[:5]:
-        atc = _add_to_cart_button(it)
+    
+    # Add cart buttons for first 8 products
+    for product in products_with_id[:8]:
+        atc = _add_to_cart_button(product)
         if atc:
             buttons.append([atc])
-        if it.get("ref_link"):
-            buttons.append(
-                [InlineKeyboardButton(text=f"🛒 {it['brand']} {it['name']}", url=it["ref_link"])]
-            )
-
-    kb = InlineKeyboardMarkup(inline_keyboard=buttons)
+    
+    # Add "Show All" button if we have many products
+    if len(products_with_id) > 8:
+        buttons.append([InlineKeyboardButton(
+            text=f"🛍️ Показать все товары ({len(products_with_id)})",
+            callback_data="makeup:show_all"
+        )])
+    
+    # ALWAYS: Add "Go to Cart" button if we have any products
+    if products_with_id:
+        buttons.append([InlineKeyboardButton(
+            text="🛒 Перейти в корзину", 
+            callback_data="show_cart"
+        )])
+    
+    # Debug ref_link issue
+    ref_link_products = [p for p in all_products if p.get("ref_link")]
+    print(f"🌐 Products with ref_link: {len(ref_link_products)}")
+    if not ref_link_products and products_with_id:
+        print("⚠️ Products have IDs but no ref_links - check affiliate link generation")
+        sample_product = products_with_id[0]
+        print(f"📝 Sample product: id={sample_product.get('id')}, link={sample_product.get('link')}, ref_link={sample_product.get('ref_link')}")
+    
+    # Return keyboard or noop
+    if buttons:
+        print(f"🛒 Created {len(buttons)} total buttons")
+        kb = InlineKeyboardMarkup(inline_keyboard=buttons)
+    else:
+        print("⚠️ No products with ID found, returning noop keyboard")
+        kb = _noop_keyboard()
+        
     return "\n".join(text_lines), kb
