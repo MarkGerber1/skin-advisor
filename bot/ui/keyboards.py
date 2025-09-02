@@ -15,7 +15,7 @@ BTN_SKINCARE = "💧 Портрет лица PRO"
 BTN_ABOUT = "ℹ️ О боте"
 BTN_PICK = "🛒 Корзина"
 BTN_SETTINGS = "⚙️ Настройки"
-BTN_REPORT = "📄 Отчёт"
+BTN_REPORT = "📄 Мои рекомендации"
 BTN_BACK = "⬅️ Назад"
 BTN_HOME = "🏠 Главное меню"
 

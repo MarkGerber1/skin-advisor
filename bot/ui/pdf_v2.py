@@ -20,11 +20,13 @@ class StructuredPDFGenerator:
         self.font_size_text = 11
         self.font_size_small = 9
         
-        # Цвета (RGB)
-        self.color_header = (41, 128, 185)      # Синий
-        self.color_section = (52, 73, 94)      # Темно-серый 
-        self.color_text = (44, 62, 80)         # Черный
-        self.color_accent = (231, 76, 60)      # Красный для акцентов
+        # BRAND COLORS (Design System Palette)
+        self.color_header = (194, 106, 141)    # #C26A8D - Rose Mauve (Primary)
+        self.color_section = (194, 106, 141)   # #C26A8D - Primary для заголовков 
+        self.color_text = (18, 18, 18)         # #121212 - Dark text
+        self.color_accent = (201, 183, 255)    # #C9B7FF - Soft Lilac (Accent)
+        self.color_muted = (107, 107, 107)     # #6B6B6B - Muted text
+        self.color_secondary = (244, 220, 228) # #F4DCE4 - Nude Blush (Background)
         
         # Отступы (уменьшены для предотвращения проблем с пространством)
         self.margin_left = 15
