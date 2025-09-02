@@ -192,9 +192,9 @@ async def add_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
             print(f"📝 Created cart item: {cart_item}")
             
             # Add to store
-                    print(f"💾 Adding to store for user {user_id}")
-        store.add(user_id, cart_item)
-        print(f"✅ Successfully added to store")
+            print(f"💾 Adding to store for user {user_id}")
+            store.add(user_id, cart_item)
+            print(f"✅ Successfully added to store")
         
         # Диагностика: проверяем что товар действительно добавился
         stored_items = store.get(user_id)
