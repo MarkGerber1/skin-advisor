@@ -219,23 +219,47 @@ async def main() -> None:
     signal.signal(signal.SIGINT, signal_handler)
     
     try:
-        # Clear any existing webhook first
+        # Clear any existing webhook first and wait for conflicts to resolve
         try:
             await bot.delete_webhook(drop_pending_updates=True)
             print("🧹 Cleared existing webhook and pending updates")
+            
+            # Wait for Telegram to process webhook deletion
+            import asyncio
+            await asyncio.sleep(2)
+            
+            # Test connection before starting polling
+            me = await bot.get_me()
+            print(f"✅ Bot connection verified: @{me.username} (ID: {me.id})")
+            
         except Exception as e:
             print(f"⚠️ Could not clear webhook: {e}")
         
-        # Start polling with proper error handling
+        # Start polling with conflict resolution
+        print("🚀 Starting polling...")
         await dp.start_polling(
             bot,
             skip_updates=True,  # Skip pending updates to avoid conflicts
-            handle_signals=False  # We handle signals manually
+            handle_signals=False,  # We handle signals manually
+            timeout=20,  # Shorter timeout to detect conflicts faster
+            retry_after=3  # Shorter retry delay
         )
     except KeyboardInterrupt:
         print("🛑 Received shutdown signal")
     except Exception as e:
-        print(f"❌ Polling error: {e}")
+        error_msg = str(e).lower()
+        if "conflict" in error_msg or "getUpdates" in str(e):
+            print(f"🚫 BOT CONFLICT DETECTED: {e}")
+            print("🔍 Possible causes:")
+            print("  • Another bot instance is running (Railway + Local)")
+            print("  • Previous bot didn't shutdown cleanly")
+            print("  • Webhook still active somewhere")
+            print("💡 Solutions:")
+            print("  • Stop other bot instances")
+            print("  • Wait 2-3 minutes for Telegram timeout")
+            print("  • Check Railway logs for duplicate deployments")
+        else:
+            print(f"❌ Polling error: {e}")
     finally:
         await graceful_shutdown(bot)
 
