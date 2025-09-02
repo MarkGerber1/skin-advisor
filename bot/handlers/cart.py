@@ -192,9 +192,15 @@ async def add_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
             print(f"📝 Created cart item: {cart_item}")
             
             # Add to store
-            print(f"💾 Adding to store for user {user_id}")
-            store.add(user_id, cart_item)
-            print(f"✅ Successfully added to store")
+                    print(f"💾 Adding to store for user {user_id}")
+        store.add(user_id, cart_item)
+        print(f"✅ Successfully added to store")
+        
+        # Диагностика: проверяем что товар действительно добавился
+        stored_items = store.get(user_id)
+        print(f"🔍 STORE VERIFICATION: User {user_id} now has {len(stored_items)} items in cart")
+        for i, item in enumerate(stored_items):
+            print(f"    {i+1}. {item.brand} {item.name} (ID: {item.product_id})")
         
         # Analytics: Product added to cart
         analytics = get_analytics_tracker()
@@ -277,6 +283,7 @@ async def add_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
 async def show_cart_callback(cb: CallbackQuery, state: FSMContext) -> None:
     """Показать корзину через inline кнопку"""
     print(f"🛒 Show cart callback triggered for user {cb.from_user.id if cb.from_user else 'unknown'}")
+    print(f"🔍 CALLBACK DIAGNOSTIC: cb.from_user.id = {cb.from_user.id if cb.from_user else 'None'}")
     await show_cart(cb.message, state)
     await cb.answer()
 
@@ -284,11 +291,24 @@ async def show_cart_callback(cb: CallbackQuery, state: FSMContext) -> None:
 async def show_cart(m: Message, state: FSMContext) -> None:
     """Показать корзину с полной информацией и кнопками управления"""
     user_id = _user_id(m)
+    print(f"🔍 CART DIAGNOSTIC: show_cart called")
+    print(f"  👤 Message user ID: {m.from_user.id if m.from_user else 'None'}")
+    print(f"  🔑 Processed user ID: {user_id}")
+    
     if not user_id:
+        print("❌ No user ID found")
         await m.answer("Неизвестный пользователь")
         return
         
+    # Диагностируем состояние корзины
     items: List[CartItem] = store.get(user_id)
+    print(f"  🛒 Cart items for user {user_id}: {len(items)}")
+    
+    # Показываем все корзины в store для диагностики
+    all_carts = store._carts if hasattr(store, '_carts') else {}
+    print(f"  📦 All carts in store: {list(all_carts.keys())}")
+    for cart_user_id, cart_items in all_carts.items():
+        print(f"    User {cart_user_id}: {len(cart_items)} items")
     if not items:
         kb = InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(text="🔄 Получить рекомендации", callback_data="get_recommendations")]
