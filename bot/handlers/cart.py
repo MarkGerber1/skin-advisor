@@ -38,16 +38,22 @@ selector = SelectorV2()
 metrics = get_metrics_tracker()
 
 
-def _user_id(msg: Message | None) -> int | None:
-    """Extract real user ID, not bot ID"""
-    if msg and msg.from_user and msg.from_user.id:
-        user_id = int(msg.from_user.id)
-        print(f"🔍 _user_id: message.from_user.id = {user_id}")
+def _user_id(msg_or_cb: Message | CallbackQuery | None) -> int | None:
+    """Extract real user ID, not bot ID from Message or CallbackQuery"""
+    if msg_or_cb and hasattr(msg_or_cb, 'from_user') and msg_or_cb.from_user and msg_or_cb.from_user.id:
+        user_id = int(msg_or_cb.from_user.id)
+        print(f"🔍 _user_id: {type(msg_or_cb).__name__}.from_user.id = {user_id}")
         # Проверяем что это не bot ID (8345324302)
         if user_id == 8345324302:
             print(f"⚠️ WARNING: Got bot ID instead of user ID!")
+            # В callback query контексте попробуем найти реальный user ID
+            if hasattr(msg_or_cb, 'message') and msg_or_cb.message and msg_or_cb.message.from_user:
+                real_user_id = int(msg_or_cb.message.from_user.id)
+                if real_user_id != 8345324302:
+                    print(f"✅ Found real user ID from callback message: {real_user_id}")
+                    return real_user_id
         return user_id
-    print(f"❌ _user_id: no message or from_user")
+    print(f"❌ _user_id: no message/callback or from_user")
     return None
 
 
@@ -411,7 +417,7 @@ async def show_cart(m: Message, state: FSMContext) -> None:
 @router.callback_query(F.data == "cart:clear")
 async def clear_cart(cb: CallbackQuery, state: FSMContext) -> None:
     """Очистить корзину"""
-    user_id = _user_id(cb.message)
+    user_id = _user_id(cb)
     if not user_id:
         await cb.answer("Ошибка пользователя")
         return
@@ -425,7 +431,7 @@ async def clear_cart(cb: CallbackQuery, state: FSMContext) -> None:
 @router.callback_query(F.data == "cart:refresh")
 async def refresh_cart(cb: CallbackQuery, state: FSMContext) -> None:
     """Обновить информацию в корзине"""
-    user_id = _user_id(cb.message)
+    user_id = _user_id(cb)
     if not user_id:
         await cb.answer("Ошибка пользователя")
         return
@@ -482,7 +488,7 @@ async def refresh_cart(cb: CallbackQuery, state: FSMContext) -> None:
 @router.callback_query(F.data == "cart:buy_all")  
 async def buy_all_items(cb: CallbackQuery, state: FSMContext) -> None:
     """Открыть все ссылки для покупки (показать инструкцию)"""
-    user_id = _user_id(cb.message)
+    user_id = _user_id(cb)
     if not user_id:
         await cb.answer("Ошибка пользователя")
         return
@@ -577,7 +583,7 @@ async def handle_unavailable_product(cb: CallbackQuery, state: FSMContext) -> No
         await cb.answer()
         return
         
-    user_id = _user_id(cb.message)
+    user_id = _user_id(cb)
     if not user_id:
         await cb.answer("Ошибка пользователя")
         return
@@ -652,7 +658,7 @@ async def back_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
 @router.callback_query(F.data.startswith("cart:update_variant:"))
 async def update_item_variant(cb: CallbackQuery, state: FSMContext) -> None:
     """Обновить вариант товара в корзине"""
-    user_id = _user_id(cb.message)
+    user_id = _user_id(cb)
     if not user_id:
         await cb.answer("Неизвестный пользователь")
         return
@@ -703,7 +709,7 @@ async def update_item_variant(cb: CallbackQuery, state: FSMContext) -> None:
 @router.callback_query(F.data == "get_recommendations")
 async def get_recommendations(cb: CallbackQuery, state: FSMContext) -> None:
     """Обработчик кнопки 'Получить рекомендации' в корзине"""
-    user_id = _user_id(cb.message)
+    user_id = _user_id(cb)
     if not user_id:
         await cb.answer("Ошибка пользователя")
         return
@@ -719,7 +725,7 @@ async def get_recommendations(cb: CallbackQuery, state: FSMContext) -> None:
 @router.callback_query(F.data == "cart:details")
 async def show_cart_details(cb: CallbackQuery, state: FSMContext) -> None:
     """Показать подробную информацию о товарах в корзине"""
-    user_id = _user_id(cb.message)
+    user_id = _user_id(cb)
     if not user_id:
         await cb.answer("Ошибка пользователя")
         return
@@ -810,7 +816,7 @@ async def show_cart_details(cb: CallbackQuery, state: FSMContext) -> None:
 @router.callback_query(F.data.startswith("cart:remove:"))
 async def remove_from_cart(cb: CallbackQuery, state: FSMContext) -> None:
     """Удалить товар из корзины"""
-    user_id = _user_id(cb.message)
+    user_id = _user_id(cb)
     if not user_id:
         await cb.answer("Ошибка пользователя")
         return
@@ -826,7 +832,7 @@ async def remove_from_cart(cb: CallbackQuery, state: FSMContext) -> None:
 @router.callback_query(F.data.startswith("cart:inc:"))
 async def increase_quantity(cb: CallbackQuery, state: FSMContext) -> None:
     """Увеличить количество товара"""
-    user_id = _user_id(cb.message)
+    user_id = _user_id(cb)
     if not user_id:
         await cb.answer("Ошибка пользователя")
         return
@@ -854,7 +860,7 @@ async def increase_quantity(cb: CallbackQuery, state: FSMContext) -> None:
 @router.callback_query(F.data.startswith("cart:dec:"))
 async def decrease_quantity(cb: CallbackQuery, state: FSMContext) -> None:
     """Уменьшить количество товара"""
-    user_id = _user_id(cb.message)
+    user_id = _user_id(cb)
     if not user_id:
         await cb.answer("Ошибка пользователя")
         return
