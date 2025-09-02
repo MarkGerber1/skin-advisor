@@ -13,7 +13,13 @@ from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, C
 from engine.catalog_store import CatalogStore
 from engine.models import Product
 from engine.selector import SelectorV2
+
+# Fix import for Railway environment
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 from i18n.ru import *
+
 from services.cart_service import get_cart_service, CartServiceError
 
 # Analytics import with fallback
