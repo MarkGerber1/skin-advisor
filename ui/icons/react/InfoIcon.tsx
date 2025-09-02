@@ -1,17 +1,26 @@
-import React, { memo } from 'react';
-import { Icon, IconProps } from './Icon';
+import React from 'react';
 
-export interface InfoIconProps extends Omit<IconProps, 'name'> {}
+interface InfoIconProps {
+  size?: number;
+  className?: string;
+}
 
-/**
- * Information/help icon
- * Used in: help sections, bot info, tooltips
- */
-export const InfoIcon = memo<InfoIconProps>((props) => {
-  return <Icon {...props} name="info" />;
-});
-
-InfoIcon.displayName = 'InfoIcon';
-
-
-
+export const InfoIcon: React.FC<InfoIconProps> = ({
+  size = 24,
+  className = ''
+}) => {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      className={className}
+      style={{ display: 'inline-block', verticalAlign: 'middle' }}
+    >
+      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M12 16V12" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"/>
+      <circle cx="12" cy="8" r="1" fill="currentColor"/>
+    </svg>
+  );
+};

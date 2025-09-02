@@ -1,192 +1,45 @@
 /* ==========================================================================
-   SKINS - Beauty & Skincare Chatbot Themes
+   BEAUTY CARE THEMES - Light & Dark Skins
    ========================================================================== */
 
 /* ==========================================================================
-   LIGHT THEME
+   LIGHT THEME (Default)
    ========================================================================== */
 
 [data-theme="light"] {
   /* Background colors */
-  --color-bg-primary: #FFFFFF;
-  --color-bg-secondary: #F8F9FA;
-  --color-bg-tertiary: #E9ECEF;
+  --color-bg: #FFFFFF;           /* Основной фон */
+  --color-surface: #FAFAFA;      /* Фон поверхностей */
 
-  /* Foreground/Text colors */
-  --color-fg-primary: #212529;
-  --color-fg-secondary: #6C757D;
-  --color-fg-tertiary: #ADB5BD;
+  /* Text colors */
+  --color-fg: #121212;           /* Основной текст */
+  --color-muted: #6B6B6B;        /* Приглушенный текст */
 
   /* Border colors */
-  --color-border: #DEE2E6;
-  --color-border-light: #E9ECEF;
-  --color-border-focus: #C26A8D;
+  --color-border: #E9E9E9;       /* Границы */
 
-  /* Surface colors */
-  --color-surface: #FFFFFF;
-  --color-surface-hover: #F8F9FA;
-  --color-surface-active: #E9ECEF;
-
-  /* Shadow adjustments for light theme */
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
-  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.12);
-  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.16);
-  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.20);
+  /* Subtle shadows for light theme */
+  --shadow-sm: 0 2px 8px rgba(0,0,0,.08);
+  --shadow-md: 0 6px 16px rgba(0,0,0,.10);
 }
 
 /* ==========================================================================
-   DARK THEME (Default)
+   DARK THEME
    ========================================================================== */
 
 [data-theme="dark"] {
   /* Background colors */
-  --color-bg-primary: #121212;
-  --color-bg-secondary: #1E1E1E;
-  --color-bg-tertiary: #2A2A2A;
+  --color-bg: #121212;           /* Темный основной фон */
+  --color-surface: #1B1B1B;      /* Темный фон поверхностей */
 
-  /* Foreground/Text colors */
-  --color-fg-primary: #FFFFFF;
-  --color-fg-secondary: #CCCCCC;
-  --color-fg-tertiary: #999999;
+  /* Text colors */
+  --color-fg: #FFFFFF;           /* Светлый текст */
+  --color-muted: #CFCFCF;        /* Светло-серый приглушенный */
 
   /* Border colors */
-  --color-border: #333333;
-  --color-border-light: #404040;
-  --color-border-focus: #C26A8D;
+  --color-border: #2A2A2A;       /* Темные границы */
 
-  /* Surface colors */
-  --color-surface: #1E1E1E;
-  --color-surface-hover: #2A2A2A;
-  --color-surface-active: #333333;
-
-  /* Shadow adjustments for dark theme */
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.12);
-  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.15);
-  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.18);
-  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.25);
-}
-
-/* ==========================================================================
-   WCAG CONTRAST RATIOS - LIGHT THEME
-   ========================================================================== */
-
-/*
-LIGHT THEME CONTRAST RATIOS:
-
-Primary Button:
-- Background: #C26A8D on #FFFFFF → Ratio: 4.2:1 ✅ AA Large, ✅ AA Normal
-- Text: #FFFFFF on #C26A8D → Ratio: 4.2:1 ✅ AA Large, ✅ AA Normal
-
-Secondary Button:
-- Background: #F4DCE4 on #FFFFFF → Ratio: 1.3:1 ❌ Low contrast
-- Text: #212529 on #F4DCE4 → Ratio: 13.4:1 ✅ AAA Large, ✅ AAA Normal
-
-Body Text:
-- Primary: #212529 on #FFFFFF → Ratio: 20.6:1 ✅ AAA Large, ✅ AAA Normal
-- Secondary: #6C757D on #FFFFFF → Ratio: 8.9:1 ✅ AAA Large, ✅ AAA Normal
-
-Surface Elements:
-- Card: #FFFFFF on #F8F9FA → Ratio: 1.1:1 (minimal for visual separation)
-- Border: #DEE2E6 on #FFFFFF → Ratio: 1.3:1 (minimal for visual separation)
-*/
-
-/* ==========================================================================
-   WCAG CONTRAST RATIOS - DARK THEME
-   ========================================================================== */
-
-/*
-DARK THEME CONTRAST RATIOS:
-
-Primary Button:
-- Background: #C26A8D on #1E1E1E → Ratio: 3.8:1 ✅ AA Large, ⚠️ AA Normal (4.5:1 needed)
-- Text: #FFFFFF on #C26A8D → Ratio: 4.2:1 ✅ AA Large, ✅ AA Normal
-
-Secondary Button:
-- Background: #F4DCE4 on #1E1E1E → Ratio: 8.7:1 ✅ AAA Large, ✅ AAA Normal
-- Text: #121212 on #F4DCE4 → Ratio: 13.4:1 ✅ AAA Large, ✅ AAA Normal
-
-Body Text:
-- Primary: #FFFFFF on #1E1E1E → Ratio: 16.8:1 ✅ AAA Large, ✅ AAA Normal
-- Secondary: #CCCCCC on #1E1E1E → Ratio: 11.9:1 ✅ AAA Large, ✅ AAA Normal
-
-Surface Elements:
-- Card: #1E1E1E on #121212 → Ratio: 1.2:1 (minimal for visual separation)
-- Border: #333333 on #1E1E1E → Ratio: 1.3:1 (minimal for visual separation)
-*/
-
-/* ==========================================================================
-   THEME UTILITIES
-   ========================================================================== */
-
-/* Theme toggle button styles */
-.theme-toggle {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  color: var(--color-fg-primary);
-  cursor: pointer;
-  padding: var(--space-sm) var(--space-md);
-  transition: var(--transition-fast);
-}
-
-.theme-toggle:hover {
-  background: var(--color-surface-hover);
-  border-color: var(--color-primary);
-}
-
-.theme-toggle:focus {
-  outline: none;
-  box-shadow: var(--focus-ring);
-}
-
-/* ==========================================================================
-   RESPONSIVE DESIGN TOKENS
-   ========================================================================== */
-
-/* Mobile adjustments */
-@media (max-width: 768px) {
-  [data-theme="light"] {
-    --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.06);
-    --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.10);
-    --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.14);
-  }
-
-  [data-theme="dark"] {
-    --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.08);
-    --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.12);
-    --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.16);
-  }
-}
-
-/* ==========================================================================
-   HIGH CONTRAST MODE SUPPORT
-   ========================================================================== */
-
-@media (prefers-contrast: high) {
-  [data-theme="light"] {
-    --color-border: #000000;
-    --color-border-light: #333333;
-    --color-fg-secondary: #333333;
-    --color-fg-tertiary: #666666;
-  }
-
-  [data-theme="dark"] {
-    --color-border: #FFFFFF;
-    --color-border-light: #CCCCCC;
-    --color-fg-secondary: #FFFFFF;
-    --color-fg-tertiary: #CCCCCC;
-  }
-}
-
-/* ==========================================================================
-   REDUCED MOTION SUPPORT
-   ========================================================================== */
-
-@media (prefers-reduced-motion: reduce) {
-  [data-theme="light"],
-  [data-theme="dark"] {
-    --transition-fast: none;
-    --transition-normal: none;
-    --transition-slow: none;
-  }
+  /* Enhanced shadows for dark theme */
+  --shadow-sm: 0 2px 8px rgba(0,0,0,.40);
+  --shadow-md: 0 6px 18px rgba(0,0,0,.50);
 }

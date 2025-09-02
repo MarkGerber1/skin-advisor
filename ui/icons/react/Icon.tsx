@@ -1,44 +1,24 @@
-import React, { memo } from 'react';
+import React from 'react';
 
-export interface IconProps {
+interface IconProps {
   name: 'palette' | 'drop' | 'cart' | 'info' | 'list' | 'settings';
-  size?: number | string;
+  size?: number;
   className?: string;
-  color?: string;
-  'aria-label'?: string;
-  'aria-hidden'?: boolean;
 }
 
-/**
- * Universal Icon component using SVG sprite
- * Supports all design system icons with proper accessibility
- */
-export const Icon = memo<IconProps>(({
+export const Icon: React.FC<IconProps> = ({
   name,
-  size = 'var(--icon-size)',
-  className = '',
-  color = 'currentColor',
-  'aria-label': ariaLabel,
-  'aria-hidden': ariaHidden = !ariaLabel,
-  ...props
+  size = 24,
+  className = ''
 }) => {
   return (
     <svg
       width={size}
       height={size}
-      className={`icon icon-${name} ${className}`}
-      style={{ color }}
-      aria-label={ariaLabel}
-      aria-hidden={ariaHidden}
-      role={ariaLabel ? 'img' : 'presentation'}
-      {...props}
+      className={className}
+      style={{ display: 'inline-block', verticalAlign: 'middle' }}
     >
       <use href={`#icon-${name}`} />
     </svg>
   );
-});
-
-Icon.displayName = 'Icon';
-
-
-
+};

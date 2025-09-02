@@ -2,57 +2,40 @@
 
 /**
  * WCAG Contrast Ratio Calculator
- * Beauty & Skincare Chatbot Design System
+ * Beauty Care Design System
  *
+ * Validates AA compliance for all color combinations
  * Usage: node scripts/contrast_check.js
  */
 
 const fs = require('fs');
 const path = require('path');
 
-// Color definitions from our design tokens
+// Design system color definitions
 const COLORS = {
   // Brand colors
   primary: '#C26A8D',
-  primaryHover: '#A8577A',
-  primaryLight: '#E5B8C8',
-  primaryDark: '#9E556D',
-
   secondary: '#F4DCE4',
-  secondaryHover: '#E8C8D1',
-  secondaryLight: '#F9ECF0',
-  secondaryDark: '#E8BFC7',
-
   accent: '#C9B7FF',
-  accentHover: '#B39BFF',
-  accentLight: '#E3DDFF',
-  accentDark: '#A390E6',
 
-  // Light theme neutrals
+  // Neutrals - Light theme
   lightBg: '#FFFFFF',
-  lightBgSecondary: '#F8F9FA',
-  lightBgTertiary: '#E9ECEF',
-  lightFgPrimary: '#212529',
-  lightFgSecondary: '#6C757D',
-  lightFgTertiary: '#ADB5BD',
-  lightBorder: '#DEE2E6',
-  lightSurface: '#FFFFFF',
+  lightFg: '#121212',
+  lightMuted: '#6B6B6B',
+  lightSurface: '#FAFAFA',
+  lightBorder: '#E9E9E9',
 
-  // Dark theme neutrals
+  // Neutrals - Dark theme
   darkBg: '#121212',
-  darkBgSecondary: '#1E1E1E',
-  darkBgTertiary: '#2A2A2A',
-  darkFgPrimary: '#FFFFFF',
-  darkFgSecondary: '#CCCCCC',
-  darkFgTertiary: '#999999',
-  darkBorder: '#333333',
-  darkSurface: '#1E1E1E',
+  darkFg: '#FFFFFF',
+  darkMuted: '#CFCFCF',
+  darkSurface: '#1B1B1B',
+  darkBorder: '#2A2A2A',
 
   // Semantic colors
-  success: '#4CAF50',
-  warning: '#FF9800',
-  error: '#F44336',
-  info: '#2196F3'
+  success: '#2E7D32',
+  warning: '#B26A00',
+  danger: '#B3261E'
 };
 
 /**
@@ -118,155 +101,139 @@ function checkWCAGCompliance(ratio, isLargeText = false) {
   const aa = ratio >= threshold;
   const aaa = ratio >= aaaThreshold;
 
-  return { aa, aaa, ratio: ratio.toFixed(2) };
+  return {
+    ratio: ratio.toFixed(2),
+    aa,
+    aaa,
+    aaThreshold: threshold,
+    aaaThreshold: aaaThreshold
+  };
 }
 
 /**
- * Generate contrast report
+ * Generate comprehensive contrast report
  */
 function generateContrastReport() {
-  console.log('='.repeat(80));
-  console.log('🎨 BEAUTY CHATBOT DESIGN SYSTEM - WCAG CONTRAST REPORT');
-  console.log('='.repeat(80));
+  console.log('🎨 BEAUTY CARE DESIGN SYSTEM - WCAG CONTRAST REPORT');
+  console.log('='.repeat(70));
   console.log('');
 
   const results = [];
+  let totalTests = 0;
+  let aaPassed = 0;
+  let aaaPassed = 0;
 
-  // Primary Button Combinations
-  console.log('🏠 PRIMARY BUTTONS');
-  console.log('-'.repeat(40));
+  // Define test combinations
+  const combinations = [
+    // Light Theme Text Combinations
+    { name: 'Primary Text on Light BG', fg: COLORS.lightFg, bg: COLORS.lightBg, isLarge: false },
+    { name: 'Secondary Text on Light BG', fg: COLORS.lightMuted, bg: COLORS.lightBg, isLarge: false },
+    { name: 'Primary Text Large on Light BG', fg: COLORS.lightFg, bg: COLORS.lightBg, isLarge: true },
+    { name: 'Secondary Text Large on Light BG', fg: COLORS.lightMuted, bg: COLORS.lightBg, isLarge: true },
 
-  const primaryButtonLight = checkWCAGCompliance(
-    getContrastRatio(COLORS.primary, COLORS.lightBg),
-    false
-  );
-  console.log(`Primary on Light BG: ${primaryButtonLight.ratio}:1 ${primaryButtonLight.aa ? '✅ AA' : '❌ AA'} ${primaryButtonLight.aaa ? '✅ AAA' : '❌ AAA'}`);
-  results.push({ name: 'Primary Button (Light)', ...primaryButtonLight });
+    // Dark Theme Text Combinations
+    { name: 'Primary Text on Dark BG', fg: COLORS.darkFg, bg: COLORS.darkBg, isLarge: false },
+    { name: 'Secondary Text on Dark BG', fg: COLORS.darkMuted, bg: COLORS.darkBg, isLarge: false },
+    { name: 'Primary Text Large on Dark BG', fg: COLORS.darkFg, bg: COLORS.darkBg, isLarge: true },
+    { name: 'Secondary Text Large on Dark BG', fg: COLORS.darkMuted, bg: COLORS.darkBg, isLarge: true },
 
-  const primaryButtonDark = checkWCAGCompliance(
-    getContrastRatio(COLORS.primary, COLORS.darkSurface),
-    false
-  );
-  console.log(`Primary on Dark BG: ${primaryButtonDark.ratio}:1 ${primaryButtonDark.aa ? '✅ AA' : '❌ AA'} ${primaryButtonDark.aaa ? '✅ AAA' : '❌ AAA'}`);
-  results.push({ name: 'Primary Button (Dark)', ...primaryButtonDark });
+    // Button Combinations - Light Theme
+    { name: 'Primary Button Text on Primary BG', fg: '#FFFFFF', bg: COLORS.primary, isLarge: false },
+    { name: 'Secondary Button Text on Surface', fg: COLORS.lightFg, bg: COLORS.lightSurface, isLarge: false },
+    { name: 'Accent Button Text on Accent BG', fg: COLORS.lightBg, bg: COLORS.accent, isLarge: false },
 
-  // Secondary Button Combinations
-  console.log('');
-  console.log('🔄 SECONDARY BUTTONS');
-  console.log('-'.repeat(40));
+    // Button Combinations - Dark Theme
+    { name: 'Primary Button Text on Primary BG (Dark)', fg: '#FFFFFF', bg: COLORS.primary, isLarge: false },
+    { name: 'Secondary Button Text on Dark Surface', fg: COLORS.darkFg, bg: COLORS.darkSurface, isLarge: false },
+    { name: 'Accent Button Text on Accent BG (Dark)', fg: COLORS.darkBg, bg: COLORS.accent, isLarge: false },
 
-  const secondaryButtonLight = checkWCAGCompliance(
-    getContrastRatio(COLORS.secondary, COLORS.lightBg),
-    false
-  );
-  console.log(`Secondary on Light BG: ${secondaryButtonLight.ratio}:1 ${secondaryButtonLight.aa ? '✅ AA' : '❌ AA'} ${secondaryButtonLight.aaa ? '✅ AAA' : '❌ AAA'}`);
-  results.push({ name: 'Secondary Button (Light)', ...secondaryButtonLight });
+    // Interactive Elements
+    { name: 'Link Text on Light BG', fg: COLORS.primary, bg: COLORS.lightBg, isLarge: false },
+    { name: 'Link Text on Dark BG', fg: COLORS.primary, bg: COLORS.darkBg, isLarge: false },
 
-  const secondaryButtonDark = checkWCAGCompliance(
-    getContrastRatio(COLORS.secondary, COLORS.darkSurface),
-    false
-  );
-  console.log(`Secondary on Dark BG: ${secondaryButtonDark.ratio}:1 ${secondaryButtonDark.aa ? '✅ AA' : '❌ AA'} ${secondaryButtonDark.aaa ? '✅ AAA' : '❌ AAA'}`);
-  results.push({ name: 'Secondary Button (Dark)', ...secondaryButtonDark });
+    // Surface Combinations
+    { name: 'Card on Light BG', fg: COLORS.lightSurface, bg: COLORS.lightBg, isLarge: false },
+    { name: 'Card on Dark BG', fg: COLORS.darkSurface, bg: COLORS.darkBg, isLarge: false },
+    { name: 'Border on Light BG', fg: COLORS.lightBorder, bg: COLORS.lightBg, isLarge: false },
+    { name: 'Border on Dark BG', fg: COLORS.darkBorder, bg: COLORS.darkBg, isLarge: false }
+  ];
 
-  // Accent Button Combinations
-  console.log('');
-  console.log('✨ ACCENT BUTTONS');
-  console.log('-'.repeat(40));
+  // Test each combination
+  combinations.forEach(combo => {
+    totalTests++;
+    const ratio = getContrastRatio(combo.fg, combo.bg);
+    const compliance = checkWCAGCompliance(ratio, combo.isLarge);
 
-  const accentButtonLight = checkWCAGCompliance(
-    getContrastRatio(COLORS.accent, COLORS.lightBg),
-    false
-  );
-  console.log(`Accent on Light BG: ${accentButtonLight.ratio}:1 ${accentButtonLight.aa ? '✅ AA' : '❌ AA'} ${accentButtonLight.aaa ? '✅ AAA' : '❌ AAA'}`);
-  results.push({ name: 'Accent Button (Light)', ...accentButtonLight });
+    const result = {
+      name: combo.name,
+      ratio: compliance.ratio,
+      aa: compliance.aa,
+      aaa: compliance.aaa,
+      isLarge: combo.isLarge,
+      fg: combo.fg,
+      bg: combo.bg
+    };
 
-  const accentButtonDark = checkWCAGCompliance(
-    getContrastRatio(COLORS.accent, COLORS.darkSurface),
-    false
-  );
-  console.log(`Accent on Dark BG: ${accentButtonDark.ratio}:1 ${accentButtonDark.aa ? '✅ AA' : '❌ AA'} ${accentButtonDark.aaa ? '✅ AAA' : '❌ AAA'}`);
-  results.push({ name: 'Accent Button (Dark)', ...accentButtonDark });
+    results.push(result);
 
-  // Text Combinations
-  console.log('');
-  console.log('📝 TEXT CONTRAST');
-  console.log('-'.repeat(40));
+    if (compliance.aa) aaPassed++;
+    if (compliance.aaa) aaaPassed++;
+  });
 
-  const primaryTextLight = checkWCAGCompliance(
-    getContrastRatio(COLORS.lightFgPrimary, COLORS.lightBg),
-    false
-  );
-  console.log(`Primary Text on Light BG: ${primaryTextLight.ratio}:1 ${primaryTextLight.aa ? '✅ AA' : '❌ AA'} ${primaryTextLight.aaa ? '✅ AAA' : '❌ AAA'}`);
-  results.push({ name: 'Primary Text (Light)', ...primaryTextLight });
+  // Display results
+  console.log('📊 CONTRAST RATIOS BY CATEGORY:');
+  console.log('-'.repeat(50));
 
-  const primaryTextDark = checkWCAGCompliance(
-    getContrastRatio(COLORS.darkFgPrimary, COLORS.darkBg),
-    false
-  );
-  console.log(`Primary Text on Dark BG: ${primaryTextDark.ratio}:1 ${primaryTextDark.aa ? '✅ AA' : '❌ AA'} ${primaryTextDark.aaa ? '✅ AAA' : '❌ AAA'}`);
-  results.push({ name: 'Primary Text (Dark)', ...primaryTextDark });
+  const categories = ['Light Theme Text', 'Dark Theme Text', 'Buttons (Light)', 'Buttons (Dark)', 'Interactive', 'Surfaces'];
 
-  const secondaryTextLight = checkWCAGCompliance(
-    getContrastRatio(COLORS.lightFgSecondary, COLORS.lightBg),
-    false
-  );
-  console.log(`Secondary Text on Light BG: ${secondaryTextLight.ratio}:1 ${secondaryTextLight.aa ? '✅ AA' : '❌ AA'} ${secondaryTextLight.aaa ? '✅ AAA' : '❌ AAA'}`);
-  results.push({ name: 'Secondary Text (Light)', ...secondaryTextLight });
+  let currentCategory = '';
+  results.forEach(result => {
+    const category = result.name.includes('Light') && result.name.includes('Text') ? 'Light Theme Text' :
+                    result.name.includes('Dark') && result.name.includes('Text') ? 'Dark Theme Text' :
+                    result.name.includes('Button') && result.name.includes('Light') ? 'Buttons (Light)' :
+                    result.name.includes('Button') && result.name.includes('Dark') ? 'Buttons (Dark)' :
+                    result.name.includes('Link') ? 'Interactive' : 'Surfaces';
 
-  const secondaryTextDark = checkWCAGCompliance(
-    getContrastRatio(COLORS.darkFgSecondary, COLORS.darkBg),
-    false
-  );
-  console.log(`Secondary Text on Dark BG: ${secondaryTextDark.ratio}:1 ${secondaryTextDark.aa ? '✅ AA' : '❌ AA'} ${secondaryTextDark.aaa ? '✅ AAA' : '❌ AAA'}`);
-  results.push({ name: 'Secondary Text (Dark)', ...secondaryTextDark });
+    if (category !== currentCategory) {
+      console.log(`\n${category}:`);
+      currentCategory = category;
+    }
 
-  // Large Text Combinations (18pt+ or 14pt+ bold)
-  console.log('');
-  console.log('📊 LARGE TEXT CONTRAST (18pt+, 14pt+ bold)');
-  console.log('-'.repeat(40));
-
-  const largeTextLight = checkWCAGCompliance(
-    getContrastRatio(COLORS.lightFgPrimary, COLORS.lightBg),
-    true
-  );
-  console.log(`Large Text on Light BG: ${largeTextLight.ratio}:1 ${largeTextLight.aa ? '✅ AA' : '❌ AA'} ${largeTextLight.aaa ? '✅ AAA' : '❌ AAA'}`);
-  results.push({ name: 'Large Text (Light)', ...largeTextLight });
-
-  const largeTextDark = checkWCAGCompliance(
-    getContrastRatio(COLORS.darkFgPrimary, COLORS.darkBg),
-    true
-  );
-  console.log(`Large Text on Dark BG: ${largeTextDark.ratio}:1 ${largeTextDark.aa ? '✅ AA' : '❌ AA'} ${largeTextDark.aaa ? '✅ AAA' : '❌ AAA'}`);
-  results.push({ name: 'Large Text (Dark)', ...largeTextDark });
+    const status = result.aa ? (result.aaa ? '✅ AAA' : '✅ AA') : '❌ FAIL';
+    const size = result.isLarge ? 'Large' : 'Normal';
+    console.log(`  ${result.name}: ${result.ratio}:1 ${status} (${size})`);
+  });
 
   // Summary
-  console.log('');
-  console.log('='.repeat(80));
-  console.log('📊 SUMMARY');
-  console.log('='.repeat(80));
-
-  const totalTests = results.length;
-  const aaPassed = results.filter(r => r.aa).length;
-  const aaaPassed = results.filter(r => r.aaa).length;
-
+  console.log('\n' + '='.repeat(70));
+  console.log('📈 SUMMARY:');
   console.log(`Total Tests: ${totalTests}`);
   console.log(`AA Compliant: ${aaPassed}/${totalTests} (${Math.round(aaPassed/totalTests*100)}%)`);
   console.log(`AAA Compliant: ${aaaPassed}/${totalTests} (${Math.round(aaaPassed/totalTests*100)}%)`);
 
-  // Check for failures
+  // Critical failures
   const failures = results.filter(r => !r.aa);
   if (failures.length > 0) {
-    console.log('');
-    console.log('⚠️  AA FAILURES:');
+    console.log('\n🚨 CRITICAL FAILURES:');
     failures.forEach(failure => {
-      console.log(`   ❌ ${failure.name}: ${failure.ratio}:1`);
+      console.log(`  ❌ ${failure.name}: ${failure.ratio}:1 (needs ${failure.isLarge ? '3.0' : '4.5'}:1)`);
     });
+
+    console.log('\n💡 RECOMMENDATIONS:');
+    console.log('  • Increase contrast by darkening backgrounds or lightening text');
+    console.log('  • Use larger text sizes for better accessibility');
+    console.log('  • Test with actual users for readability');
   }
 
-  console.log('');
-  console.log('✅ REPORT GENERATED SUCCESSFULLY');
-  console.log('='.repeat(80));
+  console.log('\n🎯 ACCESSIBILITY SCORE:');
+  const score = aaPassed/totalTests;
+  if (score >= 0.9) console.log('  🏆 EXCELLENT: 90%+ AA compliance');
+  else if (score >= 0.8) console.log('  ✅ GOOD: 80%+ AA compliance');
+  else if (score >= 0.7) console.log('  ⚠️ FAIR: 70%+ AA compliance');
+  else console.log('  🚨 NEEDS IMPROVEMENT: <70% AA compliance');
+
+  console.log('\n✅ REPORT GENERATED SUCCESSFULLY');
+  console.log('='.repeat(70));
 
   return results;
 }

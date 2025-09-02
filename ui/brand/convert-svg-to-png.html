@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Convert SVG to PNG</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #121212;
+            color: #FFFFFF;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: #C26A8D;
+            margin-bottom: 30px;
+        }
+
+        .logo-preview {
+            margin: 40px 0;
+            padding: 20px;
+            background: #1E1E1E;
+            border-radius: 12px;
+            border: 1px solid #333333;
+        }
+
+        .logo-preview img {
+            width: 256px;
+            height: 256px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .convert-btn {
+            background: #C26A8D;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+            transition: background 0.2s ease;
+        }
+
+        .convert-btn:hover {
+            background: #A8577A;
+        }
+
+        .instructions {
+            background: #2A2A2A;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 30px 0;
+            text-align: left;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .instructions h3 {
+            color: #C9B7FF;
+            margin-top: 0;
+        }
+
+        .instructions ol {
+            color: #CCCCCC;
+        }
+
+        .instructions li {
+            margin-bottom: 8px;
+        }
+
+        .download-links {
+            margin-top: 40px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 Конвертация SVG в PNG</h1>
+
+        <div class="logo-preview">
+            <h2>Логотип (светлый)</h2>
+            <img id="logoLight" src="logo.svg" alt="Logo Light">
+            <br>
+            <button class="convert-btn" onclick="convertToPNG('logoLight', 'beauty-care-logo-light.png')">Скачать PNG (светлый)</button>
+        </div>
+
+        <div class="logo-preview">
+            <h2>Логотип (темный)</h2>
+            <img id="logoDark" src="logo-dark.svg" alt="Logo Dark">
+            <br>
+            <button class="convert-btn" onclick="convertToPNG('logoDark', 'beauty-care-logo-dark.png')">Скачать PNG (темный)</button>
+        </div>
+
+        <div class="logo-preview">
+            <h2>Стикеры</h2>
+            <div style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;">
+                <div>
+                    <img id="sticker1" src="stickers/palette.svg" alt="Palette" style="width: 128px; height: 128px;">
+                    <br>
+                    <button class="convert-btn" onclick="convertToPNG('sticker1', 'palette-sticker.png')">Палитра PNG</button>
+                </div>
+                <div>
+                    <img id="sticker2" src="stickers/heart-lipstick.svg" alt="Heart Lipstick" style="width: 128px; height: 128px;">
+                    <br>
+                    <button class="convert-btn" onclick="convertToPNG('sticker2', 'heart-lipstick-sticker.png')">Сердце PNG</button>
+                </div>
+                <div>
+                    <img id="sticker3" src="stickers/drop.svg" alt="Drop" style="width: 128px; height: 128px;">
+                    <br>
+                    <button class="convert-btn" onclick="convertToPNG('sticker3', 'drop-sticker.png')">Капля PNG</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="instructions">
+            <h3>📋 Инструкции по конвертации:</h3>
+            <ol>
+                <li>Откройте эту страницу в браузере Google Chrome или Firefox</li>
+                <li>Нажмите на кнопку "Скачать PNG" для нужного логотипа/стикера</li>
+                <li>Файл автоматически скачается в формате PNG 512×512px</li>
+                <li>Для Telegram: Используйте PNG версию логотипа</li>
+                <li>Для веба: Используйте SVG версию (масштабируемая)</li>
+            </ol>
+        </div>
+
+        <div class="download-links">
+            <a href="logo.svg" class="convert-btn" download>SVG Логотип</a>
+            <a href="logo-dark.svg" class="convert-btn" download>SVG Темный</a>
+            <a href="stickers/palette.svg" class="convert-btn" download>SVG Палитра</a>
+            <a href="stickers/heart-lipstick.svg" class="convert-btn" download>SVG Сердце</a>
+            <a href="stickers/drop.svg" class="convert-btn" download>SVG Капля</a>
+        </div>
+    </div>
+
+    <script>
+        function convertToPNG(imgId, filename) {
+            const img = document.getElementById(imgId);
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+
+            // Set canvas size to 512x512
+            canvas.width = 512;
+            canvas.height = 512;
+
+            // Draw white background first
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, 512, 512);
+
+            // Draw the image
+            ctx.drawImage(img, 0, 0, 512, 512);
+
+            // Convert to PNG and download
+            canvas.toBlob(function(blob) {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }, 'image/png');
+        }
+
+        // Preload images to ensure they're ready for conversion
+        window.addEventListener('load', function() {
+            const images = ['logo.svg', 'logo-dark.svg', 'stickers/palette.svg', 'stickers/heart-lipstick.svg', 'stickers/drop.svg'];
+            images.forEach(src => {
+                const img = new Image();
+                img.src = src;
+            });
+        });
+    </script>
+</body>
+</html>

@@ -9,13 +9,14 @@ from aiogram.types import (
 from typing import List
 
 
-# Design System Button Labels - Эмодзи из дизайн-системы
-BTN_PALETTE = "🎨 Тон&Сияние"          # Primary color theme
-BTN_SKINCARE = "💧 Портрет лица PRO"  # Water/blue theme
-BTN_ABOUT = "ℹ️ О боте"               # Info theme
-BTN_PICK = "🛒 Корзина"               # Shopping theme
-BTN_SETTINGS = "⚙️ Настройки"          # Settings theme
-BTN_REPORT = "📄 Мои рекомендации"     # Document theme
+# Design System Button Labels - SVG иконки + emoji fallback
+# SVG icons available in ui/icons/svg/: palette, drop, cart, info, list, settings
+BTN_PALETTE = "🎨 Тон&Сияние"          # SVG: palette.svg | Primary color theme
+BTN_SKINCARE = "💧 Портрет лица"      # SVG: drop.svg | Water/blue theme
+BTN_ABOUT = "ℹ️ О боте"               # SVG: info.svg | Info theme
+BTN_PICK = "🛒 Корзина"               # SVG: cart.svg | Shopping theme
+BTN_SETTINGS = "⚙️ Настройки"          # SVG: settings.svg | Settings theme
+BTN_REPORT = "📄 Мои рекомендации"     # SVG: list.svg | Document theme
 BTN_BACK = "⬅️ Назад"                 # Navigation theme
 BTN_HOME = "🏠 Главное меню"          # Home theme
 

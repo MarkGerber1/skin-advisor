@@ -20,13 +20,28 @@ class StructuredPDFGenerator:
         self.font_size_text = 11
         self.font_size_small = 9
         
-        # BRAND COLORS (Design System Palette)
-        self.color_header = (194, 106, 141)    # #C26A8D - Rose Mauve (Primary)
-        self.color_section = (194, 106, 141)   # #C26A8D - Primary для заголовков 
-        self.color_text = (18, 18, 18)         # #121212 - Dark text
-        self.color_accent = (201, 183, 255)    # #C9B7FF - Soft Lilac (Accent)
-        self.color_muted = (107, 107, 107)     # #6B6B6B - Muted text
-        self.color_secondary = (244, 220, 228) # #F4DCE4 - Nude Blush (Background)
+        # DESIGN SYSTEM TOKENS - Brand Colors
+        self.design_tokens = {
+            'primary': (194, 106, 141),      # var(--color-primary) #C26A8D
+            'secondary': (244, 220, 228),    # var(--color-secondary) #F4DCE4
+            'accent': (201, 183, 255),       # var(--color-accent) #C9B7FF
+            'bg': (255, 255, 255),           # var(--color-bg) #FFFFFF
+            'fg': (18, 18, 18),              # var(--color-fg) #121212
+            'muted': (107, 107, 107),        # var(--color-muted) #6B6B6B
+            'surface': (250, 250, 250),      # var(--color-surface) #FAFAFA
+            'border': (233, 233, 233),       # var(--color-border) #E9E9E9
+            'success': (46, 125, 50),        # var(--color-success) #2E7D32
+            'warning': (176, 106, 0),        # var(--color-warning) #B26A00
+            'danger': (179, 38, 30),         # var(--color-danger) #B3261E
+        }
+
+        # BACKWARD COMPATIBILITY - Using design system tokens
+        self.color_header = self.design_tokens['primary']     # Primary для заголовков
+        self.color_section = self.design_tokens['primary']    # Primary для разделов
+        self.color_text = self.design_tokens['fg']            # Основной текст
+        self.color_accent = self.design_tokens['accent']       # Акцентный цвет
+        self.color_muted = self.design_tokens['muted']         # Приглушенный текст
+        self.color_secondary = self.design_tokens['secondary'] # Второстепенный цвет
         
         # Отступы (уменьшены для предотвращения проблем с пространством)
         self.margin_left = 15
@@ -193,7 +208,7 @@ class StructuredPDFGenerator:
         # Статус в наличии
         in_stock = product.get('in_stock', False)
         status_text = "В наличии" if in_stock else "Нет в наличии"
-        pdf.set_text_color(*self.color_accent if not in_stock else (46, 125, 50))
+        pdf.set_text_color(*self.color_accent if not in_stock else self.design_tokens['success'])
         pdf.cell(0, 4, f"Статус: {status_text}", ln=True)
         
         pdf.ln(3)
@@ -465,7 +480,7 @@ class StructuredPDFGenerator:
         
         in_stock = product.get('in_stock', False)
         status_text = "В наличии" if in_stock else "Нет в наличии"
-        pdf.set_text_color(*self.color_accent if not in_stock else (46, 125, 50))
+        pdf.set_text_color(*self.color_accent if not in_stock else self.design_tokens['success'])
         pdf.cell(0, 4, f"Статус: {status_text}", ln=True)
         
         pdf.ln(3)

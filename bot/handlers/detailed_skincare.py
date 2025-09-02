@@ -236,13 +236,22 @@ async def start_detailed_skincare_flow(message: Message, state: FSMContext) -> N
     await state.clear()
     await state.set_state(DetailedSkincareFlow.Q1_TIGHTNESS)
     
+    # Import i18n for subtitles
+    try:
+        from i18n.ru import SKINCARE_TEST_SUBTITLE
+        subtitle = SKINCARE_TEST_SUBTITLE
+    except ImportError:
+        subtitle = "10 вопросов · 2 минуты · соберём уход и SPF по целям"
+    
     await message.answer(
-        "🧴 **ПРОФЕССИОНАЛЬНЫЙ ПОРТРЕТ ЛИЦА**\n\n"
-        "Ответьте честно на 8 вопросов, чтобы определить ваш тип и состояние лица "
+        "🧴 **ПОРТРЕТ ЛИЦА**\n\n"
+        f"_{subtitle}_\n\n"
+        "Ответьте честно на вопросы, чтобы определить ваш тип и состояние лица "
         "и получить персональные рекомендации по уходовой косметике.\n\n"
-        "**Вопрос 1 из 8**\n"
+        "**Вопрос 1 из 10**\n"
         "🚿 Есть ли ощущение стянутости через 30 минут после умывания?",
-        reply_markup=_kb_tightness()
+        reply_markup=_kb_tightness(),
+        parse_mode="Markdown"
     )
 
 
@@ -255,7 +264,7 @@ async def q1_tightness(cb: CallbackQuery, state: FSMContext) -> None:
         await state.set_state(DetailedSkincareFlow.Q2_SUN_REACTION)
         
         await cb.message.edit_text(
-            "**Вопрос 2 из 8**\n"
+            "**Вопрос 2 из 10**\n"
             "☀️ Как ваше лицо реагирует на солнце?",
             reply_markup=_kb_sun_reaction()
         )
@@ -273,7 +282,7 @@ async def q2_sun_reaction(cb: CallbackQuery, state: FSMContext) -> None:
         await state.set_state(DetailedSkincareFlow.Q3_IMPERFECTIONS)
         
         await cb.message.edit_text(
-            "**Вопрос 3 из 8**\n"
+            "**Вопрос 3 из 10**\n"
             "🎯 Какие несовершенства беспокоят чаще всего?",
             reply_markup=_kb_imperfections()
         )
@@ -291,7 +300,7 @@ async def q3_imperfections(cb: CallbackQuery, state: FSMContext) -> None:
         await state.set_state(DetailedSkincareFlow.Q4_EYE_AREA)
         
         await cb.message.edit_text(
-            "**Вопрос 4 из 8**\n"
+            "**Вопрос 4 из 10**\n"
             "👁️ Как выглядит зона вокруг глаз?",
             reply_markup=_kb_eye_area()
         )
@@ -309,7 +318,7 @@ async def q4_eye_area(cb: CallbackQuery, state: FSMContext) -> None:
         await state.set_state(DetailedSkincareFlow.Q5_COUPEROSE)
         
         await cb.message.edit_text(
-            "**Вопрос 5 из 8**\n"
+            "**Вопрос 5 из 10**\n"
             "🩸 Есть ли купероз или сосудистые звездочки?",
             reply_markup=_kb_couperose()
         )
@@ -327,7 +336,7 @@ async def q5_couperose(cb: CallbackQuery, state: FSMContext) -> None:
         await state.set_state(DetailedSkincareFlow.Q6_CURRENT_CARE)
         
         await cb.message.edit_text(
-            "**Вопрос 6 из 8**\n"
+            "**Вопрос 6 из 10**\n"
             "🧴 Какой уход вы используете сейчас?",
             reply_markup=_kb_current_care()
         )
@@ -345,7 +354,7 @@ async def q6_current_care(cb: CallbackQuery, state: FSMContext) -> None:
         await state.set_state(DetailedSkincareFlow.Q7_ALLERGIES)
         
         await cb.message.edit_text(
-            "**Вопрос 7 из 8**\n"
+            "**Вопрос 7 из 10**\n"
             "⚠️ Есть ли аллергические реакции на косметику?",
             reply_markup=_kb_allergies()
         )
@@ -363,7 +372,7 @@ async def q7_allergies(cb: CallbackQuery, state: FSMContext) -> None:
         await state.set_state(DetailedSkincareFlow.Q8_DESIRED_EFFECT)
         
         await cb.message.edit_text(
-            "**Вопрос 8 из 8**\n"
+            "**Вопрос 8 из 10**\n"
             "🎯 Какой эффект вы хотите получить от ухода?",
             reply_markup=_kb_desired_effect()
         )

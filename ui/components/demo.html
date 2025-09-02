@@ -3,471 +3,717 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Skincare Bot - UI Design System Demo</title>
-    <link rel="stylesheet" href="index.css">
+    <title>Beauty Care Design System - Component Showcase</title>
+
+    <!-- Design System Styles -->
+    <link rel="stylesheet" href="./index.css">
+
+    <!-- Embedded CSS for standalone demo -->
     <style>
-        .demo-section {
-            margin-bottom: var(--space-8);
+        :root {
+            /* Brand */
+            --color-primary: #C26A8D;
+            --color-secondary: #F4DCE4;
+            --color-accent: #C9B7FF;
+
+            /* Neutrals */
+            --color-bg: #FFFFFF;
+            --color-fg: #121212;
+            --color-muted: #6B6B6B;
+            --color-surface: #FAFAFA;
+            --color-border: #E9E9E9;
+
+            /* States */
+            --color-success: #2E7D32;
+            --color-warning: #B26A00;
+            --color-danger: #B3261E;
+
+            /* Sizing & radius */
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-pill: 999px;
+
+            /* Spacing */
+            --space-1: 4px; --space-2: 8px; --space-3: 12px;
+            --space-4: 16px; --space-5: 24px; --space-6: 32px;
+
+            /* Typography */
+            --font-family: system-ui, -apple-system, sans-serif;
+            --font-size-sm: 14px;
+            --font-size-md: 16px;
+            --font-size-lg: 18px;
+            --line-height: 1.4;
+
+            /* Icons & touch */
+            --icon-size: 24px;
+            --touch-size: 48px;
+
+            /* Shadows */
+            --shadow-sm: 0 2px 8px rgba(0,0,0,.10);
+            --shadow-md: 0 6px 16px rgba(0,0,0,.12);
+
+            /* Component tokens */
+            --button-height: 44px;
+            --input-height: 44px;
+            --card-padding: var(--space-5);
+            --badge-height: 28px;
+            --focus-ring-width: 2px;
+            --focus-ring-color: var(--color-accent);
+            --transition-fast: 0.15s ease-in-out;
+            --opacity-disabled: 0.48;
+        }
+
+        [data-theme="dark"] {
+            --color-bg: #121212;
+            --color-fg: #FFFFFF;
+            --color-muted: #CFCFCF;
+            --color-surface: #1B1B1B;
+            --color-border: #2A2A2A;
+            --shadow-sm: 0 2px 8px rgba(0,0,0,.40);
+            --shadow-md: 0 6px 18px rgba(0,0,0,.50);
+        }
+
+        /* Base styles */
+        * { box-sizing: border-box; }
+        body {
+            font-family: var(--font-family);
+            background: var(--color-bg);
+            color: var(--color-fg);
+            line-height: var(--line-height);
+            margin: 0;
             padding: var(--space-6);
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius-lg);
-            background-color: var(--color-bg);
+            max-width: 1200px;
+            margin: 0 auto;
         }
-        
-        .demo-title {
-            color: var(--color-primary);
-            border-bottom: 2px solid var(--color-primary);
-            padding-bottom: var(--space-2);
-            margin-bottom: var(--space-5);
-        }
-        
-        .demo-grid {
-            display: grid;
-            gap: var(--space-4);
-            margin-bottom: var(--space-5);
-        }
-        
-        .demo-grid-2 {
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        }
-        
-        .demo-grid-3 {
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-        }
-        
-        .demo-item {
-            display: flex;
-            flex-direction: column;
-            gap: var(--space-2);
-            padding: var(--space-3);
-            background-color: var(--color-surface);
+
+        /* Buttons */
+        .btn {
+            height: var(--button-height);
+            padding: 0 var(--space-4);
             border-radius: var(--radius-md);
-        }
-        
-        .demo-label {
-            font-size: var(--font-size-sm);
-            color: var(--color-muted);
+            border: 1px solid transparent;
+            font-size: var(--font-size-md);
             font-weight: 500;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: var(--touch-size);
+            text-decoration: none;
         }
-        
-        .theme-switcher {
+
+        .btn-primary {
+            background: var(--color-primary);
+            color: #fff;
+        }
+
+        .btn-secondary {
+            background: var(--color-surface);
+            color: var(--color-fg);
+            border-color: var(--color-border);
+        }
+
+        .btn-accent {
+            background: var(--color-accent);
+            color: #fff;
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--color-primary);
+            border-color: transparent;
+        }
+
+        .btn:hover:not(:disabled) {
+            opacity: 0.92;
+        }
+
+        .btn:disabled {
+            opacity: var(--opacity-disabled);
+            cursor: not-allowed;
+        }
+
+        .btn:focus {
+            outline: var(--focus-ring-width) solid var(--focus-ring-color);
+            outline-offset: 2px;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--color-surface);
+            border-radius: var(--radius-lg);
+            padding: var(--card-padding);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--color-border);
+        }
+
+        .card-title {
+            margin: 0 0 var(--space-3) 0;
+            font-size: var(--font-size-lg);
+            font-weight: 600;
+            color: var(--color-fg);
+        }
+
+        .card-content {
+            color: var(--color-muted);
+        }
+
+        /* Forms */
+        .input {
+            height: var(--input-height);
+            padding: 0 var(--space-3);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            font-size: var(--font-size-md);
+            background: var(--color-bg);
+            color: var(--color-fg);
+            transition: border-color var(--transition-fast);
+        }
+
+        .input:focus {
+            outline: none;
+            border-color: var(--color-accent);
+            box-shadow: 0 0 0 2px rgba(201, 183, 255, 0.2);
+        }
+
+        .input::placeholder {
+            color: var(--color-muted);
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            height: var(--badge-height);
+            padding: 0 var(--space-3);
+            border-radius: var(--radius-pill);
+            font-size: var(--font-size-sm);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+        }
+
+        .badge-success {
+            background: rgba(46, 125, 50, 0.1);
+            color: var(--color-success);
+        }
+
+        .badge-warning {
+            background: rgba(176, 106, 0, 0.1);
+            color: var(--color-warning);
+        }
+
+        .badge-danger {
+            background: rgba(176, 38, 30, 0.1);
+            color: var(--color-danger);
+        }
+
+        /* Layout */
+        .header {
+            text-align: center;
+            margin-bottom: var(--space-6);
+        }
+
+        .section {
+            margin-bottom: var(--space-6);
+        }
+
+        .section-title {
+            font-size: var(--font-size-lg);
+            font-weight: 600;
+            margin-bottom: var(--space-4);
+            color: var(--color-fg);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: var(--space-4);
+        }
+
+        .flex {
+            display: flex;
+            gap: var(--space-3);
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .theme-toggle {
             position: fixed;
             top: var(--space-4);
             right: var(--space-4);
-            z-index: var(--z-dropdown);
+            z-index: 100;
         }
-        
-        .container {
+    </style>
+
+    <style>
+        body {
+            padding: var(--space-6);
             max-width: 1200px;
             margin: 0 auto;
-            padding: var(--space-6);
         }
-        
-        .hero {
+
+        .header {
             text-align: center;
-            padding: var(--space-8) 0;
-            background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-bg) 100%);
-            margin-bottom: var(--space-8);
-            border-radius: var(--radius-xl);
+            margin-bottom: var(--space-6);
+        }
+
+        .header h1 {
+            color: var(--color-primary);
+            font-size: 2.5rem;
+            margin-bottom: var(--space-2);
+        }
+
+        .header p {
+            color: var(--color-muted);
+            font-size: var(--font-size-lg);
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: var(--space-4);
+            right: var(--space-4);
+            z-index: var(--z-tooltip);
+        }
+
+        .section {
+            margin-bottom: var(--space-6);
+            padding: var(--space-5);
+            border: var(--input-border-width) solid var(--color-border);
+            border-radius: var(--radius-lg);
+            background: var(--color-surface);
+        }
+
+        .section h2 {
+            color: var(--color-primary);
+            font-size: var(--font-size-xl);
+            margin-bottom: var(--space-4);
+            padding-bottom: var(--space-2);
+            border-bottom: var(--input-border-width) solid var(--color-border);
+        }
+
+        .component-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: var(--space-4);
+            margin-bottom: var(--space-4);
+        }
+
+        .component-item {
+            padding: var(--space-4);
+            border: var(--input-border-width) solid var(--color-border);
+            border-radius: var(--radius-md);
+            background: var(--color-bg);
+        }
+
+        .component-item h3 {
+            color: var(--color-fg);
+            font-size: var(--font-size-lg);
+            margin-bottom: var(--space-3);
+        }
+
+        .code-snippet {
+            background: color-mix(in srgb, var(--color-surface), var(--color-fg) 5%);
+            border: var(--input-border-width) solid var(--color-border);
+            border-radius: var(--radius-sm);
+            padding: var(--space-3);
+            margin-top: var(--space-3);
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: var(--font-size-sm);
+            color: var(--color-fg);
+            overflow-x: auto;
+        }
+
+        .color-palette {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: var(--space-3);
+            margin-top: var(--space-4);
+        }
+
+        .color-item {
+            text-align: center;
+        }
+
+        .color-swatch {
+            width: 80px;
+            height: 80px;
+            border-radius: var(--radius-md);
+            border: 2px solid var(--color-border);
+            margin: 0 auto var(--space-2) auto;
+        }
+
+        .color-name {
+            font-size: var(--font-size-sm);
+            color: var(--color-fg);
+            font-weight: 500;
+            margin-bottom: var(--space-1);
+        }
+
+        .color-hex {
+            font-size: var(--font-size-xs);
+            color: var(--color-muted);
+            font-family: 'Monaco', 'Menlo', monospace;
         }
     </style>
 </head>
-<body class="theme-transition">
-    <!-- Theme Switcher -->
-    <div class="theme-switcher">
-        <button id="themeSwitcher" class="theme-toggle" aria-label="Переключить тему">
-            <span id="themeIcon">🌙</span>
-            <span id="themeText">Темная тема</span>
-        </button>
-    </div>
+<body>
+    <!-- Theme Toggle -->
+    <button class="theme-toggle btn btn-secondary" onclick="toggleTheme()">
+        🌙 Переключить тему
+    </button>
 
-    <!-- SVG Sprite -->
-    <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
-        <defs>
-            <symbol id="icon-palette" viewBox="0 0 24 24">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10c1.1 0 2-.9 2-2 0-.55-.22-1.05-.59-1.41-.36-.36-.91-.59-1.41-.59H9c-3.31 0-6-2.69-6-6 0-4.97 4.03-9 9-9s9 4.03 9 9c0 2.76-2.24 5-5 5h-1c-.55 0-1 .45-1 1s.45 1 1 1c4.42 0 8-3.58 8-8 0-5.52-4.48-10-10-10z" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-                <circle cx="7" cy="10" r="1.5" fill="currentColor" opacity="0.3"/>
-                <circle cx="12" cy="7" r="1.5" fill="currentColor" opacity="0.5"/>
-                <circle cx="17" cy="10" r="1.5" fill="currentColor" opacity="0.7"/>
-                <circle cx="10" cy="15" r="1.5" fill="currentColor" opacity="0.9"/>
-            </symbol>
-            <symbol id="icon-drop" viewBox="0 0 24 24">
-                <path d="M12 2.5c0 0-5 4.5-5 9.5a5 5 0 0 0 10 0c0-5-5-9.5-5-9.5z" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-                <path d="M9.5 10.5c0-1.5 1-3 2.5-4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" opacity="0.4"/>
-            </symbol>
-            <symbol id="icon-cart" viewBox="0 0 24 24">
-                <path d="M3 3h2l.4 2m0 0h15.6l-1.5 7H6.4m0 0L5 7m1.4 5v0m0 0l1.6 8h9" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-                <circle cx="9" cy="20" r="1" stroke="currentColor" stroke-width="1.75" fill="none"/>
-                <circle cx="18" cy="20" r="1" stroke="currentColor" stroke-width="1.75" fill="none"/>
-            </symbol>
-            <symbol id="icon-info" viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-                <path d="M12 16v-4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
-                <circle cx="12" cy="8" r="0.5" fill="currentColor"/>
-            </symbol>
-            <symbol id="icon-list" viewBox="0 0 24 24">
-                <path d="M8 6h13" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M8 12h13" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M8 18h13" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
-                <circle cx="4" cy="6" r="1.5" fill="currentColor" opacity="0.6"/>
-                <circle cx="4" cy="12" r="1.5" fill="currentColor" opacity="0.6"/>
-                <circle cx="4" cy="18" r="1.5" fill="currentColor" opacity="0.6"/>
-            </symbol>
-            <symbol id="icon-settings" viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-            </symbol>
-        </defs>
-    </svg>
+    <!-- Header -->
+    <header class="header">
+        <h1>💄 Beauty Care Design System</h1>
+        <p>Витрина компонентов системы дизайна</p>
+    </header>
 
-    <div class="container">
-        <!-- Hero Section -->
-        <div class="hero">
-            <h1>Skincare Bot Design System</h1>
-            <p class="text-secondary">Beauty-friendly компоненты с WCAG AA контрастом</p>
-            <div class="badge badge-primary badge-lg">
-                <svg class="icon"><use href="#icon-palette"></use></svg>
-                Rose Mauve Palette
+    <!-- Buttons Section -->
+    <section class="section">
+        <h2>🔘 Кнопки (Buttons)</h2>
+
+        <div class="component-grid">
+            <div class="component-item">
+                <h3>Варианты кнопок</h3>
+                <button class="btn btn-primary">Основная</button>
+                <button class="btn btn-secondary">Вторичная</button>
+                <button class="btn btn-accent">Акцентная</button>
+                <button class="btn btn-ghost">Призрачная</button>
+            </div>
+
+            <div class="component-item">
+                <h3>Размеры кнопок</h3>
+                <button class="btn btn-primary btn-sm">Маленькая</button>
+                <button class="btn btn-primary">Средняя</button>
+                <button class="btn btn-primary" style="height: 48px; padding: 0 20px;">Большая</button>
+            </div>
+
+            <div class="component-item">
+                <h3>Состояния кнопок</h3>
+                <button class="btn btn-success">Успех</button>
+                <button class="btn btn-warning">Предупреждение</button>
+                <button class="btn btn-danger">Ошибка</button>
+                <button class="btn btn-primary" disabled>Отключена</button>
+                <button class="btn btn-primary btn-loading">Загрузка</button>
+            </div>
+
+            <div class="component-item">
+                <h3>Кнопки с иконками</h3>
+                <button class="btn btn-primary">
+                    <span class="btn-icon">📝</span>
+                    Редактировать
+                </button>
+                <button class="btn btn-secondary">
+                    <span class="btn-icon">❤️</span>
+                    Избранное
+                </button>
+                <button class="btn btn-accent">
+                    <span class="btn-icon">🛒</span>
+                    Купить
+                </button>
             </div>
         </div>
 
-        <!-- Colors & Tokens -->
-        <section class="demo-section">
-            <h2 class="demo-title">🎨 Цветовая палитра</h2>
-            <div class="demo-grid demo-grid-3">
-                <div class="demo-item">
-                    <div class="demo-label">Primary - Rose Mauve</div>
-                    <div style="width: 100%; height: 60px; background-color: var(--color-primary); border-radius: var(--radius-md);"></div>
-                    <code>#C26A8D</code>
-                </div>
-                <div class="demo-item">
-                    <div class="demo-label">Secondary - Nude Blush</div>
-                    <div style="width: 100%; height: 60px; background-color: var(--color-secondary); border-radius: var(--radius-md);"></div>
-                    <code>#F4DCE4</code>
-                </div>
-                <div class="demo-item">
-                    <div class="demo-label">Accent - Soft Lilac</div>
-                    <div style="width: 100%; height: 60px; background-color: var(--color-accent); border-radius: var(--radius-md);"></div>
-                    <code>#C9B7FF</code>
-                </div>
-                <div class="demo-item">
-                    <div class="demo-label">Success</div>
-                    <div style="width: 100%; height: 60px; background-color: var(--color-success); border-radius: var(--radius-md);"></div>
-                    <code>#2E7D32</code>
-                </div>
-                <div class="demo-item">
-                    <div class="demo-label">Warning</div>
-                    <div style="width: 100%; height: 60px; background-color: var(--color-warning); border-radius: var(--radius-md);"></div>
-                    <code>#B26A00</code>
-                </div>
-                <div class="demo-item">
-                    <div class="demo-label">Danger</div>
-                    <div style="width: 100%; height: 60px; background-color: var(--color-danger); border-radius: var(--radius-md);"></div>
-                    <code>#B3261E</code>
-                </div>
-            </div>
-        </section>
+        <div class="code-snippet">
+&lt;button class="btn btn-primary"&gt;Основная&lt;/button&gt;<br>
+&lt;button class="btn btn-secondary"&gt;Вторичная&lt;/button&gt;<br>
+&lt;button class="btn btn-accent"&gt;Акцентная&lt;/button&gt;
+        </div>
+    </section>
 
-        <!-- Icons -->
-        <section class="demo-section">
-            <h2 class="demo-title">📐 Иконки 24×24px</h2>
-            <div class="demo-grid demo-grid-3">
-                <div class="demo-item items-center">
-                    <div class="demo-label">Palette (Цветотип)</div>
-                    <svg class="icon" style="color: var(--color-primary); width: 48px; height: 48px;"><use href="#icon-palette"></use></svg>
-                </div>
-                <div class="demo-item items-center">
-                    <div class="demo-label">Drop (Диагностика лица)</div>
-                    <svg class="icon" style="color: var(--color-primary); width: 48px; height: 48px;"><use href="#icon-drop"></use></svg>
-                </div>
-                <div class="demo-item items-center">
-                    <div class="demo-label">Cart (Корзина)</div>
-                    <svg class="icon" style="color: var(--color-primary); width: 48px; height: 48px;"><use href="#icon-cart"></use></svg>
-                </div>
-                <div class="demo-item items-center">
-                    <div class="demo-label">Info (Помощь)</div>
-                    <svg class="icon" style="color: var(--color-primary); width: 48px; height: 48px;"><use href="#icon-info"></use></svg>
-                </div>
-                <div class="demo-item items-center">
-                    <div class="demo-label">List (Рекомендации)</div>
-                    <svg class="icon" style="color: var(--color-primary); width: 48px; height: 48px;"><use href="#icon-list"></use></svg>
-                </div>
-                <div class="demo-item items-center">
-                    <div class="demo-label">Settings (Настройки)</div>
-                    <svg class="icon" style="color: var(--color-primary); width: 48px; height: 48px;"><use href="#icon-settings"></use></svg>
-                </div>
-            </div>
-        </section>
+    <!-- Cards Section -->
+    <section class="section">
+        <h2>🃏 Карточки (Cards)</h2>
 
-        <!-- Buttons -->
-        <section class="demo-section">
-            <h2 class="demo-title">🔘 Кнопки</h2>
-            <div class="demo-grid demo-grid-2">
-                <div class="demo-item">
-                    <div class="demo-label">Primary Buttons</div>
-                    <div class="d-flex gap-3 flex-wrap">
-                        <button class="btn btn-primary btn-sm">Маленькая</button>
-                        <button class="btn btn-primary">Обычная</button>
-                        <button class="btn btn-primary btn-lg">Большая</button>
-                        <button class="btn btn-primary" disabled>Заблокирована</button>
+        <div class="component-grid">
+            <div class="component-item">
+                <h3>Базовая карточка</h3>
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="card-title">Название продукта</h4>
+                        <p class="card-subtitle">Описание категории</p>
                     </div>
-                </div>
-                <div class="demo-item">
-                    <div class="demo-label">Secondary Buttons</div>
-                    <div class="d-flex gap-3 flex-wrap">
-                        <button class="btn btn-secondary btn-sm">Маленькая</button>
-                        <button class="btn btn-secondary">Обычная</button>
-                        <button class="btn btn-secondary btn-lg">Большая</button>
-                    </div>
-                </div>
-                <div class="demo-item">
-                    <div class="demo-label">Ghost Buttons</div>
-                    <div class="d-flex gap-3 flex-wrap">
-                        <button class="btn btn-ghost">Призрачная</button>
-                        <button class="btn btn-ghost">
-                            <svg class="icon"><use href="#icon-palette"></use></svg>
-                            С иконкой
-                        </button>
-                    </div>
-                </div>
-                <div class="demo-item">
-                    <div class="demo-label">State Buttons</div>
-                    <div class="d-flex gap-3 flex-wrap">
-                        <button class="btn btn-success">Успех</button>
-                        <button class="btn btn-danger">Ошибка</button>
-                        <button class="btn btn-primary btn-icon-only">
-                            <svg class="icon"><use href="#icon-cart"></use></svg>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Forms -->
-        <section class="demo-section">
-            <h2 class="demo-title">📝 Формы</h2>
-            <div class="demo-grid demo-grid-2">
-                <div class="demo-item">
-                    <div class="demo-label">Поля ввода</div>
-                    <div class="form-group">
-                        <label class="form-label">Имя</label>
-                        <input type="text" class="input" placeholder="Введите ваше имя" value="Анна">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Электронная почта</label>
-                        <input type="email" class="input" placeholder="anna@example.com">
-                        <div class="form-help">Мы никому не передаем вашу почту</div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Комментарий</label>
-                        <textarea class="input textarea" placeholder="Расскажите о ваших потребностях в уходе"></textarea>
-                    </div>
-                </div>
-                <div class="demo-item">
-                    <div class="demo-label">Селекты и чекбоксы</div>
-                    <div class="form-group">
-                        <label class="form-label">Тип лица</label>
-                        <select class="input select">
-                            <option>Выберите тип</option>
-                            <option>Сухой тип</option>
-                            <option>Жирный тип</option>
-                            <option>Комбинированный тип</option>
-                            <option>Нормальный тип</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="d-flex items-center gap-2">
-                            <input type="checkbox" class="checkbox" checked>
-                            Чувствительность к солнцу
-                        </label>
-                        <label class="d-flex items-center gap-2">
-                            <input type="radio" name="experience" class="radio" checked>
-                            Новичок в уходе
-                        </label>
-                        <label class="d-flex items-center gap-2">
-                            <input type="radio" name="experience" class="radio">
-                            Опытный пользователь
-                        </label>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Cards -->
-        <section class="demo-section">
-            <h2 class="demo-title">🃏 Карточки</h2>
-            <div class="card-grid card-grid-3">
-                <div class="card product-card">
-                    <div style="width: 100%; height: 200px; background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-accent) 100%); display: flex; align-items: center; justify-content: center; color: var(--color-primary); font-weight: 600;">
-                        ФОТО ТОВАРА
-                    </div>
-                    <div class="product-info">
-                        <h3 class="product-title">Увлажняющий крем</h3>
-                        <p class="product-description">Легкий крем для ежедневного ухода с гиалуроновой кислотой</p>
-                        <div class="product-price">2 890 ₽</div>
-                    </div>
-                    <div class="product-actions">
-                        <button class="btn btn-primary" style="flex: 1;">В корзину</button>
-                        <button class="btn btn-secondary btn-icon-only">
-                            <svg class="icon"><use href="#icon-info"></use></svg>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="card recommendation-card">
                     <div class="card-body">
-                        <svg class="recommendation-icon"><use href="#icon-drop"></use></svg>
-                        <h3 class="recommendation-title">Рекомендация</h3>
-                        <p>Для вашего типа лица отлично подойдет легкий увлажняющий крем с SPF защитой</p>
-                    </div>
-                </div>
-
-                <div class="card test-result-card">
-                    <div class="card-body">
-                        <div class="result-badge">
-                            <svg class="icon"><use href="#icon-palette"></use></svg>
-                            Результат теста
+                        <p>Подробное описание продукта с характеристиками и преимуществами.</p>
+                        <div class="card-meta">
+                            <span class="card-meta-item">Для сухой кожи</span>
+                            <span class="card-meta-item">SPF 30</span>
                         </div>
-                        <h3>Цветотип: Мягкая Осень</h3>
-                        <p>Вам подходят теплые, приглушенные оттенки. Идеальные цвета: терракот, золотисто-коричневый, оливковый.</p>
+                    </div>
+                    <div class="card-footer">
+                        <div class="card-price">2 499 ₽</div>
+                        <div class="card-actions">
+                            <button class="btn btn-primary">Купить</button>
+                            <button class="btn btn-secondary">Подробнее</button>
+                        </div>
                     </div>
                 </div>
             </div>
-        </section>
 
-        <!-- Badges -->
-        <section class="demo-section">
-            <h2 class="demo-title">🏷️ Бейджи и метки</h2>
-            <div class="demo-grid demo-grid-2">
-                <div class="demo-item">
-                    <div class="demo-label">Цветные бейджи</div>
-                    <div class="d-flex gap-2 flex-wrap">
-                        <span class="badge badge-primary">Primary</span>
-                        <span class="badge badge-secondary">Secondary</span>
-                        <span class="badge badge-success">Success</span>
-                        <span class="badge badge-warning">Warning</span>
-                        <span class="badge badge-danger">Danger</span>
-                        <span class="badge badge-info">Info</span>
+            <div class="component-item">
+                <h3>Карточка рекомендации</h3>
+                <div class="card card-recommendation">
+                    <div class="card-body">
+                        <h4 class="card-title">Персональная рекомендация</h4>
+                        <p>На основе вашего типа кожи и предпочтений.</p>
+                        <div class="card-meta">
+                            <span class="card-meta-item">Высокий рейтинг</span>
+                            <span class="card-meta-item">Популярный выбор</span>
+                        </div>
                     </div>
-                </div>
-                <div class="demo-item">
-                    <div class="demo-label">Стили бейджей</div>
-                    <div class="d-flex gap-2 flex-wrap">
-                        <span class="badge badge-outline badge-primary">Контур</span>
-                        <span class="badge badge-soft badge-primary">Мягкий</span>
-                        <span class="badge badge-sm badge-primary">Маленький</span>
-                        <span class="badge badge-lg badge-primary">Большой</span>
-                    </div>
-                </div>
-                <div class="demo-item">
-                    <div class="demo-label">Специальные бейджи</div>
-                    <div class="d-flex gap-2 flex-wrap">
-                        <span class="badge skin-type-badge">Сухой тип</span>
-                        <span class="badge product-tag">Гипоаллергенно</span>
-                        <span class="badge price-badge">1 290 ₽</span>
-                        <span class="badge new-badge">NEW</span>
-                        <span class="badge recommendation-score">95%</span>
-                    </div>
-                </div>
-                <div class="demo-item">
-                    <div class="demo-label">Бейджи с иконками</div>
-                    <div class="d-flex gap-2 flex-wrap">
-                        <span class="badge badge-primary badge-icon">
-                            <svg class="icon"><use href="#icon-palette"></use></svg>
-                            Цветотип
-                        </span>
-                        <span class="badge badge-success badge-icon">
-                            <svg class="icon"><use href="#icon-drop"></use></svg>
-                            Увлажнение
-                        </span>
+                    <div class="card-actions">
+                        <button class="btn btn-accent">Применить</button>
                     </div>
                 </div>
             </div>
-        </section>
 
-        <!-- Shadows & Effects -->
-        <section class="demo-section">
-            <h2 class="demo-title">🌟 Тени и эффекты</h2>
-            <div class="demo-grid demo-grid-2">
-                <div class="demo-item">
-                    <div class="demo-label">Уровни теней</div>
-                    <div class="d-flex gap-4">
-                        <div style="width: 80px; height: 80px; background: var(--color-bg); border-radius: var(--radius-md); box-shadow: var(--shadow-sm);"></div>
-                        <div style="width: 80px; height: 80px; background: var(--color-bg); border-radius: var(--radius-md); box-shadow: var(--shadow-md);"></div>
-                        <div style="width: 80px; height: 80px; background: var(--color-bg); border-radius: var(--radius-md); box-shadow: var(--shadow-lg);"></div>
-                        <div style="width: 80px; height: 80px; background: var(--color-bg); border-radius: var(--radius-md); box-shadow: var(--shadow-xl);"></div>
+            <div class="component-item">
+                <h3>Компактная карточка</h3>
+                <div class="card card-compact">
+                    <div class="card-body">
+                        <h4 class="card-title">Быстрый уход</h4>
+                        <div class="card-price">899 ₽</div>
                     </div>
-                    <div class="d-flex gap-4 text-center" style="font-size: var(--font-size-xs); color: var(--color-muted);">
-                        <div style="width: 80px;">Small</div>
-                        <div style="width: 80px;">Medium</div>
-                        <div style="width: 80px;">Large</div>
-                        <div style="width: 80px;">XL</div>
-                    </div>
-                </div>
-                <div class="demo-item">
-                    <div class="demo-label">Радиусы скругления</div>
-                    <div class="d-flex gap-3">
-                        <div style="width: 60px; height: 60px; background: var(--color-primary); border-radius: var(--radius-sm);"></div>
-                        <div style="width: 60px; height: 60px; background: var(--color-primary); border-radius: var(--radius-md);"></div>
-                        <div style="width: 60px; height: 60px; background: var(--color-primary); border-radius: var(--radius-lg);"></div>
-                        <div style="width: 60px; height: 60px; background: var(--color-primary); border-radius: var(--radius-xl);"></div>
-                        <div style="width: 60px; height: 60px; background: var(--color-primary); border-radius: var(--radius-pill);"></div>
-                    </div>
-                    <div class="d-flex gap-3 text-center" style="font-size: var(--font-size-xs); color: var(--color-muted);">
-                        <div style="width: 60px;">8px</div>
-                        <div style="width: 60px;">12px</div>
-                        <div style="width: 60px;">16px</div>
-                        <div style="width: 60px;">20px</div>
-                        <div style="width: 60px;">999px</div>
+                    <div class="card-actions">
+                        <button class="btn btn-primary">В корзину</button>
                     </div>
                 </div>
             </div>
-        </section>
-    </div>
+        </div>
+
+        <div class="code-snippet">
+&lt;div class="card"&gt;<br>
+  &lt;div class="card-header"&gt;<br>
+    &lt;h4 class="card-title"&gt;Название&lt;/h4&gt;<br>
+  &lt;/div&gt;<br>
+  &lt;div class="card-body"&gt;Содержимое&lt;/div&gt;<br>
+  &lt;div class="card-footer"&gt;Действия&lt;/div&gt;<br>
+&lt;/div&gt;
+        </div>
+    </section>
+
+    <!-- Forms Section -->
+    <section class="section">
+        <h2>📝 Формы (Forms)</h2>
+
+        <div class="component-grid">
+            <div class="component-item">
+                <h3>Поля ввода</h3>
+                <div class="form-group">
+                    <label class="form-label">Имя</label>
+                    <input type="text" class="input" placeholder="Введите ваше имя">
+                    <div class="form-help">Это поле обязательно для заполнения</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="input input-success" placeholder="email@example.com" value="user@example.com">
+                    <div class="form-help text-success">Email подтвержден</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Пароль</label>
+                    <input type="password" class="input input-error" placeholder="Введите пароль">
+                    <div class="form-help text-danger">Пароль должен содержать минимум 8 символов</div>
+                </div>
+            </div>
+
+            <div class="component-item">
+                <h3>Другие элементы</h3>
+                <div class="form-group">
+                    <label class="form-label">Тип кожи</label>
+                    <select class="select">
+                        <option>Выберите тип кожи</option>
+                        <option>Нормальная</option>
+                        <option>Сухая</option>
+                        <option>Жирная</option>
+                        <option>Комбинированная</option>
+                        <option>Чувствительная</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="checkbox-group">
+                        <input type="checkbox" class="checkbox" checked>
+                        <span class="checkbox-label">Согласен с условиями</span>
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <label class="radio-group">
+                        <input type="radio" name="frequency" class="radio" checked>
+                        <span class="radio-label">Ежедневно</span>
+                    </label>
+                    <label class="radio-group">
+                        <input type="radio" name="frequency" class="radio">
+                        <span class="radio-label">Через день</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="component-item">
+                <h3>Многострочный текст</h3>
+                <div class="form-group">
+                    <label class="form-label">Комментарий</label>
+                    <textarea class="textarea" placeholder="Опишите ваши предпочтения в уходе за кожей..." rows="4"></textarea>
+                    <div class="form-help">Максимум 500 символов</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="code-snippet">
+&lt;div class="form-group"&gt;<br>
+  &lt;label class="form-label"&gt;Имя&lt;/label&gt;<br>
+  &lt;input type="text" class="input" placeholder="Введите имя"&gt;<br>
+  &lt;div class="form-help"&gt;Помощь&lt;/div&gt;<br>
+&lt;/div&gt;
+        </div>
+    </section>
+
+    <!-- Badges Section -->
+    <section class="section">
+        <h2>🏷️ Бейджи (Badges)</h2>
+
+        <div class="component-grid">
+            <div class="component-item">
+                <h3>Варианты бейджей</h3>
+                <div style="display: flex; gap: var(--space-2); flex-wrap: wrap; margin-bottom: var(--space-3);">
+                    <span class="badge badge-primary">Primary</span>
+                    <span class="badge badge-secondary">Secondary</span>
+                    <span class="badge badge-success">Успех</span>
+                    <span class="badge badge-warning">Внимание</span>
+                    <span class="badge badge-danger">Ошибка</span>
+                </div>
+
+                <div style="display: flex; gap: var(--space-2); flex-wrap: wrap; margin-bottom: var(--space-3);">
+                    <span class="badge badge-outline badge-primary">Outlined</span>
+                    <span class="badge badge-soft badge-success">Soft</span>
+                    <span class="badge badge-primary badge-icon">✨ Акцент</span>
+                </div>
+
+                <div style="display: flex; gap: var(--space-2); flex-wrap: wrap;">
+                    <span class="badge badge-sm badge-primary">Маленький</span>
+                    <span class="badge badge-primary">Средний</span>
+                    <span class="badge badge-lg badge-primary">Большой</span>
+                </div>
+            </div>
+
+            <div class="component-item">
+                <h3>Бейджи типов кожи</h3>
+                <div style="display: flex; gap: var(--space-2); flex-wrap: wrap;">
+                    <span class="badge badge-skin-normal">Нормальная</span>
+                    <span class="badge badge-skin-dry">Сухая</span>
+                    <span class="badge badge-skin-oily">Жирная</span>
+                    <span class="badge badge-skin-combination">Комбинированная</span>
+                    <span class="badge badge-skin-sensitive">Чувствительная</span>
+                </div>
+            </div>
+
+            <div class="component-item">
+                <h3>Категории продуктов</h3>
+                <div style="display: flex; gap: var(--space-2); flex-wrap: wrap;">
+                    <span class="badge badge-category-cleanser">🧼 Очищение</span>
+                    <span class="badge badge-category-toner">💧 Тоники</span>
+                    <span class="badge badge-category-serum">✨ Сыворотки</span>
+                    <span class="badge badge-category-moisturizer">🧴 Увлажнение</span>
+                    <span class="badge badge-category-sunscreen">☀️ Солнцезащита</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="code-snippet">
+&lt;span class="badge badge-primary"&gt;Primary&lt;/span&gt;<br>
+&lt;span class="badge badge-success"&gt;Успех&lt;/span&gt;<br>
+&lt;span class="badge badge-outline badge-warning"&gt;Outlined&lt;/span&gt;
+        </div>
+    </section>
+
+    <!-- Colors Section -->
+    <section class="section">
+        <h2>🎨 Цветовая палитра</h2>
+
+        <div class="color-palette">
+            <div class="color-item">
+                <div class="color-swatch" style="background: var(--color-primary)"></div>
+                <div class="color-name">Primary</div>
+                <div class="color-hex">#C26A8D</div>
+            </div>
+            <div class="color-item">
+                <div class="color-swatch" style="background: var(--color-secondary)"></div>
+                <div class="color-name">Secondary</div>
+                <div class="color-hex">#F4DCE4</div>
+            </div>
+            <div class="color-item">
+                <div class="color-swatch" style="background: var(--color-accent)"></div>
+                <div class="color-name">Accent</div>
+                <div class="color-hex">#C9B7FF</div>
+            </div>
+            <div class="color-item">
+                <div class="color-swatch" style="background: var(--color-success)"></div>
+                <div class="color-name">Success</div>
+                <div class="color-hex">#2E7D32</div>
+            </div>
+            <div class="color-item">
+                <div class="color-swatch" style="background: var(--color-warning)"></div>
+                <div class="color-name">Warning</div>
+                <div class="color-hex">#B26A00</div>
+            </div>
+            <div class="color-item">
+                <div class="color-swatch" style="background: var(--color-danger)"></div>
+                <div class="color-name">Danger</div>
+                <div class="color-hex">#B3261E</div>
+            </div>
+        </div>
+
+        <div class="code-snippet">
+/* Использование цветов */<br>
+.my-element {<br>
+  background: var(--color-primary);<br>
+  color: var(--color-bg);<br>
+  border: 1px solid var(--color-border);<br>
+}
+        </div>
+    </section>
 
     <script>
-        // Theme Switcher
-        const themeSwitcher = document.getElementById('themeSwitcher');
-        const themeIcon = document.getElementById('themeIcon');
-        const themeText = document.getElementById('themeText');
-        const html = document.documentElement;
+        function toggleTheme() {
+            const html = document.documentElement;
+            const button = document.querySelector('.theme-toggle');
+            const currentTheme = html.getAttribute('data-theme');
 
-        function updateTheme(theme) {
-            html.setAttribute('data-theme', theme);
-            if (theme === 'dark') {
-                themeIcon.textContent = '☀️';
-                themeText.textContent = 'Светлая тема';
+            if (currentTheme === 'light') {
+                html.setAttribute('data-theme', 'dark');
+                button.textContent = '☀️ Светлая тема';
             } else {
-                themeIcon.textContent = '🌙';
-                themeText.textContent = 'Темная тема';
+                html.setAttribute('data-theme', 'light');
+                button.textContent = '🌙 Темная тема';
             }
-            localStorage.setItem('theme', theme);
         }
 
-        themeSwitcher.addEventListener('click', () => {
-            const currentTheme = html.getAttribute('data-theme');
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            updateTheme(newTheme);
+        // Add loading state demo
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('btn-loading')) {
+                e.target.textContent = 'Загрузка...';
+                setTimeout(() => {
+                    e.target.textContent = 'Загрузка';
+                    e.target.classList.remove('btn-loading');
+                }, 2000);
+            }
         });
 
-        // Load saved theme
-        const savedTheme = localStorage.getItem('theme') || 'light';
-        updateTheme(savedTheme);
+        // Focus management demo
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Tab') {
+                document.body.classList.add('keyboard-navigation');
+            }
+        });
 
-        // Button interactions demo
-        document.querySelectorAll('.btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                if (!this.disabled) {
-                    this.style.transform = 'translateY(1px)';
-                    setTimeout(() => {
-                        this.style.transform = '';
-                    }, 150);
-                }
-            });
+        document.addEventListener('mousedown', function() {
+            document.body.classList.remove('keyboard-navigation');
         });
     </script>
 </body>
 </html>
-
-
-
