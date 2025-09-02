@@ -1,413 +1,286 @@
-#!/usr/bin/env python3
 """
-🔗 Приоритизация источников и поиск альтернатив для блока "Что купить"
-Обеспечивает: Gold Apple → RU Official → RU Marketplace → Intl Authorized
+🎯 Source Resolver - Приоритизация источников товаров
+Золотое Яблоко → RU официальные → RU маркетплейсы → Зарубежные
 """
+from __future__ import annotations
 
-from typing import Dict, List, Optional, Tuple, Any
-from dataclasses import dataclass
+import time
+from typing import Dict, List, Optional, Any, Tuple
+from dataclasses import dataclass, asdict
 from datetime import datetime
-import re
 
-from engine.source_prioritizer import get_source_prioritizer, SourceInfo
 from engine.catalog_store import CatalogStore
-from engine.models import Product, UserProfile
+
+
+@dataclass
+class SourceInfo:
+    """Информация об источнике товара"""
+    name: str
+    priority: int
+    category: str  # goldapple, ru_official, ru_marketplace, intl
+    domain: str
+    currency: str = "RUB"
+    is_official: bool = False
 
 
 @dataclass
 class ResolvedProduct:
-    """Товар с разрешенным источником и альтернативами"""
-    original: Dict[str, Any]  # Исходный товар из рекомендаций
-    source_info: SourceInfo   # Информация об источнике
-    is_available: bool        # Доступность основного источника
-    alternative: Optional[Dict[str, Any]] = None  # Альтернативный товар
-    alternative_reason: Optional[str] = None      # Причина замены
-    checked_at: str = ""      # Дата последней проверки
-    currency_verified: bool = False  # Проверка валюты
+    """Разрешенный товар с информацией об источнике"""
+    original: Dict[str, Any]
+    source_info: SourceInfo
+    is_available: bool
+    alternative: Optional[Dict[str, Any]] = None
+    alternative_reason: Optional[str] = None
+    checked_at: str = ""
 
 
 class SourceResolver:
-    """Разрешение источников с приоритизацией и поиском альтернатив"""
-    
-    def __init__(self, catalog_path: str = None):
-        self.source_prioritizer = get_source_prioritizer()
-        if not catalog_path:
-            import os
-            catalog_path = os.getenv("CATALOG_PATH", "assets/fixed_catalog.yaml")
-        self.catalog_store = CatalogStore.instance(catalog_path)
-    
+    """Разрешитель источников с приоритизацией"""
+
+    def __init__(self):
+        # Приоритизация источников (меньше число = выше приоритет)
+        self.source_priorities = {
+            # 🥇 Золотое Яблоко (наивысший приоритет)
+            "goldapple.ru": SourceInfo("Золотое Яблоко", 1, "goldapple", "goldapple.ru", "RUB", True),
+            "золотоеяблочко.рф": SourceInfo("Золотое Яблоко", 1, "goldapple", "золотоеяблочко.рф", "RUB", True),
+
+            # 🥈 Российские официальные магазины
+            "sephora.ru": SourceInfo("SEPHORA Russia", 2, "ru_official", "sephora.ru", "RUB", True),
+            "letu.ru": SourceInfo("Л'Этуаль", 2, "ru_official", "letu.ru", "RUB", True),
+            "rive-gauche.ru": SourceInfo("Рив Гош", 2, "ru_official", "rive-gauche.ru", "RUB", True),
+            "aroma-zone.ru": SourceInfo("Aroma-Zone", 2, "ru_official", "aroma-zone.ru", "RUB", True),
+
+            # 🥉 Российские маркетплейсы
+            "wildberries.ru": SourceInfo("Wildberries", 3, "ru_marketplace", "wildberries.ru", "RUB", False),
+            "ozon.ru": SourceInfo("Ozon", 3, "ru_marketplace", "ozon.ru", "RUB", False),
+            "yandex.market.ru": SourceInfo("Яндекс.Маркет", 3, "ru_marketplace", "yandex.market.ru", "RUB", False),
+            "lamoda.ru": SourceInfo("Lamoda", 3, "ru_marketplace", "lamoda.ru", "RUB", False),
+
+            # 🌍 Зарубежные магазины (низший приоритет)
+            "sephora.com": SourceInfo("SEPHORA International", 4, "intl", "sephora.com", "USD", False),
+            "ulta.com": SourceInfo("Ulta", 4, "intl", "ulta.com", "USD", False),
+            "cultbeauty.com": SourceInfo("Cult Beauty", 4, "intl", "cultbeauty.com", "GBP", False),
+            "lookfantastic.com": SourceInfo("LookFantastic", 4, "intl", "lookfantastic.com", "GBP", False),
+        }
+
+    def _extract_domain_from_url(self, url: str) -> str:
+        """Извлечение домена из URL"""
+        if not url:
+            return ""
+
+        # Убираем протокол
+        url = url.replace("https://", "").replace("http://", "")
+
+        # Берем домен до первого слеша
+        domain = url.split("/")[0].split("?")[0]
+
+        # Приводим к нижнему регистру
+        return domain.lower()
+
+    def _get_source_info(self, url: str) -> SourceInfo:
+        """Получение информации об источнике по URL"""
+        domain = self._extract_domain_from_url(url)
+
+        # Проверяем точное совпадение домена
+        if domain in self.source_priorities:
+            return self.source_priorities[domain]
+
+        # Проверяем частичное совпадение (для поддоменов)
+        for known_domain, info in self.source_priorities.items():
+            if known_domain in domain or domain in known_domain:
+                return info
+
+        # Неизвестный источник - низший приоритет
+        return SourceInfo("Неизвестный магазин", 999, "unknown", domain, "RUB", False)
+
     def resolve_source(self, product: Dict[str, Any]) -> ResolvedProduct:
         """
-        Разрешить источник для товара с проверкой доступности
-        
+        Разрешение источника товара с приоритизацией
+
         Args:
-            product: Товар из рекомендаций
-            
+            product: Товар из каталога
+
         Returns:
-            ResolvedProduct: Товар с разрешенным источником
-        """
-        # Получаем информацию об источнике
-        original_link = product.get("ref_link") or product.get("link", "")
-        source_info = self.source_prioritizer.get_source_info(original_link)
-        
-        # Проверяем доступность основного источника
-        is_available = self._check_availability(product)
-        
-        # Если недоступен - ищем альтернативу
-        alternative = None
-        alternative_reason = None
-        
-        if not is_available:
-            alternative, alternative_reason = self._find_alternative(product)
-        
-        # Проверяем валюту
-        currency_verified = self._verify_currency(product)
-        
-        return ResolvedProduct(
-            original=product,
-            source_info=source_info,
-            is_available=is_available,
-            alternative=alternative,
-            alternative_reason=alternative_reason,
-            checked_at=datetime.now().isoformat(),
-            currency_verified=currency_verified
-        )
-    
-    def _check_availability(self, product: Dict[str, Any]) -> bool:
-        """Быстрая проверка наличия товара"""
-        # Проверяем флаг in_stock
-        if not product.get("in_stock", True):
-            return False
-        
-        # Проверяем что есть ссылка на покупку
-        if not (product.get("ref_link") or product.get("link")):
-            return False
-        
-        # Проверяем что есть цена
-        if not product.get("price"):
-            return False
-        
-        return True
-    
-    def _find_alternative(self, product: Dict[str, Any]) -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
-        """
-        Найти альтернативу для недоступного товара
-        
-        Стратегия поиска:
-        1. Другой вариант того же продукта (другой оттенок/поставщик)
-        2. Товар той же категории и ценовой группы
-        3. Учет цветотипа для оттенков
-        
-        Returns:
-            (alternative_product, reason): Альтернативный товар и причина замены
+            ResolvedProduct: Товар с разрешенной информацией об источнике
         """
         try:
-            catalog = self.catalog_store.get()
-            original_category = product.get("category", "")
-            original_price = float(product.get("price", 0))
-            
-            # 1. Поиск другого варианта того же продукта
-            same_product_alternatives = self._find_same_product_variants(
-                product, catalog, original_category, original_price
+            # Получаем URL товара
+            product_url = product.get("link", "") or product.get("buy_url", "") or product.get("url", "")
+
+            # Определяем источник
+            source_info = self._get_source_info(product_url)
+
+            # Проверяем доступность товара
+            in_stock = product.get("in_stock", True)
+            price = product.get("price", 0)
+
+            # Если товар недоступен или без цены - ищем альтернативы
+            if not in_stock or price <= 0:
+                alternative = self._find_alternative(product)
+                alternative_reason = "out_of_stock" if not in_stock else "no_price"
+            else:
+                alternative = None
+                alternative_reason = None
+
+            return ResolvedProduct(
+                original=product,
+                source_info=source_info,
+                is_available=in_stock and price > 0,
+                alternative=alternative,
+                alternative_reason=alternative_reason,
+                checked_at=datetime.now().isoformat()
             )
-            
-            if same_product_alternatives:
-                best_alt = self._pick_best_by_source_priority(same_product_alternatives)
-                return best_alt, "другой_вариант_товара"
-            
-            # 2. Поиск в той же категории и ценовой группе
-            category_alternatives = self._find_category_alternatives(
-                product, catalog, original_category, original_price
-            )
-            
-            if category_alternatives:
-                best_alt = self._pick_best_by_source_priority(category_alternatives)
-                return best_alt, "аналог_категории"
-            
-            # 3. Универсальные варианты для сезона (если применимо)
-            universal_alternatives = self._find_universal_alternatives(
-                product, catalog, original_category
-            )
-            
-            if universal_alternatives:
-                best_alt = self._pick_best_by_source_priority(universal_alternatives)
-                return best_alt, "универсальный_вариант"
-            
-            return None, None
-            
+
         except Exception as e:
-            print(f"❌ Error finding alternative for {product.get('id', 'unknown')}: {e}")
-            return None, None
-    
-    def _find_same_product_variants(self, product: Dict[str, Any], catalog: List[Product], 
-                                   category: str, price: float) -> List[Dict[str, Any]]:
-        """Найти другие варианты того же продукта"""
-        alternatives = []
-        product_brand = product.get("brand", "").lower()
-        product_name_base = self._extract_base_name(product.get("name", ""))
-        
-        # Ценовой диапазон ±20%
-        price_min = price * 0.8
-        price_max = price * 1.2
-        
-        for catalog_product in catalog:
-            if not catalog_product.in_stock:
-                continue
-            
-            # Проверяем бренд
-            if catalog_product.brand.lower() != product_brand:
-                continue
-            
-            # Проверяем базовое название (без оттенка)
-            catalog_name_base = self._extract_base_name(catalog_product.name)
-            if catalog_name_base != product_name_base:
-                continue
-            
-            # Проверяем ценовой диапазон
-            catalog_price = float(catalog_product.price) if catalog_product.price else 0
-            if not (price_min <= catalog_price <= price_max):
-                continue
-            
-            # Конвертируем в dict формат
-            alt_dict = self._product_to_dict(catalog_product)
-            if alt_dict:
-                alternatives.append(alt_dict)
-        
-        return alternatives[:3]  # Максимум 3 варианта
-    
-    def _find_category_alternatives(self, product: Dict[str, Any], catalog: List[Product],
-                                   category: str, price: float) -> List[Dict[str, Any]]:
-        """Найти альтернативы в той же категории"""
-        alternatives = []
-        
-        # Ценовой диапазон ±30% для категорийных аналогов
-        price_min = price * 0.7
-        price_max = price * 1.3
-        
-        for catalog_product in catalog:
-            if not catalog_product.in_stock:
-                continue
-            
-            # Проверяем категорию (нечеткое совпадение)
-            if not self._categories_match(category, catalog_product.category):
-                continue
-            
-            # Проверяем ценовой диапазон
-            catalog_price = float(catalog_product.price) if catalog_product.price else 0
-            if not (price_min <= catalog_price <= price_max):
-                continue
-            
-            # Исключаем тот же товар
-            if (catalog_product.brand.lower() == product.get("brand", "").lower() and
-                catalog_product.name.lower() == product.get("name", "").lower()):
-                continue
-            
-            alt_dict = self._product_to_dict(catalog_product)
-            if alt_dict:
-                alternatives.append(alt_dict)
-        
-        return alternatives[:5]  # Максимум 5 вариантов
-    
-    def _find_universal_alternatives(self, product: Dict[str, Any], catalog: List[Product],
-                                    category: str) -> List[Dict[str, Any]]:
-        """Найти универсальные альтернативы"""
-        alternatives = []
-        
-        # Универсальные категории-заменители
-        universal_mappings = {
-            "foundation": ["bb_cream", "tinted_moisturizer", "concealer"],
-            "lipstick": ["lip_tint", "lip_balm_tinted"],
-            "mascara": ["lash_serum"],
-            "cleanser": ["micellar_water", "cleansing_oil"],
-            "moisturizer": ["day_cream", "night_cream", "face_oil"]
-        }
-        
-        category_lower = category.lower()
-        universal_categories = []
-        
-        for main_cat, alternatives_cats in universal_mappings.items():
-            if main_cat in category_lower:
-                universal_categories.extend(alternatives_cats)
-        
-        if not universal_categories:
-            return []
-        
-        for catalog_product in catalog:
-            if not catalog_product.in_stock:
-                continue
-            
-            catalog_category = catalog_product.category.lower()
-            if any(univ_cat in catalog_category for univ_cat in universal_categories):
-                alt_dict = self._product_to_dict(catalog_product)
-                if alt_dict:
-                    alternatives.append(alt_dict)
-        
-        return alternatives[:3]
-    
-    def _extract_base_name(self, name: str) -> str:
-        """Извлечь базовое название товара без оттенка"""
-        # Удаляем распространенные обозначения оттенков
-        shade_patterns = [
-            r'\s*-\s*\d+.*$',  # - 01 Fair, - 02 Light
-            r'\s*\(\w+.*\)$',  # (Fair), (Light Beige)
-            r'\s+\d+\w*$',     # 01, 02L, 1N1
-            r'\s+(Fair|Light|Medium|Dark|Deep).*$',
-            r'\s+(Светлый|Средний|Темный).*$'
-        ]
-        
-        base_name = name
-        for pattern in shade_patterns:
-            base_name = re.sub(pattern, '', base_name, flags=re.IGNORECASE)
-        
-        return base_name.strip()
-    
-    def _categories_match(self, cat1: str, cat2: str) -> bool:
-        """Проверить совпадение категорий (нечеткое)"""
-        if not cat1 or not cat2:
-            return False
-        
-        cat1_lower = cat1.lower()
-        cat2_lower = cat2.lower()
-        
-        # Точное совпадение
-        if cat1_lower == cat2_lower:
-            return True
-        
-        # Синонимы категорий
-        synonyms = {
-            "foundation": ["тональный", "основа", "тональная"],
-            "concealer": ["консилер", "корректор"],
-            "powder": ["пудра"],
-            "blush": ["румяна"],
-            "lipstick": ["помада"],
-            "mascara": ["тушь"],
-            "cleanser": ["очищающее", "гель", "пенка"],
-            "toner": ["тоник"],
-            "serum": ["сыворотка"],
-            "moisturizer": ["увлажняющее", "крем"]
-        }
-        
-        for eng_category, rus_alternatives in synonyms.items():
-            if eng_category in cat1_lower or any(alt in cat1_lower for alt in rus_alternatives):
-                if eng_category in cat2_lower or any(alt in cat2_lower for alt in rus_alternatives):
-                    return True
-        
-        return False
-    
-    def _pick_best_by_source_priority(self, alternatives: List[Dict[str, Any]]) -> Dict[str, Any]:
-        """Выбрать лучшую альтернативу по приоритету источника"""
-        if not alternatives:
-            return None
-        
-        # Применяем приоритизацию источников
-        prioritized = self.source_prioritizer.sort_products_by_source_priority(alternatives)
-        return prioritized[0] if prioritized else alternatives[0]
-    
-    def _product_to_dict(self, product: Product) -> Optional[Dict[str, Any]]:
-        """Конвертировать Product в dict формат"""
+            print(f"❌ Error resolving source for product {product.get('id', 'unknown')}: {e}")
+            # Возвращаем товар с минимальной информацией
+            return ResolvedProduct(
+                original=product,
+                source_info=SourceInfo("Ошибка", 999, "error", "unknown", "RUB", False),
+                is_available=False,
+                checked_at=datetime.now().isoformat()
+            )
+
+    def _find_alternative(self, product: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """
+        Поиск альтернативы для недоступного товара
+
+        Стратегии поиска:
+        1. Тот же бренд + другое название (другой объем/оттенок)
+        2. Другая марка в той же категории
+        3. Аналог из другой категории (замена по назначению)
+        """
         try:
-            from engine.selector import _with_affiliate, _as_dict
-            
-            # Используем существующую логику из селектора
-            partner_code = "S1"
-            redirect_base = None
-            
-            return {
-                "id": getattr(product, 'key', getattr(product, 'id', '')),
-                "brand": product.brand,
-                "name": getattr(product, 'title', product.name),
-                "category": product.category,
-                "price": float(product.price) if product.price else 0.0,
-                "price_currency": getattr(product, 'price_currency', 'RUB'),
-                "link": getattr(product, 'buy_url', getattr(product, 'link', '')),
-                "ref_link": _with_affiliate(
-                    getattr(product, 'buy_url', getattr(product, 'link', '')), 
-                    partner_code, 
-                    redirect_base
-                ),
-                "in_stock": product.in_stock,
-                "explain": "",  # Будет заполнено позже
-            }
+            # Получаем каталог
+            catalog_path = "assets/fixed_catalog.yaml"  # Можно параметризовать
+            catalog_store = CatalogStore.instance(catalog_path)
+            catalog = catalog_store.get()
+
+            product_brand = product.get("brand", "").lower()
+            product_category = product.get("category", "").lower()
+            product_id = product.get("id", "")
+
+            alternatives = []
+            best_alternative = None
+            best_priority = 999
+
+            for item in catalog:
+                # Пропускаем тот же товар
+                if item.id == product_id or str(getattr(item, 'key', '')) == str(product_id):
+                    continue
+
+                # Проверяем доступность
+                if not getattr(item, 'in_stock', True) or getattr(item, 'price', 0) <= 0:
+                    continue
+
+                item_brand = getattr(item, 'brand', '').lower()
+                item_category = getattr(item, 'category', '').lower()
+
+                # Стратегия 1: Тот же бренд, другая модель (высокий приоритет)
+                if item_brand == product_brand and item_category == product_category:
+                    url = getattr(item, 'buy_url', '') or getattr(item, 'link', '')
+                    source_info = self._get_source_info(url)
+
+                    if source_info.priority < best_priority:
+                        best_priority = source_info.priority
+                        best_alternative = {
+                            "id": item.id,
+                            "name": getattr(item, 'title', item.name),
+                            "brand": item.brand,
+                            "price": item.price,
+                            "price_currency": getattr(item, 'price_currency', 'RUB'),
+                            "category": item.category,
+                            "link": url,
+                            "source_name": source_info.name,
+                            "source_priority": source_info.priority,
+                            "alternative_reason": "другой_вариант_товара"
+                        }
+
+                # Стратегия 2: Другая марка, та же категория (средний приоритет)
+                elif item_category == product_category and not best_alternative:
+                    url = getattr(item, 'buy_url', '') or getattr(item, 'link', '')
+                    source_info = self._get_source_info(url)
+
+                    if source_info.priority < best_priority:
+                        best_priority = source_info.priority
+                        best_alternative = {
+                            "id": item.id,
+                            "name": getattr(item, 'title', item.name),
+                            "brand": item.brand,
+                            "price": item.price,
+                            "price_currency": getattr(item, 'price_currency', 'RUB'),
+                            "category": item.category,
+                            "link": url,
+                            "source_name": source_info.name,
+                            "source_priority": source_info.priority,
+                            "alternative_reason": "аналог_категории"
+                        }
+
+            return best_alternative
+
         except Exception as e:
-            print(f"❌ Error converting product {product.id} to dict: {e}")
+            print(f"❌ Error finding alternative for product {product.get('id', 'unknown')}: {e}")
             return None
-    
-    def _verify_currency(self, product: Dict[str, Any]) -> bool:
-        """Проверить корректность валюты"""
-        currency = product.get("price_currency", "")
-        price = product.get("price", 0)
-        
-        # Базовая проверка
-        if not currency or not price:
-            return False
-        
-        # Проверяем поддерживаемые валюты
-        supported_currencies = ["RUB", "₽", "USD", "$", "EUR", "€"]
-        return currency in supported_currencies
 
+    def get_source_display_name(self, product: Dict[str, Any]) -> str:
+        """Получение отображаемого имени источника для товара"""
+        product_url = product.get("link", "") or product.get("buy_url", "") or product.get("url", "")
+        source_info = self._get_source_info(product_url)
 
-def resolve_products_with_alternatives(products: List[Dict[str, Any]]) -> List[ResolvedProduct]:
-    """
-    Разрешить источники для списка товаров с поиском альтернатив
-    
-    Args:
-        products: Список товаров из рекомендаций
-        
-    Returns:
-        List[ResolvedProduct]: Товары с разрешенными источниками
-    """
-    resolver = SourceResolver()
-    resolved_products = []
-    
-    for product in products:
-        resolved = resolver.resolve_source(product)
-        resolved_products.append(resolved)
-    
-    return resolved_products
+        # Маппинг для отображения
+        display_names = {
+            "goldapple": "Золотое Яблоко",
+            "ru_official": "Официал. магазин",
+            "ru_marketplace": "Маркетплейс",
+            "intl": "Зарубежный магазин",
+            "unknown": "Неизвестный источник"
+        }
 
+        return display_names.get(source_info.category, source_info.name)
 
-def enhance_product_with_source_info(product: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Дополнить товар информацией об источнике
-    
-    Args:
-        product: Исходный товар
-        
-    Returns:
-        Dict: Товар с дополненной информацией об источнике
-    """
-    resolver = SourceResolver()
-    resolved = resolver.resolve_source(product)
-    
-    # Создаем копию товара с дополнительной информацией
-    enhanced = product.copy()
-    enhanced.update({
-        "source_name": resolved.source_info.name,
-        "source_priority": resolved.source_info.priority,
-        "source_category": resolved.source_info.category,
-        "is_available": resolved.is_available,
-        "checked_at": resolved.checked_at,
-        "currency_verified": resolved.currency_verified
-    })
-    
-    # Если есть альтернатива - заменяем основной товар
-    if resolved.alternative:
-        enhanced.update({
-            "original_id": product.get("id"),
-            "original_name": product.get("name"),
-            "alternative_reason": resolved.alternative_reason,
-            **resolved.alternative  # Заменяем данные товара на альтернативу
-        })
-    
-    return enhanced
+    def get_source_priority(self, product: Dict[str, Any]) -> int:
+        """Получение приоритета источника для товара"""
+        product_url = product.get("link", "") or product.get("buy_url", "") or product.get("url", "")
+        source_info = self._get_source_info(product_url)
+        return source_info.priority
 
 
 # Глобальный экземпляр
 _source_resolver = None
 
 def get_source_resolver() -> SourceResolver:
-    """Получить глобальный экземпляр source resolver"""
+    """Получить глобальный экземпляр SourceResolver"""
     global _source_resolver
     if _source_resolver is None:
         _source_resolver = SourceResolver()
     return _source_resolver
+
+
+def enhance_product_with_source_info(product: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Обогащение товара информацией об источнике
+
+    Args:
+        product: Исходный товар
+
+    Returns:
+        Dict: Товар с дополнительной информацией об источнике
+    """
+    resolver = get_source_resolver()
+    resolved = resolver.resolve_source(product)
+
+    enhanced = dict(product)  # Копия оригинального товара
+
+    # Добавляем информацию об источнике
+    enhanced["source_name"] = resolver.get_source_display_name(product)
+    enhanced["source_priority"] = resolver.get_source_priority(product)
+    enhanced["source_category"] = resolved.source_info.category
+    enhanced["is_available"] = resolved.is_available
+    enhanced["checked_at"] = resolved.checked_at
+
+    # Добавляем информацию об альтернативе если есть
+    if resolved.alternative:
+        enhanced["alternative"] = resolved.alternative
+        enhanced["alternative_reason"] = resolved.alternative_reason
+
+    return enhanced

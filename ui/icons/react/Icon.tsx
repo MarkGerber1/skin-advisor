@@ -39,3 +39,4 @@ export const Icon = memo<IconProps>(({
 });
 
 Icon.displayName = 'Icon';
+

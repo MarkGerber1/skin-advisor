@@ -12,3 +12,4 @@ export const CartIcon = memo<CartIconProps>((props) => {
 });
 
 CartIcon.displayName = 'CartIcon';
+

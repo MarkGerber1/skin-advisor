@@ -26,3 +26,4 @@ export type { SettingsIconProps } from './SettingsIcon';
 
 // Icon name type for validation
 export type IconName = 'palette' | 'drop' | 'cart' | 'info' | 'list' | 'settings';
+

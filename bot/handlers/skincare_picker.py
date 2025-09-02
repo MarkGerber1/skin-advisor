@@ -18,12 +18,31 @@ from services.cart_service import get_cart_service, CartServiceError
 
 # Analytics import with fallback
 try:
-    from engine.analytics import get_analytics_tracker
+    from engine.analytics import (
+        get_analytics_tracker,
+        track_skincare_recommendations_viewed,
+        track_category_opened,
+        track_product_opened,
+        track_variant_selected,
+        track_oos_shown,
+        track_alternatives_shown,
+        track_skincare_error,
+        track_cart_event
+    )
     ANALYTICS_AVAILABLE = True
 except ImportError:
     ANALYTICS_AVAILABLE = False
     def get_analytics_tracker():
         return None
+    # Stub functions for fallback
+    def track_skincare_recommendations_viewed(*args, **kwargs): pass
+    def track_category_opened(*args, **kwargs): pass
+    def track_product_opened(*args, **kwargs): pass
+    def track_variant_selected(*args, **kwargs): pass
+    def track_oos_shown(*args, **kwargs): pass
+    def track_alternatives_shown(*args, **kwargs): pass
+    def track_skincare_error(*args, **kwargs): pass
+    def track_cart_event(*args, **kwargs): pass
 
 router = Router()
 
@@ -147,12 +166,7 @@ async def start_skincare_picker(cb: CallbackQuery, state: FSMContext) -> None:
     """Запуск подбора ухода после теста"""
     try:
         # Аналитика
-        if ANALYTICS_AVAILABLE:
-            analytics = get_analytics_tracker()
-            analytics.track_event("recommendations_viewed", cb.from_user.id, {
-                "branch": "skincare",
-                "source": "test_completion"
-            })
+        track_skincare_recommendations_viewed(cb.from_user.id)
 
         # Получаем доступные категории из результатов теста
         data = await state.get_data()
@@ -235,12 +249,7 @@ async def show_category_products(cb: CallbackQuery, state: FSMContext) -> None:
         user_id = cb.from_user.id
 
         # Аналитика
-        if ANALYTICS_AVAILABLE:
-            analytics = get_analytics_tracker()
-            analytics.track_event("category_opened", user_id, {
-                "name": category_slug,
-                "page": page
-            })
+        track_category_opened(user_id, category_slug)
 
         # Получаем товары категории
         products, total_pages = _get_products_by_category(user_id, category_slug, page)
@@ -358,12 +367,7 @@ async def show_product_variants(cb: CallbackQuery, state: FSMContext) -> None:
         user_id = cb.from_user.id
 
         # Аналитика
-        if ANALYTICS_AVAILABLE:
-            analytics = get_analytics_tracker()
-            analytics.track_event("product_opened", user_id, {
-                "pid": product_id,
-                "source": "category_view"
-            })
+        track_product_opened(user_id, product_id, "category_view")
 
         # Находим товар (пока используем заглушку, в будущем из каталога)
         # TODO: Получить товар из каталога по ID
@@ -447,15 +451,13 @@ async def add_product_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
             )
 
             # Аналитика
-            if ANALYTICS_AVAILABLE:
-                analytics = get_analytics_tracker()
-                analytics.track_event("product_added_to_cart", user_id, {
-                    "pid": product_id,
-                    "vid": variant_id or "default",
-                    "source": cart_item.ref_link or "unknown",
-                    "price": cart_item.price,
-                    "category": cart_item.category
-                })
+            track_cart_event("product_added_to_cart", user_id,
+                pid=product_id,
+                vid=variant_id or "default",
+                source=cart_item.ref_link or "unknown",
+                price=cart_item.price,
+                category=cart_item.category
+            )
 
             # Формируем сообщение об успехе
             variant_text = f" ({cart_item.variant_name})" if cart_item.variant_name else ""
@@ -476,13 +478,7 @@ async def add_product_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
             await cb.answer(MSG_ADD_FAILED)
 
             # Аналитика ошибки
-            if ANALYTICS_AVAILABLE:
-                analytics = get_analytics_tracker()
-                analytics.track_event("error_shown", user_id, {
-                    "code": e.code.value if hasattr(e, 'code') else "unknown",
-                    "place": "cart_add",
-                    "error_message": str(e)
-                })
+            track_skincare_error(user_id, e.code.value if hasattr(e, 'code') else "unknown", "cart_add")
 
     except Exception as e:
         print(f"❌ Unexpected error in add_product_to_cart: {e}")
@@ -541,13 +537,7 @@ async def show_out_of_stock_alternatives(cb: CallbackQuery, state: FSMContext) -
         await cb.message.edit_text("\n".join(text_lines), reply_markup=kb)
 
         # Аналитика показа альтернатив
-        if ANALYTICS_AVAILABLE:
-            analytics = get_analytics_tracker()
-            analytics.track_event("alternatives_shown", user_id, {
-                "pid": product_id,
-                "base_category": "unknown",  # TODO: определить категорию
-                "alternatives_count": len(alternatives)
-            })
+        track_alternatives_shown(user_id, product_id, "unknown", len(alternatives))
 
         await cb.answer()
 
