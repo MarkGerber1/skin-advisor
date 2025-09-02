@@ -125,17 +125,22 @@ async def _find_product_in_recommendations(user_id: int, product_id: str) -> Opt
 @router.callback_query(F.data.startswith("cart:add:"))
 async def add_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
     """Улучшенное добавление товара в корзину с полной валидацией и защитой от дублей"""
+    print(f"🛒 Cart add callback triggered: {cb.data}")
+    
     if not cb.data:
+        print("❌ No callback data provided")
         await cb.answer()
         return
         
     msg = cb.message
     if not isinstance(msg, Message):
+        print("❌ Invalid message type")
         await cb.answer()
         return
         
     user_id = _user_id(msg)
     if not user_id:
+        print("❌ No user ID found")
         await cb.answer("Неизвестный пользователь", show_alert=True)
         return
     
@@ -145,10 +150,12 @@ async def add_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
         product_id = parts[2] if len(parts) > 2 else ""
         variant_id = parts[3] if len(parts) > 3 else None
         
-        print(f"🛒 Adding product {product_id} (variant: {variant_id}) to cart for user {user_id}")
+        print(f"🛒 DETAILED: Adding product '{product_id}' (variant: {variant_id}) to cart for user {user_id}")
+        print(f"🛒 CART_SERVICE_AVAILABLE: {CART_SERVICE_AVAILABLE}")
         
         # Используем улучшенный сервис корзины если доступен
         if CART_SERVICE_AVAILABLE:
+            print(f"✅ Using enhanced cart service")
             cart_service = get_cart_service()
             cart_item = await cart_service.add_item(
                 user_id=user_id,
@@ -156,11 +163,17 @@ async def add_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
                 variant_id=variant_id,
                 qty=1
             )
+            print(f"✅ Cart service added item: {cart_item}")
         else:
             # Fallback: simple add to cart using existing store
             print(f"🔄 Using fallback cart method for {product_id}")
             product_data = await _find_product_in_recommendations(user_id, product_id)
+            print(f"🔍 Product data found: {product_data is not None}")
+            if product_data:
+                print(f"📦 Product details: brand={product_data.get('brand')}, name={product_data.get('name')}, price={product_data.get('price')}")
+            
             if not product_data:
+                print(f"❌ Product {product_id} not found in recommendations")
                 raise CartServiceError("Product not found", CartErrorCode.PRODUCT_NOT_FOUND)
             
             cart_item = CartItem(
@@ -176,7 +189,12 @@ async def add_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
                 in_stock=product_data.get('in_stock', True),
                 variant_id=variant_id
             )
+            print(f"📝 Created cart item: {cart_item}")
+            
+            # Add to store
+            print(f"💾 Adding to store for user {user_id}")
             store.add(user_id, cart_item)
+            print(f"✅ Successfully added to store")
         
         # Analytics: Product added to cart
         analytics = get_analytics_tracker()
@@ -237,16 +255,22 @@ async def add_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
         await cb.answer(user_message, show_alert=True)
         
     except Exception as e:
-        print(f"❌ Unexpected error in add_to_cart: {e}")
+        print(f"❌ CRITICAL ERROR in add_to_cart: {e}")
+        print(f"❌ Exception type: {type(e).__name__}")
+        import traceback
+        print(f"❌ Full traceback: {traceback.format_exc()}")
         
         # Метрика: неожиданная ошибка
-        metrics.track_event("cart_add_failed", user_id, {
-            "reason": "unexpected_error",
-            "product_id": parts[2] if len(parts) > 2 else "",
-            "error_message": str(e)
-        })
+        try:
+            metrics.track_event("cart_add_failed", user_id, {
+                "reason": "unexpected_error",
+                "product_id": parts[2] if len(parts) > 2 else "",
+                "error_message": str(e)
+            })
+        except Exception as metrics_error:
+            print(f"⚠️ Could not track error metrics: {metrics_error}")
         
-        await cb.answer("⚠️ Произошла ошибка. Попробуйте позже", show_alert=True)
+        await cb.answer(f"⚠️ Ошибка добавления: {str(e)[:100]}", show_alert=True)
 
 
 @router.message(F.text == "🛒 Корзина")
