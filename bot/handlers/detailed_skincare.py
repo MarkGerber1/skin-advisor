@@ -776,7 +776,7 @@ async def back_to_skincare_results(cb: CallbackQuery, state: FSMContext) -> None
             f"Что вы хотите увидеть?",
             reply_markup=InlineKeyboardMarkup(inline_keyboard=[
                 [InlineKeyboardButton(text="ℹ️ Полное описание типа лица", callback_data="skincare_result:description")],
-                [InlineKeyboardButton(text="🧴 Рекомендуемые продукты", callback_data="skincare_result:products")],
+                [InlineKeyboardButton(text="🛍️ Подобрать уход", callback_data="skincare_result:products")],
                 [InlineKeyboardButton(text="📄 Получить отчёт", callback_data="report:latest")],
                 [InlineKeyboardButton(text="🏠 Главное меню", callback_data="universal:home")]
             ])
