@@ -404,7 +404,13 @@ async def a7(cb: CallbackQuery, state: FSMContext) -> None:
 
         from bot.ui.render import render_makeup_report
         text, kb = render_makeup_report(result)
-        
+
+        # Сохраняем профиль пользователя для будущих рекомендаций
+        from bot.handlers.user_profile_store import get_user_profile_store
+        profile_store = get_user_profile_store()
+        profile_store.save_profile(uid, profile, metadata={"test_type": "palette", "completed_at": "now"})
+        print(f"💾 Profile saved for user {uid} after palette test completion")
+
         enriched = {"tl_dr": tldr_report, "full_text": full_report}
         text_to_pdf = enriched.get("full_text") or text
         # Save JSON + PDF

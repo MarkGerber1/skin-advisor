@@ -57,38 +57,46 @@ async def _find_product_in_recommendations(user_id: int, product_id: str) -> Opt
         # Получаем профиль пользователя
         from engine.models import UserProfile
         from engine.catalog_store import CatalogStore
-        
-        # Получаем реальный профиль пользователя из FSM coordinator
-        from bot.handlers.fsm_coordinator import get_fsm_coordinator
-        coordinator = get_fsm_coordinator()
-        session = await coordinator.get_session(user_id)
-        
-        # Если есть активная сессия с данными теста, используем их
-        if session and session.flow_data:
-            profile_data = session.flow_data
-            print(f"🔍 Found session profile data: {profile_data}")
-            
-            user_profile = UserProfile(
-                user_id=user_id,
-                skin_type=profile_data.get("skin_type", "normal"),
-                concerns=profile_data.get("concerns", []),
-                season=profile_data.get("season", "spring"),
-                undertone=profile_data.get("undertone", "neutral"),
-                contrast=profile_data.get("contrast", "medium")
-            )
-            print(f"✅ Using real profile: skin_type={user_profile.skin_type}, season={user_profile.season}")
+
+        # Сначала пытаемся загрузить сохраненный профиль пользователя
+        from bot.handlers.user_profile_store import get_user_profile_store
+        profile_store = get_user_profile_store()
+        user_profile = profile_store.load_profile(user_id)
+
+        if user_profile:
+            print(f"✅ Using saved profile: skin_type={user_profile.skin_type}, season={user_profile.season}")
         else:
-            # Fallback: используем универсальный профиль
-            print(f"⚠️ No session found for user {user_id}, using fallback profile")
-            user_profile = UserProfile(
-                user_id=user_id,
-                skin_type="normal",
-                concerns=[],
-                season="spring",
-                undertone="neutral",
-                contrast="medium"
-            )
-            print(f"🔄 Using fallback profile: skin_type={user_profile.skin_type}, season={user_profile.season}")
+            # Если сохраненного профиля нет, пробуем получить из FSM coordinator
+            from bot.handlers.fsm_coordinator import get_fsm_coordinator
+            coordinator = get_fsm_coordinator()
+            session = await coordinator.get_session(user_id)
+
+            # Если есть активная сессия с данными теста, используем их
+            if session and session.flow_data:
+                profile_data = session.flow_data
+                print(f"🔍 Found session profile data: {profile_data}")
+
+                user_profile = UserProfile(
+                    user_id=user_id,
+                    skin_type=profile_data.get("skin_type", "normal"),
+                    concerns=profile_data.get("concerns", []),
+                    season=profile_data.get("season", "spring"),
+                    undertone=profile_data.get("undertone", "neutral"),
+                    contrast=profile_data.get("contrast", "medium")
+                )
+                print(f"✅ Using session profile: skin_type={user_profile.skin_type}, season={user_profile.season}")
+            else:
+                # Fallback: используем универсальный профиль
+                print(f"⚠️ No saved or session profile found for user {user_id}, using fallback profile")
+                user_profile = UserProfile(
+                    user_id=user_id,
+                    skin_type="normal",
+                    concerns=[],
+                    season="spring",
+                    undertone="neutral",
+                    contrast="medium"
+                )
+                print(f"🔄 Using fallback profile: skin_type={user_profile.skin_type}, season={user_profile.season}")
         
         # Получаем каталог и строим рекомендации
         import os
