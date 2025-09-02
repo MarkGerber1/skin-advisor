@@ -536,12 +536,14 @@ async def q8_desired_effect(cb: CallbackQuery, state: FSMContext) -> None:
         print(f"💾 Saving profile to FSM coordinator for user {uid}")
         from bot.handlers.fsm_coordinator import get_fsm_coordinator
         coordinator = get_fsm_coordinator()
-        await coordinator.save_user_profile(uid, {
+        # Используем update_step для сохранения профиля
+        await coordinator.update_step(uid, "RESULT", {
             "user_id": uid,
             "skin_type": skin_type,
             "concerns": concerns,
             "sensitivity": sensitivity,
-            "test_type": "detailed_skincare"
+            "test_type": "detailed_skincare",
+            "profile": profile.model_dump()
         })
         
         # Сохраняем результат в состояние
