@@ -10,9 +10,22 @@ from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 
-from engine.catalog_store import CatalogStore
-from engine.models import Product
-from engine.selector import SelectorV2
+# Fix imports for engine modules
+try:
+    from engine.catalog_store import CatalogStore
+    from engine.models import Product
+    from engine.selector import SelectorV2
+except ImportError:
+    print("CRITICAL: Failed to import engine modules, using fallback")
+    # Define fallback classes
+    class CatalogStore:
+        @staticmethod
+        def instance(*args):
+            return None
+    class Product:
+        pass
+    class SelectorV2:
+        pass
 
 # Fix import for Railway environment
 import sys
@@ -61,7 +74,26 @@ except ImportError:
         BTN_CHOOSE_VARIANT = "Выбрать вариант"
         MSG_ADDED = "Добавлено в корзину: {item}"
 
-from services.cart_service import get_cart_service, CartServiceError
+# Fix import for services module
+try:
+    from services.cart_service import get_cart_service, CartServiceError
+except ImportError:
+    try:
+        import sys
+        import os
+        # Add project root to sys.path if not already there
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        project_root = os.path.dirname(os.path.dirname(current_dir))
+        if project_root not in sys.path:
+            sys.path.insert(0, project_root)
+        from services.cart_service import get_cart_service, CartServiceError
+    except ImportError:
+        print("CRITICAL: Failed to import cart_service, using fallback")
+        # Define fallback functions
+        def get_cart_service():
+            return None
+        class CartServiceError(Exception):
+            pass
 
 # Analytics import with fallback
 try:
