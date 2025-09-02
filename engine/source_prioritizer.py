@@ -237,3 +237,5 @@ if __name__ == "__main__":
         source_name = source_info.name if source_info else "Неизвестный"
         print(f"  {url} → Приоритет: {priority}, Источник: {source_name}")
 
+
+

@@ -50,3 +50,5 @@ for filepath, age in recent_files[:10]:  # Show first 10
 
 if len(recent_files) > 10:
     print(f"... and {len(recent_files) - 10} more")
+
+

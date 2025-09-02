@@ -100,3 +100,5 @@ def get_user_profile_store() -> UserProfileStore:
     if _profile_store is None:
         _profile_store = UserProfileStore()
     return _profile_store
+
+
