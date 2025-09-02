@@ -64,6 +64,26 @@ except ImportError:
         # Define minimal fallback constants
         HEAD_SKINCARE_PICK = "Подборка ухода по результатам"
         SUB_PICK = "Выберите категорию, затем добавьте средства в корзину"
+
+        # Category constants
+        CAT_CLEANSE = "cleansing"
+        CAT_TONE = "toning"
+        CAT_SERUM = "serum"
+        CAT_MOIST = "moisturizing"
+        CAT_EYE = "eye_care"
+        CAT_SPF = "sun_protection"
+        CAT_MASK = "masks"
+
+        # UI category names
+        CATEGORY_CLEANSER = "Очищение"
+        CATEGORY_TONER = "Тонизирование"
+        CATEGORY_SERUM = "Концентраты"
+        CATEGORY_MOISTURIZER = "Увлажнение"
+        CATEGORY_EYE_CARE = "Уход за областью глаз"
+        CATEGORY_SUN_PROTECTION = "Защита от солнца"
+        CATEGORY_MASK = "Маски"
+
+        # Button constants
         BTN_CLEANSE = "Очищение"
         BTN_TONE = "Тонизирование"
         BTN_SERUM = "Сыворотки"
