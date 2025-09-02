@@ -273,6 +273,13 @@ async def add_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
         await cb.answer(f"⚠️ Ошибка добавления: {str(e)[:100]}", show_alert=True)
 
 
+@router.callback_query(F.data == "show_cart")
+async def show_cart_callback(cb: CallbackQuery, state: FSMContext) -> None:
+    """Показать корзину через inline кнопку"""
+    print(f"🛒 Show cart callback triggered for user {cb.from_user.id if cb.from_user else 'unknown'}")
+    await show_cart(cb.message, state)
+    await cb.answer()
+
 @router.message(F.text == "🛒 Корзина")
 async def show_cart(m: Message, state: FSMContext) -> None:
     """Показать корзину с полной информацией и кнопками управления"""
