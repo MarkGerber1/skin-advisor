@@ -551,6 +551,46 @@ async def q8_lip_color(cb: CallbackQuery, state: FSMContext) -> None:
         )
         print(f"✅ Result buttons displayed for state: {await state.get_state()}")
         
+        # Генерируем визуальную карточку
+        try:
+            from report.cards import generate_visual_cards
+            print("🎨 Generating visual card for makeup test...")
+            card_files = generate_visual_cards(uid, "makeup", profile, {"season": season, "undertone": undertone})
+            print(f"✅ Visual card generated: {card_files}")
+
+            # Отправляем карточку в чат
+            if card_files.get('png') and os.path.exists(card_files['png']):
+                print("📤 Sending PNG card to user...")
+                with open(card_files['png'], 'rb') as photo:
+                    await cb.message.reply_photo(
+                        photo=photo,
+                        caption="🎨 **Ваша персональная цветовая карта**\n\n"
+                               f"**Цветотип:** {season_names[season]}\n"
+                               f"**Подтон кожи:** {undertone}\n\n"
+                               f"Рекомендации по макияжу адаптированы под ваши особенности!",
+                        parse_mode="Markdown"
+                    )
+                print("✅ PNG card sent successfully")
+            elif card_files.get('svg') and os.path.exists(card_files['svg']):
+                print("📤 Sending SVG card to user...")
+                with open(card_files['svg'], 'rb') as document:
+                    await cb.message.reply_document(
+                        document=document,
+                        caption="🎨 **Ваша персональная цветовая карта**\n\n"
+                               f"**Цветотип:** {season_names[season]}\n"
+                               f"**Подтон кожи:** {undertone}\n\n"
+                               f"Рекомендации по макияжу адаптированы под ваши особенности!",
+                        parse_mode="Markdown"
+                    )
+                print("✅ SVG card sent successfully")
+            else:
+                print("⚠️ No visual card file found to send")
+
+        except Exception as e:
+            print(f"❌ Error generating/sending visual card: {e}")
+            import traceback
+            traceback.print_exc()
+
         # Analytics: Track test completion
         if ANALYTICS_AVAILABLE:
             user_id = cb.from_user.id if cb.from_user else 0
@@ -561,7 +601,7 @@ async def q8_lip_color(cb: CallbackQuery, state: FSMContext) -> None:
                 if test_start_time:
                     duration = time.time() - test_start_time
                 analytics.user_completed_test(user_id, "palette", duration)
-        
+
         await cb.answer("🎊 Тест завершен!")
         
     except Exception as e:
