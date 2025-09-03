@@ -42,3 +42,4 @@ echo "🔗 Ссылка: https://github.com/MarkGerber1/skin-advisor"
 echo ""
 echo "📋 Последний коммит:"
 git log --oneline -1
+
