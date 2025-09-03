@@ -131,6 +131,50 @@ class CartStore:
                 self._save(user_id, items)
                 print(f"📊 Cart: Set qty for {composite_key}: {qty}")
 
+    def update_item_variant(self, user_id: int, product_id: str, old_variant_id: Optional[str], new_variant_id: Optional[str]) -> Optional[CartItem]:
+        """Update variant for an existing cart item"""
+        with self._lock:
+            items = self._load(user_id)
+
+            # Find the old item
+            old_composite_key = f"{product_id}:{old_variant_id}" if old_variant_id else f"{product_id}:default"
+
+            if old_composite_key not in items:
+                print(f"⚠️ Cart: Item not found for update: {old_composite_key}")
+                return None
+
+            old_item = items[old_composite_key]
+            qty = old_item.qty
+
+            # Remove old item
+            del items[old_composite_key]
+
+            # Create new item with updated variant
+            new_item = CartItem(
+                product_id=product_id,
+                qty=qty,
+                brand=old_item.brand,
+                name=old_item.name,
+                price=old_item.price,
+                price_currency=old_item.price_currency,
+                ref_link=old_item.ref_link,
+                explain=old_item.explain,
+                category=old_item.category,
+                in_stock=old_item.in_stock,
+                variant_id=new_variant_id,
+                variant_name=None,  # Will be set by caller if needed
+                variant_type=None   # Will be set by caller if needed
+            )
+
+            # Add new item
+            new_composite_key = new_item.get_composite_key()
+            items[new_composite_key] = new_item
+
+            self._save(user_id, items)
+            print(f"🔄 Cart: Updated variant {old_composite_key} -> {new_composite_key}")
+
+            return new_item
+
     def clear(self, user_id: int) -> None:
         with self._lock:
             path = self._path(user_id)
