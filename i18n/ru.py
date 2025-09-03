@@ -18,6 +18,43 @@ PROGRESS_SKINCARE = "n/10"
 # Hair color hint
 HAIR_COLOR_HINT = "Если волосы окрашены — ориентируйтесь на корни"
 
+# Inline skincare picker
+HEAD_SKINCARE_PICK = "Подборка ухода по результатам"
+SUB_PICK = "Выберите категорию, затем добавьте средства в корзину"
+
+# Category buttons
+BTN_CLEANSE = "Очищение"
+BTN_TONE = "Тонизирование"
+BTN_SERUM = "Сыворотки"
+BTN_MOIST = "Увлажнение"
+BTN_EYE = "Зона вокруг глаз"
+BTN_SPF = "Солнцезащита"
+BTN_REMOVER = "Снятие макияжа"
+
+# Product actions
+BTN_CHOOSE_VARIANT = "Выбрать вариант"
+BTN_ADD_TO_CART = "Добавить в корзину"
+BTN_IN_CART = "✓ В корзине"
+
+# Navigation
+BTN_BACK = "◀︎ Назад"
+BTN_BACK_CAT = "В категории"
+BTN_PREV = "◀︎"
+BTN_NEXT = "▶︎"
+
+# Out of stock
+BADGE_OOS = "Нет в наличии"
+BTN_SHOW_ALTS = "Показать альтернативы"
+
+# Sources
+SRC_GOLDAPPLE = "Золотое Яблоко"
+SRC_RU_OFFICIAL = "Официал. магазин"
+SRC_RU_MP = "Маркетплейс"
+SRC_INTL = "Зарубежный магазин"
+
+# Messages
+MSG_ADDED = "Добавлено в корзину: {бренд} {название} ({вариант})"
+
 # Labels
 LABEL_TYPE = "Тип"
 LABEL_STATE = "Состояние"
