@@ -291,9 +291,12 @@ class StructuredPDFGenerator:
                 'detailed_skincare': 'ОТЧЕТ ПО ПОРТРЕТУ ЛИЦА',
                 'skincare': 'ОТЧЕТ ПО УХОДУ ЗА КОЖЕЙ'
             }
-            
+
             title = title_map.get(report_type, 'ПЕРСОНАЛЬНЫЙ ОТЧЕТ')
             self._add_header(pdf, title)
+
+            # ДОБАВЛЯЕМ ВИЗУАЛЬНУЮ КАРТОЧКУ
+            self._add_visual_card_section(pdf, uid, report_type)
             
             # 1. РЕЗЮМЕ
             self._add_section_header(pdf, "1. РЕЗЮМЕ АНАЛИЗА")
@@ -591,7 +594,206 @@ if __name__ == "__main__":
             }
         }
     }
-    
+
+    def _add_visual_card_section(self, pdf: FPDF, uid: int, report_type: str):
+        """Добавляет секцию с визуальной карточкой в PDF"""
+        try:
+            print(f"🎨 Adding visual card to PDF for user {uid}, type {report_type}")
+
+            # Определяем тип карточки
+            card_type = "makeup" if "palette" in report_type else "skincare"
+
+            # Путь к карточке пользователя
+            from datetime import datetime
+            date_str = datetime.now().strftime("%Y%m%d")
+            card_dir = f"output/cards/{uid}/{date_str}"
+            card_png = f"{card_dir}/{'makeup_card.png' if card_type == 'makeup' else 'skincare_card.png'}"
+            card_svg = f"{card_dir}/{'makeup_card.svg' if card_type == 'makeup' else 'skincare_card.svg'}"
+
+            print(f"🔍 Looking for card files: PNG={card_png}, SVG={card_svg}")
+
+            # Проверяем наличие файлов
+            card_path = None
+            if os.path.exists(card_png):
+                card_path = card_png
+                print("✅ Found PNG card")
+            elif os.path.exists(card_svg):
+                # Конвертируем SVG в PNG для PDF если нужно
+                try:
+                    import cairosvg
+                    temp_png = f"{card_dir}/temp_card.png"
+                    cairosvg.svg2png(url=card_svg, write_to=temp_png,
+                                   output_width=600, output_height=400)
+                    card_path = temp_png
+                    print("✅ Converted SVG to PNG for PDF")
+                except ImportError:
+                    print("⚠️ CairoSVG not available, skipping SVG card")
+                except Exception as e:
+                    print(f"⚠️ Error converting SVG: {e}")
+
+            if card_path:
+                # Добавляем секцию с заголовком
+                section_title = "ВИЗУАЛЬНАЯ КАРТА РЕЗУЛЬТАТОВ" if card_type == "makeup" else "КАРТА УХОДА ЗА ЛИЦОМ"
+                self._add_section_header(pdf, section_title)
+
+                # Добавляем изображение карточки
+                try:
+                    # Получаем размеры страницы
+                    page_width = pdf.w - self.margin_left - self.margin_right
+                    page_height = pdf.h - self.margin_top - 50
+
+                    # Вычисляем размеры изображения (подгоняем под страницу)
+                    img_width = min(page_width, 150)  # Максимум 150mm шириной
+                    img_height = (img_width * 400) / 600  # Сохраняем пропорции (600x400)
+
+                    # Центрируем изображение
+                    x_pos = (pdf.w - img_width) / 2
+                    y_pos = pdf.get_y() + 5
+
+                    print(f"📐 Adding image at x={x_pos}, y={y_pos}, w={img_width}, h={img_height}")
+
+                    # Добавляем изображение
+                    pdf.image(card_path, x=x_pos, y=y_pos, w=img_width, h=img_height)
+
+                    # Перемещаем курсор ниже изображения
+                    pdf.set_y(y_pos + img_height + 10)
+
+                    # Добавляем подпись
+                    caption = ("Ваша персональная цветовая карта с рекомендациями по макияжу" if card_type == "makeup"
+                              else "Ваша персональная карта ухода за лицом")
+                    pdf.set_font("DejaVu", size=self.font_size_small)
+                    pdf.set_text_color(*self.design_tokens['muted'])
+                    pdf.multi_cell(0, 5, caption, align='C')
+                    pdf.ln(5)
+
+                    print("✅ Visual card successfully added to PDF")
+
+                    # ДОБАВЛЯЕМ ДИАГРАММЫ
+                    self._add_charts_section(pdf, uid, report_type, profile)
+
+                except Exception as e:
+                    print(f"❌ Error adding image to PDF: {e}")
+                    # Добавляем текстовую альтернативу
+                    pdf.set_font("DejaVu", size=self.font_size_text)
+                    pdf.set_text_color(*self.design_tokens['text'])
+                    pdf.multi_cell(0, 6, "Визуальная карточка недоступна для отображения в PDF. "
+                                       "Посмотрите её в Telegram чате после завершения теста.")
+                    pdf.ln(5)
+            else:
+                print("⚠️ No visual card file found for PDF")
+
+        except Exception as e:
+            print(f"❌ Error in _add_visual_card_section: {e}")
+            # Не прерываем генерацию PDF из-за ошибки с карточкой
+
+    def _add_charts_section(self, pdf: FPDF, uid: int, report_type: str, profile: Dict[str, Any]):
+        """Добавляет секцию с диаграммами в PDF"""
+        try:
+            print(f"📊 Adding charts section to PDF for user {uid}")
+
+            # Импортируем генератор диаграмм
+            from report.cards import VisualCardGenerator
+            generator = VisualCardGenerator()
+
+            if "palette" in report_type:
+                # Диаграммы для цветотипа
+                self._add_section_header(pdf, "АНАЛИЗ ЦВЕТОТИПА")
+
+                # Диаграмма контраста
+                contrast_data = {
+                    "Контраст": profile.get('contrast_score', 75),
+                    "Яркость": profile.get('brightness_score', 60),
+                    "Насыщенность": profile.get('saturation_score', 70)
+                }
+                contrast_svg = generator.generate_radial_chart(contrast_data, "Параметры цветотипа")
+                if contrast_svg:
+                    self._embed_svg_chart(pdf, contrast_svg, "contrast_chart")
+
+                # Диаграмма температуры
+                temperature_data = {
+                    "Теплый": profile.get('warm_score', 80),
+                    "Холодный": profile.get('cool_score', 20),
+                    "Нейтральный": profile.get('neutral_score', 30)
+                }
+                temp_svg = generator.generate_bar_chart(temperature_data, "Температура подтона", "Процент")
+                if temp_svg:
+                    self._embed_svg_chart(pdf, temp_svg, "temperature_chart")
+
+            elif "skincare" in report_type:
+                # Диаграммы для ухода
+                self._add_section_header(pdf, "АНАЛИЗ СОСТОЯНИЯ КОЖИ")
+
+                # Диаграмма увлажнения
+                hydration_data = {
+                    "Увлажнение": profile.get('hydration_score', 65),
+                    "Жирность": profile.get('oiliness_score', 45),
+                    "Чувствительность": profile.get('sensitivity_score', 55)
+                }
+                hydration_svg = generator.generate_radial_chart(hydration_data, "Состояние кожи")
+                if hydration_svg:
+                    self._embed_svg_chart(pdf, hydration_svg, "hydration_chart")
+
+                # Диаграмма проблем
+                concerns_data = {}
+                concerns = profile.get('concerns', [])
+                if concerns:
+                    for concern in concerns[:4]:  # Максимум 4 проблемы
+                        concern_scores = {
+                            "дегидратация": 80, "прыщи": 60, "пигментация": 70,
+                            "расширенные поры": 50, "морщины": 75, "покраснения": 65
+                        }
+                        score = concern_scores.get(concern, 50)
+                        concerns_data[concern[:15]] = score  # Обрезаем длинные названия
+
+                if concerns_data:
+                    concerns_svg = generator.generate_bar_chart(concerns_data, "Ключевые проблемы", "Степень")
+                    if concerns_svg:
+                        self._embed_svg_chart(pdf, concerns_svg, "concerns_chart")
+
+            print("✅ Charts section successfully added to PDF")
+
+        except Exception as e:
+            print(f"❌ Error in _add_charts_section: {e}")
+            # Не прерываем генерацию PDF из-за ошибки с диаграммами
+
+    def _embed_svg_chart(self, pdf: FPDF, svg_content: str, chart_name: str):
+        """Встраивает SVG диаграмму в PDF"""
+        try:
+            # Создаем временный PNG файл
+            temp_png_path = f"/tmp/{chart_name}_{pdf.page_no()}.png"
+
+            # Конвертируем SVG в PNG
+            try:
+                import cairosvg
+                cairosvg.svg2png(bytestring=svg_content.encode('utf-8'),
+                               write_to=temp_png_path,
+                               output_width=300,
+                               output_height=250)
+            except ImportError:
+                print("⚠️ CairoSVG not available for chart conversion")
+                return
+
+            # Добавляем изображение в PDF
+            page_width = pdf.w - self.margin_left - self.margin_right
+            img_width = min(page_width, 120)
+            img_height = (img_width * 250) / 300
+
+            x_pos = (pdf.w - img_width) / 2
+            y_pos = pdf.get_y() + 5
+
+            pdf.image(temp_png_path, x=x_pos, y=y_pos, w=img_width, h=img_height)
+            pdf.set_y(y_pos + img_height + 10)
+
+            # Очищаем временный файл
+            try:
+                import os
+                os.remove(temp_png_path)
+            except:
+                pass
+
+        except Exception as e:
+            print(f"❌ Error embedding SVG chart: {e}")
+
     # Генерируем тестовый PDF
     generator = StructuredPDFGenerator()
     pdf_path = generator.generate_structured_pdf(999, test_snapshot)
