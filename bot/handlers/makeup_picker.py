@@ -43,19 +43,19 @@ except ImportError:
         SUB_PICK_MAKEUP = "Выберите категорию и оттенки"
 
         # Button constants (fallback)
-        BTN_TONE = "Тон/BB/CC"
-        BTN_CONCEALER = "Консилер"
-        BTN_CORRECTOR = "Корректор"
-        BTN_POWDER = "Пудра"
-        BTN_BLUSH = "Румяна"
-        BTN_BRONZER = "Бронзер"
-        BTN_CONTOUR = "Скульптор"
-        BTN_HIGHLIGHTER = "Хайлайтер"
-        BTN_BROWS = "Брови"
-        BTN_EYESHADOW = "Тени"
-        BTN_EYELINER = "Лайнер/Карандаш"
-        BTN_MASCARA = "Тушь"
-        BTN_LIPS = "Губы"
+        BTN_MAKEUP_TONE = "Тон/BB/CC"
+        BTN_MAKEUP_CONCEALER = "Консилер"
+        BTN_MAKEUP_CORRECTOR = "Корректор"
+        BTN_MAKEUP_POWDER = "Пудра"
+        BTN_MAKEUP_BLUSH = "Румяна"
+        BTN_MAKEUP_BRONZER = "Бронзер"
+        BTN_MAKEUP_CONTOUR = "Скульптор"
+        BTN_MAKEUP_HIGHLIGHTER = "Хайлайтер"
+        BTN_MAKEUP_BROWS = "Брови"
+        BTN_MAKEUP_EYESHADOW = "Тени"
+        BTN_MAKEUP_EYELINER = "Лайнер/Карандаш"
+        BTN_MAKEUP_MASCARA = "Тушь"
+        BTN_MAKEUP_LIPS = "Губы"
         BTN_CHOOSE_SHADE = "Выбрать оттенок"
         BTN_ADD_TO_CART = "Добавить в корзину"
         BTN_IN_CART = "✓ В корзине"
@@ -108,8 +108,27 @@ except ImportError:
 try:
     from engine.catalog_store import CatalogStore
     from engine.models import Product, UserProfile
-    from engine.source_resolver import resolve_source
+    from engine.source_resolver import SourceResolver
     ENGINE_AVAILABLE = True
+
+    # Create resolver instance
+    resolver = SourceResolver()
+
+    def resolve_source(product):
+        """Wrapper function for resolve_source method"""
+        try:
+            return resolver.resolve_source(product)
+        except Exception as e:
+            print(f"❌ Error resolving source: {e}")
+            return type('ResolvedProduct', (), {
+                'source_name': 'Неизвестный магазин',
+                'priority': 999,
+                'source_type': 'unknown',
+                'domain': 'unknown',
+                'currency': 'RUB',
+                'is_affiliate': False
+            })()
+
 except ImportError as e:
     print(f"⚠️ Engine modules not available: {e}")
     ENGINE_AVAILABLE = False
@@ -129,8 +148,21 @@ except ImportError as e:
             for k, v in kwargs.items():
                 setattr(self, k, v)
 
-    def resolve_source(*args, **kwargs):
-        return "unknown"
+    class SourceResolver:
+        def resolve_source(self, product):
+            return type('ResolvedProduct', (), {
+                'source_name': 'Неизвестный магазин',
+                'priority': 999,
+                'source_type': 'unknown',
+                'domain': 'unknown',
+                'currency': 'RUB',
+                'is_affiliate': False
+            })()
+
+    resolver = SourceResolver()
+
+    def resolve_source(product):
+        return resolver.resolve_source(product)
 
 # Analytics import with fallback
 try:
