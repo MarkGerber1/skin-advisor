@@ -3,6 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#C26A8D">
+    <meta name="description" content="Брендовые активы Beauty Care Bot - логотипы, стикеры, палитра цветов">
+    <meta name="author" content="Beauty Care Bot">
+
+    <!-- Favicon -->
+    <link rel="icon" href="ui/brand/logo.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="ui/brand/logo.png">
+
+    <!-- Manifest для PWA -->
+    <link rel="manifest" href="manifest.json">
+
     <title>Beauty Care Bot - Brand Assets Preview</title>
     <style>
         body {
@@ -330,6 +341,47 @@
             link.click();
             document.body.removeChild(link);
         }
+
+        // PWA Support
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/BeautyCare-Site/service-worker.js')
+                    .then(registration => {
+                        console.log('✅ PWA: Service Worker registered for brand page');
+                    })
+                    .catch(error => {
+                        console.error('❌ PWA: Service Worker registration failed:', error);
+                    });
+            });
+        }
+
+        // PWA Install Prompt
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+
+            // Add install button
+            const installBtn = document.createElement('button');
+            installBtn.className = 'download-btn';
+            installBtn.innerHTML = '📱 Установить PWA';
+            installBtn.onclick = () => {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    deferredPrompt.userChoice.then((choiceResult) => {
+                        console.log('PWA install outcome:', choiceResult.outcome);
+                        deferredPrompt = null;
+                    });
+                }
+            };
+
+            // Add to page
+            const container = document.querySelector('.container');
+            const title = document.querySelector('h1');
+            if (title && container) {
+                title.insertAdjacentElement('afterend', installBtn);
+            }
+        });
     </script>
 </body>
 </html>

@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#C26A8D">
+    <title>Beauty Care - Офлайн режим</title>
+
+    <!-- Favicon -->
+    <link rel="icon" href="ui/brand/logo.svg" type="image/svg+xml">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="ui/theme/tokens.css">
+    <link rel="stylesheet" href="ui/theme/skins.css">
+    <link rel="stylesheet" href="ui/components/index.css">
+
+    <!-- Manifest -->
+    <link rel="manifest" href="manifest.json">
+
+    <style>
+        :root {
+            --offline-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --offline-card-bg: rgba(255, 255, 255, 0.95);
+            --offline-text: #333;
+            --offline-accent: #C26A8D;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            background: var(--offline-bg);
+            font-family: system-ui, -apple-system, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .offline-container {
+            max-width: 400px;
+            padding: 2rem;
+            text-align: center;
+            background: var(--offline-card-bg);
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .offline-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 1.5rem;
+            opacity: 0.8;
+        }
+
+        .offline-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--offline-text);
+            margin: 0 0 0.5rem 0;
+        }
+
+        .offline-subtitle {
+            font-size: 1rem;
+            color: #666;
+            margin: 0 0 2rem 0;
+            line-height: 1.5;
+        }
+
+        .offline-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.875rem 1.5rem;
+            border-radius: 12px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .btn-primary {
+            background: var(--offline-accent);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #B0557A;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(194, 106, 141, 0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.8);
+            color: var(--offline-text);
+            border: 2px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-secondary:hover {
+            background: white;
+            border-color: var(--offline-accent);
+            color: var(--offline-accent);
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            font-size: 0.875rem;
+            color: #666;
+            margin-bottom: 1rem;
+        }
+
+        .status-indicator::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ff6b6b;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .cached-reports {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .cached-reports h3 {
+            font-size: 1.125rem;
+            color: var(--offline-text);
+            margin: 0 0 1rem 0;
+        }
+
+        .reports-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .report-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 1rem;
+            background: rgba(194, 106, 141, 0.1);
+            border-radius: 8px;
+            text-decoration: none;
+            color: var(--offline-text);
+            transition: all 0.2s ease;
+        }
+
+        .report-item:hover {
+            background: rgba(194, 106, 141, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .report-info {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.25rem;
+        }
+
+        .report-name {
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .report-meta {
+            font-size: 0.75rem;
+            color: #666;
+        }
+
+        .report-icon {
+            width: 24px;
+            height: 24px;
+            opacity: 0.7;
+        }
+
+        .no-reports {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+            padding: 2rem 1rem;
+        }
+
+        .loading {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .loading::after {
+            content: '';
+            width: 16px;
+            height: 16px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid var(--offline-accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 480px) {
+            .offline-container {
+                margin: 1rem;
+                padding: 1.5rem;
+            }
+
+            .offline-title {
+                font-size: 1.25rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="offline-container">
+        <!-- Offline Status -->
+        <div class="status-indicator">
+            <span>Офлайн режим</span>
+        </div>
+
+        <!-- Main Icon -->
+        <svg class="offline-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" fill="currentColor"/>
+        </svg>
+
+        <!-- Title and Description -->
+        <h1 class="offline-title">Beauty Care</h1>
+        <p class="offline-subtitle">
+            Вы находитесь в офлайн режиме.<br>
+            Некоторые функции могут быть недоступны,<br>
+            но ваши отчеты сохранены локально.
+        </p>
+
+        <!-- Action Buttons -->
+        <div class="offline-actions">
+            <button id="retry-btn" class="btn btn-primary">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z" fill="currentColor"/>
+                </svg>
+                Попробовать снова
+            </button>
+
+            <button id="install-btn" class="btn btn-secondary" style="display: none;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 14h-3v3h-2v-3H8v-2h3v-3h2v3h3v2zm-3-7V3.5L18.5 9H13z" fill="currentColor"/>
+                </svg>
+                Установить приложение
+            </button>
+        </div>
+
+        <!-- Cached Reports Section -->
+        <div class="cached-reports">
+            <h3>Сохраненные отчеты</h3>
+            <div id="reports-container">
+                <div class="loading">Загрузка отчетов...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript for offline functionality -->
+    <script>
+        // DOM elements
+        const retryBtn = document.getElementById('retry-btn');
+        const installBtn = document.getElementById('install-btn');
+        const reportsContainer = document.getElementById('reports-container');
+
+        // Install prompt handling
+        let deferredPrompt;
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            installBtn.style.display = 'inline-flex';
+        });
+
+        installBtn.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                console.log('Install outcome:', outcome);
+                deferredPrompt = null;
+                installBtn.style.display = 'none';
+            }
+        });
+
+        // Retry connection
+        retryBtn.addEventListener('click', () => {
+            window.location.reload();
+        });
+
+        // Load cached reports
+        async function loadCachedReports() {
+            try {
+                // Request cached reports from service worker
+                if ('serviceWorker' in navigator) {
+                    const registration = await navigator.serviceWorker.ready;
+
+                    // Send message to service worker
+                    registration.active.postMessage({
+                        type: 'GET_CACHED_REPORTS',
+                        userId: getCurrentUserId()
+                    });
+
+                    // Listen for response
+                    navigator.serviceWorker.addEventListener('message', (event) => {
+                        if (event.data.type === 'CACHED_REPORTS_LIST') {
+                            displayCachedReports(event.data.reports);
+                        }
+                    });
+                }
+
+                // Also try to load from localStorage
+                loadReportsFromLocalStorage();
+
+            } catch (error) {
+                console.error('Failed to load cached reports:', error);
+                reportsContainer.innerHTML = '<div class="no-reports">Не удалось загрузить отчеты</div>';
+            }
+        }
+
+        // Get current user ID (from URL or localStorage)
+        function getCurrentUserId() {
+            // Try to get from URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            const userId = urlParams.get('user_id');
+
+            if (userId) return userId;
+
+            // Try to get from localStorage
+            const stored = localStorage.getItem('beauty_care_user_id');
+            return stored || 'anonymous';
+        }
+
+        // Load reports from localStorage
+        function loadReportsFromLocalStorage() {
+            try {
+                const reports = [];
+                const keys = Object.keys(localStorage);
+
+                for (const key of keys) {
+                    if (key.startsWith('beauty_care_report_')) {
+                        const reportData = JSON.parse(localStorage.getItem(key));
+                        if (reportData) {
+                            reports.push({
+                                id: key.replace('beauty_care_report_', ''),
+                                name: reportData.title || 'Персональный отчет',
+                                type: reportData.type || 'unknown',
+                                created: reportData.created || Date.now(),
+                                data: reportData
+                            });
+                        }
+                    }
+                }
+
+                if (reports.length > 0) {
+                    displayCachedReports(reports);
+                } else {
+                    reportsContainer.innerHTML = '<div class="no-reports">Нет сохраненных отчетов</div>';
+                }
+            } catch (error) {
+                console.error('Failed to load from localStorage:', error);
+            }
+        }
+
+        // Display cached reports
+        function displayCachedReports(reports) {
+            if (!reports || reports.length === 0) {
+                reportsContainer.innerHTML = '<div class="no-reports">Нет сохраненных отчетов</div>';
+                return;
+            }
+
+            const reportsList = reports.map(report => {
+                const date = new Date(report.created || report.cachedAt).toLocaleDateString('ru-RU');
+                const typeText = report.type === 'pdf' ? 'PDF отчет' : 'Данные отчета';
+                const iconSrc = report.type === 'pdf' ? 'ui/icons/svg/list.svg' : 'ui/icons/svg/info.svg';
+
+                return `
+                    <a href="#" onclick="openReport('${report.url || report.id}')" class="report-item">
+                        <div class="report-info">
+                            <div class="report-name">${report.name || 'Отчет Beauty Care'}</div>
+                            <div class="report-meta">${typeText} • ${date}</div>
+                        </div>
+                        <svg class="report-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 14h-3v3h-2v-3H8v-2h3v-3h2v3h3v2zm-3-7V3.5L18.5 9H13z" fill="currentColor"/>
+                        </svg>
+                    </a>
+                `;
+            }).join('');
+
+            reportsContainer.innerHTML = `<div class="reports-list">${reportsList}</div>`;
+        }
+
+        // Open report function
+        function openReport(reportId) {
+            // Try to open cached report
+            if (navigator.serviceWorker) {
+                // For now, just show a message
+                alert('Отчет будет открыт из кеша. В полной версии это откроет сохраненный PDF/HTML отчет.');
+            } else {
+                alert('Service Worker не поддерживается. Отчет недоступен в офлайн режиме.');
+            }
+        }
+
+        // Check online status
+        function updateOnlineStatus() {
+            const isOnline = navigator.onLine;
+            const statusIndicator = document.querySelector('.status-indicator');
+
+            if (isOnline) {
+                statusIndicator.innerHTML = '<span>Онлайн</span>';
+                statusIndicator.style.setProperty('--status-color', '#4CAF50');
+                retryBtn.style.display = 'none';
+            } else {
+                statusIndicator.innerHTML = '<span>Офлайн режим</span>';
+                statusIndicator.style.setProperty('--status-color', '#ff6b6b');
+                retryBtn.style.display = 'inline-flex';
+            }
+        }
+
+        // Listen for online/offline events
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+
+        // Initial status check
+        updateOnlineStatus();
+
+        // Load cached reports on page load
+        loadCachedReports();
+
+        // Register service worker if not already registered
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/BeautyCare-Site/service-worker.js')
+                .then(registration => {
+                    console.log('Service Worker registered:', registration);
+                })
+                .catch(error => {
+                    console.error('Service Worker registration failed:', error);
+                });
+        }
+    </script>
+</body>
+</html>
