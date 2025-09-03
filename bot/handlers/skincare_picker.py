@@ -65,6 +65,18 @@ except ImportError:
         HEAD_SKINCARE_PICK = "Подборка ухода по результатам"
         SUB_PICK = "Выберите категорию, затем добавьте средства в корзину"
 
+        # Button constants (fallback)
+        BTN_CLEANSE = "Очищение"
+        BTN_TONE = "Тонизирование"
+        BTN_SERUM = "Сыворотки"
+        BTN_MOIST = "Увлажнение"
+        BTN_EYE = "Зона вокруг глаз"
+        BTN_SPF = "Солнцезащита"
+        BTN_REMOVER = "Снятие макияжа"
+        BTN_CHOOSE_VARIANT = "Выбрать вариант"
+        BTN_ADD_TO_CART = "Добавить в корзину"
+        BTN_IN_CART = "✓ В корзине"
+
         # Category constants
         CAT_CLEANSE = "cleansing"
         CAT_TONE = "toning"
@@ -82,9 +94,10 @@ except ImportError:
         CATEGORY_EYE_CARE = BTN_EYE
         CATEGORY_SUN_PROTECTION = BTN_SPF
         CATEGORY_MASK = BTN_REMOVER
-        BTN_ADD_TO_CART = "Добавить в корзину"
-        BTN_CHOOSE_VARIANT = "Выбрать вариант"
         MSG_ADDED = "Добавлено в корзину: {item}"
+        MSG_VARIANT_ADDED = "Добавлено в корзину: {brand} {name} ({variant})"
+        BADGE_OOS = "Нет в наличии"
+        BTN_SHOW_ALTS = "Показать альтернативы"
 
 # Fix import for services module
 try:
