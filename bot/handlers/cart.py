@@ -12,24 +12,9 @@ from engine.selector import SelectorV2
 from engine.business_metrics import get_metrics_tracker
 from engine.analytics import get_analytics_tracker
 
-# Temporary fallback: import cart_service with try/except
-try:
-    from services.cart_service import get_cart_service, CartServiceError, CartErrorCode
-    CART_SERVICE_AVAILABLE = True
-except ImportError:
-    print("⚠️ services.cart_service not available, using fallback")
-    CART_SERVICE_AVAILABLE = False
-    # Define fallback classes
-    class CartServiceError(Exception):
-        def __init__(self, message, code=None):
-            self.message = message
-            self.code = code
-            super().__init__(message)
-    
-    class CartErrorCode:
-        INVALID_PRODUCT_ID = "invalid_product_id"
-        PRODUCT_NOT_FOUND = "product_not_found"
-        OUT_OF_STOCK = "out_of_stock"
+# Cart service removed - using direct CartStore operations
+print("✅ Using CartStore directly (services/cart_service removed)")
+CART_SERVICE_AVAILABLE = False
 
 
 router = Router()
@@ -177,50 +162,39 @@ async def add_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
             return
         
         print(f"🛒 DETAILED: Adding product '{product_id}' (variant: {variant_id}) to cart for user {user_id}")
-        print(f"🛒 CART_SERVICE_AVAILABLE: {CART_SERVICE_AVAILABLE}")
-        
-        # Используем улучшенный сервис корзины если доступен
-        if CART_SERVICE_AVAILABLE:
-            print(f"✅ Using enhanced cart service")
-            cart_service = get_cart_service()
-            cart_item = await cart_service.add_item(
-                user_id=user_id,
-                product_id=product_id,
-                variant_id=variant_id,
-                qty=1
-            )
-            print(f"✅ Cart service added item: {cart_item}")
-        else:
-            # Fallback: simple add to cart using existing store
-            print(f"🔄 Using fallback cart method for {product_id}")
-            product_data = await _find_product_in_recommendations(user_id, product_id)
-            print(f"🔍 Product data found: {product_data is not None}")
-            if product_data:
-                print(f"📦 Product details: brand={product_data.get('brand')}, name={product_data.get('name')}, price={product_data.get('price')}")
-            
-            if not product_data:
-                print(f"❌ Product {product_id} not found in recommendations")
-                raise CartServiceError("Product not found", CartErrorCode.PRODUCT_NOT_FOUND)
-            
-            cart_item = CartItem(
-                product_id=product_id,
-                qty=1,
-                brand=product_data.get('brand'),
-                name=product_data.get('name'),
-                price=product_data.get('price'),
-                price_currency=product_data.get('price_currency', 'RUB'),
-                ref_link=product_data.get('ref_link'),
-                explain=product_data.get('explain'),
-                category=product_data.get('category'),
-                in_stock=product_data.get('in_stock', True),
-                variant_id=variant_id
-            )
-            print(f"📝 Created cart item: {cart_item}")
-            
-            # Add to store
-            print(f"💾 Adding to store for user {user_id}")
-            store.add(user_id, cart_item)
-            print(f"✅ Successfully added to store")
+        print(f"🛒 Using CartStore directly (cart_service removed)")
+
+        # Direct CartStore operations (fallback logic)
+        print(f"🔄 Using fallback cart method for {product_id}")
+        product_data = await _find_product_in_recommendations(user_id, product_id)
+        print(f"🔍 Product data found: {product_data is not None}")
+        if product_data:
+            print(f"📦 Product details: brand={product_data.get('brand')}, name={product_data.get('name')}, price={product_data.get('price')}")
+
+        if not product_data:
+            print(f"❌ Product {product_id} not found in recommendations")
+            await cb.answer("❌ Товар не найден в рекомендациях", show_alert=True)
+            return
+
+        cart_item = CartItem(
+            product_id=product_id,
+            qty=1,
+            brand=product_data.get('brand'),
+            name=product_data.get('name'),
+            price=product_data.get('price'),
+            price_currency=product_data.get('price_currency', 'RUB'),
+            ref_link=product_data.get('ref_link'),
+            explain=product_data.get('explain'),
+            category=product_data.get('category'),
+            in_stock=product_data.get('in_stock', True),
+            variant_id=variant_id
+        )
+        print(f"📝 Created cart item: {cart_item}")
+
+        # Add to store
+        print(f"💾 Adding to store for user {user_id}")
+        store.add(user_id, cart_item)
+        print(f"✅ Successfully added to store")
         
         # Диагностика: проверяем что товар действительно добавился
         stored_items = store.get(user_id)
@@ -261,48 +235,25 @@ async def add_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
         
         await cb.answer(message, show_alert=True)
         
-    except CartServiceError as e:
-        print(f"❌ Cart service error: {e}")
-        
-        # Метрика: ошибка добавления
-        metrics.track_event("cart_add_failed", user_id, {
-            "reason": e.code.value,
-            "product_id": parts[2] if len(parts) > 2 else "",
-            "variant_id": parts[3] if len(parts) > 3 else None,
-            "error_message": e.message
-        })
-        
-        # Пользовательские сообщения об ошибках
-        error_messages = {
-            CartErrorCode.INVALID_PRODUCT_ID: "⚠️ Некорректный ID товара",
-            CartErrorCode.INVALID_VARIANT_ID: "⚠️ Некорректный вариант товара", 
-            CartErrorCode.PRODUCT_NOT_FOUND: "⚠️ Товар не найден в каталоге",
-            CartErrorCode.OUT_OF_STOCK: "⚠️ Товар временно недоступен",
-            CartErrorCode.VARIANT_NOT_SUPPORTED: "⚠️ Этот товар не поддерживает варианты",
-            CartErrorCode.VARIANT_MISMATCH: "⚠️ Неподходящий вариант для данного товара",
-            CartErrorCode.DUPLICATE_REQUEST: "⚠️ Подождите, товар уже добавляется...",
-        }
-        
-        user_message = error_messages.get(e.code, "⚠️ Не удалось добавить товар в корзину")
-        await cb.answer(user_message, show_alert=True)
-        
     except Exception as e:
-        print(f"❌ CRITICAL ERROR in add_to_cart: {e}")
+        print(f"❌ Cart operation error: {e}")
         print(f"❌ Exception type: {type(e).__name__}")
         import traceback
         print(f"❌ Full traceback: {traceback.format_exc()}")
-        
-        # Метрика: неожиданная ошибка
+
+        # Метрика: ошибка добавления
         try:
             metrics.track_event("cart_add_failed", user_id, {
-                "reason": "unexpected_error",
+                "reason": "cart_error",
                 "product_id": parts[2] if len(parts) > 2 else "",
+                "variant_id": parts[3] if len(parts) > 3 else None,
                 "error_message": str(e)
             })
-        except Exception as metrics_error:
-            print(f"⚠️ Could not track error metrics: {metrics_error}")
-        
-        await cb.answer(f"⚠️ Ошибка добавления: {str(e)[:100]}", show_alert=True)
+        except:
+            pass  # Ignore metrics errors
+
+        # Пользовательское сообщение об ошибке
+        await cb.answer("⚠️ Не удалось добавить товар в корзину", show_alert=True)
 
 
 @router.callback_query(F.data == "show_cart")
@@ -742,15 +693,15 @@ async def update_item_variant(cb: CallbackQuery, state: FSMContext) -> None:
         old_variant = parts[3] if parts[3] != "null" else None
         new_variant = parts[4] if parts[4] != "null" else None
 
-        if CART_SERVICE_AVAILABLE:
-            cart_service = get_cart_service()
-            updated_item = await cart_service.update_item_variant(
-                user_id=user_id,
-                product_id=product_id,
-                old_variant_id=old_variant,
-                new_variant_id=new_variant
-            )
+        # Use CartStore directly (cart_service removed)
+        updated_item = store.update_item_variant(
+            user_id=user_id,
+            product_id=product_id,
+            old_variant_id=old_variant,
+            new_variant_id=new_variant
+        )
 
+        if updated_item:
             # Analytics
             analytics = get_analytics_tracker()
             analytics.track_event("cart_variant_updated", user_id, {
@@ -761,11 +712,8 @@ async def update_item_variant(cb: CallbackQuery, state: FSMContext) -> None:
 
             await cb.answer(f"✅ Вариант обновлен: {updated_item.variant_name or 'Стандарт'}", show_alert=True)
         else:
-            await cb.answer("❌ Сервис корзины недоступен")
+            await cb.answer("❌ Товар не найден в корзине", show_alert=True)
 
-    except CartServiceError as e:
-        print(f"❌ Cart variant update error: {e}")
-        await cb.answer(f"❌ {e.message}", show_alert=True)
     except Exception as e:
         print(f"❌ Unexpected error in variant update: {e}")
         await cb.answer("❌ Произошла ошибка при обновлении варианта", show_alert=True)
