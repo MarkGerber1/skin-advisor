@@ -5,18 +5,32 @@ interface CartIconProps {
   className?: string;
 }
 
+/**
+ * 🛒 Cart icon for shopping
+ * Uses design system tokens: --icon-size: 24px
+ * Supports touch targets: min-width/height via size prop
+ */
 export const CartIcon: React.FC<CartIconProps> = ({
   size = 24,
   className = ''
 }) => {
+  const iconSize = Math.max(size, 24); // Minimum touch target
+
   return (
     <svg
-      width={size}
-      height={size}
+      width={iconSize}
+      height={iconSize}
       viewBox="0 0 24 24"
       fill="none"
       className={className}
-      style={{ display: 'inline-block', verticalAlign: 'middle' }}
+      style={{
+        display: 'inline-block',
+        verticalAlign: 'middle',
+        minWidth: 'var(--touch-size, 48px)',
+        minHeight: 'var(--touch-size, 48px)'
+      }}
+      role="img"
+      aria-label="Shopping cart"
     >
       <circle cx="9" cy="21" r="1" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"/>
       <circle cx="20" cy="21" r="1" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"/>

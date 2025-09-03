@@ -5,34 +5,49 @@ interface DropIconProps {
   className?: string;
 }
 
+/**
+ * 💧 Drop icon for skincare/face diagnosis
+ * Uses design system tokens: --icon-size: 24px
+ * Supports touch targets: min-width/height via size prop
+ */
 export const DropIcon: React.FC<DropIconProps> = ({
   size = 24,
   className = ''
 }) => {
+  const iconSize = Math.max(size, 24); // Minimum touch target
+
   return (
     <svg
-      width={size}
-      height={size}
+      width={iconSize}
+      height={iconSize}
       viewBox="0 0 24 24"
       fill="none"
       className={className}
-      style={{ display: 'inline-block', verticalAlign: 'middle' }}
+      style={{
+        display: 'inline-block',
+        verticalAlign: 'middle',
+        minWidth: 'var(--touch-size, 48px)',
+        minHeight: 'var(--touch-size, 48px)'
+      }}
+      role="img"
+      aria-label="Skincare drop"
     >
       <path
-        d="M12 2L13.09 8.26L19 9L13.09 9.74L12 16L10.91 9.74L5 9L10.91 8.26L12 2Z"
+        d="M12 2.5c0 0-5 4.5-5 9.5a5 5 0 0 0 10 0c0-5-5-9.5-5-9.5z"
         stroke="currentColor"
         strokeWidth="1.75"
         strokeLinecap="round"
         strokeLinejoin="round"
+        fill="none"
       />
       <path
-        d="M12 16C14.2091 16 16 14.2091 16 12C16 9.79086 14.2091 8 12 8C9.79086 8 8 9.79086 8 12C8 14.2091 9.79086 16 12 16Z"
+        d="M9.5 10.5c0-1.5 1-3 2.5-4"
         stroke="currentColor"
         strokeWidth="1.75"
         strokeLinecap="round"
         strokeLinejoin="round"
+        opacity="0.4"
       />
-      <circle cx="12" cy="12" r="3" fill="currentColor" opacity="0.2"/>
     </svg>
   );
 };
