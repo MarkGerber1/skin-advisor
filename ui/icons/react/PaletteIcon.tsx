@@ -5,18 +5,32 @@ interface PaletteIconProps {
   className?: string;
 }
 
+/**
+ * 🎨 Palette icon for color/tone tests
+ * Uses design system tokens: --icon-size: 24px
+ * Supports touch targets: min-width/height via size prop
+ */
 export const PaletteIcon: React.FC<PaletteIconProps> = ({
   size = 24,
   className = ''
 }) => {
+  const iconSize = Math.max(size, 24); // Minimum touch target
+
   return (
     <svg
-      width={size}
-      height={size}
+      width={iconSize}
+      height={iconSize}
       viewBox="0 0 24 24"
       fill="none"
       className={className}
-      style={{ display: 'inline-block', verticalAlign: 'middle' }}
+      style={{
+        display: 'inline-block',
+        verticalAlign: 'middle',
+        minWidth: 'var(--touch-size, 48px)',
+        minHeight: 'var(--touch-size, 48px)'
+      }}
+      role="img"
+      aria-label="Color palette"
     >
       <path
         d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10c1.1 0 2-.9 2-2 0-.55-.22-1.05-.59-1.41-.36-.36-.91-.59-1.41-.59H9c-3.31 0-6-2.69-6-6 0-4.97 4.03-9 9-9s9 4.03 9 9c0 2.76-2.24 5-5 5h-1c-.55 0-1 .45-1 1s.45 1 1 1c4.42 0 8-3.58 8-8 0-5.52-4.48-10-10-10z"
