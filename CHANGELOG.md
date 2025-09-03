@@ -1,5 +1,45 @@
 # 🎨 Beauty Care Design System - Changelog
 
+## [1.0.2] - Makeup Picker Launch - December 2024
+
+### ✨ **New Major Feature**
+
+#### 🔥 **Makeup Inline Picker**
+- **New Module**: `bot/handlers/makeup_picker.py` - Complete makeup product selection system
+- **Integration**: After "Тон&Сияние" test completion with "💄 Подобрать макияж" button
+- **Categories**: 13 makeup categories (Foundation, Concealer, Blush, Eyeshadow, Lips, etc.)
+- **Smart Shade Mapping**: Intelligent color recommendations based on user profile:
+  - Cool undertone → cool/ash/rose tones
+  - Warm undertone → warm/golden/peach tones
+  - High contrast → saturated pure colors
+  - Low contrast → soft natural shades
+- **Callback Contracts**: `m:cat:<slug>`, `m:cat:<slug>:p<page>`, `m:prd:<pid>`, `m:add:<pid>:<vid>` (under 64 bytes)
+- **Analytics**: Full funnel tracking (recommendations_viewed, category_opened, product_opened, shade_selected, cart events)
+- **Source Prioritization**: Gold Apple → RU official → RU marketplace → INTL
+- **Idempotency**: Unique `product_id + variant_id` keys, quantity increment on duplicates
+
+### 📋 **Technical Implementation**
+```python
+# New router integration in bot/main.py
+dp.include_router(makeup_picker_router)  # After skincare picker
+
+# i18n constants added
+HEAD_MAKEUP_PICK = "Подборка макияжа по результатам"
+SUB_PICK_MAKEUP = "Выберите категорию и оттенки"
+BTN_MAKEUP_TONE = "Тон/BB/CC"
+# ... 12 more makeup categories
+```
+
+### 🎯 **Acceptance Criteria Met**
+- ✅ Block appears immediately after "Тон&Сияние" completion
+- ✅ Shade selection mandatory where applicable
+- ✅ Idempotent cart additions (product_id + variant_id keys)
+- ✅ Source prioritization properly implemented
+- ✅ Cart counter updates correctly
+- ✅ Analytics logged throughout user journey
+
+---
+
 ## [1.0.1] - Critical Import Fix - December 2024
 
 ### 🚨 **Critical Bug Fixes**
