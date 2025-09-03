@@ -3,6 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#C26A8D">
+    <meta name="description" content="Превью дизайн-системы Beauty Chatbot - компоненты, цвета, иконки">
+    <meta name="author" content="Beauty Care Bot">
+
+    <!-- Favicon -->
+    <link rel="icon" href="ui/brand/logo.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="ui/brand/logo.png">
+
+    <!-- Manifest для PWA -->
+    <link rel="manifest" href="manifest.json">
+
     <title>Beauty Chatbot Design System - Preview</title>
     <style>
         /* Встроенные стили для автономной работы */
@@ -421,6 +432,46 @@
             document.documentElement.setAttribute('data-theme', 'light');
             document.querySelector('.theme-toggle').textContent = '☀️ Светлая тема';
         }
+
+        // PWA Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/BeautyCare-Site/service-worker.js')
+                    .then(registration => {
+                        console.log('✅ PWA: Service Worker registered for demo page');
+                    })
+                    .catch(error => {
+                        console.error('❌ PWA: Service Worker registration failed:', error);
+                    });
+            });
+        }
+
+        // PWA Install Prompt
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+
+            // Add install button to page
+            const installBtn = document.createElement('button');
+            installBtn.className = 'btn install-btn';
+            installBtn.innerHTML = '📱 Установить PWA';
+            installBtn.onclick = () => {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    deferredPrompt.userChoice.then((choiceResult) => {
+                        console.log('PWA install outcome:', choiceResult.outcome);
+                        deferredPrompt = null;
+                    });
+                }
+            };
+
+            // Add to header
+            const header = document.querySelector('h1');
+            if (header && header.parentNode) {
+                header.parentNode.insertBefore(installBtn, header.nextSibling);
+            }
+        });
     </script>
 </body>
 </html>

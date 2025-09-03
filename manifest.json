@@ -1,0 +1,116 @@
+{
+  "name": "Beauty Care - Персональный косметолог",
+  "short_name": "Beauty Care",
+  "description": "Персонализированные рекомендации по уходу за кожей и макияжу",
+  "start_url": "/BeautyCare-Site/index.html",
+  "display": "standalone",
+  "background_color": "#FFFFFF",
+  "theme_color": "#C26A8D",
+  "orientation": "portrait",
+  "scope": "/BeautyCare-Site/",
+  "categories": ["lifestyle", "health", "beauty"],
+  "lang": "ru",
+  "dir": "ltr",
+
+  "icons": [
+    {
+      "src": "ui/brand/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "ui/brand/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "ui/brand/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "ui/brand/stickers/palette.svg",
+      "sizes": "96x96",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "ui/brand/stickers/drop.svg",
+      "sizes": "96x96",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+
+  "shortcuts": [
+    {
+      "name": "Диагностика кожи",
+      "short_name": "Уход",
+      "description": "Пройти тест на тип кожи",
+      "url": "/BeautyCare-Site/index.html#skincare",
+      "icons": [
+        {
+          "src": "ui/brand/stickers/drop.svg",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Цветотип",
+      "short_name": "Макияж",
+      "description": "Определить цветотип внешности",
+      "url": "/BeautyCare-Site/index.html#makeup",
+      "icons": [
+        {
+          "src": "ui/brand/stickers/palette.svg",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Мои отчеты",
+      "short_name": "Отчеты",
+      "description": "Посмотреть сохраненные отчеты",
+      "url": "/BeautyCare-Site/index.html#reports",
+      "icons": [
+        {
+          "src": "ui/icons/svg/list.svg",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ],
+
+  "screenshots": [
+    {
+      "src": "screenshots/home.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide"
+    },
+    {
+      "src": "screenshots/test.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow"
+    }
+  ],
+
+  "related_applications": [
+    {
+      "platform": "webapp",
+      "url": "https://beauty-care-bot.vercel.app/manifest.json"
+    }
+  ],
+
+  "prefer_related_applications": false,
+
+  "iarc_rating_id": "",
+
+  "edge_side_panel": {
+    "preferred_width": 400
+  }
+}

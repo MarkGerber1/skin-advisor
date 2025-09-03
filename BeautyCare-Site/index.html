@@ -3,6 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#C26A8D">
+    <meta name="description" content="Персонализированные рекомендации по уходу за кожей и макияжу. Диагностика типа кожи и цветотипа внешности.">
+    <meta name="keywords" content="косметология, уход за кожей, макияж, цветотип, тип кожи">
+    <meta name="author" content="Beauty Care Bot">
+
+    <!-- Favicon -->
+    <link rel="icon" href="ui/brand/logo.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="ui/brand/logo.png">
+
+    <!-- Manifest для PWA -->
+    <link rel="manifest" href="manifest.json">
+
     <title>Beauty Care Bot - Все созданные материалы</title>
     <style>
         body {
@@ -283,5 +295,299 @@
             </div>
         </div>
     </div>
+
+    <!-- PWA Registration and Install Prompt -->
+    <script>
+        // PWA Installation
+        let deferredPrompt;
+
+        // Listen for the beforeinstallprompt event
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+
+            // Show install button if it exists
+            const installBtn = document.getElementById('install-btn');
+            if (installBtn) {
+                installBtn.style.display = 'inline-flex';
+            }
+
+            console.log('🎯 PWA: Install prompt available');
+        });
+
+        // Handle install button click
+        function installPWA() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('✅ PWA: User accepted the install prompt');
+                    } else {
+                        console.log('❌ PWA: User dismissed the install prompt');
+                    }
+                    deferredPrompt = null;
+                });
+            }
+        }
+
+        // Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/BeautyCare-Site/service-worker.js')
+                    .then(registration => {
+                        console.log('✅ Service Worker registered successfully:', registration.scope);
+
+                        // Handle updates
+                        registration.addEventListener('updatefound', () => {
+                            const newWorker = registration.installing;
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    // New version available
+                                    showUpdateNotification();
+                                }
+                            });
+                        });
+
+                        // Listen for messages from service worker
+                        navigator.serviceWorker.addEventListener('message', (event) => {
+                            if (event.data && event.data.type) {
+                                handleServiceWorkerMessage(event.data);
+                            }
+                        });
+
+                    })
+                    .catch(error => {
+                        console.error('❌ Service Worker registration failed:', error);
+                    });
+            });
+        } else {
+            console.warn('⚠️ Service Worker not supported in this browser');
+        }
+
+        // Handle messages from service worker
+        function handleServiceWorkerMessage(data) {
+            switch (data.type) {
+                case 'REPORT_CACHED':
+                    console.log('📄 Report cached for user:', data.userId);
+                    showNotification('Отчет сохранен для офлайн доступа', 'success');
+                    break;
+                case 'CACHED_REPORTS_LIST':
+                    console.log('📋 Cached reports:', data.reports);
+                    break;
+                case 'CACHE_CLEARED':
+                    console.log('🗑️ Cache cleared for user:', data.userId);
+                    showNotification('Кеш очищен', 'info');
+                    break;
+            }
+        }
+
+        // Show update notification
+        function showUpdateNotification() {
+            const notification = document.createElement('div');
+            notification.className = 'update-notification';
+            notification.innerHTML = `
+                <div class="update-content">
+                    <h3>Доступно обновление</h3>
+                    <p>Новая версия Beauty Care готова к установке</p>
+                    <div class="update-actions">
+                        <button onclick="updatePWA()">Обновить</button>
+                        <button onclick="dismissUpdate()">Позже</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(notification);
+        }
+
+        // Update PWA
+        function updatePWA() {
+            window.location.reload();
+        }
+
+        // Dismiss update
+        function dismissUpdate() {
+            const notification = document.querySelector('.update-notification');
+            if (notification) {
+                notification.remove();
+            }
+        }
+
+        // Show notification
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            notification.textContent = message;
+
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        // Cache current page for offline access
+        function cacheCurrentPage() {
+            if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+                navigator.serviceWorker.controller.postMessage({
+                    type: 'CACHE_REPORT',
+                    userId: 'demo',
+                    reportData: {
+                        title: 'Beauty Care - Главная страница',
+                        url: window.location.href,
+                        type: 'page',
+                        created: Date.now()
+                    }
+                });
+            }
+        }
+
+        // Check online status
+        function updateOnlineStatus() {
+            const isOnline = navigator.onLine;
+            const statusElement = document.getElementById('online-status');
+
+            if (statusElement) {
+                statusElement.textContent = isOnline ? 'Онлайн' : 'Офлайн';
+                statusElement.className = isOnline ? 'status-online' : 'status-offline';
+            }
+
+            console.log('🌐 Network status:', isOnline ? 'online' : 'offline');
+        }
+
+        // Listen for online/offline events
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+
+        // Initial status check
+        document.addEventListener('DOMContentLoaded', () => {
+            updateOnlineStatus();
+
+            // Add install button to page if needed
+            const installBtn = document.createElement('button');
+            installBtn.id = 'install-btn';
+            installBtn.className = 'install-button';
+            installBtn.innerHTML = `
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 14h-3v3h-2v-3H8v-2h3v-3h2v3h3v2zm-3-7V3.5L18.5 9H13z" fill="currentColor"/>
+                </svg>
+                Установить
+            `;
+            installBtn.style.display = 'none';
+            installBtn.onclick = installPWA;
+
+            // Add to header or navigation
+            const header = document.querySelector('.container h1');
+            if (header) {
+                header.parentNode.insertBefore(installBtn, header.nextSibling);
+            }
+
+            // Cache current page for offline access
+            setTimeout(cacheCurrentPage, 1000);
+        });
+
+        // Add notification styles
+        const style = document.createElement('style');
+        style.textContent = `
+            .install-button {
+                background: #C26A8D;
+                color: white;
+                border: none;
+                padding: 0.5rem 1rem;
+                border-radius: 8px;
+                cursor: pointer;
+                font-weight: 600;
+                display: inline-flex;
+                align-items: center;
+                gap: 0.5rem;
+                margin: 1rem auto;
+                transition: all 0.2s ease;
+            }
+
+            .install-button:hover {
+                background: #B0557A;
+                transform: translateY(-2px);
+            }
+
+            .notification {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 1rem;
+                border-radius: 8px;
+                color: white;
+                font-weight: 500;
+                z-index: 1000;
+                animation: slideIn 0.3s ease;
+            }
+
+            .notification-success { background: #4CAF50; }
+            .notification-error { background: #f44336; }
+            .notification-info { background: #2196F3; }
+
+            .update-notification {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.8);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 2000;
+            }
+
+            .update-content {
+                background: white;
+                padding: 2rem;
+                border-radius: 12px;
+                text-align: center;
+                max-width: 400px;
+                margin: 1rem;
+            }
+
+            .update-content h3 {
+                margin: 0 0 1rem 0;
+                color: #333;
+            }
+
+            .update-content p {
+                margin: 0 0 2rem 0;
+                color: #666;
+            }
+
+            .update-actions {
+                display: flex;
+                gap: 1rem;
+                justify-content: center;
+            }
+
+            .update-actions button {
+                padding: 0.5rem 1.5rem;
+                border: none;
+                border-radius: 6px;
+                cursor: pointer;
+                font-weight: 500;
+            }
+
+            .update-actions button:first-child {
+                background: #C26A8D;
+                color: white;
+            }
+
+            .update-actions button:last-child {
+                background: #f5f5f5;
+                color: #333;
+            }
+
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+
+            .status-online { color: #4CAF50; }
+            .status-offline { color: #f44336; }
+        `;
+        document.head.appendChild(style);
+    </script>
 </body>
 </html>
