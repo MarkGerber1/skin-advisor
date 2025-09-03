@@ -524,3 +524,4 @@
 .card:focus-visible {
   box-shadow: var(--focus-ring), var(--shadow-md);
 }
+

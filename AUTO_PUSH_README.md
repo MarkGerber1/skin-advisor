@@ -119,3 +119,4 @@ COMMIT_MESSAGE="feat: add new feature X
 ---
 
 **🎉 Автоматизируйте процесс разработки с Beauty Care Bot!**
+

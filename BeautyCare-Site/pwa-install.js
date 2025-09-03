@@ -510,3 +510,4 @@ const pwaStyles = `
 document.head.insertAdjacentHTML('beforeend', pwaStyles);
 
 console.log('🎯 PWA Install Prompt component loaded');
+
