@@ -1,219 +1,29 @@
 <!DOCTYPE html>
-<html lang="ru" data-theme="light">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Beauty Care Design System - Component Showcase</title>
-
-    <!-- Design System Styles -->
-    <link rel="stylesheet" href="./index.css">
-
-    <!-- Embedded CSS for standalone demo -->
+    <title>Beauty Care Design System - Demo</title>
+    <link rel="stylesheet" href="tokens.css">
+    <link rel="stylesheet" href="skins.css">
+    <link rel="stylesheet" href="buttons.css">
+    <link rel="stylesheet" href="forms.css">
+    <link rel="stylesheet" href="cards.css">
+    <link rel="stylesheet" href="badges.css">
+    <link rel="stylesheet" href="index.css">
     <style>
-        :root {
-            /* Brand */
-            --color-primary: #C26A8D;
-            --color-secondary: #F4DCE4;
-            --color-accent: #C9B7FF;
-
-            /* Neutrals */
-            --color-bg: #FFFFFF;
-            --color-fg: #121212;
-            --color-muted: #6B6B6B;
-            --color-surface: #FAFAFA;
-            --color-border: #E9E9E9;
-
-            /* States */
-            --color-success: #2E7D32;
-            --color-warning: #B26A00;
-            --color-danger: #B3261E;
-
-            /* Sizing & radius */
-            --radius-sm: 8px;
-            --radius-md: 12px;
-            --radius-lg: 16px;
-            --radius-pill: 999px;
-
-            /* Spacing */
-            --space-1: 4px; --space-2: 8px; --space-3: 12px;
-            --space-4: 16px; --space-5: 24px; --space-6: 32px;
-
-            /* Typography */
-            --font-family: system-ui, -apple-system, sans-serif;
-            --font-size-sm: 14px;
-            --font-size-md: 16px;
-            --font-size-lg: 18px;
-            --line-height: 1.4;
-
-            /* Icons & touch */
-            --icon-size: 24px;
-            --touch-size: 48px;
-
-            /* Shadows */
-            --shadow-sm: 0 2px 8px rgba(0,0,0,.10);
-            --shadow-md: 0 6px 16px rgba(0,0,0,.12);
-
-            /* Component tokens */
-            --button-height: 44px;
-            --input-height: 44px;
-            --card-padding: var(--space-5);
-            --badge-height: 28px;
-            --focus-ring-width: 2px;
-            --focus-ring-color: var(--color-accent);
-            --transition-fast: 0.15s ease-in-out;
-            --opacity-disabled: 0.48;
-        }
-
-        [data-theme="dark"] {
-            --color-bg: #121212;
-            --color-fg: #FFFFFF;
-            --color-muted: #CFCFCF;
-            --color-surface: #1B1B1B;
-            --color-border: #2A2A2A;
-            --shadow-sm: 0 2px 8px rgba(0,0,0,.40);
-            --shadow-md: 0 6px 18px rgba(0,0,0,.50);
-        }
-
-        /* Base styles */
-        * { box-sizing: border-box; }
         body {
             font-family: var(--font-family);
-            background: var(--color-bg);
-            color: var(--color-fg);
             line-height: var(--line-height);
             margin: 0;
             padding: var(--space-6);
+            background-color: var(--color-bg);
+            color: var(--color-fg);
+        }
+
+        .container {
             max-width: 1200px;
             margin: 0 auto;
-        }
-
-        /* Buttons */
-        .btn {
-            height: var(--button-height);
-            padding: 0 var(--space-4);
-            border-radius: var(--radius-md);
-            border: 1px solid transparent;
-            font-size: var(--font-size-md);
-            font-weight: 500;
-            cursor: pointer;
-            transition: all var(--transition-fast);
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            min-width: var(--touch-size);
-            text-decoration: none;
-        }
-
-        .btn-primary {
-            background: var(--color-primary);
-            color: #fff;
-        }
-
-        .btn-secondary {
-            background: var(--color-surface);
-            color: var(--color-fg);
-            border-color: var(--color-border);
-        }
-
-        .btn-accent {
-            background: var(--color-accent);
-            color: #fff;
-        }
-
-        .btn-ghost {
-            background: transparent;
-            color: var(--color-primary);
-            border-color: transparent;
-        }
-
-        .btn:hover:not(:disabled) {
-            opacity: 0.92;
-        }
-
-        .btn:disabled {
-            opacity: var(--opacity-disabled);
-            cursor: not-allowed;
-        }
-
-        .btn:focus {
-            outline: var(--focus-ring-width) solid var(--focus-ring-color);
-            outline-offset: 2px;
-        }
-
-        /* Cards */
-        .card {
-            background: var(--color-surface);
-            border-radius: var(--radius-lg);
-            padding: var(--card-padding);
-            box-shadow: var(--shadow-sm);
-            border: 1px solid var(--color-border);
-        }
-
-        .card-title {
-            margin: 0 0 var(--space-3) 0;
-            font-size: var(--font-size-lg);
-            font-weight: 600;
-            color: var(--color-fg);
-        }
-
-        .card-content {
-            color: var(--color-muted);
-        }
-
-        /* Forms */
-        .input {
-            height: var(--input-height);
-            padding: 0 var(--space-3);
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius-md);
-            font-size: var(--font-size-md);
-            background: var(--color-bg);
-            color: var(--color-fg);
-            transition: border-color var(--transition-fast);
-        }
-
-        .input:focus {
-            outline: none;
-            border-color: var(--color-accent);
-            box-shadow: 0 0 0 2px rgba(201, 183, 255, 0.2);
-        }
-
-        .input::placeholder {
-            color: var(--color-muted);
-        }
-
-        /* Badges */
-        .badge {
-            display: inline-flex;
-            align-items: center;
-            height: var(--badge-height);
-            padding: 0 var(--space-3);
-            border-radius: var(--radius-pill);
-            font-size: var(--font-size-sm);
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.025em;
-        }
-
-        .badge-success {
-            background: rgba(46, 125, 50, 0.1);
-            color: var(--color-success);
-        }
-
-        .badge-warning {
-            background: rgba(176, 106, 0, 0.1);
-            color: var(--color-warning);
-        }
-
-        .badge-danger {
-            background: rgba(176, 38, 30, 0.1);
-            color: var(--color-danger);
-        }
-
-        /* Layout */
-        .header {
-            text-align: center;
-            margin-bottom: var(--space-6);
         }
 
         .section {
@@ -224,20 +34,28 @@
             font-size: var(--font-size-lg);
             font-weight: 600;
             margin-bottom: var(--space-4);
+            color: var(--color-primary);
+        }
+
+        .subsection-title {
+            font-size: var(--font-size-md);
+            font-weight: 500;
+            margin: var(--space-5) 0 var(--space-3) 0;
             color: var(--color-fg);
         }
 
-        .grid {
+        .demo-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: var(--space-4);
+            margin-bottom: var(--space-5);
         }
 
-        .flex {
-            display: flex;
-            gap: var(--space-3);
-            flex-wrap: wrap;
-            align-items: center;
+        .demo-item {
+            background: var(--color-surface);
+            border-radius: var(--radius-md);
+            padding: var(--space-4);
+            box-shadow: var(--shadow-sm);
         }
 
         .theme-toggle {
@@ -246,474 +64,386 @@
             right: var(--space-4);
             z-index: 100;
         }
-    </style>
-
-    <style>
-        body {
-            padding: var(--space-6);
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .header {
-            text-align: center;
-            margin-bottom: var(--space-6);
-        }
-
-        .header h1 {
-            color: var(--color-primary);
-            font-size: 2.5rem;
-            margin-bottom: var(--space-2);
-        }
-
-        .header p {
-            color: var(--color-muted);
-            font-size: var(--font-size-lg);
-        }
-
-        .theme-toggle {
-            position: fixed;
-            top: var(--space-4);
-            right: var(--space-4);
-            z-index: var(--z-tooltip);
-        }
-
-        .section {
-            margin-bottom: var(--space-6);
-            padding: var(--space-5);
-            border: var(--input-border-width) solid var(--color-border);
-            border-radius: var(--radius-lg);
-            background: var(--color-surface);
-        }
-
-        .section h2 {
-            color: var(--color-primary);
-            font-size: var(--font-size-xl);
-            margin-bottom: var(--space-4);
-            padding-bottom: var(--space-2);
-            border-bottom: var(--input-border-width) solid var(--color-border);
-        }
-
-        .component-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: var(--space-4);
-            margin-bottom: var(--space-4);
-        }
-
-        .component-item {
-            padding: var(--space-4);
-            border: var(--input-border-width) solid var(--color-border);
-            border-radius: var(--radius-md);
-            background: var(--color-bg);
-        }
-
-        .component-item h3 {
-            color: var(--color-fg);
-            font-size: var(--font-size-lg);
-            margin-bottom: var(--space-3);
-        }
-
-        .code-snippet {
-            background: color-mix(in srgb, var(--color-surface), var(--color-fg) 5%);
-            border: var(--input-border-width) solid var(--color-border);
-            border-radius: var(--radius-sm);
-            padding: var(--space-3);
-            margin-top: var(--space-3);
-            font-family: 'Monaco', 'Menlo', monospace;
-            font-size: var(--font-size-sm);
-            color: var(--color-fg);
-            overflow-x: auto;
-        }
 
         .color-palette {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: var(--space-3);
-            margin-top: var(--space-4);
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-2);
         }
 
         .color-item {
-            text-align: center;
-        }
-
-        .color-swatch {
-            width: 80px;
+            width: 120px;
             height: 80px;
-            border-radius: var(--radius-md);
-            border: 2px solid var(--color-border);
-            margin: 0 auto var(--space-2) auto;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: flex-end;
+            padding: var(--space-2);
+            color: white;
+            font-size: var(--font-size-sm);
+            font-weight: 500;
+            box-shadow: var(--shadow-sm);
         }
 
-        .color-name {
+        .form-demo {
+            max-width: 400px;
+        }
+
+        .form-group {
+            margin-bottom: var(--space-4);
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: var(--space-2);
+            font-weight: 500;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: var(--space-3);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            font-size: var(--font-size-md);
+            background: var(--color-bg);
+            color: var(--color-fg);
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--color-accent);
+            box-shadow: 0 0 0 2px var(--color-accent);
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: var(--space-4);
+        }
+
+        .badge-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-3);
+        }
+
+        .spacing-demo {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-2);
+        }
+
+        .spacing-item {
+            height: 40px;
+            background: var(--color-accent);
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            padding: 0 var(--space-3);
+            font-size: var(--font-size-sm);
+            color: white;
+        }
+
+        .typography-demo p {
+            margin: var(--space-2) 0;
+        }
+
+        .typography-demo .heading-lg {
+            font-size: var(--font-size-lg);
+            font-weight: 600;
+        }
+
+        .typography-demo .heading-md {
+            font-size: var(--font-size-md);
+            font-weight: 500;
+        }
+
+        .typography-demo .body {
+            font-size: var(--font-size-md);
+        }
+
+        .typography-demo .caption {
+            font-size: var(--font-size-sm);
+            color: var(--color-muted);
+        }
+
+        .shadow-demo {
+            display: flex;
+            gap: var(--space-4);
+            flex-wrap: wrap;
+        }
+
+        .shadow-item {
+            width: 120px;
+            height: 80px;
+            background: var(--color-surface);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-size: var(--font-size-sm);
             color: var(--color-fg);
-            font-weight: 500;
-            margin-bottom: var(--space-1);
         }
 
-        .color-hex {
-            font-size: var(--font-size-xs);
-            color: var(--color-muted);
-            font-family: 'Monaco', 'Menlo', monospace;
+        .shadow-item.sm { box-shadow: var(--shadow-sm); }
+        .shadow-item.md { box-shadow: var(--shadow-md); }
+
+        .radius-demo {
+            display: flex;
+            gap: var(--space-3);
+            flex-wrap: wrap;
         }
+
+        .radius-item {
+            width: 80px;
+            height: 80px;
+            background: var(--color-accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: var(--font-size-sm);
+            color: white;
+        }
+
+        .radius-item.sm { border-radius: var(--radius-sm); }
+        .radius-item.md { border-radius: var(--radius-md); }
+        .radius-item.lg { border-radius: var(--radius-lg); }
+        .radius-item.pill { border-radius: var(--radius-pill); }
     </style>
 </head>
 <body>
     <!-- Theme Toggle -->
-    <button class="theme-toggle btn btn-secondary" onclick="toggleTheme()">
-        🌙 Переключить тему
-    </button>
+    <div class="theme-toggle">
+        <button class="btn btn-secondary" onclick="toggleTheme()">
+            🌙 Toggle Theme
+        </button>
+    </div>
 
-    <!-- Header -->
-    <header class="header">
-        <h1>💄 Beauty Care Design System</h1>
-        <p>Витрина компонентов системы дизайна</p>
-    </header>
+    <div class="container">
+        <header class="section">
+            <h1>🎨 Beauty Care Design System</h1>
+            <p>Комплексная дизайн-система для Telegram бота по уходу за кожей и макияжу</p>
+        </header>
 
-    <!-- Buttons Section -->
-    <section class="section">
-        <h2>🔘 Кнопки (Buttons)</h2>
+        <!-- Colors -->
+        <section class="section">
+            <h2 class="section-title">🎨 Цветовая палитра</h2>
+            <div class="color-palette">
+                <div class="color-item" style="background: var(--color-primary);">Primary<br>#C26A8D</div>
+                <div class="color-item" style="background: var(--color-secondary);">Secondary<br>#F4DCE4</div>
+                <div class="color-item" style="background: var(--color-accent);">Accent<br>#C9B7FF</div>
+                <div class="color-item" style="background: var(--color-bg);">Background<br>#FFFFFF</div>
+                <div class="color-item" style="background: var(--color-fg); color: var(--color-bg);">Foreground<br>#121212</div>
+                <div class="color-item" style="background: var(--color-muted); color: var(--color-bg);">Muted<br>#6B6B6B</div>
+                <div class="color-item" style="background: var(--color-surface);">Surface<br>#FAFAFA</div>
+                <div class="color-item" style="background: var(--color-border); color: var(--color-fg);">Border<br>#E9E9E9</div>
+                <div class="color-item" style="background: var(--color-success); color: white;">Success<br>#2E7D32</div>
+                <div class="color-item" style="background: var(--color-warning); color: white;">Warning<br>#B26A00</div>
+                <div class="color-item" style="background: var(--color-danger); color: white;">Danger<br>#B3261E</div>
+            </div>
+        </section>
 
-        <div class="component-grid">
-            <div class="component-item">
-                <h3>Варианты кнопок</h3>
-                <button class="btn btn-primary">Основная</button>
-                <button class="btn btn-secondary">Вторичная</button>
-                <button class="btn btn-accent">Акцентная</button>
-                <button class="btn btn-ghost">Призрачная</button>
+        <!-- Buttons -->
+        <section class="section">
+            <h2 class="section-title">🔘 Кнопки</h2>
+
+            <h3 class="subsection-title">Primary Buttons</h3>
+            <div class="demo-grid">
+                <div class="demo-item">
+                    <button class="btn btn-primary">Primary Button</button>
+                </div>
+                <div class="demo-item">
+                    <button class="btn btn-primary" disabled>Disabled</button>
+                </div>
             </div>
 
-            <div class="component-item">
-                <h3>Размеры кнопок</h3>
-                <button class="btn btn-primary btn-sm">Маленькая</button>
-                <button class="btn btn-primary">Средняя</button>
-                <button class="btn btn-primary" style="height: 48px; padding: 0 20px;">Большая</button>
+            <h3 class="subsection-title">Secondary Buttons</h3>
+            <div class="demo-grid">
+                <div class="demo-item">
+                    <button class="btn btn-secondary">Secondary Button</button>
+                </div>
+                <div class="demo-item">
+                    <button class="btn btn-secondary" disabled>Disabled</button>
+                </div>
             </div>
 
-            <div class="component-item">
-                <h3>Состояния кнопок</h3>
-                <button class="btn btn-success">Успех</button>
-                <button class="btn btn-warning">Предупреждение</button>
-                <button class="btn btn-danger">Ошибка</button>
-                <button class="btn btn-primary" disabled>Отключена</button>
-                <button class="btn btn-primary btn-loading">Загрузка</button>
+            <h3 class="subsection-title">Ghost Buttons</h3>
+            <div class="demo-grid">
+                <div class="demo-item">
+                    <button class="btn btn-ghost">Ghost Button</button>
+                </div>
+                <div class="demo-item">
+                    <button class="btn btn-ghost" disabled>Disabled</button>
+                </div>
             </div>
+        </section>
 
-            <div class="component-item">
-                <h3>Кнопки с иконками</h3>
-                <button class="btn btn-primary">
-                    <span class="btn-icon">📝</span>
-                    Редактировать
-                </button>
-                <button class="btn btn-secondary">
-                    <span class="btn-icon">❤️</span>
-                    Избранное
-                </button>
-                <button class="btn btn-accent">
-                    <span class="btn-icon">🛒</span>
-                    Купить
-                </button>
+        <!-- Forms -->
+        <section class="section">
+            <h2 class="section-title">📝 Формы</h2>
+            <div class="demo-grid">
+                <div class="demo-item">
+                    <div class="form-demo">
+                        <div class="form-group">
+                            <label class="form-label">Имя</label>
+                            <input type="text" class="form-input" placeholder="Введите имя">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-input" placeholder="your@email.com">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Сообщение</label>
+                            <textarea class="form-input" rows="3" placeholder="Ваше сообщение"></textarea>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
+        </section>
 
-        <div class="code-snippet">
-&lt;button class="btn btn-primary"&gt;Основная&lt;/button&gt;<br>
-&lt;button class="btn btn-secondary"&gt;Вторичная&lt;/button&gt;<br>
-&lt;button class="btn btn-accent"&gt;Акцентная&lt;/button&gt;
-        </div>
-    </section>
-
-    <!-- Cards Section -->
-    <section class="section">
-        <h2>🃏 Карточки (Cards)</h2>
-
-        <div class="component-grid">
-            <div class="component-item">
-                <h3>Базовая карточка</h3>
+        <!-- Cards -->
+        <section class="section">
+            <h2 class="section-title">📋 Карточки</h2>
+            <div class="card-grid">
                 <div class="card">
                     <div class="card-header">
-                        <h4 class="card-title">Название продукта</h4>
-                        <p class="card-subtitle">Описание категории</p>
+                        <h3>Базовая карточка</h3>
                     </div>
                     <div class="card-body">
-                        <p>Подробное описание продукта с характеристиками и преимуществами.</p>
-                        <div class="card-meta">
-                            <span class="card-meta-item">Для сухой кожи</span>
-                            <span class="card-meta-item">SPF 30</span>
-                        </div>
+                        <p>Это базовая карточка с заголовком и содержимым. Используется для отображения информации в структурированном виде.</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Карточка с действиями</h3>
+                    </div>
+                    <div class="card-body">
+                        <p>Карточка может содержать различные элементы интерфейса и действия пользователя.</p>
                     </div>
                     <div class="card-footer">
-                        <div class="card-price">2 499 ₽</div>
-                        <div class="card-actions">
-                            <button class="btn btn-primary">Купить</button>
-                            <button class="btn btn-secondary">Подробнее</button>
-                        </div>
+                        <button class="btn btn-primary">Действие</button>
+                        <button class="btn btn-ghost">Отмена</button>
                     </div>
                 </div>
             </div>
+        </section>
 
-            <div class="component-item">
-                <h3>Карточка рекомендации</h3>
-                <div class="card card-recommendation">
-                    <div class="card-body">
-                        <h4 class="card-title">Персональная рекомендация</h4>
-                        <p>На основе вашего типа кожи и предпочтений.</p>
-                        <div class="card-meta">
-                            <span class="card-meta-item">Высокий рейтинг</span>
-                            <span class="card-meta-item">Популярный выбор</span>
-                        </div>
-                    </div>
-                    <div class="card-actions">
-                        <button class="btn btn-accent">Применить</button>
-                    </div>
+        <!-- Badges -->
+        <section class="section">
+            <h2 class="section-title">🏷️ Бейджи</h2>
+            <div class="badge-grid">
+                <span class="badge badge-success">Success</span>
+                <span class="badge badge-warning">Warning</span>
+                <span class="badge badge-danger">Danger</span>
+                <span class="badge">Default</span>
+                <span class="badge badge-muted">Muted</span>
+            </div>
+        </section>
+
+        <!-- Typography -->
+        <section class="section">
+            <h2 class="section-title">📖 Типографика</h2>
+            <div class="typography-demo">
+                <p class="heading-lg">Крупный заголовок (18px, 600)</p>
+                <p class="heading-md">Средний заголовок (16px, 500)</p>
+                <p class="body">Основной текст (16px, 400). Это стандартный размер шрифта для основного содержимого. Он обеспечивает хорошую читаемость и комфорт для глаз.</p>
+                <p class="caption">Вспомогательный текст (14px). Используется для подписей, сносок и второстепенной информации.</p>
+            </div>
+        </section>
+
+        <!-- Spacing -->
+        <section class="section">
+            <h2 class="section-title">📏 Отступы</h2>
+            <div class="spacing-demo">
+                <div class="spacing-item">--space-1: 4px</div>
+                <div class="spacing-item">--space-2: 8px</div>
+                <div class="spacing-item">--space-3: 12px</div>
+                <div class="spacing-item">--space-4: 16px</div>
+                <div class="spacing-item">--space-5: 24px</div>
+                <div class="spacing-item">--space-6: 32px</div>
+            </div>
+        </section>
+
+        <!-- Shadows -->
+        <section class="section">
+            <h2 class="section-title">🎭 Тени</h2>
+            <div class="shadow-demo">
+                <div class="shadow-item sm">--shadow-sm</div>
+                <div class="shadow-item md">--shadow-md</div>
+            </div>
+        </section>
+
+        <!-- Border Radius -->
+        <section class="section">
+            <h2 class="section-title">🔄 Радиусы скругления</h2>
+            <div class="radius-demo">
+                <div class="radius-item sm">--radius-sm: 8px</div>
+                <div class="radius-item md">--radius-md: 12px</div>
+                <div class="radius-item lg">--radius-lg: 16px</div>
+                <div class="radius-item pill">--radius-pill: 999px</div>
+            </div>
+        </section>
+
+        <!-- Touch Targets -->
+        <section class="section">
+            <h2 class="section-title">👆 Области касания</h2>
+            <div class="demo-grid">
+                <div class="demo-item">
+                    <p>Минимальная область касания: <strong>48x48px (--touch-size)</strong></p>
+                    <p>Все интерактивные элементы должны иметь область касания не менее 48 пикселей для обеспечения доступности.</p>
                 </div>
             </div>
+        </section>
 
-            <div class="component-item">
-                <h3>Компактная карточка</h3>
-                <div class="card card-compact">
-                    <div class="card-body">
-                        <h4 class="card-title">Быстрый уход</h4>
-                        <div class="card-price">899 ₽</div>
-                    </div>
-                    <div class="card-actions">
-                        <button class="btn btn-primary">В корзину</button>
-                    </div>
+        <!-- Dark Theme Preview -->
+        <section class="section">
+            <h2 class="section-title">🌙 Темная тема</h2>
+            <div class="demo-grid">
+                <div class="demo-item" style="background: #121212; color: #FFFFFF;">
+                    <h3>Темная тема активна</h3>
+                    <p>Нажмите кнопку "Toggle Theme" в правом верхнем углу для переключения между светлой и темной темами.</p>
+                    <button class="btn btn-primary" style="background: #C26A8D; color: white;">Primary в темной теме</button>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <div class="code-snippet">
-&lt;div class="card"&gt;<br>
-  &lt;div class="card-header"&gt;<br>
-    &lt;h4 class="card-title"&gt;Название&lt;/h4&gt;<br>
-  &lt;/div&gt;<br>
-  &lt;div class="card-body"&gt;Содержимое&lt;/div&gt;<br>
-  &lt;div class="card-footer"&gt;Действия&lt;/div&gt;<br>
-&lt;/div&gt;
-        </div>
-    </section>
-
-    <!-- Forms Section -->
-    <section class="section">
-        <h2>📝 Формы (Forms)</h2>
-
-        <div class="component-grid">
-            <div class="component-item">
-                <h3>Поля ввода</h3>
-                <div class="form-group">
-                    <label class="form-label">Имя</label>
-                    <input type="text" class="input" placeholder="Введите ваше имя">
-                    <div class="form-help">Это поле обязательно для заполнения</div>
+        <!-- Accessibility -->
+        <section class="section">
+            <h2 class="section-title">♿ Доступность</h2>
+            <div class="demo-grid">
+                <div class="demo-item">
+                    <h3>WCAG AA Compliance</h3>
+                    <ul>
+                        <li>✅ Контрастность текста: минимум 4.5:1</li>
+                        <li>✅ Области касания: минимум 48x48px</li>
+                        <li>✅ Фокус: видимые индикаторы фокуса</li>
+                        <li>✅ Цвет: не единственный способ передачи информации</li>
+                        <li>✅ Шрифты: читаемые размеры и семейства</li>
+                    </ul>
                 </div>
-
-                <div class="form-group">
-                    <label class="form-label">Email</label>
-                    <input type="email" class="input input-success" placeholder="email@example.com" value="user@example.com">
-                    <div class="form-help text-success">Email подтвержден</div>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Пароль</label>
-                    <input type="password" class="input input-error" placeholder="Введите пароль">
-                    <div class="form-help text-danger">Пароль должен содержать минимум 8 символов</div>
+                <div class="demo-item">
+                    <h3>Keyboard Navigation</h3>
+                    <p>Все интерактивные элементы доступны с клавиатуры:</p>
+                    <ul>
+                        <li>Tab - навигация между элементами</li>
+                        <li>Enter/Space - активация кнопок</li>
+                        <li>Escape - закрытие модальных окон</li>
+                    </ul>
                 </div>
             </div>
-
-            <div class="component-item">
-                <h3>Другие элементы</h3>
-                <div class="form-group">
-                    <label class="form-label">Тип кожи</label>
-                    <select class="select">
-                        <option>Выберите тип кожи</option>
-                        <option>Нормальная</option>
-                        <option>Сухая</option>
-                        <option>Жирная</option>
-                        <option>Комбинированная</option>
-                        <option>Чувствительная</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label class="checkbox-group">
-                        <input type="checkbox" class="checkbox" checked>
-                        <span class="checkbox-label">Согласен с условиями</span>
-                    </label>
-                </div>
-
-                <div class="form-group">
-                    <label class="radio-group">
-                        <input type="radio" name="frequency" class="radio" checked>
-                        <span class="radio-label">Ежедневно</span>
-                    </label>
-                    <label class="radio-group">
-                        <input type="radio" name="frequency" class="radio">
-                        <span class="radio-label">Через день</span>
-                    </label>
-                </div>
-            </div>
-
-            <div class="component-item">
-                <h3>Многострочный текст</h3>
-                <div class="form-group">
-                    <label class="form-label">Комментарий</label>
-                    <textarea class="textarea" placeholder="Опишите ваши предпочтения в уходе за кожей..." rows="4"></textarea>
-                    <div class="form-help">Максимум 500 символов</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="code-snippet">
-&lt;div class="form-group"&gt;<br>
-  &lt;label class="form-label"&gt;Имя&lt;/label&gt;<br>
-  &lt;input type="text" class="input" placeholder="Введите имя"&gt;<br>
-  &lt;div class="form-help"&gt;Помощь&lt;/div&gt;<br>
-&lt;/div&gt;
-        </div>
-    </section>
-
-    <!-- Badges Section -->
-    <section class="section">
-        <h2>🏷️ Бейджи (Badges)</h2>
-
-        <div class="component-grid">
-            <div class="component-item">
-                <h3>Варианты бейджей</h3>
-                <div style="display: flex; gap: var(--space-2); flex-wrap: wrap; margin-bottom: var(--space-3);">
-                    <span class="badge badge-primary">Primary</span>
-                    <span class="badge badge-secondary">Secondary</span>
-                    <span class="badge badge-success">Успех</span>
-                    <span class="badge badge-warning">Внимание</span>
-                    <span class="badge badge-danger">Ошибка</span>
-                </div>
-
-                <div style="display: flex; gap: var(--space-2); flex-wrap: wrap; margin-bottom: var(--space-3);">
-                    <span class="badge badge-outline badge-primary">Outlined</span>
-                    <span class="badge badge-soft badge-success">Soft</span>
-                    <span class="badge badge-primary badge-icon">✨ Акцент</span>
-                </div>
-
-                <div style="display: flex; gap: var(--space-2); flex-wrap: wrap;">
-                    <span class="badge badge-sm badge-primary">Маленький</span>
-                    <span class="badge badge-primary">Средний</span>
-                    <span class="badge badge-lg badge-primary">Большой</span>
-                </div>
-            </div>
-
-            <div class="component-item">
-                <h3>Бейджи типов кожи</h3>
-                <div style="display: flex; gap: var(--space-2); flex-wrap: wrap;">
-                    <span class="badge badge-skin-normal">Нормальная</span>
-                    <span class="badge badge-skin-dry">Сухая</span>
-                    <span class="badge badge-skin-oily">Жирная</span>
-                    <span class="badge badge-skin-combination">Комбинированная</span>
-                    <span class="badge badge-skin-sensitive">Чувствительная</span>
-                </div>
-            </div>
-
-            <div class="component-item">
-                <h3>Категории продуктов</h3>
-                <div style="display: flex; gap: var(--space-2); flex-wrap: wrap;">
-                    <span class="badge badge-category-cleanser">🧼 Очищение</span>
-                    <span class="badge badge-category-toner">💧 Тоники</span>
-                    <span class="badge badge-category-serum">✨ Сыворотки</span>
-                    <span class="badge badge-category-moisturizer">🧴 Увлажнение</span>
-                    <span class="badge badge-category-sunscreen">☀️ Солнцезащита</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="code-snippet">
-&lt;span class="badge badge-primary"&gt;Primary&lt;/span&gt;<br>
-&lt;span class="badge badge-success"&gt;Успех&lt;/span&gt;<br>
-&lt;span class="badge badge-outline badge-warning"&gt;Outlined&lt;/span&gt;
-        </div>
-    </section>
-
-    <!-- Colors Section -->
-    <section class="section">
-        <h2>🎨 Цветовая палитра</h2>
-
-        <div class="color-palette">
-            <div class="color-item">
-                <div class="color-swatch" style="background: var(--color-primary)"></div>
-                <div class="color-name">Primary</div>
-                <div class="color-hex">#C26A8D</div>
-            </div>
-            <div class="color-item">
-                <div class="color-swatch" style="background: var(--color-secondary)"></div>
-                <div class="color-name">Secondary</div>
-                <div class="color-hex">#F4DCE4</div>
-            </div>
-            <div class="color-item">
-                <div class="color-swatch" style="background: var(--color-accent)"></div>
-                <div class="color-name">Accent</div>
-                <div class="color-hex">#C9B7FF</div>
-            </div>
-            <div class="color-item">
-                <div class="color-swatch" style="background: var(--color-success)"></div>
-                <div class="color-name">Success</div>
-                <div class="color-hex">#2E7D32</div>
-            </div>
-            <div class="color-item">
-                <div class="color-swatch" style="background: var(--color-warning)"></div>
-                <div class="color-name">Warning</div>
-                <div class="color-hex">#B26A00</div>
-            </div>
-            <div class="color-item">
-                <div class="color-swatch" style="background: var(--color-danger)"></div>
-                <div class="color-name">Danger</div>
-                <div class="color-hex">#B3261E</div>
-            </div>
-        </div>
-
-        <div class="code-snippet">
-/* Использование цветов */<br>
-.my-element {<br>
-  background: var(--color-primary);<br>
-  color: var(--color-bg);<br>
-  border: 1px solid var(--color-border);<br>
-}
-        </div>
-    </section>
+        </section>
+    </div>
 
     <script>
         function toggleTheme() {
-            const html = document.documentElement;
-            const button = document.querySelector('.theme-toggle');
-            const currentTheme = html.getAttribute('data-theme');
-
-            if (currentTheme === 'light') {
-                html.setAttribute('data-theme', 'dark');
-                button.textContent = '☀️ Светлая тема';
-            } else {
-                html.setAttribute('data-theme', 'light');
-                button.textContent = '🌙 Темная тема';
-            }
+            const body = document.body;
+            const currentTheme = body.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            body.setAttribute('data-theme', newTheme);
         }
 
-        // Add loading state demo
-        document.addEventListener('click', function(e) {
-            if (e.target.classList.contains('btn-loading')) {
-                e.target.textContent = 'Загрузка...';
-                setTimeout(() => {
-                    e.target.textContent = 'Загрузка';
-                    e.target.classList.remove('btn-loading');
-                }, 2000);
-            }
-        });
-
-        // Focus management demo
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Tab') {
-                document.body.classList.add('keyboard-navigation');
-            }
-        });
-
-        document.addEventListener('mousedown', function() {
-            document.body.classList.remove('keyboard-navigation');
-        });
+        // Initialize theme
+        document.body.setAttribute('data-theme', 'light');
     </script>
 </body>
 </html>
