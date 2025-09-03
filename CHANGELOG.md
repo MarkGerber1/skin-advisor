@@ -38,6 +38,14 @@ BTN_MAKEUP_TONE = "Тон/BB/CC"
 - ✅ Cart counter updates correctly
 - ✅ Analytics logged throughout user journey
 
+### 🐛 **Bug Fixes in v1.0.2**
+- **Fixed**: `NameError: name 'BTN_MAKEUP_TONE' is not defined` in makeup picker
+- **Fixed**: `ImportError: cannot import name 'resolve_source'` from source_resolver
+- **Fixed**: Missing fallback constants for BTN_MAKEUP_* series
+- **Added**: Wrapper function for SourceResolver.resolve_source() method
+- **Added**: Complete fallback classes for production deployment
+- **Result**: Bot starts successfully in Railway/production environment
+
 ---
 
 ## [1.0.1] - Critical Import Fix - December 2024
