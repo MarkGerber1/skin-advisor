@@ -57,6 +57,14 @@ except ImportError as e:
     raise
 
 try:
+    from bot.handlers.makeup_picker import router as makeup_picker_router
+
+    print("OK makeup picker router imported")
+except ImportError as e:
+    print(f"ERROR Failed to import makeup picker router: {e}")
+    raise
+
+try:
     from bot.handlers.cart import router as cart_router
 
     print("OK cart router imported")
@@ -191,6 +199,7 @@ async def main() -> None:
     dp.include_router(detailed_palette_router)  # Detailed palette test - BEFORE universal
     dp.include_router(detailed_skincare_router)  # Detailed skincare test - BEFORE universal
     dp.include_router(skincare_picker_router)  # Skincare product picker - AFTER tests
+    dp.include_router(makeup_picker_router)  # Makeup product picker - AFTER tests
     dp.include_router(skincare_router)
     dp.include_router(palette_router)
     dp.include_router(cart_router)

@@ -31,6 +31,25 @@ BTN_EYE = "Зона вокруг глаз"
 BTN_SPF = "Солнцезащита"
 BTN_REMOVER = "Снятие макияжа"
 
+# Makeup picker
+HEAD_MAKEUP_PICK = "Подборка макияжа по результатам"
+SUB_PICK_MAKEUP = "Выберите категорию и оттенки"
+
+# Makeup category buttons
+BTN_MAKEUP_TONE = "Тон/BB/CC"
+BTN_MAKEUP_CONCEALER = "Консилер"
+BTN_MAKEUP_CORRECTOR = "Корректор"
+BTN_MAKEUP_POWDER = "Пудра"
+BTN_MAKEUP_BLUSH = "Румяна"
+BTN_MAKEUP_BRONZER = "Бронзер"
+BTN_MAKEUP_CONTOUR = "Скульптор"
+BTN_MAKEUP_HIGHLIGHTER = "Хайлайтер"
+BTN_MAKEUP_BROWS = "Брови"
+BTN_MAKEUP_EYESHADOW = "Тени"
+BTN_MAKEUP_EYELINER = "Лайнер/Карандаш"
+BTN_MAKEUP_MASCARA = "Тушь"
+BTN_MAKEUP_LIPS = "Губы"
+
 # Product actions
 BTN_CHOOSE_VARIANT = "Выбрать вариант"
 BTN_ADD_TO_CART = "Добавить в корзину"
@@ -117,6 +136,25 @@ BTN_MOIST = "Увлажнение"
 BTN_EYE = "Зона вокруг глаз"
 BTN_SPF = "Солнцезащита"
 BTN_REMOVER = "Снятие макияжа"
+
+# Makeup picker
+HEAD_MAKEUP_PICK = "Подборка макияжа по результатам"
+SUB_PICK_MAKEUP = "Выберите категорию и оттенки"
+
+# Makeup category buttons
+BTN_MAKEUP_TONE = "Тон/BB/CC"
+BTN_MAKEUP_CONCEALER = "Консилер"
+BTN_MAKEUP_CORRECTOR = "Корректор"
+BTN_MAKEUP_POWDER = "Пудра"
+BTN_MAKEUP_BLUSH = "Румяна"
+BTN_MAKEUP_BRONZER = "Бронзер"
+BTN_MAKEUP_CONTOUR = "Скульптор"
+BTN_MAKEUP_HIGHLIGHTER = "Хайлайтер"
+BTN_MAKEUP_BROWS = "Брови"
+BTN_MAKEUP_EYESHADOW = "Тени"
+BTN_MAKEUP_EYELINER = "Лайнер/Карандаш"
+BTN_MAKEUP_MASCARA = "Тушь"
+BTN_MAKEUP_LIPS = "Губы"
 
 # Product actions
 BTN_CHOOSE_VARIANT = "Выбрать вариант"
