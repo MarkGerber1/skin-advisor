@@ -40,11 +40,14 @@ BTN_MAKEUP_TONE = "Тон/BB/CC"
 
 ### 🐛 **Bug Fixes in v1.0.2**
 - **Fixed**: `NameError: name 'BTN_MAKEUP_TONE' is not defined` in makeup picker
+- **Fixed**: `NameError: name 'BTN_TONE' is not defined` in CATEGORY_* assignments
 - **Fixed**: `ImportError: cannot import name 'resolve_source'` from source_resolver
 - **Fixed**: Missing fallback constants for BTN_MAKEUP_* series
 - **Added**: Wrapper function for SourceResolver.resolve_source() method
 - **Added**: Complete fallback classes for production deployment
+- **Added**: All BTN_MAKEUP_* constants in i18n/ru.py
 - **Result**: Bot starts successfully in Railway/production environment
+- **Result**: Makeup picker fully functional with all 13 categories
 
 ---
 
