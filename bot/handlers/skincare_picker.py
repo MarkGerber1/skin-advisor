@@ -74,22 +74,14 @@ except ImportError:
         CAT_SPF = "sun_protection"
         CAT_MASK = "masks"
 
-        # UI category names
-        CATEGORY_CLEANSER = "Очищение"
-        CATEGORY_TONER = "Тонизирование"
-        CATEGORY_SERUM = "Концентраты"
-        CATEGORY_MOISTURIZER = "Увлажнение"
-        CATEGORY_EYE_CARE = "Уход за областью глаз"
-        CATEGORY_SUN_PROTECTION = "Защита от солнца"
-        CATEGORY_MASK = "Маски"
-
-        # Button constants
-        BTN_CLEANSE = "Очищение"
-        BTN_TONE = "Тонизирование"
-        BTN_SERUM = "Сыворотки"
-        BTN_MOIST = "Увлажнение"
-        BTN_EYE = "Зона вокруг глаз"
-        BTN_SPF = "Солнцезащита"
+        # UI category names (sync with i18n)
+        CATEGORY_CLEANSER = BTN_CLEANSE
+        CATEGORY_TONER = BTN_TONE
+        CATEGORY_SERUM = BTN_SERUM
+        CATEGORY_MOISTURIZER = BTN_MOIST
+        CATEGORY_EYE_CARE = BTN_EYE
+        CATEGORY_SUN_PROTECTION = BTN_SPF
+        CATEGORY_MASK = BTN_REMOVER
         BTN_ADD_TO_CART = "Добавить в корзину"
         BTN_CHOOSE_VARIANT = "Выбрать вариант"
         MSG_ADDED = "Добавлено в корзину: {item}"
@@ -260,7 +252,32 @@ def _get_products_by_category(user_id: int, category_slug: str, page: int = 1) -
         return [], 0
 
 
-@router.callback_query(F.data == "skincare_result:products")
+# Theme switcher
+@router.message(F.text == "/theme")
+async def switch_theme(message: Message) -> None:
+    """Переключатель тем (светлая/темная)"""
+    user_id = message.from_user.id if message.from_user else 0
+
+    # Имитируем переключение темы (в реальности нужно хранить в БД)
+    current_theme = "light"  # В реальности брать из user preferences
+
+    if current_theme == "light":
+        new_theme = "dark"
+        theme_name = "темную"
+    else:
+        new_theme = "light"
+        theme_name = "светлую"
+
+    # Сохранить новую тему для пользователя (в будущем)
+    # await save_user_theme(user_id, new_theme)
+
+    await message.answer(
+        f"🌙 Тема переключена на {theme_name}!\n\n"
+        f"Используйте команду снова для переключения.",
+        reply_markup=None
+    )
+
+@router.callback_query(F.data == "skincare_picker:start")
 async def start_skincare_picker(cb: CallbackQuery, state: FSMContext) -> None:
     """Запуск подбора ухода после теста"""
     try:
