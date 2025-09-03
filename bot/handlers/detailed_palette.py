@@ -544,6 +544,7 @@ async def q8_lip_color(cb: CallbackQuery, state: FSMContext) -> None:
             reply_markup=InlineKeyboardMarkup(inline_keyboard=[
                 [InlineKeyboardButton(text="ℹ️ Полное описание цветотипа", callback_data="result:description")],
                 [InlineKeyboardButton(text="🛍️ Что купить", callback_data="result:products")],
+                [InlineKeyboardButton(text="💄 Подобрать макияж", callback_data="makeup_picker:start")],
                 [InlineKeyboardButton(text="📄 Получить отчёт", callback_data="report:latest")],
                 [InlineKeyboardButton(text="🏠 Главное меню", callback_data="universal:home")]
             ])
