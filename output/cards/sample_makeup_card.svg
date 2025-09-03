@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="800" height="600" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="100%" height="100%" fill="#FFFFFF"/>
+
+  <!-- Header gradient -->
+  <defs>
+    <linearGradient id="headerGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#C26A8D;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#C9B7FF;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Header -->
+  <rect x="0" y="0" width="100%" height="120" fill="url(#headerGradient)"/>
+  <text x="50%" y="50" font-family="Arial" font-size="32"
+        fill="white" text-anchor="middle" dominant-baseline="middle" font-weight="bold">Ваш цветотип</text>
+  <text x="50%" y="90" font-family="Arial" font-size="24" fill="white" text-anchor="middle" opacity="0.9">🌸 Яркая Весна</text>
+
+  <!-- Undertone info -->
+  <text x="50" y="160" font-family="Arial" font-size="18"
+        fill="#121212" font-weight="bold">Подтон кожи: Теплый</text>
+
+  <!-- Palette visualization -->
+  <text x="50" y="200" font-family="Arial" font-size="24"
+        fill="#C26A8D" font-weight="bold">Рекомендуемая палитра:</text>
+
+  <!-- Color swatches -->
+  <rect x="50" y="220" width="80" height="80" fill="#C26A8D" rx="8"/>
+  <text x="90" y="270" font-family="Arial" font-size="14"
+        fill="#121212" text-anchor="middle">Основной</text>
+
+  <rect x="150" y="220" width="80" height="80" fill="#F4DCE4" rx="8"/>
+  <text x="190" y="270" font-family="Arial" font-size="14"
+        fill="#121212" text-anchor="middle">Второстепенный</text>
+
+  <rect x="250" y="220" width="80" height="80" fill="#C9B7FF" rx="8"/>
+  <text x="290" y="270" font-family="Arial" font-size="14"
+        fill="#121212" text-anchor="middle">Акцент</text>
+
+  <!-- Makeup recommendations -->
+  <text x="50" y="320" font-family="Arial" font-size="24"
+        fill="#C26A8D" font-weight="bold">Рекомендации по макияжу:</text>
+
+  <text x="50" y="350" font-family="Arial" font-size="18"
+        fill="#121212">• Тон: Теплые бежевые тона с золотистым подтоном</text>
+  <text x="50" y="375" font-family="Arial" font-size="18"
+        fill="#121212">• Румяна: Персиковые и абрикосовые оттенки</text>
+  <text x="50" y="400" font-family="Arial" font-size="18"
+        fill="#121212">• Тени: Золотистые, персиковые и лавандовые тона</text>
+  <text x="50" y="425" font-family="Arial" font-size="18"
+        fill="#121212">• Помада: Нежные коралловые и персиковые тона</text>
+
+  <!-- Footer -->
+  <text x="50" y="480" font-family="Arial" font-size="14"
+        fill="#6B6B6B">Beauty Care • Персонализированные рекомендации</text>
+  <text x="50" y="500" font-family="Arial" font-size="14"
+        fill="#6B6B6B">Используйте /theme для переключения тем</text>
+
+  <!-- Decorative elements -->
+  <circle cx="700" cy="100" r="40" fill="#C26A8D" opacity="0.2"/>
+  <circle cx="720" cy="80" r="30" fill="#C9B7FF" opacity="0.3"/>
+  <circle cx="680" cy="120" r="25" fill="#F4DCE4" opacity="0.4"/>
+</svg>
