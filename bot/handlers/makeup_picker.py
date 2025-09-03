@@ -215,48 +215,141 @@ MAKEUP_CATEGORIES = [
 def select_shades(profile: UserProfile, product: Product) -> List[Dict]:
     """
     Выбор подходящих оттенков на основе профиля пользователя
+    Учитывает сезон, подтон, цвет глаз, волос, контраст
     Возвращает список вариантов в порядке релевантности
     """
     if not ENGINE_AVAILABLE or not profile or not product:
         return []
 
     try:
-        # Логика выбора оттенков на основе профиля
+        # Извлекаем параметры профиля
         undertone = profile.undertone if hasattr(profile, 'undertone') else 'neutral'
         season = profile.season if hasattr(profile, 'season') else 'neutral'
+        eye_color = getattr(profile, 'eye_color', None)
+        hair_color = getattr(profile, 'hair_color', '')
+        contrast_level = getattr(profile, 'contrast_level', 'medium')
+        makeup_style = getattr(profile, 'makeup_style', '')
 
-        # Базовая логика маппинга оттенков
+        # Получаем категорию продукта для специфической логики
+        product_category = getattr(product, 'category', '')
+
+        # Расширенная логика маппинга оттенков
         shade_mapping = {
-            'warm': ['warm', 'golden', 'peach', 'coral'],
-            'cool': ['cool', 'ash', 'rose', 'berry'],
-            'neutral': ['beige', 'nude', 'taupe']
+            'foundation': {
+                'warm': ['warm beige', 'golden', 'peach', 'honey', 'amber'],
+                'cool': ['cool beige', 'ash', 'rose beige', 'porcelain', 'ivory'],
+                'neutral': ['neutral beige', 'nude', 'buff', 'taupe', 'sand']
+            },
+            'blush': {
+                'warm': ['peach', 'coral', 'salmon', 'apricot', 'mauve'],
+                'cool': ['rose', 'berry', 'dusty rose', 'cool pink', 'plum'],
+                'neutral': ['nude', 'dusty mauve', 'soft rose', 'cinnamon']
+            },
+            'eyeshadow': {
+                'warm': ['golden', 'copper', 'bronze', 'taupe', 'cinnamon'],
+                'cool': ['charcoal', 'navy', 'emerald', 'violet', 'silver'],
+                'neutral': ['brown', 'gray', 'olive', 'beige', 'nude']
+            },
+            'lipstick': {
+                'warm': ['coral', 'peach', 'terracotta', 'cinnamon', 'mauve'],
+                'cool': ['berry', 'cool pink', 'plum', 'fuchsia', 'cherry'],
+                'neutral': ['nude', 'dusty rose', 'taupe', 'auburn', 'brick']
+            },
+            'highlighter': {
+                'warm': ['golden', 'peach', 'copper', 'champagne'],
+                'cool': ['silver', 'rose gold', 'platinum', 'diamond'],
+                'neutral': ['beige', 'cream', 'nude', 'bronze']
+            }
         }
 
-        # Получаем подходящие оттенки для подтона
-        preferred_shades = shade_mapping.get(undertone, ['nude'])
+        # Специфическая логика для цвета глаз
+        eye_color_mapping = {
+            'blue': ['warm', 'golden', 'copper'],  # Голубые глаза + теплые тона
+            'green': ['warm', 'golden', 'emerald'],  # Зеленые глаза + комплементарные
+            'brown': ['neutral', 'taupe', 'bronze'],  # Карие глаза + нейтральные
+            'gray': ['cool', 'silver', 'charcoal'],  # Серые глаза + холодные
+            'hazel': ['warm', 'golden', 'cinnamon']  # Ореховые глаза + теплые
+        }
 
-        # Фильтруем варианты продукта по подходящим оттенкам
+        # Специфическая логика для цвета волос
+        hair_color_mapping = {
+            'blonde': ['warm', 'golden', 'peach'],  # Светлые волосы + теплые тона
+            'brunette': ['neutral', 'taupe', 'auburn'],  # Темные волосы + нейтральные
+            'red': ['warm', 'coral', 'cinnamon'],  # Рыжие волосы + теплые тона
+            'black': ['cool', 'charcoal', 'navy'],  # Черные волосы + холодные
+            'gray': ['cool', 'silver', 'platinum']  # Седые волосы + холодные
+        }
+
+        # Логика контраста
+        contrast_mapping = {
+            'high': ['cool', 'charcoal', 'navy', 'black'],  # Высокий контраст + насыщенные
+            'low': ['warm', 'peach', 'beige', 'nude'],  # Низкий контраст + мягкие
+            'medium': ['neutral', 'taupe', 'brown', 'rose']  # Средний контраст + сбалансированные
+        }
+
+        # Определяем предпочтительные оттенки
+        preferred_shades = []
+
+        # Базовые предпочтения по подтону
+        base_mapping = shade_mapping.get(product_category, {}).get(undertone, ['nude'])
+        preferred_shades.extend(base_mapping)
+
+        # Учитываем цвет глаз
+        if eye_color:
+            eye_mapping = eye_color_mapping.get(eye_color, [])
+            preferred_shades.extend(eye_mapping)
+
+        # Учитываем цвет волос
+        if hair_color:
+            hair_mapping = hair_color_mapping.get(hair_color.lower(), [])
+            preferred_shades.extend(hair_mapping)
+
+        # Учитываем контраст
+        contrast_mapping_list = contrast_mapping.get(contrast_level, [])
+        preferred_shades.extend(contrast_mapping_list)
+
+        # Удаляем дубликаты и сохраняем порядок
+        seen = set()
+        preferred_shades = [x for x in preferred_shades if not (x in seen or seen.add(x))]
+
+        # Если предпочтений мало, добавляем базовые
+        if len(preferred_shades) < 3:
+            preferred_shades.extend(['nude', 'beige', 'neutral'])
+
+        # Фильтруем варианты продукта
         suitable_variants = []
         if hasattr(product, 'variants') and product.variants:
             for variant in product.variants:
                 variant_name = getattr(variant, 'name', '').lower()
                 variant_type = getattr(variant, 'type', '').lower()
+                variant_undertone = getattr(variant, 'undertone', '').lower()
 
-                # Проверяем, подходит ли оттенок
-                for shade in preferred_shades:
-                    if shade in variant_name or shade in variant_type:
-                        suitable_variants.append({
-                            'variant': variant,
-                            'relevance_score': 1.0  # Можно доработать логику скоринга
-                        })
+                relevance_score = 0.0
+
+                # Проверяем совпадения с предпочтениями
+                for i, shade in enumerate(preferred_shades):
+                    weight = 1.0 - (i * 0.1)  # Чем раньше в списке, тем выше вес
+
+                    if shade in variant_name or shade in variant_type or shade in variant_undertone:
+                        relevance_score = max(relevance_score, weight)
                         break
+
+                # Дополнительные бонусы
+                if undertone and undertone in variant_undertone:
+                    relevance_score += 0.3
+
+                if relevance_score > 0:
+                    suitable_variants.append({
+                        'variant': variant,
+                        'relevance_score': min(relevance_score, 1.0)
+                    })
 
         # Если нет точных совпадений, берем первые доступные варианты
         if not suitable_variants and hasattr(product, 'variants') and product.variants:
             for variant in product.variants[:3]:  # Максимум 3 варианта
                 suitable_variants.append({
                     'variant': variant,
-                    'relevance_score': 0.5
+                    'relevance_score': 0.3
                 })
 
         # Сортируем по релевантности
@@ -466,7 +559,7 @@ async def show_makeup_category(cb: CallbackQuery, state: FSMContext) -> None:
 
 @router.callback_query(F.data.startswith("m:prd:"))
 async def show_makeup_product(cb: CallbackQuery, state: FSMContext) -> None:
-    """Показать детали продукта и варианты"""
+    """Показать детали продукта с кнопкой выбора оттенков"""
     try:
         product_id = cb.data.split(":")[2]
         user_id = cb.from_user.id if cb.from_user else 0
@@ -490,16 +583,6 @@ async def show_makeup_product(cb: CallbackQuery, state: FSMContext) -> None:
             await cb.answer("⚠️ Продукт не найден")
             return
 
-        # Получаем профиль пользователя для выбора оттенков
-        data = await state.get_data()
-        user_profile = None
-        if 'profile' in data and ENGINE_AVAILABLE:
-            from engine.models import UserProfile
-            user_profile = UserProfile(**data['profile'])
-
-        # Выбираем подходящие оттенки
-        suitable_shades = select_shades(user_profile, product)
-
         # Формируем сообщение
         brand = getattr(product, 'brand', 'Бренд')
         name = getattr(product, 'name', 'Название')
@@ -511,47 +594,46 @@ async def show_makeup_product(cb: CallbackQuery, state: FSMContext) -> None:
         text += f"💰 Цена: {price} {currency}\n"
         text += f"📦 В наличии: {'✅' if in_stock else '❌'}\n\n"
 
-        # Создаем кнопки для вариантов
+        # Проверяем наличие вариантов
+        has_variants = hasattr(product, 'variants') and product.variants and len(product.variants) > 0
+
+        if has_variants:
+            text += f"🎨 Доступно {len(product.variants)} оттенков\n\n"
+            text += "Выберите оттенок для добавления в корзину:"
+        else:
+            text += "🎨 Этот продукт доступен в одном варианте\n\n"
+            text += "Добавить в корзину?"
+
+        # Создаем кнопки
         buttons = []
 
-        if suitable_shades:
-            text += "🎨 **Рекомендуемые оттенки:**\n"
-            for i, shade_info in enumerate(suitable_shades[:5], 1):  # Максимум 5 вариантов
-                variant = shade_info['variant']
-                variant_name = getattr(variant, 'name', f'Вариант {i}')
-                relevance = shade_info.get('relevance_score', 0.5)
-
-                # Индикатор релевантности
-                stars = "⭐" * int(relevance * 5) if relevance >= 0.5 else "☆"
-
-                button_text = f"{stars} {variant_name}"
-                if len(button_text) > 30:
-                    button_text = button_text[:27] + "..."
-
-                buttons.append([
-                    InlineKeyboardButton(
-                        text=button_text,
-                        callback_data=f"m:add:{product_id}:{getattr(variant, 'id', str(id(variant)))}"
-                    )
-                ])
+        if has_variants and len(product.variants) > 1:
+            # Кнопка для выбора оттенков
+            buttons.append([
+                InlineKeyboardButton(
+                    text="🎨 Выбрать оттенок",
+                    callback_data=f"m:opt:{product_id}"
+                )
+            ])
+        elif has_variants and len(product.variants) == 1:
+            # Один вариант - сразу добавляем
+            variant = product.variants[0]
+            buttons.append([
+                InlineKeyboardButton(
+                    text=f"🛍️ {BTN_ADD_TO_CART}",
+                    callback_data=f"m:add:{product_id}:{getattr(variant, 'id', str(id(variant)))}"
+                )
+            ])
         else:
-            text += "🎨 **Доступные варианты:**\n"
-            # Показываем все доступные варианты если нет персонализированных
-            if hasattr(product, 'variants') and product.variants:
-                for i, variant in enumerate(product.variants[:5], 1):
-                    variant_name = getattr(variant, 'name', f'Вариант {i}')
-                    button_text = f"{i}. {variant_name}"
-                    if len(button_text) > 30:
-                        button_text = button_text[:27] + "..."
+            # Нет вариантов - добавляем без variant_id
+            buttons.append([
+                InlineKeyboardButton(
+                    text=f"🛍️ {BTN_ADD_TO_CART}",
+                    callback_data=f"m:add:{product_id}:default"
+                )
+            ])
 
-                    buttons.append([
-                        InlineKeyboardButton(
-                            text=button_text,
-                            callback_data=f"m:add:{product_id}:{getattr(variant, 'id', str(id(variant)))}"
-                        )
-                    ])
-
-        # Добавляем кнопку "Назад"
+        # Кнопка "Назад"
         buttons.append([
             InlineKeyboardButton(text="◀️ Назад", callback_data="makeup_picker:start")
         ])
@@ -566,6 +648,116 @@ async def show_makeup_product(cb: CallbackQuery, state: FSMContext) -> None:
     except Exception as e:
         print(f"❌ Error in show_makeup_product: {e}")
         await cb.answer("⚠️ Ошибка загрузки продукта")
+
+
+@router.callback_query(F.data.startswith("m:opt:"))
+async def show_makeup_shade_options(cb: CallbackQuery, state: FSMContext) -> None:
+    """Показать варианты оттенков для выбора"""
+    try:
+        product_id = cb.data.split(":")[2]
+        user_id = cb.from_user.id if cb.from_user else 0
+
+        # Получаем продукт из каталога
+        catalog_path = os.getenv("CATALOG_PATH", "assets/fixed_catalog.yaml")
+        catalog_store = CatalogStore.instance(catalog_path)
+        catalog = catalog_store.get()
+
+        product = None
+        for p in catalog or []:
+            if getattr(p, 'id', str(id(p))) == product_id:
+                product = p
+                break
+
+        if not product or not hasattr(product, 'variants') or not product.variants:
+            await cb.answer("⚠️ Варианты не найдены")
+            return
+
+        # Получаем профиль пользователя для персонализации
+        data = await state.get_data()
+        user_profile = None
+        if 'profile' in data and ENGINE_AVAILABLE:
+            from engine.models import UserProfile
+            user_profile = UserProfile(**data['profile'])
+
+        # Выбираем подходящие оттенки
+        suitable_shades = select_shades(user_profile, product)
+
+        # Формируем сообщение
+        brand = getattr(product, 'brand', 'Бренд')
+        name = getattr(product, 'name', 'Название')
+
+        text = f"💄 **{brand} {name}**\n\n"
+        text += "🎨 **Выберите оттенок:**\n\n"
+
+        # Создаем кнопки для вариантов
+        buttons = []
+
+        if suitable_shades:
+            text += "**Рекомендуемые для вашего типа:**\n"
+            for i, shade_info in enumerate(suitable_shades[:6], 1):  # Максимум 6 вариантов
+                variant = shade_info['variant']
+                variant_name = getattr(variant, 'name', f'Вариант {i}')
+                undertone = getattr(variant, 'undertone', 'neutral')
+                relevance = shade_info.get('relevance_score', 0.5)
+
+                # Индикатор релевантности
+                stars = "⭐" * int(relevance * 3) if relevance >= 0.7 else "☆"
+
+                button_text = f"{stars} {variant_name}"
+                if undertone:
+                    button_text += f" ({undertone})"
+                if len(button_text) > 35:
+                    button_text = button_text[:32] + "..."
+
+                buttons.append([
+                    InlineKeyboardButton(
+                        text=button_text,
+                        callback_data=f"m:add:{product_id}:{getattr(variant, 'id', str(id(variant)))}"
+                    )
+                ])
+        else:
+            # Показываем все доступные варианты
+            for i, variant in enumerate(product.variants[:6], 1):
+                variant_name = getattr(variant, 'name', f'Вариант {i}')
+                undertone = getattr(variant, 'undertone', 'neutral')
+
+                button_text = f"{i}. {variant_name}"
+                if undertone:
+                    button_text += f" ({undertone})"
+                if len(button_text) > 35:
+                    button_text = button_text[:32] + "..."
+
+                buttons.append([
+                    InlineKeyboardButton(
+                        text=button_text,
+                        callback_data=f"m:add:{product_id}:{getattr(variant, 'id', str(id(variant)))}"
+                    )
+                ])
+
+        # Добавляем кнопку "Показать все" если много вариантов
+        if len(product.variants) > 6:
+            buttons.append([
+                InlineKeyboardButton(
+                    text=f"📋 Показать все ({len(product.variants)})",
+                    callback_data=f"m:all:{product_id}"
+                )
+            ])
+
+        # Кнопка "Назад"
+        buttons.append([
+            InlineKeyboardButton(text="◀️ Назад к продукту", callback_data=f"m:prd:{product_id}")
+        ])
+
+        await cb.message.edit_text(
+            text,
+            reply_markup=InlineKeyboardMarkup(inline_keyboard=buttons)
+        )
+
+        await cb.answer()
+
+    except Exception as e:
+        print(f"❌ Error in show_makeup_shade_options: {e}")
+        await cb.answer("⚠️ Ошибка загрузки оттенков")
 
 
 @router.callback_query(F.data.startswith("m:add:"))
@@ -626,7 +818,8 @@ async def add_makeup_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
                     category=getattr(product, 'category', 'makeup')
                 )
 
-                if variant_id:
+                # Аналитика выбора оттенка
+                if variant_id and variant:
                     track_shade_selected(user_id, product_id, variant_id,
                         undertone=getattr(variant, 'undertone', 'unknown'))
 
@@ -648,6 +841,71 @@ async def add_makeup_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
     except Exception as e:
         print(f"❌ Error in add_makeup_to_cart: {e}")
         await cb.answer("⚠️ Ошибка добавления в корзину")
+
+
+@router.callback_query(F.data.startswith("m:all:"))
+async def show_all_makeup_variants(cb: CallbackQuery, state: FSMContext) -> None:
+    """Показать все варианты продукта"""
+    try:
+        product_id = cb.data.split(":")[2]
+        user_id = cb.from_user.id if cb.from_user else 0
+
+        # Получаем продукт из каталога
+        catalog_path = os.getenv("CATALOG_PATH", "assets/fixed_catalog.yaml")
+        catalog_store = CatalogStore.instance(catalog_path)
+        catalog = catalog_store.get()
+
+        product = None
+        for p in catalog or []:
+            if getattr(p, 'id', str(id(p))) == product_id:
+                product = p
+                break
+
+        if not product or not hasattr(product, 'variants') or not product.variants:
+            await cb.answer("⚠️ Варианты не найдены")
+            return
+
+        # Формируем сообщение со всеми вариантами
+        brand = getattr(product, 'brand', 'Бренд')
+        name = getattr(product, 'name', 'Название')
+
+        text = f"💄 **{brand} {name}**\n\n"
+        text += f"🎨 **Все доступные оттенки ({len(product.variants)}):**\n\n"
+
+        # Создаем кнопки для всех вариантов
+        buttons = []
+        for i, variant in enumerate(product.variants, 1):
+            variant_name = getattr(variant, 'name', f'Вариант {i}')
+            undertone = getattr(variant, 'undertone', '')
+
+            button_text = f"{i}. {variant_name}"
+            if undertone:
+                button_text += f" ({undertone})"
+            if len(button_text) > 35:
+                button_text = button_text[:32] + "..."
+
+            buttons.append([
+                InlineKeyboardButton(
+                    text=button_text,
+                    callback_data=f"m:add:{product_id}:{getattr(variant, 'id', str(id(variant)))}"
+                )
+            ])
+
+        # Кнопка "Назад"
+        buttons.append([
+            InlineKeyboardButton(text="◀️ Назад к выбору", callback_data=f"m:opt:{product_id}")
+        ])
+
+        await cb.message.edit_text(
+            text,
+            reply_markup=InlineKeyboardMarkup(inline_keyboard=buttons)
+        )
+
+        await cb.answer()
+
+    except Exception as e:
+        print(f"❌ Error in show_all_makeup_variants: {e}")
+        await cb.answer("⚠️ Ошибка загрузки вариантов")
 
 
 @router.callback_query(F.data == "m:back:results")
