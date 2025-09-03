@@ -1,5 +1,36 @@
 # 🎨 Beauty Care Design System - Changelog
 
+## [1.0.1] - Critical Import Fix - December 2024
+
+### 🚨 **Critical Bug Fixes**
+
+#### 🔥 **Production Startup Error Fix**
+- **Issue**: `ModuleNotFoundError: No module named 'i18n'` causing bot crashes in Railway deployment
+- **Root Cause**: Missing fallback constants for `BTN_*` and `MSG_*` when i18n import fails
+- **Solution**: Added comprehensive fallback constants in `skincare_picker.py`
+- **Impact**: Bot now starts successfully in production environment
+- **Files**: `bot/handlers/skincare_picker.py`
+- **Status**: ✅ **RESOLVED** - Bot deployment stable
+
+### 📋 **Fallback Constants Added**
+```python
+# Button constants fallback
+BTN_CLEANSE = "Очищение"
+BTN_TONE = "Тонизирование"
+BTN_SERUM = "Сыворотки"
+BTN_MOIST = "Увлажнение"
+BTN_EYE = "Зона вокруг глаз"
+BTN_SPF = "Солнцезащита"
+BTN_REMOVER = "Снятие макияжа"
+
+# Message constants fallback
+MSG_VARIANT_ADDED = "Добавлено в корзину: {brand} {name} ({variant})"
+BADGE_OOS = "Нет в наличии"
+BTN_SHOW_ALTS = "Показать альтернативы"
+```
+
+---
+
 ## [1.0.0] - UI System Launch - December 2024
 
 ### ✨ **Major Features**
