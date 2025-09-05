@@ -16,6 +16,7 @@ try:
     from engine.models import Product
     from engine.selector import SelectorV2
     from engine.affiliate_validator import AffiliateManager
+    from engine.ab_testing import get_ab_testing_framework
 except ImportError:
     print("CRITICAL: Failed to import engine modules, using fallback")
     # Define fallback classes
@@ -34,6 +35,15 @@ except ImportError:
             pass
         def track_external_checkout_opened(self, *args, **kwargs):
             pass
+    class ABTestingFramework:
+        def log_button_click(self, *args, **kwargs):
+            pass
+        def log_test_completion(self, *args, **kwargs):
+            pass
+        def log_add_to_cart(self, *args, **kwargs):
+            pass
+        def get_category_order_variant(self, user_id):
+            return ["cleansing", "toning", "serum", "moisturizing", "eye_care", "sun_protection", "masks"]
 
         @staticmethod
         def emit_analytics(*args, **kwargs):
@@ -161,6 +171,12 @@ try:
     affiliate_manager = AffiliateManager()
 except:
     affiliate_manager = AffiliateManager()  # fallback
+
+# Инициализация A/B testing framework
+try:
+    ab_framework = get_ab_testing_framework()
+except:
+    ab_framework = ABTestingFramework()  # fallback
 
 # Маппинг категорий на их слаги
 CATEGORY_MAPPING = {
@@ -305,8 +321,12 @@ async def switch_theme(message: Message) -> None:
 async def start_skincare_picker(cb: CallbackQuery, state: FSMContext) -> None:
     """Запуск подбора ухода после теста"""
     try:
+        user_id = cb.from_user.id
+
         # Аналитика
-        track_skincare_recommendations_viewed(cb.from_user.id)
+        track_skincare_recommendations_viewed(user_id)
+
+        # A/B testing: логируем клик по кнопке (будет обновлено после определения категорий)
 
         # Получаем доступные категории из результатов теста
         data = await state.get_data()
@@ -314,26 +334,41 @@ async def start_skincare_picker(cb: CallbackQuery, state: FSMContext) -> None:
         skin_type = skin_analysis.get("type", "normal")
         concerns = skin_analysis.get("concerns", [])
 
-        # Определяем релевантные категории на основе типа кожи и проблем
-        available_categories = []
+        # A/B testing: получаем порядок категорий для пользователя
+        category_order = ab_framework.get_category_order_variant(user_id)
 
-        # Всегда показываем основные категории
-        available_categories.extend([
+        # Определяем релевантные категории на основе типа кожи и проблем
+        base_categories = [
             (CAT_CLEANSE, BTN_CLEANSE),
             (CAT_TONE, BTN_TONE),
             (CAT_SERUM, BTN_SERUM),
             (CAT_MOIST, BTN_MOIST)
-        ])
+        ]
 
         # Добавляем специфические категории
+        additional_categories = []
         if any(concern in ["aging", "dark_circles", "puffiness"] for concern in concerns):
-            available_categories.append((CAT_EYE, BTN_EYE))
+            additional_categories.append((CAT_EYE, BTN_EYE))
 
         if any(concern in ["pigmentation", "sun_damage"] for concern in concerns):
-            available_categories.append((CAT_SPF, BTN_SPF))
+            additional_categories.append((CAT_SPF, BTN_SPF))
+
+        # Объединяем все категории
+        all_categories = base_categories + additional_categories
+
+        # A/B testing: сортируем категории согласно варианту
+        available_categories = []
+        for cat_slug in category_order:
+            for cat_tuple in all_categories:
+                if cat_tuple[0] == cat_slug:
+                    available_categories.append(cat_tuple)
+                    break
 
         # Маски всегда доступны
         available_categories.append((CAT_MASK, BTN_REMOVER))
+
+        # A/B testing: логируем клик по кнопке с количеством категорий
+        ab_framework.log_button_click(user_id, "category_order_experiment", len(available_categories))
 
         # Создаем клавиатуру с категориями
         buttons = []
@@ -641,6 +676,12 @@ async def add_product_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
 
             except Exception as e:
                 print(f"[WARNING] Affiliate tracking error: {e}")
+
+            # A/B testing: логируем добавление в корзину
+            try:
+                ab_framework.log_add_to_cart(user_id, "category_order_experiment", 1)
+            except Exception as e:
+                print(f"[WARNING] A/B tracking error: {e}")
 
             # Формируем сообщение об успехе
             variant_text = f" ({cart_item.variant_name})" if cart_item.variant_name else ""
