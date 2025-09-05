@@ -1,0 +1,153 @@
+"""
+Unit tests for CartStore
+"""
+
+import unittest
+import tempfile
+import shutil
+from pathlib import Path
+from services.cart_store import CartStore, CartItem
+
+
+class TestCartStore(unittest.TestCase):
+    """Test CartStore functionality"""
+
+    def setUp(self):
+        """Set up test environment"""
+        self.temp_dir = Path(tempfile.mkdtemp())
+        # Create a separate instance for testing
+        self.store = CartStore()
+        self.store.data_dir = self.temp_dir / "carts"
+        self.store.data_dir.mkdir(parents=True, exist_ok=True)
+
+    def tearDown(self):
+        """Clean up test environment"""
+        shutil.rmtree(self.temp_dir)
+
+    def test_add_item_new_product(self):
+        """Test adding a new product to cart"""
+        user_id = 12345
+        item = self.store.add_item(
+            user_id=user_id,
+            product_id="test_product",
+            variant_id="variant1",
+            quantity=2,
+            brand="Test Brand",
+            name="Test Product",
+            price=100.0
+        )
+
+        self.assertEqual(item.product_id, "test_product")
+        self.assertEqual(item.variant_id, "variant1")
+        self.assertEqual(item.quantity, 2)
+        self.assertEqual(item.brand, "Test Brand")
+        self.assertEqual(item.price, 100.0)
+
+        # Check cart contents
+        cart = self.store.get_cart(user_id)
+        self.assertEqual(len(cart), 1)
+        self.assertEqual(cart[0].quantity, 2)
+
+    def test_add_item_existing_product(self):
+        """Test adding quantity to existing product"""
+        user_id = 12345
+
+        # Add first item
+        self.store.add_item(user_id, "test_product", "variant1", 2)
+
+        # Add to existing item
+        self.store.add_item(user_id, "test_product", "variant1", 3)
+
+        cart = self.store.get_cart(user_id)
+        self.assertEqual(len(cart), 1)
+        self.assertEqual(cart[0].quantity, 5)  # 2 + 3
+
+    def test_update_quantity(self):
+        """Test updating item quantity"""
+        user_id = 12345
+
+        # Add item
+        self.store.add_item(user_id, "test_product", "variant1", 5)
+
+        # Update quantity
+        success = self.store.update_quantity(user_id, "test_product", "variant1", 3)
+
+        self.assertTrue(success)
+        cart = self.store.get_cart(user_id)
+        self.assertEqual(cart[0].quantity, 3)
+
+    def test_update_quantity_remove_when_zero(self):
+        """Test that item is removed when quantity set to 0"""
+        user_id = 12345
+
+        # Add item
+        self.store.add_item(user_id, "test_product", "variant1", 5)
+
+        # Set quantity to 0
+        success = self.store.update_quantity(user_id, "test_product", "variant1", 0)
+
+        self.assertTrue(success)
+        cart = self.store.get_cart(user_id)
+        self.assertEqual(len(cart), 0)
+
+    def test_remove_item(self):
+        """Test removing item from cart"""
+        user_id = 12345
+
+        # Add item
+        self.store.add_item(user_id, "test_product", "variant1", 5)
+
+        # Remove item
+        success = self.store.remove_item(user_id, "test_product", "variant1")
+
+        self.assertTrue(success)
+        cart = self.store.get_cart(user_id)
+        self.assertEqual(len(cart), 0)
+
+    def test_clear_cart(self):
+        """Test clearing entire cart"""
+        user_id = 12345
+
+        # Add multiple items
+        self.store.add_item(user_id, "product1", "variant1", 2)
+        self.store.add_item(user_id, "product2", "variant2", 3)
+
+        # Clear cart
+        self.store.clear_cart(user_id)
+
+        cart = self.store.get_cart(user_id)
+        self.assertEqual(len(cart), 0)
+
+    def test_get_cart_total(self):
+        """Test calculating cart total"""
+        user_id = 12345
+
+        # Add items with prices
+        self.store.add_item(user_id, "product1", "variant1", 2, price=100.0)
+        self.store.add_item(user_id, "product2", "variant2", 1, price=200.0)
+
+        total_quantity, total_price = self.store.get_cart_total(user_id)
+
+        self.assertEqual(total_quantity, 3)  # 2 + 1
+        self.assertEqual(total_price, 400.0)  # 2*100 + 1*200
+
+    def test_persistence(self):
+        """Test that cart data persists across store instances"""
+        user_id = 12345
+
+        # Add item to first store instance
+        self.store.add_item(user_id, "test_product", "variant1", 5, price=100.0)
+
+        # Create new store instance (simulating restart)
+        new_store = CartStore()
+        new_store.data_dir = self.temp_dir / "carts"
+
+        # Check that data was loaded
+        cart = new_store.get_cart(user_id)
+        self.assertEqual(len(cart), 1)
+        self.assertEqual(cart[0].quantity, 5)
+        self.assertEqual(cart[0].price, 100.0)
+
+
+if __name__ == '__main__':
+    unittest.main()

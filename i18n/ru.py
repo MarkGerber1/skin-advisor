@@ -1,41 +1,20 @@
 """
-Russian UI text constants for skincare chatbot.
-Soft, user-friendly formulations replacing harsh technical terms.
+Russian localization constants
+Константы русской локализации
 """
 
-# Main sections
-TEXT_TONE_GLOW = "Тон&Сияние"
-TEXT_SKIN_PORTRAIT = "Портрет лица"
+# Test subtitles
+SKINCARE_TEST_SUBTITLE = "💧 Определим тип кожи и подберем уход"
+PALETTE_TEST_SUBTITLE = "🎨 Определим ваш цветотип для идеального макияжа"
 
-# Test descriptions and subtitles
-PALETTE_TEST_SUBTITLE = "8 вопросов · 1–2 минуты · подберём оттенки и список покупок"
-SKINCARE_TEST_SUBTITLE = "10 вопросов · 2 минуты · соберём уход и SPF по целям"
-
-# Progress indicators
-PROGRESS_PALETTE = "n/8"
-PROGRESS_SKINCARE = "n/10"
-
-# Hair color hint
-HAIR_COLOR_HINT = "Если волосы окрашены — ориентируйтесь на корни"
-
-# Inline skincare picker
-HEAD_SKINCARE_PICK = "Подборка ухода по результатам"
-SUB_PICK = "Выберите категорию, затем добавьте средства в корзину"
-
-# Category buttons
-BTN_CLEANSE = "Очищение"
-BTN_TONE = "Тонизирование"
-BTN_SERUM = "Сыворотки"
-BTN_MOIST = "Увлажнение"
-BTN_EYE = "Зона вокруг глаз"
-BTN_SPF = "Солнцезащита"
-BTN_REMOVER = "Снятие макияжа"
+# Hints
+HAIR_COLOR_HINT = "💇 Выберите естественный цвет волос"
 
 # Makeup picker
 HEAD_MAKEUP_PICK = "Подборка макияжа по результатам"
 SUB_PICK_MAKEUP = "Выберите категорию и оттенки"
 
-# Makeup category buttons
+# Makeup categories
 BTN_MAKEUP_TONE = "Тон/BB/CC"
 BTN_MAKEUP_CONCEALER = "Консилер"
 BTN_MAKEUP_CORRECTOR = "Корректор"
@@ -48,87 +27,12 @@ BTN_MAKEUP_BROWS = "Брови"
 BTN_MAKEUP_EYESHADOW = "Тени"
 BTN_MAKEUP_EYELINER = "Лайнер/Карандаш"
 BTN_MAKEUP_MASCARA = "Тушь"
-BTN_MAKEUP_LIPS = "Губы"
 
-# Product actions
-BTN_CHOOSE_VARIANT = "Выбрать вариант"
-BTN_ADD_TO_CART = "Добавить в корзину"
-BTN_IN_CART = "✓ В корзине"
-
-# Navigation
-BTN_BACK = "◀︎ Назад"
-BTN_BACK_CAT = "В категории"
-BTN_PREV = "◀︎"
-BTN_NEXT = "▶︎"
-
-# Out of stock
-BADGE_OOS = "Нет в наличии"
-BTN_SHOW_ALTS = "Показать альтернативы"
-
-# Sources
-SRC_GOLDAPPLE = "Золотое Яблоко"
-SRC_RU_OFFICIAL = "Официал. магазин"
-SRC_RU_MP = "Маркетплейс"
-SRC_INTL = "Зарубежный магазин"
-
-# Messages
-MSG_ADDED = "Добавлено в корзину: {бренд} {название} ({вариант})"
-
-# Labels
-LABEL_TYPE = "Тип"
-LABEL_STATE = "Состояние"
-LABEL_FACE_CARE = "Уход для лица"
-LABEL_EYE_ZONE = "Зона вокруг глаз"
-
-# States and conditions
-STATE_BREAKOUT_PRONE = "Склонность к высыпаниям"
-STATE_DEHYDRATED = "Обезвоженность"
-STATE_PIGMENTATION = "Пигментация"
-STATE_REDNESS = "Покраснения" 
-STATE_DULLNESS = "Тусклость"
-STATE_ENLARGED_PORES = "Расширенные поры"
-STATE_ANTI_AGING = "Возрастные изменения"
-STATE_COUPEROSE = "Купероз"
-
-# Terms
-TERM_TONE_FACE = "Тон лица"
-TERM_SKIN_TYPE = "Тип лица"
-
-# Hints and tips
-HINT_DYED_HAIR = "Если волосы окрашены — ориентируйтесь на корни"
-
-# Button texts
-BTN_FACE_DIAGNOSIS = "💧 Диагностика лица"
-BTN_FACE_CARE = "🧴 Уход для лица"
-
-# Test titles
-TEST_TITLE_FACE_DIAGNOSIS = "ПРОФЕССИОНАЛЬНАЯ ДИАГНОСТИКА ЛИЦА"
-TEST_TITLE_DETAILED_FACE = "ПОДРОБНАЯ ДИАГНОСТИКА ЛИЦА"
-
-# Report sections
-REPORT_FACE_TYPE = "Тип лица"
-REPORT_FACE_STATE = "Состояние лица"
-REPORT_PERSONAL_CARE = "📋 Персональный уход"
-
-# Care routine
-ROUTINE_MORNING = "🌅 УТРОМ (AM):"
-ROUTINE_EVENING = "🌙 ВЕЧЕРОМ (PM):"
-ROUTINE_WEEKLY = "📅 ЕЖЕНЕДЕЛЬНО:"
-
-# Product categories in UI
-CATEGORY_CLEANSER = "Очищение"
-CATEGORY_TONER = "Тонизирование"
-CATEGORY_SERUM = "Концентраты"
-CATEGORY_MOISTURIZER = "Увлажнение"
-CATEGORY_EYE_CARE = "Уход за областью глаз"
-CATEGORY_SUN_PROTECTION = "Защита от солнца"
-CATEGORY_MASK = "Маски"
-
-# Skincare selection UI
+# Skincare picker
 HEAD_SKINCARE_PICK = "Подборка ухода по результатам"
 SUB_PICK = "Выберите категорию, затем добавьте средства в корзину"
 
-# Category buttons
+# Skincare categories
 BTN_CLEANSE = "Очищение"
 BTN_TONE = "Тонизирование"
 BTN_SERUM = "Сыворотки"
@@ -137,59 +41,22 @@ BTN_EYE = "Зона вокруг глаз"
 BTN_SPF = "Солнцезащита"
 BTN_REMOVER = "Снятие макияжа"
 
-# Makeup picker
-HEAD_MAKEUP_PICK = "Подборка макияжа по результатам"
-SUB_PICK_MAKEUP = "Выберите категорию и оттенки"
+# Cart messages
+MSG_ADDED = "Добавлено в корзину: {brand} {name} ({variant})"
 
-# Makeup category buttons
-BTN_MAKEUP_TONE = "Тон/BB/CC"
-BTN_MAKEUP_CONCEALER = "Консилер"
-BTN_MAKEUP_CORRECTOR = "Корректор"
-BTN_MAKEUP_POWDER = "Пудра"
-BTN_MAKEUP_BLUSH = "Румяна"
-BTN_MAKEUP_BRONZER = "Бронзер"
-BTN_MAKEUP_CONTOUR = "Скульптор"
-BTN_MAKEUP_HIGHLIGHTER = "Хайлайтер"
-BTN_MAKEUP_BROWS = "Брови"
-BTN_MAKEUP_EYESHADOW = "Тени"
-BTN_MAKEUP_EYELINER = "Лайнер/Карандаш"
-BTN_MAKEUP_MASCARA = "Тушь"
-BTN_MAKEUP_LIPS = "Губы"
-
-# Product actions
+# Buttons
 BTN_CHOOSE_VARIANT = "Выбрать вариант"
 BTN_ADD_TO_CART = "Добавить в корзину"
 BTN_IN_CART = "✓ В корзине"
-BTN_OPEN_SITE = "Открыть на сайте"
-
-# Navigation
 BTN_BACK = "◀︎ Назад"
 BTN_BACK_CAT = "В категории"
 BTN_PREV = "◀︎"
 BTN_NEXT = "▶︎"
 
-# Messages
-MSG_ADDED = "Добавлено в корзину: {item}"
-MSG_VARIANT_ADDED = "Добавлено: {brand} {name} ({variant})"
-
-# Status
+# Badges and sources
 BADGE_OOS = "Нет в наличии"
 BTN_SHOW_ALTS = "Показать альтернативы"
-MSG_NO_VARIANTS = "Вариант недоступен. Обновите подборку."
-MSG_ADD_FAILED = "Не удалось добавить. Повторите позже."
-
-# Sources
 SRC_GOLDAPPLE = "Золотое Яблоко"
 SRC_RU_OFFICIAL = "Официал. магазин"
 SRC_RU_MP = "Маркетплейс"
 SRC_INTL = "Зарубежный магазин"
-
-# Category slugs for callbacks
-CAT_CLEANSE = "cleansing"
-CAT_TONE = "toning"
-CAT_SERUM = "serum"
-CAT_MOIST = "moisturizing"
-CAT_EYE = "eye_care"
-CAT_SPF = "sun_protection"
-CAT_MASK = "masks"
-

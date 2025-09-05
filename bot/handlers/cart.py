@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import annotations
 
 from typing import List, Dict, Optional
@@ -22,6 +23,27 @@ store = get_cart_store()
 selector = SelectorV2()
 metrics = get_metrics_tracker()
 
+
+def _compare_keyboards(kb1: InlineKeyboardMarkup | None, kb2: InlineKeyboardMarkup | None) -> bool:
+    """Сравнить две клавиатуры"""
+    if not kb1 and not kb2:
+        return True
+    if not kb1 or not kb2:
+        return False
+
+    if len(kb1.inline_keyboard) != len(kb2.inline_keyboard):
+        return False
+
+    for row1, row2 in zip(kb1.inline_keyboard, kb2.inline_keyboard):
+        if len(row1) != len(row2):
+            return False
+        for btn1, btn2 in zip(row1, row2):
+            if (btn1.text != btn2.text or
+                btn1.callback_data != btn2.callback_data or
+                btn1.url != btn2.url):
+                return False
+
+    return True
 
 def _user_id(msg_or_cb: Message | CallbackQuery | None) -> int | None:
     """Extract real user ID, not bot ID from Message or CallbackQuery"""
@@ -297,6 +319,7 @@ async def show_cart_callback(cb: CallbackQuery, state: FSMContext) -> None:
     lines = ["🛒 **ВАША КОРЗИНА**\n"]
     total = 0.0
     available_items = 0
+    item_buttons = []
 
     for i, item in enumerate(items, 1):
         price = item.price or 0.0
@@ -317,19 +340,41 @@ async def show_cart_callback(cb: CallbackQuery, state: FSMContext) -> None:
         if item.explain:
             lines.append(f"   _{item.explain}_\n")
 
+        # Кнопки управления количеством для каждого товара
+        item_buttons.append([
+            InlineKeyboardButton(text="➖", callback_data=f"cart:dec:{item.product_id}"),
+            InlineKeyboardButton(text=f"{qty}", callback_data=f"cart:show:{item.product_id}"),
+            InlineKeyboardButton(text="➕", callback_data=f"cart:inc:{item.product_id}"),
+            InlineKeyboardButton(text="🗑️", callback_data=f"cart:rm:{item.product_id}")
+        ])
+
     # Итоговая информация
     lines.append(f"\n💰 **Итого:** {total:.0f} ₽")
     lines.append(f"📦 Доступно: {available_items}/{len(items)} товаров")
 
     # Кнопки управления
-    kb = InlineKeyboardMarkup(inline_keyboard=[
+    all_buttons = item_buttons + [
         [InlineKeyboardButton(text="🗑️ Очистить корзину", callback_data="cart:clear")],
         [InlineKeyboardButton(text="📋 Создать заказ", callback_data="cart:checkout")],
         [InlineKeyboardButton(text="🔙 Назад", callback_data="back:main")]
-    ])
+    ]
+    kb = InlineKeyboardMarkup(inline_keyboard=all_buttons)
 
     text = "\n".join(lines)
-    await cb.message.edit_text(text, reply_markup=kb, parse_mode="Markdown")
+
+    # Проверяем, изменилось ли сообщение, чтобы избежать "message is not modified"
+    current_text = cb.message.text or ""
+    current_markup = cb.message.reply_markup
+
+    # Сравниваем текст и разметку
+    text_changed = current_text != text
+    markup_changed = self._compare_keyboards(current_markup, kb) if current_markup else True
+
+    if text_changed or markup_changed:
+        await cb.message.edit_text(text, reply_markup=kb, parse_mode="Markdown")
+    else:
+        print("ℹ️ Cart content unchanged, skipping edit_message_text")
+
     await cb.answer()
 
 @router.message(F.text == "🛒 Корзина")
@@ -637,7 +682,7 @@ async def handle_unavailable_product(cb: CallbackQuery, state: FSMContext) -> No
         lines.append(f"   💰 {price_text}")
         if explain:
             lines.append(f"   💡 {explain}")
-        lines.append("")
+    lines.append("")
         
         # Кнопки для добавления альтернативы
         alt_id = str(alt.get('id', ''))
@@ -829,19 +874,29 @@ async def show_cart_details(cb: CallbackQuery, state: FSMContext) -> None:
     await cb.answer("Подробная информация")
 
 
-@router.callback_query(F.data.startswith("cart:remove:"))
+@router.callback_query(F.data.startswith("cart:rm:"))
 async def remove_from_cart(cb: CallbackQuery, state: FSMContext) -> None:
     """Удалить товар из корзины"""
     user_id = _user_id(cb)
     if not user_id:
         await cb.answer("Ошибка пользователя")
         return
-    
-    product_id = cb.data.split(":", 2)[2]
-    store.remove(user_id, product_id)
-    
-    metrics.track_event("cart_remove", user_id, {"product_id": product_id})
-    await cb.answer("Товар удален из корзины")
+
+    parts = cb.data.split(":")
+    product_id = parts[2]
+    variant_id = parts[3] if len(parts) > 3 else None
+
+    success = store.remove_item(user_id, product_id, variant_id)
+
+    if success:
+        metrics.track_event("cart_item_removed", user_id, {
+            "product_id": product_id,
+            "variant_id": variant_id
+        })
+        await cb.answer("Товар удален из корзины")
+    else:
+        await cb.answer("Товар не найден")
+
     await show_cart_callback(cb, state)
 
 
@@ -854,15 +909,16 @@ async def increase_quantity(cb: CallbackQuery, state: FSMContext) -> None:
         return
     
     product_id = cb.data.split(":", 2)[2]
-    items = store.get(user_id)
-    
-    for item in items:
+    cart = store.get_cart(user_id)
+
+    for item in cart:
         if item.product_id == product_id:
-            new_qty = min(item.qty + 1, 10)  # Максимум 10 штук
-            store.set_qty(user_id, product_id, new_qty)
-            
+            new_qty = min(item.quantity + 1, 10)  # Максимум 10 штук
+            store.update_quantity(user_id, product_id, item.variant_id, new_qty)
+
             metrics.track_event("cart_qty_change", user_id, {
                 "product_id": product_id,
+                "variant_id": item.variant_id,
                 "new_qty": new_qty,
                 "action": "increase"
             })
@@ -882,19 +938,20 @@ async def decrease_quantity(cb: CallbackQuery, state: FSMContext) -> None:
         return
     
     product_id = cb.data.split(":", 2)[2]
-    items = store.get(user_id)
-    
-    for item in items:
+    cart = store.get_cart(user_id)
+
+    for item in cart:
         if item.product_id == product_id:
-            new_qty = max(item.qty - 1, 1)  # Минимум 1 штука
-            store.set_qty(user_id, product_id, new_qty)
-            
+            new_qty = max(item.quantity - 1, 1)  # Минимум 1 штука
+            store.update_quantity(user_id, product_id, item.variant_id, new_qty)
+
             metrics.track_event("cart_qty_change", user_id, {
                 "product_id": product_id,
+                "variant_id": item.variant_id,
                 "new_qty": new_qty,
                 "action": "decrease"
             })
-            
+
             await cb.answer(f"Количество: {new_qty}")
             break
 
@@ -970,7 +1027,7 @@ async def checkout_cart(cb: CallbackQuery, state: FSMContext) -> None:
         return
     
     # Создать сообщение с товарами и ссылками
-    text_lines = ["��� **ОФОРМЛЕНИЕ ЗАКАЗА**\\n"]
+    text_lines = ["🛒 **ОФОРМЛЕНИЕ ЗАКАЗА**\n"]
     
     total_price = 0
     buttons = []
@@ -986,12 +1043,12 @@ async def checkout_cart(cb: CallbackQuery, state: FSMContext) -> None:
         # Кнопка для оформления на сайте
         if item.ref_link:
             buttons.append([InlineKeyboardButton(
-                text=f"��� Купить {item.brand or item.name}",
+                text=f"��� Купить {item.brand or item.name}",
                 url=item.ref_link
             )])
         elif hasattr(item, 'link') and item.link:
             buttons.append([InlineKeyboardButton(
-                text=f"��� Купить {item.brand or item.name}",
+                text=f"��� Купить {item.brand or item.name}",
                 url=item.link
             )])
         
@@ -1002,7 +1059,7 @@ async def checkout_cart(cb: CallbackQuery, state: FSMContext) -> None:
     # Кнопки навигации
     buttons.append([
         InlineKeyboardButton(text="⬅️ Назад в корзину", callback_data="show_cart"),
-        InlineKeyboardButton(text="��� Главное меню", callback_data="back:main")
+        InlineKeyboardButton(text="��� Главное меню", callback_data="back:main")
     ])
     
     kb = InlineKeyboardMarkup(inline_keyboard=buttons)
