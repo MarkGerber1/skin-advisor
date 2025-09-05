@@ -209,7 +209,7 @@ def render_skincare_report(result: Dict) -> Tuple[str, InlineKeyboardMarkup]:
     # Return keyboard or noop
     if buttons:
         print(f"🛒 Created {len(buttons)} total skincare buttons")
-    kb = InlineKeyboardMarkup(inline_keyboard=buttons)
+        kb = InlineKeyboardMarkup(inline_keyboard=buttons)
     else:
         print("⚠️ No skincare products with ID found, returning noop keyboard")
         kb = _noop_keyboard()
@@ -370,7 +370,7 @@ def render_makeup_report(result: Dict) -> Tuple[str, InlineKeyboardMarkup]:
     # Return keyboard or noop
     if buttons:
         print(f"🛒 Created {len(buttons)} total buttons")
-    kb = InlineKeyboardMarkup(inline_keyboard=buttons)
+        kb = InlineKeyboardMarkup(inline_keyboard=buttons)
     else:
         print("⚠️ No products with ID found, returning noop keyboard")
         kb = _noop_keyboard()
