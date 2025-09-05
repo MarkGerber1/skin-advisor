@@ -7,6 +7,10 @@ import urllib.parse
 from typing import Dict, List, Optional, Tuple, Any
 from dataclasses import dataclass
 from config.env import get_settings
+from engine.analytics import AnalyticsTracker
+import logging
+
+logger = logging.getLogger(__name__)
 
 @dataclass
 class AffiliateCheckResult:
@@ -17,6 +21,162 @@ class AffiliateCheckResult:
     affiliate_tag: Optional[str]
     is_valid: bool
     issues: List[str]
+
+class AffiliateManager:
+    """Менеджер партнерских ссылок для монетизации"""
+
+    def __init__(self):
+        self.settings = get_settings()
+        self.analytics = AnalyticsTracker()
+
+        # Конфигурация партнерских параметров для разных источников
+        self.affiliate_configs = {
+            'goldapple': {
+                'aff_param': 'partner',
+                'campaign_param': 'utm_campaign',
+                'source_param': 'utm_source',
+                'medium_param': 'utm_medium',
+                'partner_code': self.settings.get('goldapple_partner_code', 'BEAUTYCARE'),
+                'campaign': 'recommendation'
+            },
+            'ru_official': {
+                'aff_param': 'affiliate',
+                'campaign_param': 'campaign',
+                'source_param': 'source',
+                'medium_param': 'medium',
+                'partner_code': self.settings.get('ru_official_partner_code', 'BEAUTYCARE_RU'),
+                'campaign': 'skincare'
+            },
+            'ru_marketplace': {
+                'aff_param': 'partner',
+                'campaign_param': 'campaign',
+                'source_param': 'ref',
+                'medium_param': 'medium',
+                'partner_code': self.settings.get('ru_marketplace_partner_code', 'BEAUTYCARE_MP'),
+                'campaign': 'marketplace'
+            },
+            'intl_authorized': {
+                'aff_param': 'aff',
+                'campaign_param': 'campaign',
+                'source_param': 'source',
+                'medium_param': 'medium',
+                'partner_code': self.settings.get('intl_partner_code', 'BEAUTYCARE_INT'),
+                'campaign': 'international'
+            }
+        }
+
+    def add_affiliate_params(self, url: str, source: str, campaign: Optional[str] = None) -> str:
+        """Добавляет партнерские параметры к URL
+
+        Args:
+            url: Оригинальный URL
+            source: Источник (goldapple, ru_official, etc.)
+            campaign: Кампания (опционально)
+
+        Returns:
+            URL с партнерскими параметрами
+        """
+        if not url or not source:
+            logger.warning(f"Invalid URL or source: url={url}, source={source}")
+            return url
+
+        config = self.affiliate_configs.get(source)
+        if not config:
+            logger.warning(f"Unknown source: {source}")
+            return url
+
+        try:
+            parsed = urllib.parse.urlparse(url)
+            params = urllib.parse.parse_qs(parsed.query)
+
+            # Добавляем партнерские параметры
+            params[config['aff_param']] = [config['partner_code']]
+            params[config['source_param']] = [source]
+            params[config['medium_param']] = ['affiliate']
+
+            if campaign:
+                params[config['campaign_param']] = [campaign]
+            else:
+                params[config['campaign_param']] = [config['campaign']]
+
+            # Реконструируем URL
+            new_query = urllib.parse.urlencode(params, doseq=True)
+            new_url = parsed._replace(query=new_query).geturl()
+
+            logger.info(f"Affiliate URL generated: {source} -> {new_url}")
+            return new_url
+
+        except Exception as e:
+            logger.error(f"Error adding affiliate params to {url}: {e}")
+            return url
+
+    def track_checkout_click(self, items_count: int, total: float, currency: str = 'RUB',
+                           source: Optional[str] = None, product_ids: Optional[List[str]] = None):
+        """Отслеживает клик по checkout
+
+        Args:
+            items_count: Количество товаров
+            total: Общая сумма
+            currency: Валюта
+            source: Источник (опционально)
+            product_ids: ID товаров (опционально)
+        """
+        payload = {
+            'items_count': items_count,
+            'total': total,
+            'currency': currency,
+            'source': source,
+            'product_ids': product_ids or []
+        }
+
+        self.analytics.emit('checkout_clicked', payload)
+        logger.info(f"Checkout click tracked: {payload}")
+
+    def track_external_checkout_opened(self, partner: str, url: str,
+                                     items_count: Optional[int] = None):
+        """Отслеживает открытие внешнего checkout
+
+        Args:
+            partner: Название партнера
+            url: URL checkout
+            items_count: Количество товаров (опционально)
+        """
+        payload = {
+            'partner': partner,
+            'url': url,
+            'items_count': items_count
+        }
+
+        self.analytics.emit('external_checkout_opened', payload)
+        logger.info(f"External checkout opened: {payload}")
+
+    def get_affiliate_url(self, product_url: str, source: str,
+                         campaign: Optional[str] = None,
+                         track_click: bool = True) -> str:
+        """Получить партнерскую ссылку с отслеживанием
+
+        Args:
+            product_url: Оригинальный URL продукта
+            source: Источник
+            campaign: Кампания
+            track_click: Отслеживать ли клик
+
+        Returns:
+            Партнерская ссылка
+        """
+        affiliate_url = self.add_affiliate_params(product_url, source, campaign)
+
+        if track_click:
+            # Отслеживаем клик по продукту
+            self.analytics.emit('product_affiliate_click', {
+                'source': source,
+                'campaign': campaign,
+                'original_url': product_url,
+                'affiliate_url': affiliate_url
+            })
+
+        return affiliate_url
+
 
 class AffiliateValidator:
     """Валидатор партнерских ссылок для монетизации"""
@@ -178,6 +338,45 @@ class AffiliateValidator:
         }
 
 
+def test_affiliate_manager():
+    """Тестирует новую affiliate систему"""
+
+    print("🔗 AFFILIATE MANAGER TEST")
+    print("=" * 50)
+
+    manager = AffiliateManager()
+
+    # Тест 1: add_affiliate_params
+    print("\n1. Testing add_affiliate_params:")
+    test_cases = [
+        ("https://goldapple.ru/product", "goldapple", "skincare"),
+        ("https://example-shop.ru/item", "ru_official", None),
+        ("https://marketplace.com/product", "ru_marketplace", "makeup"),
+        ("https://intl-shop.com/item", "intl_authorized", "promo")
+    ]
+
+    for url, source, campaign in test_cases:
+        affiliate_url = manager.add_affiliate_params(url, source, campaign)
+        print(f"  ✅ {source}: {affiliate_url}")
+
+    # Тест 2: События
+    print("\n2. Testing tracking events:")
+    manager.track_checkout_click(3, 4500.50, 'RUB', 'goldapple', ['prod1', 'prod2'])
+    manager.track_external_checkout_opened('Gold Apple', 'https://goldapple.ru/checkout', 3)
+    print("  ✅ Events tracked")
+
+    # Тест 3: get_affiliate_url
+    print("\n3. Testing get_affiliate_url:")
+    full_url = manager.get_affiliate_url(
+        "https://goldapple.ru/product",
+        "goldapple",
+        "recommendation"
+    )
+    print(f"  ✅ Full affiliate URL: {full_url}")
+
+    return manager
+
+
 def run_affiliate_validation_test():
     """Запускает полную проверку партнерских ссылок"""
     
@@ -263,19 +462,31 @@ def run_affiliate_validation_test():
 
 
 if __name__ == "__main__":
+    # Тестируем новую affiliate систему
+    print("🚀 STARTING AFFILIATE SYSTEM TESTS")
+    print("=" * 60)
+
+    # Тест AffiliateManager
+    manager = test_affiliate_manager()
+
+    print("\n" + "=" * 60)
+
+    # Тест AffiliateValidator (старый)
     validator = run_affiliate_validation_test()
-    
+
     # Дополнительный тест конкретного URL
     print(f"\n🔧 MANUAL URL TEST:")
     test_url = "https://example.com/product"
     affiliate_url = validator.validate_url(test_url, test_url + "?aff=" + validator.expected_affiliate_tag)
-    
+
     print(f"Original: {test_url}")
     print(f"Affiliate: {affiliate_url.affiliate_url}")
     print(f"Valid: {affiliate_url.is_valid}")
     print(f"Has affiliate: {affiliate_url.has_affiliate}")
     if affiliate_url.issues:
         print(f"Issues: {affiliate_url.issues}")
+
+    print("\n🎯 ALL AFFILIATE TESTS COMPLETED")
 
 
 

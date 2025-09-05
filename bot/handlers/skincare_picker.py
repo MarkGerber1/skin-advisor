@@ -15,6 +15,7 @@ try:
     from engine.catalog_store import CatalogStore
     from engine.models import Product
     from engine.selector import SelectorV2
+    from engine.affiliate_validator import AffiliateManager
 except ImportError:
     print("CRITICAL: Failed to import engine modules, using fallback")
     # Define fallback classes
@@ -26,6 +27,13 @@ except ImportError:
         pass
     class SelectorV2:
         pass
+    class AffiliateManager:
+        def add_affiliate_params(self, url, source, campaign=None):
+            return url
+        def track_checkout_click(self, *args, **kwargs):
+            pass
+        def track_external_checkout_opened(self, *args, **kwargs):
+            pass
 
 # Fix import for Railway environment
 import sys
@@ -150,6 +158,11 @@ except ImportError:
 
 router = Router()
 
+# Инициализация affiliate менеджера
+try:
+    affiliate_manager = AffiliateManager()
+except:
+    affiliate_manager = AffiliateManager()  # fallback
 
 # Маппинг категорий на их слаги
 CATEGORY_MAPPING = {
@@ -498,6 +511,16 @@ async def show_product_variants(cb: CallbackQuery, state: FSMContext) -> None:
         # Аналитика
         track_product_opened(user_id, product_id, "category_view")
 
+        # Affiliate отслеживание открытия товара
+        try:
+            affiliate_manager.analytics.emit('product_opened', {
+                'pid': product_id,
+                'source': 'skincare_picker',
+                'user_id': user_id
+            })
+        except Exception as e:
+            print(f"⚠️ Product open tracking error: {e}")
+
         # Находим товар (пока используем заглушку, в будущем из каталога)
         # TODO: Получить товар из каталога по ID
 
@@ -587,6 +610,40 @@ async def add_product_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
                 price=cart_item.price,
                 category=cart_item.category
             )
+
+            # Affiliate отслеживание
+            try:
+                # Определяем источник по ref_link
+                source = "unknown"
+                if cart_item.ref_link:
+                    if "goldapple" in cart_item.ref_link.lower():
+                        source = "goldapple"
+                    elif "wildberries" in cart_item.ref_link.lower() or "marketplace" in cart_item.ref_link.lower():
+                        source = "ru_marketplace"
+                    elif "official" in cart_item.ref_link.lower():
+                        source = "ru_official"
+                    elif "amazon" in cart_item.ref_link.lower() or "sephora" in cart_item.ref_link.lower():
+                        source = "intl_authorized"
+
+                # Отслеживаем клик по checkout
+                affiliate_manager.track_checkout_click(
+                    items_count=1,
+                    total=float(cart_item.price) if cart_item.price else 0,
+                    currency='RUB',
+                    source=source,
+                    product_ids=[product_id]
+                )
+
+                # Отслеживаем открытие внешнего checkout
+                if cart_item.ref_link:
+                    affiliate_manager.track_external_checkout_opened(
+                        partner=source.title(),
+                        url=cart_item.ref_link,
+                        items_count=1
+                    )
+
+            except Exception as e:
+                print(f"⚠️ Affiliate tracking error: {e}")
 
             # Формируем сообщение об успехе
             variant_text = f" ({cart_item.variant_name})" if cart_item.variant_name else ""
