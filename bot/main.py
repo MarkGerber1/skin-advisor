@@ -8,7 +8,7 @@ print("Python version:", sys.version)
 print("Starting imports...")
 
 try:
-    from aiogram import Bot, Dispatcher
+    from aiogram import Bot, Dispatcher, F
 
     print("OK aiogram imported")
 except ImportError as e:
