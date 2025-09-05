@@ -6,6 +6,8 @@
 import hashlib
 import json
 import time
+import csv
+import os
 from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass, asdict
 from pathlib import Path
@@ -58,23 +60,39 @@ class ABTestResult:
     confidence_interval: Tuple[float, float]
     statistical_significance: bool
 
+@dataclass
+class ABConversionMetric:
+    """Метрика конверсии для A/B тестирования"""
+    user_id: int
+    test_id: str
+    variant_id: str
+    timestamp: float
+    event_type: str  # 'button_click', 'test_completion', 'add_to_cart'
+    category_count: Optional[int] = None  # Количество категорий в подборе
+    items_added: Optional[int] = None  # Количество добавленных товаров
+    session_duration: Optional[float] = None  # Время сессии в секундах
+
 class ABTestingFramework:
     """Фреймворк для A/B тестирования"""
     
     def __init__(self, tests_dir: str = "data/ab_tests"):
         self.tests_dir = Path(tests_dir)
         self.tests_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # Файлы для хранения
         self.tests_file = self.tests_dir / "tests.json"
         self.assignments_file = self.tests_dir / "assignments.jsonl"
         self.results_file = self.tests_dir / "results.jsonl"
-        
+        self.conversion_metrics_file = self.tests_dir / "conversion_metrics.csv"
+
         # Загрузка активных тестов
         self.active_tests = self._load_tests()
-        
+
         # Кеш назначений пользователей
         self.user_assignments = self._load_user_assignments()
+
+        # Создаем CSV файл если не существует
+        self._ensure_csv_headers()
     
     def create_test(self, test_id: str, name: str, description: str, variants: List[ABVariant]) -> ABTest:
         """Создает новый A/B тест"""
@@ -166,6 +184,97 @@ class ABTestingFramework:
             return default_value
         
         return variant.content.get(content_key, default_value)
+
+    def log_conversion_metric(self, metric: ABConversionMetric):
+        """Записывает метрику конверсии в CSV"""
+        with open(self.conversion_metrics_file, 'a', newline='', encoding='utf-8') as csvfile:
+            fieldnames = ['user_id', 'test_id', 'variant_id', 'timestamp', 'event_type',
+                         'category_count', 'items_added', 'session_duration']
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+
+            writer.writerow({
+                'user_id': metric.user_id,
+                'test_id': metric.test_id,
+                'variant_id': metric.variant_id,
+                'timestamp': metric.timestamp,
+                'event_type': metric.event_type,
+                'category_count': metric.category_count,
+                'items_added': metric.items_added,
+                'session_duration': metric.session_duration
+            })
+
+    def get_ab_flag(self, flag_name: str, default_value: str = "A") -> str:
+        """Получает значение A/B флага из переменных окружения"""
+        env_var = f"FEATURE_AB_{flag_name.upper()}"
+        return os.getenv(env_var, default_value)
+
+    def get_copy_variant(self) -> str:
+        """Получает вариант копирайтинга из переменных окружения"""
+        return self.get_ab_flag("copy_variant", "A")
+
+    def get_order_variant(self) -> str:
+        """Получает вариант порядка категорий из переменных окружения"""
+        return self.get_ab_flag("order_variant", "A")
+
+    def get_test_name_variant(self, user_id: int) -> str:
+        """Получает вариант названия теста для пользователя"""
+        variant = self.assign_user_to_variant(user_id, "test_name_experiment")
+        if variant == "portrait_face":
+            return "Портрет лица"
+        elif variant == "face_balance":
+            return "Баланс лица"
+        return "Портрет лица"  # default
+
+    def get_category_order_variant(self, user_id: int) -> List[str]:
+        """Получает порядок категорий для пользователя"""
+        variant = self.assign_user_to_variant(user_id, "category_order_experiment")
+        if variant == "order_alphabetical":
+            return ["cleansing", "toning", "serum", "moisturizing", "eye_care", "sun_protection", "masks"]
+        elif variant == "order_popularity":
+            return ["moisturizing", "serum", "cleansing", "toning", "eye_care", "sun_protection", "masks"]
+        return ["cleansing", "toning", "serum", "moisturizing", "eye_care", "sun_protection", "masks"]  # default
+
+    def log_button_click(self, user_id: int, test_id: str, category_count: Optional[int] = None):
+        """Логирует клик по кнопке"""
+        variant_id = self.user_assignments.get(f"{user_id}_{test_id}")
+        if variant_id:
+            metric = ABConversionMetric(
+                user_id=user_id,
+                test_id=test_id,
+                variant_id=variant_id,
+                timestamp=time.time(),
+                event_type="button_click",
+                category_count=category_count
+            )
+            self.log_conversion_metric(metric)
+
+    def log_test_completion(self, user_id: int, test_id: str, session_duration: Optional[float] = None):
+        """Логирует завершение теста"""
+        variant_id = self.user_assignments.get(f"{user_id}_{test_id}")
+        if variant_id:
+            metric = ABConversionMetric(
+                user_id=user_id,
+                test_id=test_id,
+                variant_id=variant_id,
+                timestamp=time.time(),
+                event_type="test_completion",
+                session_duration=session_duration
+            )
+            self.log_conversion_metric(metric)
+
+    def log_add_to_cart(self, user_id: int, test_id: str, items_added: int):
+        """Логирует добавление в корзину"""
+        variant_id = self.user_assignments.get(f"{user_id}_{test_id}")
+        if variant_id:
+            metric = ABConversionMetric(
+                user_id=user_id,
+                test_id=test_id,
+                variant_id=variant_id,
+                timestamp=time.time(),
+                event_type="add_to_cart",
+                items_added=items_added
+            )
+            self.log_conversion_metric(metric)
     
     def record_conversion(self, user_id: int, test_id: str, metric_name: str, metric_value: float):
         """Записывает конверсию для A/B теста"""
@@ -274,7 +383,16 @@ class ABTestingFramework:
         
         # Fallback на первый вариант
         return test.variants[0].id if test.variants else "default"
-    
+
+    def _ensure_csv_headers(self):
+        """Создает CSV файл с заголовками если он не существует"""
+        if not self.conversion_metrics_file.exists():
+            with open(self.conversion_metrics_file, 'w', newline='', encoding='utf-8') as csvfile:
+                fieldnames = ['user_id', 'test_id', 'variant_id', 'timestamp', 'event_type',
+                             'category_count', 'items_added', 'session_duration']
+                writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+                writer.writeheader()
+
     def _load_tests(self) -> Dict[str, ABTest]:
         """Загружает тесты из файла"""
         if not self.tests_file.exists():
@@ -369,10 +487,56 @@ def get_ab_testing_framework() -> ABTestingFramework:
 
 def setup_default_ab_tests():
     """Настраивает дефолтные A/B тесты для подсказок и explain"""
-    
+
     framework = get_ab_testing_framework()
-    
-    # Тест 1: Подсказки в шагах
+
+    # Тест 1: Название второго теста
+    test_name_variants = [
+        ABVariant(
+            id="portrait_face",
+            name="Portrait Face",
+            content={"test_name": "Портрет лица"},
+            weight=0.5
+        ),
+        ABVariant(
+            id="face_balance",
+            name="Face Balance",
+            content={"test_name": "Баланс лица"},
+            weight=0.5
+        )
+    ]
+
+    framework.create_test(
+        test_id="test_name_experiment",
+        name="Test Name Variation",
+        description="Тестируем разные названия для второго теста",
+        variants=test_name_variants
+    )
+
+    # Тест 2: Порядок категорий в подборе
+    category_order_variants = [
+        ABVariant(
+            id="order_alphabetical",
+            name="Alphabetical Order",
+            content={"order": ["cleansing", "toning", "serum", "moisturizing", "eye_care", "sun_protection", "masks"]},
+            weight=0.5
+        ),
+        ABVariant(
+            id="order_popularity",
+            name="Popularity Order",
+            content={"order": ["moisturizing", "serum", "cleansing", "toning", "eye_care", "sun_protection", "masks"]},
+            weight=0.5
+        )
+    ]
+
+    framework.create_test(
+        test_id="category_order_experiment",
+        name="Category Order Variation",
+        description="Тестируем разный порядок категорий в подборе товаров",
+        variants=category_order_variants
+    )
+
+    # Тест 3: Подсказки в шагах
     hints_variants = [
         ABVariant(
             id="hints_detailed",
@@ -386,7 +550,7 @@ def setup_default_ab_tests():
         ),
         ABVariant(
             id="hints_simple",
-            name="Simple Hints", 
+            name="Simple Hints",
             content={
                 "Q1_HAIR_COLOR": "💇 Выберите естественный цвет волос",
                 "Q3_SKIN_UNDERTONE": "🎨 Определим ваш подтон кожи",
@@ -395,15 +559,15 @@ def setup_default_ab_tests():
             weight=0.5
         )
     ]
-    
+
     framework.create_test(
         test_id="hints_experiment",
         name="Step Hints Effectiveness",
         description="Тестируем влияние подробности подсказок на completion rate",
         variants=hints_variants
     )
-    
-    # Тест 2: Explain тексты на карточках
+
+    # Тест 4: Explain тексты на карточках
     explain_variants = [
         ABVariant(
             id="explain_technical",
@@ -411,7 +575,7 @@ def setup_default_ab_tests():
             content={
                 "prefix": "Подойдет:",
                 "undertone_warm": "теплый подтон кожи",
-                "season_autumn": "глубокие осенние оттенки", 
+                "season_autumn": "глубокие осенние оттенки",
                 "contrast_medium": "средняя интенсивность цвета"
             },
             weight=0.5
@@ -428,14 +592,14 @@ def setup_default_ab_tests():
             weight=0.5
         )
     ]
-    
+
     framework.create_test(
-        test_id="explain_experiment", 
+        test_id="explain_experiment",
         name="Product Explain Wording",
         description="Тестируем эмоциональность vs техничность в объяснениях товаров",
         variants=explain_variants
     )
-    
+
     print("✅ Default A/B tests created")
     return framework
 

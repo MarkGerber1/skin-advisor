@@ -127,6 +127,7 @@ try:
     from engine.models import Product, UserProfile
     from engine.source_resolver import SourceResolver
     from engine.affiliate_validator import AffiliateManager
+    from engine.ab_testing import get_ab_testing_framework
     ENGINE_AVAILABLE = True
 
     # Create resolver instance
@@ -191,6 +192,16 @@ except ImportError as e:
         def emit_analytics(*args, **kwargs):
             pass
 
+    class ABTestingFramework:
+        def log_button_click(self, *args, **kwargs):
+            pass
+        def log_test_completion(self, *args, **kwargs):
+            pass
+        def log_add_to_cart(self, *args, **kwargs):
+            pass
+        def get_category_order_variant(self, user_id):
+            return ["cleansing", "toning", "serum", "moisturizing", "eye_care", "sun_protection", "masks"]
+
     resolver = SourceResolver()
 
     def resolve_source(product):
@@ -231,6 +242,12 @@ try:
     affiliate_manager = AffiliateManager()
 except:
     affiliate_manager = AffiliateManager()  # fallback
+
+# Инициализация A/B testing framework
+try:
+    ab_framework = get_ab_testing_framework()
+except:
+    ab_framework = ABTestingFramework()  # fallback
 
 # MAKEUP_CATEGORIES is now defined inside the i18n try/except block above
 
@@ -895,6 +912,12 @@ async def add_makeup_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
 
             except Exception as e:
                 print(f"[WARNING] Affiliate tracking error: {e}")
+
+            # A/B testing: логируем добавление в корзину
+            try:
+                ab_framework.log_add_to_cart(user_id, "category_order_experiment", 1)
+            except Exception as e:
+                print(f"[WARNING] A/B tracking error: {e}")
 
             # Формируем сообщение об успехе
             variant_text = f" ({getattr(variant, 'name', '')})" if variant else ""
