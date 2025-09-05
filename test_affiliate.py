@@ -23,3 +23,4 @@ except ImportError as e:
     print(f"❌ Ошибка импорта: {e}")
 except Exception as e:
     print(f"❌ Ошибка выполнения: {e}")
+

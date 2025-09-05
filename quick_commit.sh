@@ -33,3 +33,4 @@ if git status --porcelain | grep -q .; then
 else
     echo "ℹ️  Нет изменений для коммита"
 fi
+
