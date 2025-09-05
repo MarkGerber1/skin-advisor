@@ -11,6 +11,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY bot/ ./bot/
 COPY engine/ ./engine/
 COPY assets/ ./assets/
+COPY services/ ./services/
+COPY i18n/ ./i18n/
+COPY report/ ./report/
 COPY start.py ./start.py
 COPY *.toml ./
 COPY *.json ./
@@ -23,7 +26,13 @@ RUN echo "=== Build verification ===" && \
     echo "=== Checking bot/main.py ===" && \
     test -f /usr/src/app/bot/main.py && echo "✓ bot/main.py EXISTS" || echo "✗ bot/main.py NOT FOUND" && \
     echo "=== Checking assets/ ===" && \
-    test -d /usr/src/app/assets && echo "✓ assets/ EXISTS" || echo "✗ assets/ NOT FOUND"
+    test -d /usr/src/app/assets && echo "✓ assets/ EXISTS" || echo "✗ assets/ NOT FOUND" && \
+    echo "=== Checking services/ ===" && \
+    test -d /usr/src/app/services && echo "✓ services/ EXISTS" || echo "✗ services/ NOT FOUND" && \
+    echo "=== Checking i18n/ ===" && \
+    test -d /usr/src/app/i18n && echo "✓ i18n/ EXISTS" || echo "✗ i18n/ NOT FOUND" && \
+    echo "=== Checking report/ ===" && \
+    test -d /usr/src/app/report && echo "✓ report/ EXISTS" || echo "✗ report/ NOT FOUND"
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
