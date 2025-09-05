@@ -35,6 +35,10 @@ except ImportError:
         def track_external_checkout_opened(self, *args, **kwargs):
             pass
 
+        @staticmethod
+        def emit_analytics(*args, **kwargs):
+            pass
+
 # Fix import for Railway environment
 import sys
 import os
@@ -107,21 +111,15 @@ except ImportError:
         BADGE_OOS = "Нет в наличии"
         BTN_SHOW_ALTS = "Показать альтернативы"
 
-# Fix import for services module
+# Fix import for cart module
 try:
-    from services.cart_service import get_cart_service, CartServiceError
+    from engine.cart_store import CartStore
+    cart_service_available = True
 except ImportError:
-    try:
-        import sys
-        import os
-        # Add project root to sys.path if not already there
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        project_root = os.path.dirname(os.path.dirname(current_dir))
-        if project_root not in sys.path:
-            sys.path.insert(0, project_root)
-        from services.cart_service import get_cart_service, CartServiceError
-    except ImportError:
-        print("CRITICAL: Failed to import cart_service, using fallback")
+    print("CRITICAL: Failed to import CartStore, using fallback")
+    cart_service_available = False
+    class CartStore:
+        pass
         # Define fallback functions
         def get_cart_service():
             return None
@@ -513,13 +511,13 @@ async def show_product_variants(cb: CallbackQuery, state: FSMContext) -> None:
 
         # Affiliate отслеживание открытия товара
         try:
-            affiliate_manager.analytics.emit('product_opened', {
+            affiliate_manager.emit_analytics('product_opened', {
                 'pid': product_id,
                 'source': 'skincare_picker',
                 'user_id': user_id
             })
         except Exception as e:
-            print(f"⚠️ Product open tracking error: {e}")
+            print(f"[WARNING] Product open tracking error: {e}")
 
         # Находим товар (пока используем заглушку, в будущем из каталога)
         # TODO: Получить товар из каталога по ID
@@ -587,15 +585,14 @@ async def add_product_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
         user_id = cb.from_user.id
 
         # Проверяем доступность сервиса корзины
-        if not hasattr(cb.bot, 'cart_service_available'):
+        if not cart_service_available:
             await cb.answer(MSG_ADD_FAILED)
             return
 
         try:
-            cart_service = get_cart_service()
-
+            cart_store = CartStore()
             # Добавляем товар в корзину
-            cart_item = await cart_service.add_item(
+            cart_item = cart_store.add_item(
                 user_id=user_id,
                 product_id=product_id,
                 variant_id=variant_id,
@@ -643,7 +640,7 @@ async def add_product_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
                     )
 
             except Exception as e:
-                print(f"⚠️ Affiliate tracking error: {e}")
+                print(f"[WARNING] Affiliate tracking error: {e}")
 
             # Формируем сообщение об успехе
             variant_text = f" ({cart_item.variant_name})" if cart_item.variant_name else ""

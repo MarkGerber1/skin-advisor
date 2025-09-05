@@ -94,14 +94,31 @@ except ImportError:
         CATEGORY_MASCARA = BTN_MAKEUP_MASCARA
         CATEGORY_LIPS = BTN_MAKEUP_LIPS
 
-# Fix import for services module
+        # Categories for makeup picker
+        MAKEUP_CATEGORIES = [
+            (CAT_TONE, BTN_MAKEUP_TONE),
+            (CAT_CONCEALER, BTN_MAKEUP_CONCEALER),
+            (CAT_CORRECTOR, BTN_MAKEUP_CORRECTOR),
+            (CAT_POWDER, BTN_MAKEUP_POWDER),
+            (CAT_BLUSH, BTN_MAKEUP_BLUSH),
+            (CAT_BRONZER, BTN_MAKEUP_BRONZER),
+            (CAT_CONTOUR, BTN_MAKEUP_CONTOUR),
+            (CAT_HIGHLIGHTER, BTN_MAKEUP_HIGHLIGHTER),
+            (CAT_BROWS, BTN_MAKEUP_BROWS),
+            (CAT_EYESHADOW, BTN_MAKEUP_EYESHADOW),
+            (CAT_EYELINER, BTN_MAKEUP_EYELINER),
+            (CAT_MASCARA, BTN_MAKEUP_MASCARA),
+            (CAT_LIPS, BTN_MAKEUP_LIPS)
+        ]
+
+# Fix import for cart module
 try:
-    from services.cart_service import get_cart_service, CartServiceError
+    from engine.cart_store import CartStore
+    cart_service_available = True
 except ImportError:
-    print("⚠️ cart_service not available, using fallback")
-    def get_cart_service():
-        return None
-    class CartServiceError(Exception):
+    print("[WARNING] CartStore not available, using fallback")
+    cart_service_available = False
+    class CartStore:
         pass
 
 # Fix import for engine modules
@@ -157,6 +174,8 @@ except ImportError as e:
                 'source_type': 'unknown',
                 'domain': 'unknown',
                 'currency': 'RUB',
+                'is_affiliate': False
+            })()
 
     class AffiliateManager:
         def add_affiliate_params(self, url, source, campaign=None):
@@ -167,12 +186,10 @@ except ImportError as e:
             pass
         def get_affiliate_url(self, *args, **kwargs):
             return args[0] if args else ""
-        class analytics:
-            @staticmethod
-            def emit(*args, **kwargs):
-                pass
-                'is_affiliate': False
-            })()
+
+        @staticmethod
+        def emit_analytics(*args, **kwargs):
+            pass
 
     resolver = SourceResolver()
 
@@ -215,22 +232,7 @@ try:
 except:
     affiliate_manager = AffiliateManager()  # fallback
 
-# Categories for makeup picker
-MAKEUP_CATEGORIES = [
-    (CAT_TONE, BTN_MAKEUP_TONE),
-    (CAT_CONCEALER, BTN_MAKEUP_CONCEALER),
-    (CAT_CORRECTOR, BTN_MAKEUP_CORRECTOR),
-    (CAT_POWDER, BTN_MAKEUP_POWDER),
-    (CAT_BLUSH, BTN_MAKEUP_BLUSH),
-    (CAT_BRONZER, BTN_MAKEUP_BRONZER),
-    (CAT_CONTOUR, BTN_MAKEUP_CONTOUR),
-    (CAT_HIGHLIGHTER, BTN_MAKEUP_HIGHLIGHTER),
-    (CAT_BROWS, BTN_MAKEUP_BROWS),
-    (CAT_EYESHADOW, BTN_MAKEUP_EYESHADOW),
-    (CAT_EYELINER, BTN_MAKEUP_EYELINER),
-    (CAT_MASCARA, BTN_MAKEUP_MASCARA),
-    (CAT_LIPS, BTN_MAKEUP_LIPS)
-]
+# MAKEUP_CATEGORIES is now defined inside the i18n try/except block above
 
 
 def select_shades(profile: UserProfile, product: Product) -> List[Dict]:
@@ -591,13 +593,13 @@ async def show_makeup_product(cb: CallbackQuery, state: FSMContext) -> None:
 
         # Affiliate отслеживание открытия товара
         try:
-            affiliate_manager.analytics.emit('product_opened', {
+            affiliate_manager.emit_analytics('product_opened', {
                 'pid': product_id,
                 'source': 'makeup_picker',
                 'user_id': user_id
             })
         except Exception as e:
-            print(f"⚠️ Product open tracking error: {e}")
+            print(f"[WARNING] Product open tracking error: {e}")
 
         # Получаем продукт из каталога
         catalog_path = os.getenv("CATALOG_PATH", "assets/fixed_catalog.yaml")
@@ -802,11 +804,12 @@ async def add_makeup_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
 
         user_id = cb.from_user.id if cb.from_user else 0
 
-        # Получаем сервис корзины
-        cart_service = get_cart_service()
-        if not cart_service:
-            await cb.answer("⚠️ Сервис корзины недоступен")
+        # Проверяем доступность корзины
+        if not cart_service_available:
+            await cb.answer("[WARNING] Сервис корзины недоступен")
             return
+
+        cart_store = CartStore()
 
         # Получаем продукт из каталога
         catalog_path = os.getenv("CATALOG_PATH", "assets/fixed_catalog.yaml")
@@ -832,7 +835,7 @@ async def add_makeup_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
 
         # Добавляем в корзину
         try:
-            cart_item = cart_service.add_item(
+            cart_item = cart_store.add_item(
                 user_id=user_id,
                 product_id=product_id,
                 variant_id=variant_id,
@@ -891,7 +894,7 @@ async def add_makeup_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
                     )
 
             except Exception as e:
-                print(f"⚠️ Affiliate tracking error: {e}")
+                print(f"[WARNING] Affiliate tracking error: {e}")
 
             # Формируем сообщение об успехе
             variant_text = f" ({getattr(variant, 'name', '')})" if variant else ""
