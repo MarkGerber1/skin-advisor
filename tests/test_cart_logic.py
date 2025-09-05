@@ -44,7 +44,7 @@ class TestCartStore:
         )
         
         self.cart_store.add(self.user_id, item)
-        items = self.cart_store.get(self.user_id)
+        items = self.cart_store.get_cart(self.user_id)
         
         assert len(items) == 1
         assert "test_product_1" in items
@@ -59,7 +59,7 @@ class TestCartStore:
         self.cart_store.add(self.user_id, item1)
         self.cart_store.add(self.user_id, item2)
         
-        items = self.cart_store.get(self.user_id)
+        items = self.cart_store.get_cart(self.user_id)
         
         assert len(items) == 1  # Не дублируется
         assert items["test_product_1"].qty == 4  # 1 + 3
@@ -72,7 +72,7 @@ class TestCartStore:
         self.cart_store.add(self.user_id, item1)
         self.cart_store.add(self.user_id, item2)
         
-        items = self.cart_store.get(self.user_id)
+        items = self.cart_store.get_cart(self.user_id)
         
         assert len(items) == 2
         assert items["product_1"].qty == 1
@@ -95,7 +95,7 @@ class TestCartStore:
         self.cart_store.add(self.user_id, item)
         self.cart_store.set_qty(self.user_id, "test_product", 10)
         
-        items = self.cart_store.get(self.user_id)
+        items = self.cart_store.get_cart(self.user_id)
         assert items["test_product"].qty == 10
     
     def test_set_quantity_zero_removes_item(self):
@@ -105,7 +105,7 @@ class TestCartStore:
         self.cart_store.add(self.user_id, item)
         self.cart_store.set_qty(self.user_id, "test_product", 0)
         
-        items = self.cart_store.get(self.user_id)
+        items = self.cart_store.get_cart(self.user_id)
         assert len(items) == 0
     
     def test_clear_cart(self):
@@ -129,7 +129,7 @@ class TestCartStore:
         
         # Создаем новый экземпляр с той же директорией
         new_store = CartStore(base_dir=self.temp_dir)
-        items = new_store.get(self.user_id)
+        items = new_store.get_cart(self.user_id)
         
         assert len(items) == 1
         assert items["persistent_item"].qty == 3

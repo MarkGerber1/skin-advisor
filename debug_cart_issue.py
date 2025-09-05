@@ -56,7 +56,7 @@ def test_catalog():
     try:
         from engine.catalog_store import CatalogStore
         catalog_store = CatalogStore.instance(catalog_path)
-        catalog = catalog_store.get()
+        catalog = catalog_store.get_catalog()
 
         print(f"📊 Catalog loaded: {len(catalog)} products")
 
@@ -101,7 +101,7 @@ def test_selector():
         # Load catalog
         catalog_path = os.getenv("CATALOG_PATH", "assets/fixed_catalog.yaml")
         catalog_store = CatalogStore.instance(catalog_path)
-        catalog = catalog_store.get()
+        catalog = catalog_store.get_catalog()
 
         # Test selector
         selector = SelectorV2()
