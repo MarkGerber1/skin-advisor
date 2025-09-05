@@ -712,19 +712,19 @@ async def handle_unavailable_product(cb: CallbackQuery, state: FSMContext) -> No
             lines.append(f"   💡 {explain}")
     lines.append("")
 
-        # Кнопки для добавления альтернативы
-        alt_id = str(alt.get('id', ''))
-        if alt_id:
-            buttons.append([
-                InlineKeyboardButton(
-                    text=f"➕ Добавить {i}",
-                    callback_data=f"cart:add:{alt_id}"
-                ),
-                InlineKeyboardButton(
-                    text=f"🛒 Купить {i}",
-                    url=alt.get('ref_link', 'https://goldapple.ru/')
-                )
-            ])
+    # Кнопки для добавления альтернативы
+    alt_id = str(alt.get('id', ''))
+    if alt_id:
+        buttons.append([
+            InlineKeyboardButton(
+                text=f"➕ Добавить {i}",
+                callback_data=f"cart:add:{alt_id}"
+            ),
+            InlineKeyboardButton(
+                text=f"🛒 Купить {i}",
+                url=alt.get('ref_link', 'https://goldapple.ru/')
+            )
+        ])
     
     # Кнопка возврата к корзине
     buttons.append([
