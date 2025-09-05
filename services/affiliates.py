@@ -11,7 +11,17 @@ class AffiliateService:
     """Сервис для работы с партнерскими ссылками"""
 
     def __init__(self):
-        self.settings = get_settings()
+        try:
+            self.settings = get_settings()
+        except Exception as e:
+            print(f"⚠️ Could not load settings: {e}, using defaults")
+            # Create a mock settings object
+            class MockSettings:
+                goldapple_partner_code = 'BEAUTYCARE'
+                ru_official_partner_code = 'BEAUTYCARE_RU'
+                ru_marketplace_partner_code = 'BEAUTYCARE_MP'
+                intl_partner_code = 'BEAUTYCARE_INT'
+            self.settings = MockSettings()
 
         # Конфигурация партнерских параметров для разных источников
         self.affiliate_configs = {
