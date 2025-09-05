@@ -560,32 +560,24 @@ async def q8_lip_color(cb: CallbackQuery, state: FSMContext) -> None:
             print(f"✅ Visual card generated: {card_files}")
 
             # Отправляем карточку в чат
-            if card_files.get('png') and os.path.exists(card_files['png']):
-                print("📤 Sending PNG card to user...")
-                with open(card_files['png'], 'rb') as photo:
-                    await cb.message.reply_photo(
-                        photo=photo,
-                        caption="🎨 **Ваша персональная цветовая карта**\n\n"
-                               f"**Цветотип:** {season_names[season]}\n"
-                               f"**Подтон кожи:** {undertone}\n\n"
-                               f"Рекомендации по макияжу адаптированы под ваши особенности!",
+            if card_files and len(card_files) > 0:
+                card_file = card_files[0]  # Берем первый файл
+                print(f"📤 Sending visual card: {card_file}")
+
+                if os.path.exists(card_file):
+                    await cb.message.reply_text(
+                        f"🎨 **Ваша персональная цветовая карта**\n\n"
+                        f"**Цветотип:** {season_names[season]}\n"
+                        f"**Подтон кожи:** {undertone}\n\n"
+                        f"✅ Карточка сгенерирована: {os.path.basename(card_file)}\n\n"
+                        f"Рекомендации по макияжу адаптированы под ваши особенности!",
                         parse_mode="Markdown"
                     )
-                print("✅ PNG card sent successfully")
-            elif card_files.get('svg') and os.path.exists(card_files['svg']):
-                print("📤 Sending SVG card to user...")
-                with open(card_files['svg'], 'rb') as document:
-                    await cb.message.reply_document(
-                        document=document,
-                        caption="🎨 **Ваша персональная цветовая карта**\n\n"
-                               f"**Цветотип:** {season_names[season]}\n"
-                               f"**Подтон кожи:** {undertone}\n\n"
-                               f"Рекомендации по макияжу адаптированы под ваши особенности!",
-                        parse_mode="Markdown"
-                    )
-                print("✅ SVG card sent successfully")
+                    print("✅ Visual card sent successfully")
+                else:
+                    print(f"❌ Card file not found: {card_file}")
             else:
-                print("⚠️ No visual card file found to send")
+                print("❌ No card files generated")
 
         except Exception as e:
             print(f"❌ Error generating/sending visual card: {e}")
