@@ -128,6 +128,7 @@ try:
     from engine.source_resolver import SourceResolver
     from engine.affiliate_validator import AffiliateManager
     from engine.ab_testing import get_ab_testing_framework
+    from services.affiliates import build_ref_link
     ENGINE_AVAILABLE = True
 
     # Create resolver instance
@@ -826,7 +827,7 @@ async def add_makeup_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
             await cb.answer("[WARNING] Сервис корзины недоступен")
             return
 
-        cart_store = CartStore()
+        cart_store = store  # Используем унифицированный store
 
         # Получаем продукт из каталога
         catalog_path = os.getenv("CATALOG_PATH", "assets/fixed_catalog.yaml")
@@ -850,13 +851,28 @@ async def add_makeup_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
             await cb.answer("⚠️ Продукт не найден")
             return
 
+        # Генерируем партнерскую ссылку
+        ref_link = None
+        try:
+            product_data = {
+                'id': product_id,
+                'brand': getattr(product, 'brand', ''),
+                'name': getattr(product, 'name', ''),
+                'link': getattr(product, 'link', ''),
+                'source': getattr(product, 'source', 'unknown')
+            }
+            ref_link = build_ref_link(product_data, "makeup_recommendation")
+        except Exception as e:
+            print(f"Warning: Could not generate affiliate link: {e}")
+
         # Добавляем в корзину
         try:
             cart_item = cart_store.add_item(
                 user_id=user_id,
                 product_id=product_id,
                 variant_id=variant_id,
-                qty=1
+                qty=1,
+                ref_link=ref_link
             )
 
             # Аналитика

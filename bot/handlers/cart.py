@@ -7,18 +7,18 @@ from aiogram import Router, F
 from aiogram.types import CallbackQuery, Message, InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.fsm.context import FSMContext
 
-from engine.cart_store import CartStore, CartItem
+from services.cart_store import get_cart_store, CartStore, CartItem
 from engine.selector import SelectorV2
 from engine.business_metrics import get_metrics_tracker
 from engine.analytics import get_analytics_tracker
 
 # Cart service removed - using direct CartStore operations
-print("✅ Using CartStore directly (services/cart_service removed)")
+print("[OK] Using CartStore directly (services/cart_service removed)")
 CART_SERVICE_AVAILABLE = False
 
 
 router = Router()
-store = CartStore()
+store = get_cart_store()
 selector = SelectorV2()
 metrics = get_metrics_tracker()
 
@@ -30,15 +30,15 @@ def _user_id(msg_or_cb: Message | CallbackQuery | None) -> int | None:
         print(f"🔍 _user_id: {type(msg_or_cb).__name__}.from_user.id = {user_id}")
         # Проверяем что это не bot ID (8345324302)
         if user_id == 8345324302:
-            print(f"⚠️ WARNING: Got bot ID instead of user ID!")
+            print(f"[WARNING] Got bot ID instead of user ID!")
             # В callback query контексте попробуем найти реальный user ID
             if hasattr(msg_or_cb, 'message') and msg_or_cb.message and msg_or_cb.message.from_user:
                 real_user_id = int(msg_or_cb.message.from_user.id)
                 if real_user_id != 8345324302:
-                    print(f"✅ Found real user ID from callback message: {real_user_id}")
+                    print(f"[OK] Found real user ID from callback message: {real_user_id}")
                     return real_user_id
         return user_id
-    print(f"❌ _user_id: no message/callback or from_user")
+    print(f"[ERROR] _user_id: no message/callback or from_user")
     return None
 
 
@@ -55,7 +55,7 @@ async def _find_product_in_recommendations(user_id: int, product_id: str) -> Opt
         user_profile = profile_store.load_profile(user_id)
 
         if user_profile:
-            print(f"✅ Using saved profile: skin_type={user_profile.skin_type}, season={user_profile.season}")
+            print(f"[OK] Using saved profile: skin_type={user_profile.skin_type}, season={user_profile.season}")
         else:
             # Если сохраненного профиля нет, пробуем получить из FSM coordinator
             from bot.handlers.fsm_coordinator import get_fsm_coordinator
@@ -75,10 +75,10 @@ async def _find_product_in_recommendations(user_id: int, product_id: str) -> Opt
                     undertone=profile_data.get("undertone", "neutral"),
                     contrast=profile_data.get("contrast", "medium")
                 )
-                print(f"✅ Using session profile: skin_type={user_profile.skin_type}, season={user_profile.season}")
+                print(f"[OK] Using session profile: skin_type={user_profile.skin_type}, season={user_profile.season}")
             else:
                 # Fallback: используем универсальный профиль
-                print(f"⚠️ No saved or session profile found for user {user_id}, using fallback profile")
+                print(f"[WARNING] No saved or session profile found for user {user_id}, using fallback profile")
                 user_profile = UserProfile(
                     user_id=user_id,
                     skin_type="normal",
@@ -123,7 +123,7 @@ async def _find_product_in_recommendations(user_id: int, product_id: str) -> Opt
                 return product
                 
     except Exception as e:
-        print(f"❌ Error finding product {product_id}: {e}")
+        print(f"[ERROR] Error finding product {product_id}: {e}")
     
     return None
 
@@ -134,7 +134,7 @@ async def add_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
     print(f"🛒 Cart add callback triggered: {cb.data}")
     
     if not cb.data:
-        print("❌ No callback data provided")
+        print("[ERROR] No callback data provided")
         await cb.answer()
         return
         
@@ -899,3 +899,119 @@ async def decrease_quantity(cb: CallbackQuery, state: FSMContext) -> None:
             break
 
     await show_cart_callback(cb, state)
+
+@router.callback_query(F.data.startswith("cart:inc:"))
+async def increase_quantity(cb: CallbackQuery, state: FSMContext) -> None:
+    """Увеличить количество товара"""
+    user_id = _user_id(cb)
+    if not user_id:
+        await cb.answer("Ошибка пользователя")
+        return
+    
+    product_id = cb.data.split(":", 2)[2]
+    cart = store.get_cart(user_id)
+    
+    for item in cart:
+        if item.product_id == product_id:
+            new_qty = item.quantity + 1
+            store.update_quantity(user_id, product_id, item.variant_id, new_qty)
+            
+            metrics.track_event("cart_qty_change", user_id, {
+                "product_id": product_id,
+                "variant_id": item.variant_id,
+                "new_qty": new_qty,
+                "action": "increase"
+            })
+            
+            await cb.answer(f"Количество: {new_qty}")
+            break
+    
+    await show_cart_callback(cb, state)
+
+
+@router.callback_query(F.data.startswith("cart:rm:"))
+async def remove_from_cart(cb: CallbackQuery, state: FSMContext) -> None:
+    """Удалить товар из корзины"""
+    user_id = _user_id(cb)
+    if not user_id:
+        await cb.answer("Ошибка пользователя")
+        return
+    
+    parts = cb.data.split(":")
+    product_id = parts[2]
+    variant_id = parts[3] if len(parts) > 3 else None
+    
+    success = store.remove_item(user_id, product_id, variant_id)
+    
+    if success:
+        metrics.track_event("cart_item_removed", user_id, {
+            "product_id": product_id,
+            "variant_id": variant_id
+        })
+        
+        await cb.answer("Товар удален из корзины")
+    else:
+        await cb.answer("Товар не найден")
+    
+    await show_cart_callback(cb, state)
+
+
+@router.callback_query(F.data == "cart:checkout")
+async def checkout_cart(cb: CallbackQuery, state: FSMContext) -> None:
+    """Оформить заказ"""
+    user_id = _user_id(cb)
+    if not user_id:
+        await cb.answer("Ошибка пользователя")
+        return
+    
+    cart = store.get_cart(user_id)
+    if not cart:
+        await cb.answer("Корзина пуста")
+        return
+    
+    # Создать сообщение с товарами и ссылками
+    text_lines = ["��� **ОФОРМЛЕНИЕ ЗАКАЗА**\\n"]
+    
+    total_price = 0
+    buttons = []
+    
+    for item in cart:
+        price = (item.price or 0) * item.quantity
+        total_price += price
+        
+        text_lines.append(f"• {item.brand or ''} {item.name or ''}")
+        text_lines.append(f"  Количество: {item.quantity}")
+        text_lines.append(f"  Цена: {price:.0f} ₽")
+        
+        # Кнопка для оформления на сайте
+        if item.ref_link:
+            buttons.append([InlineKeyboardButton(
+                text=f"��� Купить {item.brand or item.name}",
+                url=item.ref_link
+            )])
+        elif hasattr(item, 'link') and item.link:
+            buttons.append([InlineKeyboardButton(
+                text=f"��� Купить {item.brand or item.name}",
+                url=item.link
+            )])
+        
+        text_lines.append("")  # Пустая строка
+    
+    text_lines.append(f"**Итого: {total_price:.0f} ₽**")
+    
+    # Кнопки навигации
+    buttons.append([
+        InlineKeyboardButton(text="⬅️ Назад в корзину", callback_data="show_cart"),
+        InlineKeyboardButton(text="��� Главное меню", callback_data="back:main")
+    ])
+    
+    kb = InlineKeyboardMarkup(inline_keyboard=buttons)
+    await cb.message.edit_text("\\n".join(text_lines), reply_markup=kb)
+    
+    # Логирование
+    metrics.track_event("cart_checkout_opened", user_id, {
+        "items_count": len(cart),
+        "total_price": total_price
+    })
+    
+    await cb.answer()

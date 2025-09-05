@@ -206,10 +206,43 @@ async def main() -> None:
     dp.include_router(report_router)
     dp.include_router(universal_router)  # Universal catch-all - LOWEST PRIORITY
 
+    # Общий обработчик для back:main
+    @dp.callback_query(F.data == "back:main")
+    async def handle_back_main(cb: CallbackQuery, state: FSMContext):
+        """Обработчик возврата в главное меню"""
+        from bot.ui.keyboards import main_menu_inline
+
+        # Очищаем состояние
+        await state.clear()
+
+        # Показываем главное меню
+        await cb.message.edit_text(
+            "🏠 **Главное меню**\n\nВыберите действие:",
+            reply_markup=main_menu_inline(),
+            parse_mode="Markdown"
+        )
+
+        await cb.answer()
+
     # Fallback handler removed - was intercepting all callbacks before routers!
-    
+
     print("Starting polling...")
-    
+
+    # Проверяем lock-файл для предотвращения конфликта polling
+    lock_file = "/tmp/skin-advisor.lock"
+    if os.path.exists(lock_file):
+        print("❌ Другой инстанс бота уже запущен! Удалите lock-файл или остановите другой процесс.")
+        print(f"Lock file: {lock_file}")
+        return
+
+    # Создаем lock-файл
+    try:
+        with open(lock_file, 'w') as f:
+            f.write(str(os.getpid()))
+        print(f"✅ Lock file created: {lock_file}")
+    except Exception as e:
+        print(f"⚠️ Could not create lock file: {e}")
+
     # Add graceful shutdown handler
     import signal
     import asyncio
@@ -224,6 +257,14 @@ async def main() -> None:
         finally:
             await bot.session.close()
             print("✅ Bot session closed")
+
+            # Удаляем lock-файл
+            try:
+                if os.path.exists(lock_file):
+                    os.remove(lock_file)
+                    print(f"✅ Lock file removed: {lock_file}")
+            except Exception as e:
+                print(f"⚠️ Could not remove lock file: {e}")
     
     # Setup graceful shutdown signal handlers
     shutdown_event = asyncio.Event()
