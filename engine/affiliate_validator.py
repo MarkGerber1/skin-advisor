@@ -1,5 +1,5 @@
 """
-🔗 Affiliate Validator - Проверка партнерских ссылок и монетизации
+[AFFILIATE] Validator - Проверка партнерских ссылок и монетизации
 Обеспечивает 100% покрытие всех buy_url партнерскими метками
 """
 
@@ -36,7 +36,7 @@ class AffiliateManager:
                 'campaign_param': 'utm_campaign',
                 'source_param': 'utm_source',
                 'medium_param': 'utm_medium',
-                'partner_code': self.settings.get('goldapple_partner_code', 'BEAUTYCARE'),
+                'partner_code': getattr(self.settings, 'goldapple_partner_code', 'BEAUTYCARE'),
                 'campaign': 'recommendation'
             },
             'ru_official': {
@@ -44,7 +44,7 @@ class AffiliateManager:
                 'campaign_param': 'campaign',
                 'source_param': 'source',
                 'medium_param': 'medium',
-                'partner_code': self.settings.get('ru_official_partner_code', 'BEAUTYCARE_RU'),
+                'partner_code': getattr(self.settings, 'ru_official_partner_code', 'BEAUTYCARE_RU'),
                 'campaign': 'skincare'
             },
             'ru_marketplace': {
@@ -52,7 +52,7 @@ class AffiliateManager:
                 'campaign_param': 'campaign',
                 'source_param': 'ref',
                 'medium_param': 'medium',
-                'partner_code': self.settings.get('ru_marketplace_partner_code', 'BEAUTYCARE_MP'),
+                'partner_code': getattr(self.settings, 'ru_marketplace_partner_code', 'BEAUTYCARE_MP'),
                 'campaign': 'marketplace'
             },
             'intl_authorized': {
@@ -60,7 +60,7 @@ class AffiliateManager:
                 'campaign_param': 'campaign',
                 'source_param': 'source',
                 'medium_param': 'medium',
-                'partner_code': self.settings.get('intl_partner_code', 'BEAUTYCARE_INT'),
+                'partner_code': getattr(self.settings, 'intl_partner_code', 'BEAUTYCARE_INT'),
                 'campaign': 'international'
             }
         }
@@ -341,7 +341,7 @@ class AffiliateValidator:
 def test_affiliate_manager():
     """Тестирует новую affiliate систему"""
 
-    print("🔗 AFFILIATE MANAGER TEST")
+    print("[AFFILIATE] MANAGER TEST")
     print("=" * 50)
 
     manager = AffiliateManager()
@@ -357,13 +357,13 @@ def test_affiliate_manager():
 
     for url, source, campaign in test_cases:
         affiliate_url = manager.add_affiliate_params(url, source, campaign)
-        print(f"  ✅ {source}: {affiliate_url}")
+        print(f"  [OK] {source}: {affiliate_url}")
 
     # Тест 2: События
     print("\n2. Testing tracking events:")
     manager.track_checkout_click(3, 4500.50, 'RUB', 'goldapple', ['prod1', 'prod2'])
     manager.track_external_checkout_opened('Gold Apple', 'https://goldapple.ru/checkout', 3)
-    print("  ✅ Events tracked")
+    print("  [OK] Events tracked")
 
     # Тест 3: get_affiliate_url
     print("\n3. Testing get_affiliate_url:")
@@ -372,7 +372,7 @@ def test_affiliate_manager():
         "goldapple",
         "recommendation"
     )
-    print(f"  ✅ Full affiliate URL: {full_url}")
+    print(f"  [OK] Full affiliate URL: {full_url}")
 
     return manager
 
@@ -380,7 +380,7 @@ def test_affiliate_manager():
 def run_affiliate_validation_test():
     """Запускает полную проверку партнерских ссылок"""
     
-    print("🔗 AFFILIATE VALIDATION TEST")
+    print("[AFFILIATE] VALIDATION TEST")
     print("=" * 50)
     
     validator = AffiliateValidator()
@@ -399,7 +399,7 @@ def run_affiliate_validation_test():
         result = _with_affiliate(original, partner, redirect)
         validation = validator.validate_url(original, result)
         
-        status = "✅" if validation.is_valid and validation.has_affiliate else "❌"
+        status = "[OK]" if validation.is_valid and validation.has_affiliate else "[FAIL]"
         print(f"  {status} {result}")
     
     # Тест 2: Проверка конфигурации
@@ -452,18 +452,18 @@ def run_affiliate_validation_test():
                 for issue in report['issues'][:3]:
                     print(f"    - {issue}")
         else:
-            print("  ⚠️ No catalog loaded, skipping selector test")
+            print("  [WARNING] No catalog loaded, skipping selector test")
             
     except Exception as e:
-        print(f"  ❌ Selector test failed: {e}")
-    
-    print(f"\n🎯 VALIDATION COMPLETE")
+        print(f"  [ERROR] Selector test failed: {e}")
+
+    print(f"\n[SUCCESS] VALIDATION COMPLETE")
     return validator
 
 
 if __name__ == "__main__":
     # Тестируем новую affiliate систему
-    print("🚀 STARTING AFFILIATE SYSTEM TESTS")
+    print("[START] AFFILIATE SYSTEM TESTS")
     print("=" * 60)
 
     # Тест AffiliateManager
@@ -486,7 +486,7 @@ if __name__ == "__main__":
     if affiliate_url.issues:
         print(f"Issues: {affiliate_url.issues}")
 
-    print("\n🎯 ALL AFFILIATE TESTS COMPLETED")
+    print("\n[SUCCESS] ALL AFFILIATE TESTS COMPLETED")
 
 
 

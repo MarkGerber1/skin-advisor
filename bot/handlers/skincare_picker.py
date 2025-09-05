@@ -70,6 +70,24 @@ for path in possible_paths:
         sys.path.insert(0, path)
         print(f"Added to sys.path: {path}")
 
+# Define category constants outside try/except
+CAT_CLEANSE = "cleansing"
+CAT_TONE = "toning"
+CAT_SERUM = "serum"
+CAT_MOIST = "moisturizing"
+CAT_EYE = "eye_care"
+CAT_SPF = "sun_protection"
+CAT_MASK = "masks"
+
+# Define UI category names outside try/except
+CATEGORY_CLEANSER = "Очищение"
+CATEGORY_TONER = "Тонизирование"
+CATEGORY_SERUM = "Сыворотки"
+CATEGORY_MOISTURIZER = "Увлажнение"
+CATEGORY_EYE_CARE = "Зона вокруг глаз"
+CATEGORY_SUN_PROTECTION = "Солнцезащита"
+CATEGORY_MASK = "Снятие макияжа"
+
 try:
     from i18n.ru import *
 except ImportError:
@@ -100,23 +118,9 @@ except ImportError:
         BTN_ADD_TO_CART = "Добавить в корзину"
         BTN_IN_CART = "✓ В корзине"
 
-        # Category constants
-        CAT_CLEANSE = "cleansing"
-        CAT_TONE = "toning"
-        CAT_SERUM = "serum"
-        CAT_MOIST = "moisturizing"
-        CAT_EYE = "eye_care"
-        CAT_SPF = "sun_protection"
-        CAT_MASK = "masks"
+        # Category constants (already defined above)
 
-        # UI category names (sync with i18n)
-        CATEGORY_CLEANSER = BTN_CLEANSE
-        CATEGORY_TONER = BTN_TONE
-        CATEGORY_SERUM = BTN_SERUM
-        CATEGORY_MOISTURIZER = BTN_MOIST
-        CATEGORY_EYE_CARE = BTN_EYE
-        CATEGORY_SUN_PROTECTION = BTN_SPF
-        CATEGORY_MASK = BTN_REMOVER
+        # UI category names (already defined above)
         MSG_ADDED = "Добавлено в корзину: {item}"
         MSG_VARIANT_ADDED = "Добавлено в корзину: {brand} {name} ({variant})"
         BADGE_OOS = "Нет в наличии"
