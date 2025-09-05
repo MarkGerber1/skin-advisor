@@ -178,7 +178,7 @@ class SelectorV2:
             "toner": ["toner", "тоник", "эксфолиант"],
             "serum": ["serum", "сыворотка", "концентрат"],
             "moisturizer": ["moisturizer", "крем", "эмульсия"],
-            "eye_cream": ["eye_cream", "крем_глаз"],
+            "eye_cream": ["eye_cream", "крем_глаз", "крем для глаз"],
             "sunscreen": ["sunscreen", "spf", "санскрин"],
             "mask": ["mask", "маска"]
         }

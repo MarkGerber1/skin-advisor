@@ -555,7 +555,8 @@ async def q8_lip_color(cb: CallbackQuery, state: FSMContext) -> None:
         try:
             from report.cards import generate_visual_cards
             print("🎨 Generating visual card for makeup test...")
-            card_files = generate_visual_cards(uid, "makeup", profile, {"season": season, "undertone": undertone})
+            recommendations = []  # Можно добавить реальные рекомендации
+            card_files = generate_visual_cards({"user_id": uid, "season": season, "undertone": undertone}, recommendations)
             print(f"✅ Visual card generated: {card_files}")
 
             # Отправляем карточку в чат

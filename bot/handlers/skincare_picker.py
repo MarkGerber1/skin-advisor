@@ -17,6 +17,7 @@ try:
     from engine.selector import SelectorV2
     from engine.affiliate_validator import AffiliateManager
     from engine.ab_testing import get_ab_testing_framework
+    from services.affiliates import build_ref_link
 except ImportError:
     print("CRITICAL: Failed to import engine modules, using fallback")
     # Define fallback classes
@@ -625,13 +626,34 @@ async def add_product_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
             return
 
         try:
-            cart_store = CartStore()
+            cart_store = store  # Используем унифицированный store
+            # Находим продукт для генерации партнерской ссылки
+            product_data = None
+            try:
+                selector = SelectorV2()
+                products = selector.select_products(user_id, category="all", limit=100)
+                for prod in products:
+                    if str(prod.get('id', '')) == product_id:
+                        product_data = prod
+                        break
+            except Exception as e:
+                print(f"Warning: Could not find product data for {product_id}: {e}")
+
+            # Генерируем партнерскую ссылку
+            ref_link = None
+            if product_data:
+                try:
+                    ref_link = build_ref_link(product_data, "skincare_recommendation")
+                except Exception as e:
+                    print(f"Warning: Could not generate affiliate link: {e}")
+
             # Добавляем товар в корзину
             cart_item = cart_store.add_item(
                 user_id=user_id,
                 product_id=product_id,
                 variant_id=variant_id,
-                qty=1
+                qty=1,
+                ref_link=ref_link
             )
 
             # Аналитика

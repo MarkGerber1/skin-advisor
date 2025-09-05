@@ -199,6 +199,32 @@ products:
     link: https://goldapple.ru/19000094562-ceramide-ato-concentrate-cream
     in_stock: true
 
+  - id: "lrp-eye-001"
+    brand: La Roche-Posay
+    name: Toleriane Ultra Крем для области вокруг глаз
+    category: Крем для глаз
+    texture: cream
+    tags: [sensitive, hydrating, anti-puffiness]
+    actives: [niacinamide, prebiotic, caffeine]
+    volume_ml: 15
+    price: 2499
+    price_currency: RUB
+    link: https://goldapple.ru/19000094562-toleriane-ultra-eye
+    in_stock: true
+
+  - id: "cerave-eye-001"
+    brand: CeraVe
+    name: Увлажняющий крем для области вокруг глаз
+    category: Крем для глаз
+    texture: cream
+    tags: [hydrating, barrier-repair, gentle]
+    actives: [ceramide, hyaluronic, niacinamide]
+    volume_ml: 14
+    price: 1299
+    price_currency: RUB
+    link: https://www.letu.ru/product/cerave-krem-dlya-glaz/100300185
+    in_stock: true
+
   # === СОЛНЦЕЗАЩИТА ===
   - id: "boj-002"
     brand: Beauty of Joseon

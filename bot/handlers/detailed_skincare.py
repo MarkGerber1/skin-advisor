@@ -631,12 +631,8 @@ async def q8_desired_effect(cb: CallbackQuery, state: FSMContext) -> None:
         try:
             from report.cards import generate_visual_cards
             print("🎨 Generating visual card for skincare test...")
-            result_data = {
-                "skin_type": skin_type,
-                "concerns": concerns,
-                "sensitivity": sensitivity
-            }
-            card_files = generate_visual_cards(uid, "skincare", profile, result_data)
+            recommendations = []  # Можно добавить реальные рекомендации
+            card_files = generate_visual_cards({"user_id": uid, "skin_type": skin_type, "concerns": concerns}, recommendations)
             print(f"✅ Visual card generated: {card_files}")
 
             # Отправляем карточку в чат
