@@ -142,6 +142,14 @@ async def _find_product_in_recommendations(user_id: int, product_id: str) -> Opt
         # Ищем по ID
         for product in all_products:
             if str(product.get("id", "")) == product_id:
+                # Генерируем affiliate link если его нет
+                if not product.get("ref_link"):
+                    try:
+                        from services.affiliates import build_ref_link
+                        product["ref_link"] = build_ref_link(product, "cart_add")
+                        print(f"🔗 Generated affiliate link for {product_id}: {product['ref_link'][:50]}...")
+                    except Exception as e:
+                        print(f"⚠️ Failed to generate affiliate link: {e}")
                 return product
                 
     except Exception as e:
