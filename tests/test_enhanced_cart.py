@@ -63,7 +63,7 @@ def test_cart_store_enhanced_functionality():
     store.add(user_id, cart_item)
     
     # Проверяем что товар добавился
-    items = store.get(user_id)
+    items = store.get_cart(user_id)
     assert len(items) == 1
     
     saved_item = items[0]
@@ -78,12 +78,12 @@ def test_cart_store_enhanced_functionality():
     
     # Тест обновления количества
     store.set_qty(user_id, "prod_456", 3)
-    items = store.get(user_id)
+    items = store.get_cart(user_id)
     assert items[0].qty == 3
     
     # Тест удаления
     store.remove(user_id, "prod_456")
-    items = store.get(user_id)
+    items = store.get_cart(user_id)
     assert len(items) == 0
     
     # Очищаем после теста
@@ -135,7 +135,7 @@ def test_cart_multiple_products():
         store.add(user_id, product)
     
     # Проверяем что все товары добавились
-    items = store.get(user_id)
+    items = store.get_cart(user_id)
     assert len(items) == 3
     
     # Проверяем товары по категориям
@@ -180,7 +180,7 @@ def test_cart_affiliate_links():
     )
     
     store.add(user_id, cart_item)
-    items = store.get(user_id)
+    items = store.get_cart(user_id)
     
     assert len(items) == 1
     ref_link = items[0].ref_link

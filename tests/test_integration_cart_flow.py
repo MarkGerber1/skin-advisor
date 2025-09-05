@@ -99,7 +99,7 @@ class TestCartFlowIntegration:
         self.cart_store.add(self.user_id, foundation_item)
         
         # 3. Проверяем корзину
-        cart_items = self.cart_store.get(self.user_id)
+        cart_items = self.cart_store.get_cart(self.user_id)
         assert len(cart_items) == 2
         
         # 4. Проверяем идемпотентность - добавляем тот же оттенок помады
@@ -112,7 +112,7 @@ class TestCartFlowIntegration:
         )
         self.cart_store.add(self.user_id, lipstick_same_shade)
         
-        cart_items = self.cart_store.get(self.user_id)
+        cart_items = self.cart_store.get_cart(self.user_id)
         assert len(cart_items) == 2  # Не дублируется
         
         # Находим помаду и проверяем что qty увеличилось
@@ -133,13 +133,13 @@ class TestCartFlowIntegration:
         )
         self.cart_store.add(self.user_id, lipstick_different_shade)
         
-        cart_items = self.cart_store.get(self.user_id)
+        cart_items = self.cart_store.get_cart(self.user_id)
         assert len(cart_items) == 3  # Добавился как отдельная позиция
         
         # 6. Тестируем управление количеством
         self.cart_store.set_qty(self.user_id, "lipstick-mac-001", 5, "shade-ruby-woo")
         
-        cart_items = self.cart_store.get(self.user_id)
+        cart_items = self.cart_store.get_cart(self.user_id)
         lipstick_ruby = next((item for item in cart_items 
                             if item.get_composite_key() == "lipstick-mac-001:shade-ruby-woo"), None)
         assert lipstick_ruby.qty == 5
@@ -147,7 +147,7 @@ class TestCartFlowIntegration:
         # 7. Тестируем удаление конкретного варианта
         self.cart_store.remove(self.user_id, "lipstick-mac-001", "shade-velvet-teddy")
         
-        cart_items = self.cart_store.get(self.user_id)
+        cart_items = self.cart_store.get_cart(self.user_id)
         assert len(cart_items) == 2  # Velvet Teddy удален
         
         # 8. Проверяем итоговую корзину
@@ -196,7 +196,7 @@ class TestCartFlowIntegration:
         
         # Создаем новый экземпляр CartStore (симулируем перезапуск)
         new_cart_store = CartStore(base_dir=self.temp_dir)
-        loaded_items = new_cart_store.get(self.user_id)
+        loaded_items = new_cart_store.get_cart(self.user_id)
         
         assert len(loaded_items) == 4
         
@@ -242,7 +242,7 @@ class TestCartFlowIntegration:
             json.dump(legacy_data, f)
         
         # Загружаем через новую систему
-        migrated_items = self.cart_store.get(self.user_id)
+        migrated_items = self.cart_store.get_cart(self.user_id)
         
         assert len(migrated_items) == 1
         item = migrated_items[0]
@@ -267,7 +267,7 @@ class TestCartFlowIntegration:
         )
         self.cart_store.add(self.user_id, new_variant)
         
-        all_items = self.cart_store.get(self.user_id)
+        all_items = self.cart_store.get_cart(self.user_id)
         assert len(all_items) == 2  # Legacy + новый вариант
 
 

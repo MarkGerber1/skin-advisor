@@ -69,7 +69,7 @@ class TestCartVariants:
         self.cart_store.add(self.user_id, lipstick_red)
         self.cart_store.add(self.user_id, lipstick_pink)
         
-        items = self.cart_store.get(self.user_id)
+        items = self.cart_store.get_cart(self.user_id)
         
         # Должно быть 2 отдельные позиции
         assert len(items) == 2
@@ -108,7 +108,7 @@ class TestCartVariants:
         )
         self.cart_store.add(self.user_id, lipstick_red_again)
         
-        items = self.cart_store.get(self.user_id)
+        items = self.cart_store.get_cart(self.user_id)
         
         # Должна быть только 1 позиция
         assert len(items) == 1
@@ -139,7 +139,7 @@ class TestCartVariants:
         self.cart_store.add(self.user_id, foundation_default)
         self.cart_store.add(self.user_id, foundation_shade)
         
-        items = self.cart_store.get(self.user_id)
+        items = self.cart_store.get_cart(self.user_id)
         
         # Должно быть 2 позиции
         assert len(items) == 2
@@ -164,12 +164,12 @@ class TestCartVariants:
         
         self.cart_store.add(self.user_id, lipstick_red)
         self.cart_store.add(self.user_id, lipstick_pink)
-        assert len(self.cart_store.get(self.user_id)) == 2
+        assert len(self.cart_store.get_cart(self.user_id)) == 2
         
         # Удаляем конкретный вариант
         self.cart_store.remove(self.user_id, "lipstick-001", "shade-red-01")
         
-        items = self.cart_store.get(self.user_id)
+        items = self.cart_store.get_cart(self.user_id)
         assert len(items) == 1
         assert items[0].get_composite_key() == "lipstick-001:shade-pink-02"
     
@@ -185,7 +185,7 @@ class TestCartVariants:
         # Изменяем количество красной помады
         self.cart_store.set_qty(self.user_id, "lipstick-001", 10, "shade-red-01")
         
-        items = self.cart_store.get(self.user_id)
+        items = self.cart_store.get_cart(self.user_id)
         items_dict = {item.get_composite_key(): item for item in items}
         
         assert items_dict["lipstick-001:shade-red-01"].qty == 10
@@ -218,7 +218,7 @@ class TestCartVariants:
             json.dump(legacy_data, f)
         
         # Загружаем через новую систему
-        items = self.cart_store.get(self.user_id)
+        items = self.cart_store.get_cart(self.user_id)
         
         assert len(items) == 1
         item = items[0]
