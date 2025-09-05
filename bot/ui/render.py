@@ -161,6 +161,20 @@ def render_skincare_report(result: Dict) -> Tuple[str, InlineKeyboardMarkup]:
     products_with_id = [p for p in all_products if p.get("id")]
     print(f"🆔 Skincare products with ID: {len(products_with_id)}")
 
+    # Generate affiliate links for products
+    products_with_ref_link = []
+    for product in products_with_id:
+        if not product.get("ref_link"):
+            try:
+                from services.affiliates import build_ref_link
+                product["ref_link"] = build_ref_link(product, "skincare_recommendation")
+                print(f"🔗 Generated affiliate link for {product.get('id')}: {product['ref_link'][:50]}...")
+            except Exception as e:
+                print(f"⚠️ Failed to generate affiliate link for {product.get('id')}: {e}")
+        products_with_ref_link.append(product)
+
+    print(f"🌐 Skincare products with ref_link: {len([p for p in products_with_ref_link if p.get('ref_link')])}")
+
     buttons: List[List[InlineKeyboardButton]] = []
 
     # Add cart buttons for first 8 products
@@ -195,7 +209,7 @@ def render_skincare_report(result: Dict) -> Tuple[str, InlineKeyboardMarkup]:
     # Return keyboard or noop
     if buttons:
         print(f"🛒 Created {len(buttons)} total skincare buttons")
-        kb = InlineKeyboardMarkup(inline_keyboard=buttons)
+    kb = InlineKeyboardMarkup(inline_keyboard=buttons)
     else:
         print("⚠️ No skincare products with ID found, returning noop keyboard")
         kb = _noop_keyboard()
@@ -308,7 +322,21 @@ def render_makeup_report(result: Dict) -> Tuple[str, InlineKeyboardMarkup]:
     # Even if ref_link is missing, we can still add products to cart
     products_with_id = [p for p in all_products if p.get("id")]
     print(f"🆔 Products with ID: {len(products_with_id)}")
-    
+
+    # Generate affiliate links for products
+    products_with_ref_link = []
+    for product in products_with_id:
+        if not product.get("ref_link"):
+            try:
+                from services.affiliates import build_ref_link
+                product["ref_link"] = build_ref_link(product, "makeup_recommendation")
+                print(f"🔗 Generated affiliate link for {product.get('id')}: {product['ref_link'][:50]}...")
+            except Exception as e:
+                print(f"⚠️ Failed to generate affiliate link for {product.get('id')}: {e}")
+        products_with_ref_link.append(product)
+
+    print(f"🌐 Products with ref_link: {len([p for p in products_with_ref_link if p.get('ref_link')])}")
+
     buttons: List[List[InlineKeyboardButton]] = []
     
     # Add cart buttons for first 8 products
@@ -342,7 +370,7 @@ def render_makeup_report(result: Dict) -> Tuple[str, InlineKeyboardMarkup]:
     # Return keyboard or noop
     if buttons:
         print(f"🛒 Created {len(buttons)} total buttons")
-        kb = InlineKeyboardMarkup(inline_keyboard=buttons)
+    kb = InlineKeyboardMarkup(inline_keyboard=buttons)
     else:
         print("⚠️ No products with ID found, returning noop keyboard")
         kb = _noop_keyboard()
