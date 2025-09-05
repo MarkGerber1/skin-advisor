@@ -61,3 +61,5 @@ echo "• Бренд: brand.html"
 echo "• Конвертер: converter.html"
 echo "• Отчет: PARTNER_REPORT_2.md"
 
+
+

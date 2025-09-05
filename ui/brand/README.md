@@ -160,3 +160,4 @@ categories = {
 - `ui/brand/logo-dark.svg` - Темный логотип
 - `ui/brand/stickers/` - Папка со стикерами
 
+

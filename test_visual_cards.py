@@ -76,3 +76,5 @@ print("- Install Pillow: pip install Pillow")
 print("- Install CairoSVG: pip install CairoSVG")
 print("- For production: ensure both libraries are available")
 
+
+

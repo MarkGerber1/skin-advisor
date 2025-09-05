@@ -109,6 +109,7 @@ try:
     from engine.catalog_store import CatalogStore
     from engine.models import Product, UserProfile
     from engine.source_resolver import SourceResolver
+    from engine.affiliate_validator import AffiliateManager
     ENGINE_AVAILABLE = True
 
     # Create resolver instance
@@ -156,6 +157,20 @@ except ImportError as e:
                 'source_type': 'unknown',
                 'domain': 'unknown',
                 'currency': 'RUB',
+
+    class AffiliateManager:
+        def add_affiliate_params(self, url, source, campaign=None):
+            return url
+        def track_checkout_click(self, *args, **kwargs):
+            pass
+        def track_external_checkout_opened(self, *args, **kwargs):
+            pass
+        def get_affiliate_url(self, *args, **kwargs):
+            return args[0] if args else ""
+        class analytics:
+            @staticmethod
+            def emit(*args, **kwargs):
+                pass
                 'is_affiliate': False
             })()
 
@@ -193,6 +208,12 @@ except ImportError:
     def track_cart_event(*args, **kwargs): pass
 
 router = Router()
+
+# Инициализация affiliate менеджера
+try:
+    affiliate_manager = AffiliateManager()
+except:
+    affiliate_manager = AffiliateManager()  # fallback
 
 # Categories for makeup picker
 MAKEUP_CATEGORIES = [
@@ -568,6 +589,16 @@ async def show_makeup_product(cb: CallbackQuery, state: FSMContext) -> None:
         if ANALYTICS_AVAILABLE:
             track_product_opened(user_id, product_id, "makeup_picker")
 
+        # Affiliate отслеживание открытия товара
+        try:
+            affiliate_manager.analytics.emit('product_opened', {
+                'pid': product_id,
+                'source': 'makeup_picker',
+                'user_id': user_id
+            })
+        except Exception as e:
+            print(f"⚠️ Product open tracking error: {e}")
+
         # Получаем продукт из каталога
         catalog_path = os.getenv("CATALOG_PATH", "assets/fixed_catalog.yaml")
         catalog_store = CatalogStore.instance(catalog_path)
@@ -822,6 +853,45 @@ async def add_makeup_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
                 if variant_id and variant:
                     track_shade_selected(user_id, product_id, variant_id,
                         undertone=getattr(variant, 'undertone', 'unknown'))
+
+            # Affiliate отслеживание
+            try:
+                # Определяем источник
+                source = getattr(product, 'source', 'unknown')
+                if not source or source == 'unknown':
+                    # Определяем по URL или названию
+                    product_url = getattr(product, 'link', '')
+                    if product_url:
+                        if "goldapple" in product_url.lower():
+                            source = "goldapple"
+                        elif "wildberries" in product_url.lower() or "marketplace" in product_url.lower():
+                            source = "ru_marketplace"
+                        elif "official" in product_url.lower():
+                            source = "ru_official"
+                        elif "amazon" in product_url.lower() or "sephora" in product_url.lower():
+                            source = "intl_authorized"
+
+                # Отслеживаем клик по checkout
+                price = float(getattr(product, 'price', 0))
+                affiliate_manager.track_checkout_click(
+                    items_count=1,
+                    total=price,
+                    currency='RUB',
+                    source=source,
+                    product_ids=[product_id]
+                )
+
+                # Отслеживаем открытие внешнего checkout
+                product_url = getattr(product, 'link', '')
+                if product_url:
+                    affiliate_manager.track_external_checkout_opened(
+                        partner=source.title(),
+                        url=product_url,
+                        items_count=1
+                    )
+
+            except Exception as e:
+                print(f"⚠️ Affiliate tracking error: {e}")
 
             # Формируем сообщение об успехе
             variant_text = f" ({getattr(variant, 'name', '')})" if variant else ""
