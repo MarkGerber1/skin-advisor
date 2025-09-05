@@ -195,3 +195,4 @@ def get_cart_store() -> CartStore:
     if _cart_store_instance is None:
         _cart_store_instance = CartStore()
     return _cart_store_instance
+
