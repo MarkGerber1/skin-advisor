@@ -215,11 +215,21 @@ async def add_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
 
         # Add to store
         print(f"💾 Adding to store for user {user_id}")
-        store.add(user_id, cart_item)
+        store.add_item(
+            user_id=user_id,
+            product_id=cart_item.product_id,
+            variant_id=cart_item.variant_id,
+            quantity=cart_item.quantity,
+            brand=cart_item.brand,
+            name=cart_item.name,
+            price=cart_item.price,
+            ref_link=cart_item.ref_link,
+            category=cart_item.category
+        )
         print(f"✅ Successfully added to store")
         
         # Диагностика: проверяем что товар действительно добавился
-        stored_items = store.get(user_id)
+        stored_items = store.get_cart(user_id)
         print(f"🔍 STORE VERIFICATION: User {user_id} now has {len(stored_items)} items in cart")
         for i, item in enumerate(stored_items):
             print(f"    {i+1}. {item.brand} {item.name} (ID: {item.product_id})")
@@ -295,7 +305,7 @@ async def show_cart_callback(cb: CallbackQuery, state: FSMContext) -> None:
     print(f"  🔑 Processed user ID: {user_id}")
 
     # Диагностируем состояние корзины
-    items: List[CartItem] = store.get(user_id)
+    items: List[CartItem] = store.get_cart(user_id)
     print(f"  🛒 Cart items for user {user_id}: {len(items)}")
 
     # Показываем все корзины в store для диагностики
@@ -391,7 +401,7 @@ async def show_cart(m: Message, state: FSMContext) -> None:
         return
         
     # Диагностируем состояние корзины
-    items: List[CartItem] = store.get(user_id)
+    items: List[CartItem] = store.get_cart(user_id)
     print(f"  🛒 Cart items for user {user_id}: {len(items)}")
     
     # Показываем все корзины в store для диагностики
@@ -501,7 +511,7 @@ async def refresh_cart(cb: CallbackQuery, state: FSMContext) -> None:
         return
     
     # Проверяем актуальность товаров в корзине
-    items = store.get(user_id)
+    items = store.get_cart(user_id)
     updated_count = 0
     removed_count = 0
     
@@ -511,7 +521,7 @@ async def refresh_cart(cb: CallbackQuery, state: FSMContext) -> None:
         
         if not current_product:
             # Товар больше не доступен
-            store.remove(user_id, item.product_id)
+            store.remove_item(user_id, item.product_id, item.variant_id)
             removed_count += 1
         elif current_product.get("in_stock") != item.in_stock or current_product.get("price") != item.price:
             # Обновляем информацию
@@ -528,8 +538,18 @@ async def refresh_cart(cb: CallbackQuery, state: FSMContext) -> None:
                 in_stock=current_product.get("in_stock", True),
                 added_at=item.added_at
             )
-            store.remove(user_id, item.product_id)
-            store.add(user_id, updated_item)
+            store.remove_item(user_id, item.product_id, item.variant_id)
+            store.add_item(
+                user_id=user_id,
+                product_id=updated_item.product_id,
+                variant_id=updated_item.variant_id,
+                quantity=updated_item.quantity,
+                brand=updated_item.brand,
+                name=updated_item.name,
+                price=updated_item.price,
+                ref_link=updated_item.ref_link,
+                category=updated_item.category
+            )
             updated_count += 1
     
     metrics.track_event("cart_refresh", user_id, {
@@ -557,7 +577,7 @@ async def buy_all_items(cb: CallbackQuery, state: FSMContext) -> None:
         await cb.answer("Ошибка пользователя")
         return
     
-    items = store.get(user_id)
+    items = store.get_cart(user_id)
     available_items = [item for item in items if item.in_stock and item.ref_link]
     
     if not available_items:
@@ -791,7 +811,7 @@ async def show_cart_details(cb: CallbackQuery, state: FSMContext) -> None:
         await cb.answer("Ошибка пользователя")
         return
     
-    items = store.get(user_id)
+    items = store.get_cart(user_id)
     if not items:
         await cb.answer("Корзина пуста")
         return
