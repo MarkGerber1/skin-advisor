@@ -561,15 +561,15 @@ async def q8_lip_color(cb: CallbackQuery, state: FSMContext) -> None:
 
             # Отправляем карточку в чат
             if card_files and len(card_files) > 0:
-                card_file = card_files[0]  # Берем первый файл
-                print(f"📤 Sending visual card: {card_file}")
+                card_path = card_files[0]  # Берем первый файл из списка
+                print(f"📤 Sending visual card: {card_path}")
 
-                if os.path.exists(card_file):
+                if os.path.exists(card_path):
                     await cb.message.reply_text(
                         f"🎨 **Ваша персональная цветовая карта**\n\n"
                         f"**Цветотип:** {season_names[season]}\n"
                         f"**Подтон кожи:** {undertone}\n\n"
-                        f"✅ Карточка сгенерирована: {os.path.basename(card_file)}\n\n"
+                        f"✅ Карточка сгенерирована: {os.path.basename(card_path)}\n\n"
                         f"Рекомендации по макияжу адаптированы под ваши особенности!",
                         parse_mode="Markdown"
                     )

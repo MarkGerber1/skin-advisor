@@ -5,7 +5,13 @@ Affiliate Links Service
 
 import urllib.parse
 from typing import Dict, List, Optional, Any
-from config.env import get_settings
+
+# Try to import config, fallback to mock if not available
+try:
+    from config.env import get_settings
+except ImportError:
+    print("⚠️ Config module not available, using mock settings")
+    get_settings = None
 
 class AffiliateService:
     """Сервис для работы с партнерскими ссылками"""

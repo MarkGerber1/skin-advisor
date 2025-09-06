@@ -636,37 +636,19 @@ async def q8_desired_effect(cb: CallbackQuery, state: FSMContext) -> None:
             print(f"✅ Visual card generated: {card_files}")
 
             # Отправляем карточку в чат
-            if card_files.get('png') and os.path.exists(card_files['png']):
-                print("📤 Sending PNG card to user...")
-                skin_type_names_short = {
-                    "dry": "🏜️ Сухой тип",
-                    "oily": "🛢️ Жирный тип",
-                    "combination": "⚖️ Комбинированный тип",
-                    "normal": "✨ Нормальный тип"
-                }
+            if card_files and len(card_files) > 0:
+                card_path = card_files[0]  # Берем первый файл из списка
+                if os.path.exists(card_path):
+                    print(f"📤 Sending card to user: {card_path}")
 
-                with open(card_files['png'], 'rb') as photo:
-                    await cb.message.reply_photo(
-                        photo=photo,
-                        caption="💧 **Ваша персональная карта ухода**\n\n"
-                               f"**Тип лица:** {skin_type_names_short[skin_type]}\n"
-                               f"**Чувствительность:** {sensitivity}\n\n"
-                               f"Рекомендации по уходу адаптированы под ваши особенности!",
-                        parse_mode="Markdown"
+                    # Отправляем как текстовое сообщение с путем к файлу
+                    await cb.message.reply_text(
+                        f"🎨 Ваша визуальная карточка создана!\n📁 Файл: {os.path.basename(card_path)}",
+                        reply_markup=InlineKeyboardMarkup(inline_keyboard=[
+                            [InlineKeyboardButton(text="🏠 Главное меню", callback_data="back:main")]
+                        ])
                     )
-                print("✅ PNG card sent successfully")
-            elif card_files.get('svg') and os.path.exists(card_files['svg']):
-                print("📤 Sending SVG card to user...")
-                with open(card_files['svg'], 'rb') as document:
-                    await cb.message.reply_document(
-                        document=document,
-                        caption="💧 **Ваша персональная карта ухода**\n\n"
-                               f"**Тип лица:** {skin_type}\n"
-                               f"**Чувствительность:** {sensitivity}\n\n"
-                               f"Рекомендации по уходу адаптированы под ваши особенности!",
-                        parse_mode="Markdown"
-                    )
-                print("✅ SVG card sent successfully")
+                print("✅ Card sent successfully")
             else:
                 print("⚠️ No visual card file found to send")
 
