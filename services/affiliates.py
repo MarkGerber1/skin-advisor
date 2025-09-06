@@ -68,6 +68,14 @@ class AffiliateService:
                 'medium_param': 'medium',
                 'partner_code': getattr(self.settings, 'intl_partner_code', 'BEAUTYCARE_INT'),
                 'priority': 4
+            },
+            'default': {
+                'aff_param': 'partner',
+                'campaign_param': 'utm_campaign',
+                'source_param': 'utm_source',
+                'medium_param': 'utm_medium',
+                'partner_code': 'BEAUTYCARE_DEFAULT',
+                'priority': 5
             }
         }
 
@@ -85,19 +93,38 @@ class AffiliateService:
             # Получаем оригинальную ссылку
             original_link = product.get('link') or product.get('url')
             if not original_link:
+                print(f"⚠️ No link found for product {product.get('id', 'unknown')}")
                 return None
+
+            # Если уже есть ref_link, используем его
+            if product.get('ref_link'):
+                return product['ref_link']
 
             # Определяем источник по ссылке или названию
             source = self._detect_source(product)
             print(f"🔍 Detected source for {product.get('id', 'unknown')}: {source}")
 
+            # Проверяем конфигурацию
+            if not self.affiliate_configs:
+                print(f"⚠️ No affiliate configs available, returning original link")
+                print(f"🔗 affiliate_link_built: product={product.get('id', 'unknown')}, source=None, used_fallback=True")
+                return original_link
+
+            # Проверяем источник
             if not source or source not in self.affiliate_configs:
-                print(f"⚠️ Source {source} not found in affiliate_configs, returning original link")
-                return original_link  # Возвращаем оригинальную ссылку
+                # Пробуем default конфигурацию
+                if 'default' in self.affiliate_configs:
+                    source = 'default'
+                    print(f"🔄 Using default affiliate config for {product.get('id', 'unknown')}")
+                else:
+                    print(f"⚠️ No affiliate config for source {source}, returning original link")
+                    print(f"🔗 affiliate_link_built: product={product.get('id', 'unknown')}, source={source}, used_fallback=True")
+                    return original_link
 
             # Генерируем партнерскую ссылку
             affiliate_url = self._add_affiliate_params(original_link, source, campaign)
             print(f"✅ Generated affiliate link: {affiliate_url[:50]}...")
+            print(f"🔗 affiliate_link_built: product={product.get('id', 'unknown')}, source={source}, used_fallback=False")
 
             return affiliate_url
 
@@ -105,7 +132,8 @@ class AffiliateService:
             print(f"❌ Error building affiliate link for product {product.get('id', 'unknown')}: {e}")
             import traceback
             traceback.print_exc()
-            return None
+            # Возвращаем оригинальную ссылку в случае ошибки
+            return product.get('link') or product.get('url')
 
     def _detect_source(self, product: Dict[str, Any]) -> Optional[str]:
         """Определить источник продукта"""
