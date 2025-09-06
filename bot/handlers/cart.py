@@ -17,6 +17,24 @@ from engine.analytics import get_analytics_tracker
 print("[OK] Using CartStore directly (services/cart_service removed)")
 CART_SERVICE_AVAILABLE = False
 
+# Debounce mechanism for cart operations
+_last_cart_operation: Dict[str, float] = {}
+DEBOUNCE_SECONDS = 2.0
+
+
+def _check_debounce(user_id: int, operation: str) -> bool:
+    """Check if operation should be debounced"""
+    import time
+    key = f"{user_id}:{operation}"
+    now = time.time()
+
+    if key in _last_cart_operation:
+        if now - _last_cart_operation[key] < DEBOUNCE_SECONDS:
+            return False  # Debounce
+
+    _last_cart_operation[key] = now
+    return True  # Allow operation
+
 
 router = Router()
 store = get_cart_store()
@@ -264,8 +282,9 @@ async def add_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
         price_text = f"{cart_item.price} {cart_item.price_currency}"
         
         message = f"✅ Добавлено в корзину!\n\n🛍️ {brand_name}"
-        if cart_item.variant_name:
-            message += f" ({cart_item.variant_name})"
+        variant_name = getattr(cart_item, "variant_name", None)
+        if variant_name:
+            message += f" ({variant_name})"
         message += f"\n💰 {price_text}"
         
         if cart_item.explain:
@@ -438,10 +457,11 @@ async def show_cart(m: Message, state: FSMContext) -> None:
         # Формируем название товара
         brand_name = f"{item.brand or ''} {item.name or item.product_id}".strip()
         price_text = f"{price} {item.price_currency or '₽'}" if price > 0 else "Цена уточняется"
-        
-        # Статус наличия
-        stock_emoji = "✅" if item.in_stock else "❌"
-        if item.in_stock:
+
+        # Статус наличия (безопасное обращение)
+        in_stock = getattr(item, "in_stock", True)
+        stock_emoji = "✅" if in_stock else "❌"
+        if in_stock:
             available_items += 1
         
         lines.append(f"{i}. {stock_emoji} **{brand_name}**")
@@ -463,30 +483,48 @@ async def show_cart(m: Message, state: FSMContext) -> None:
     
     # Кнопки управления
     buttons = []
-    
+
+    # Кнопки для каждого товара (инкремент/декремент/удаление)
+    for item in items:
+        item_buttons = []
+        qty = getattr(item, "quantity", 1)
+
+        # Кнопки управления количеством
+        item_buttons.append(InlineKeyboardButton(text="➖", callback_data=f"cart:dec:{item.product_id}"))
+        item_buttons.append(InlineKeyboardButton(text=f"{qty}", callback_data=f"cart:show:{item.product_id}"))
+        item_buttons.append(InlineKeyboardButton(text="➕", callback_data=f"cart:inc:{item.product_id}"))
+        item_buttons.append(InlineKeyboardButton(text="🗑️", callback_data=f"cart:rm:{item.product_id}"))
+
+        buttons.append(item_buttons)
+
+    # Разделитель
+    buttons.append([])
+
     # Кнопки покупки для товаров в наличии
     buy_buttons = []
     for item in items[:3]:  # Показываем только первые 3
-        if item.in_stock and item.ref_link:
+        in_stock = getattr(item, "in_stock", True)
+        ref_link = getattr(item, "ref_link", None)
+        if in_stock and ref_link:
             brand_short = (item.brand or "")[:10]
             buy_buttons.append([
                 InlineKeyboardButton(
                     text=f"🛒 {brand_short}",
-                    url=item.ref_link
+                    url=ref_link
                 )
             ])
-    
+
     if buy_buttons:
         buttons.extend(buy_buttons)
         buttons.append([InlineKeyboardButton(text="🛍️ Купить всё", callback_data="cart:buy_all")])
-    
+
     # Кнопки управления корзиной
     buttons.extend([
         [
-            InlineKeyboardButton(text="🗑️ Очистить", callback_data="cart:clear"),
+            InlineKeyboardButton(text="🗑️ Очистить корзину", callback_data="cart:clr"),
             InlineKeyboardButton(text="🔄 Обновить", callback_data="cart:refresh")
         ],
-        [InlineKeyboardButton(text="📋 Подробнее", callback_data="cart:details")]
+        [InlineKeyboardButton(text="⬅️ Назад к подбору", callback_data="back:main")]
     ])
     
     kb = InlineKeyboardMarkup(inline_keyboard=buttons)
@@ -948,7 +986,12 @@ async def increase_quantity(cb: CallbackQuery, state: FSMContext) -> None:
     if not user_id:
         await cb.answer("Ошибка пользователя")
         return
-    
+
+    # Debounce check
+    if not _check_debounce(user_id, f"inc:{cb.data}"):
+        await cb.answer("⏳ Подождите...")
+        return
+
     product_id = cb.data.split(":", 2)[2]
     cart = store.get_cart(user_id)
 
@@ -956,6 +999,9 @@ async def increase_quantity(cb: CallbackQuery, state: FSMContext) -> None:
         if item.product_id == product_id:
             new_qty = min(item.quantity + 1, 10)  # Максимум 10 штук
             store.update_quantity(user_id, product_id, item.variant_id, new_qty)
+
+            # Логирование изменения количества
+            print(f"📈 product_inc_qty: user={user_id}, product={product_id}, old_qty={item.quantity}, new_qty={new_qty}")
 
             metrics.track_event("cart_qty_change", user_id, {
                 "product_id": product_id,
@@ -983,8 +1029,12 @@ async def decrease_quantity(cb: CallbackQuery, state: FSMContext) -> None:
 
     for item in cart:
         if item.product_id == product_id:
+            old_qty = item.quantity
             new_qty = max(item.quantity - 1, 1)  # Минимум 1 штука
             store.update_quantity(user_id, product_id, item.variant_id, new_qty)
+
+            # Логирование изменения количества
+            print(f"📉 product_dec_qty: user={user_id}, product={product_id}, old_qty={old_qty}, new_qty={new_qty}")
 
             metrics.track_event("cart_qty_change", user_id, {
                 "product_id": product_id,
@@ -1217,6 +1267,9 @@ async def cart_delete(cb: CallbackQuery):
                 store._save_cart(user_id, cart)
                 print(f"✅ Removed {product_id} from cart")
 
+                # Логирование удаления товара
+                print(f"🗑️ product_removed: user={user_id}, product={product_id}, qty={removed_item.quantity}")
+
                 # Аналитика
                 if ANALYTICS_AVAILABLE:
                     analytics = get_analytics_tracker()
@@ -1235,7 +1288,7 @@ async def cart_delete(cb: CallbackQuery):
         await cb.answer("⚠️ Ошибка при удалении товара")
 
 
-@router.callback_query(F.data == "cart:clear")
+@router.callback_query(F.data == "cart:clr")
 async def cart_clear(cb: CallbackQuery):
     """Очистить всю корзину"""
     try:
@@ -1244,9 +1297,11 @@ async def cart_clear(cb: CallbackQuery):
 
         # Очищаем корзину
         store = get_cart_store()
+        cart_before = store.get_cart(user_id)
         store.clear_cart(user_id)
 
         print("✅ Cart cleared")
+        print(f"🗑️ cart_cleared: user={user_id}, items_removed={len(cart_before)}")
 
         # Аналитика
         if ANALYTICS_AVAILABLE:

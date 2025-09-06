@@ -24,6 +24,8 @@ class CartItem:
     category: Optional[str] = None
     variant_name: Optional[str] = None
     in_stock: bool = True
+    qty: int = 1  # алиас для совместимости
+    image_url: Optional[str] = None
 
     def get_key(self) -> str:
         """Уникальный ключ товара в корзине"""
