@@ -802,10 +802,25 @@ async def get_recommendations(cb: CallbackQuery, state: FSMContext) -> None:
         return
     
     print(f"🎯 get_recommendations: user {user_id} wants recommendations for cart")
-    
-    # Показываем текущую корзину
-    await show_cart_callback(cb, state)
-    
+
+    # Проверяем, изменилось ли сообщение и нужно ли обновлять
+    current_text = cb.message.text or ""
+    current_markup = cb.message.reply_markup
+
+    # Получаем актуальную информацию о корзине
+    store = get_cart_store()
+    cart_items = store.get_cart(user_id)
+    cart_text = "🛒 Ваша корзина пуста.\n\nДобавьте товары из рекомендаций!" if not cart_items else f"🛒 Ваша корзина ({len(cart_items)} товаров)"
+
+    # Проверяем, нужно ли обновлять
+    text_changed = current_text != cart_text
+    markup_changed = not _compare_keyboards(current_markup, None)  # Всегда обновляем разметку для рекомендаций
+
+    if text_changed or markup_changed:
+        await show_cart_callback(cb, state)
+    else:
+        print("ℹ️ Cart content unchanged, skipping update")
+
     await cb.answer("Открываю корзину с рекомендациями")
 
 

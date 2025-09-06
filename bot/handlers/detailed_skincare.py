@@ -555,6 +555,21 @@ async def q8_desired_effect(cb: CallbackQuery, state: FSMContext) -> None:
             "profile": profile.model_dump()
         })
         
+        # Сохраняем профиль в user_profile_store
+        from bot.handlers.user_profile_store import get_user_profile_store
+        profile_store = get_user_profile_store()
+        profile_data = {
+            "user_id": uid,
+            "skin_type": skin_type,
+            "concerns": concerns,
+            "sensitivity": sensitivity,
+            "season": "spring",  # default
+            "undertone": "neutral",  # default
+            "contrast": "medium"  # default
+        }
+        await profile_store.save_profile(uid, profile_data)
+        print(f"✅ Profile saved to user_profile_store for user {uid}")
+
         # Сохраняем результат в состояние
         await state.update_data(
             skin_analysis=skin_analysis,
@@ -772,6 +787,69 @@ async def show_skincare_products(cb: CallbackQuery, state: FSMContext) -> None:
     except Exception as e:
         print(f"❌ Error in show_skincare_products: {e}")
         await cb.answer("⚠️ Ошибка при показе продуктов")
+
+
+@router.callback_query(F.data == "skincare_result:products")
+async def show_skincare_products_universal(cb: CallbackQuery, state: FSMContext) -> None:
+    """Универсальный обработчик для показа продуктов ухода"""
+    try:
+        print(f"🛍️ skincare_result:products callback from user {cb.from_user.id}")
+
+        # Пытаемся получить данные из состояния
+        data = await state.get_data()
+        result = data.get("result", {})
+
+        if not result or not result.get("skincare"):
+            # Если нет данных в состоянии, пытаемся получить из сохраненного профиля
+            user_id = cb.from_user.id
+            from bot.handlers.user_profile_store import get_user_profile_store
+            profile_store = get_user_profile_store()
+            profile = profile_store.load_profile(user_id)
+
+            if profile:
+                # Создаем результат на основе профиля
+                result = {
+                    "skincare": {
+                        "cleanser": [{"id": "fallback_cleanser", "brand": "Рекомендуемый", "name": "Средство для очищения", "price": 1500}],
+                        "toner": [{"id": "fallback_toner", "brand": "Рекомендуемый", "name": "Тоник", "price": 1200}],
+                        "serum": [{"id": "fallback_serum", "brand": "Рекомендуемый", "name": "Сыворотка", "price": 2500}],
+                        "moisturizer": [{"id": "fallback_moisturizer", "brand": "Рекомендуемый", "name": "Увлажняющий крем", "price": 1800}]
+                    }
+                }
+            else:
+                await cb.answer("⚠️ Профиль не найден. Пожалуйста, пройдите тест заново.")
+                return
+
+        # Используем реальные продукты из системы рекомендаций
+        from bot.ui.render import render_skincare_report
+
+        text, kb = render_skincare_report(result)
+
+        # Добавляем кнопку возврата
+        buttons = kb.inline_keyboard if kb else []
+        buttons.append([InlineKeyboardButton(text="⬅️ Назад к результатам", callback_data="back:skincare_results")])
+        kb = InlineKeyboardMarkup(inline_keyboard=buttons)
+
+        await cb.message.edit_text(
+            f"🛍️ **ЧТО КУПИТЬ**\n\n{text}",
+            reply_markup=kb,
+            parse_mode="Markdown"
+        )
+
+        # Analytics
+        if ANALYTICS_AVAILABLE:
+            user_id = cb.from_user.id if cb.from_user else 0
+            analytics = get_analytics_tracker()
+            if analytics and result.get("skincare"):
+                skincare_products = result.get("skincare", {})
+                total_products = sum(len(products) for products in skincare_products.values() if products)
+                analytics.recommendations_viewed(user_id, "skincare", total_products)
+
+        await cb.answer()
+
+    except Exception as e:
+        print(f"❌ Error in show_skincare_products_universal: {e}")
+        await cb.answer("⚠️ Ошибка при показе рекомендаций")
 
 
 @router.callback_query(F.data == "back:skincare_results", DetailedSkincareFlow.RESULT)
