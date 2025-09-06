@@ -432,7 +432,7 @@ async def show_cart(m: Message, state: FSMContext) -> None:
     
     for i, item in enumerate(items, 1):
         price = item.price or 0.0
-        qty = item.qty
+        qty = item.quantity
         total += price * qty
         
         # Формируем название товара
@@ -533,7 +533,7 @@ async def refresh_cart(cb: CallbackQuery, state: FSMContext) -> None:
             # Обновляем информацию
             updated_item = CartItem(
                 product_id=item.product_id,
-                qty=item.qty,
+                qty=item.quantity,
                 brand=current_product.get("brand", item.brand),
                 name=current_product.get("name", item.name),
                 price=current_product.get("price", item.price),
@@ -849,7 +849,7 @@ async def show_cart_details(cb: CallbackQuery, state: FSMContext) -> None:
         
         price_text = f"{item.price} {item.price_currency}" if item.price else "Цена уточняется"
         lines.append(f"💰 Цена: {price_text}")
-        lines.append(f"📦 Количество: {item.qty}")
+        lines.append(f"📦 Количество: {item.quantity}")
         
         stock_text = "✅ В наличии" if item.in_stock else "❌ Недоступен"
         lines.append(f"📊 Статус: {stock_text}")

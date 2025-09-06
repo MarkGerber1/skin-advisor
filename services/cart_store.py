@@ -22,6 +22,8 @@ class CartItem:
     price_currency: str = "RUB"
     ref_link: Optional[str] = None
     category: Optional[str] = None
+    variant_name: Optional[str] = None
+    in_stock: bool = True
 
     def get_key(self) -> str:
         """Уникальный ключ товара в корзине"""
