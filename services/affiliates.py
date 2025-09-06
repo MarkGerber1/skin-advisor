@@ -89,17 +89,22 @@ class AffiliateService:
 
             # Определяем источник по ссылке или названию
             source = self._detect_source(product)
+            print(f"🔍 Detected source for {product.get('id', 'unknown')}: {source}")
 
             if not source or source not in self.affiliate_configs:
+                print(f"⚠️ Source {source} not found in affiliate_configs, returning original link")
                 return original_link  # Возвращаем оригинальную ссылку
 
             # Генерируем партнерскую ссылку
             affiliate_url = self._add_affiliate_params(original_link, source, campaign)
+            print(f"✅ Generated affiliate link: {affiliate_url[:50]}...")
 
             return affiliate_url
 
         except Exception as e:
-            print(f"Error building affiliate link for product {product.get('id', 'unknown')}: {e}")
+            print(f"❌ Error building affiliate link for product {product.get('id', 'unknown')}: {e}")
+            import traceback
+            traceback.print_exc()
             return None
 
     def _detect_source(self, product: Dict[str, Any]) -> Optional[str]:
