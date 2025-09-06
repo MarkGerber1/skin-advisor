@@ -565,7 +565,7 @@ async def q8_lip_color(cb: CallbackQuery, state: FSMContext) -> None:
                 print(f"📤 Sending visual card: {card_path}")
 
                 if os.path.exists(card_path):
-                    await cb.message.reply_text(
+                    await cb.message.answer(
                         f"🎨 **Ваша персональная цветовая карта**\n\n"
                         f"**Цветотип:** {season_names[season]}\n"
                         f"**Подтон кожи:** {undertone}\n\n"
@@ -575,7 +575,7 @@ async def q8_lip_color(cb: CallbackQuery, state: FSMContext) -> None:
                     )
                     print("✅ Visual card sent successfully")
                 else:
-                    print(f"❌ Card file not found: {card_file}")
+                    print(f"❌ Card file not found: {card_path}")
             else:
                 print("❌ No card files generated")
 

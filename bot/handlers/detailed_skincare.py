@@ -642,7 +642,7 @@ async def q8_desired_effect(cb: CallbackQuery, state: FSMContext) -> None:
                     print(f"📤 Sending card to user: {card_path}")
 
                     # Отправляем как текстовое сообщение с путем к файлу
-                    await cb.message.reply_text(
+                    await cb.message.answer(
                         f"🎨 Ваша визуальная карточка создана!\n📁 Файл: {os.path.basename(card_path)}",
                         reply_markup=InlineKeyboardMarkup(inline_keyboard=[
                             [InlineKeyboardButton(text="🏠 Главное меню", callback_data="back:main")]

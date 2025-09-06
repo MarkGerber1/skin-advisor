@@ -19,6 +19,7 @@ class CartItem:
     brand: Optional[str] = None
     name: Optional[str] = None
     price: Optional[float] = None
+    price_currency: str = "RUB"
     ref_link: Optional[str] = None
     category: Optional[str] = None
 
