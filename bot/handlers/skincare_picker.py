@@ -122,6 +122,17 @@ except ImportError:
 
         # UI category names (already defined above)
         MSG_ADDED = "Добавлено в корзину: {item}"
+
+        # Display names for categories
+        CAT_DISPLAY_NAMES = {
+            "cleanser": "Очищение",
+            "toner": "Тонизирование",
+            "serum": "Сыворотки",
+            "moisturizer": "Увлажнение",
+            "eye_cream": "Уход за глазами",
+            "sunscreen": "Солнцезащита",
+            "mask": "Маски"
+        }
         MSG_VARIANT_ADDED = "Добавлено в корзину: {brand} {name} ({variant})"
         BADGE_OOS = "Нет в наличии"
         BTN_SHOW_ALTS = "Показать альтернативы"
@@ -807,3 +818,102 @@ async def back_to_category(cb: CallbackQuery, state: FSMContext) -> None:
     """Вернуться к списку товаров категории"""
     # TODO: Восстановить предыдущее состояние категории
     await start_skincare_picker(cb, state)
+
+
+async def get_user_profile(user_id: int):
+    """Получить профиль пользователя"""
+    try:
+        from bot.handlers.user_profile_store import get_user_profile_store
+        store = get_user_profile_store()
+        return await store.get_profile(user_id)
+    except Exception as e:
+        print(f"❌ Error getting user profile: {e}")
+        return None
+
+
+async def get_skincare_recommendations(user_id: int, profile):
+    """Получить рекомендации по уходу для пользователя"""
+    try:
+        if SELECTOR_AVAILABLE:
+            # Используем настоящий селектор
+            selector = SelectorV2()
+            result = selector.select_products_v2(profile, "skincare")
+            return result.get("skincare", {})
+        else:
+            # Фолбэк с тестовыми данными
+            return {
+                "cleanser": [
+                    {"id": "test_cleanser", "brand": "Test Brand", "name": "Test Cleanser", "price": 1500, "price_currency": "RUB"}
+                ],
+                "toner": [
+                    {"id": "test_toner", "brand": "Test Brand", "name": "Test Toner", "price": 1200, "price_currency": "RUB"}
+                ]
+            }
+    except Exception as e:
+        print(f"❌ Error getting skincare recommendations: {e}")
+        return {}
+
+
+@router.callback_query(F.data == "skincare:show_all")
+async def skincare_show_all(cb: CallbackQuery) -> None:
+    """Показать полный список всех рекомендаций skincare"""
+    try:
+        print(f"📋 skincare:show_all callback from user {cb.from_user.id}")
+
+        # Получаем профиль пользователя для персонализации
+        user_id = cb.from_user.id
+        profile = await get_user_profile(user_id)
+
+        if not profile:
+            await cb.answer("⚠️ Профиль не найден. Пожалуйста, пройдите тест заново.")
+            return
+
+        # Получаем рекомендации для пользователя
+        recommendations = await get_skincare_recommendations(user_id, profile)
+
+        if not recommendations:
+            await cb.answer("⚠️ Рекомендации не найдены. Пожалуйста, пройдите тест заново.")
+            return
+
+        # Формируем полный список всех товаров
+        text_lines = ["🛍️ **Все рекомендации по уходу за кожей**\n"]
+        buttons = []
+
+        total_products = 0
+        for category, products in recommendations.items():
+            if products:
+                text_lines.append(f"\n📦 **{CAT_DISPLAY_NAMES.get(category, category.title())}**")
+                for product in products:
+                    total_products += 1
+                    price_text = _format_price(product)
+                    text_lines.append(f"• {product['brand']} {product['name']} • {price_text}")
+
+                    # Добавляем кнопку для каждого товара
+                    buttons.append([
+                        InlineKeyboardButton(
+                            text=f"➕ Добавить",
+                            callback_data=f"c:add:{product['id']}:default"
+                        )
+                    ])
+
+        text_lines.append(f"\n📊 Всего товаров: {total_products}")
+
+        # Добавляем кнопки навигации
+        buttons.append([
+            InlineKeyboardButton(text="🏠 Главное меню", callback_data="back:main"),
+            InlineKeyboardButton(text="🔄 Обновить", callback_data="skincare:show_all")
+        ])
+
+        kb = InlineKeyboardMarkup(inline_keyboard=buttons)
+        await cb.message.edit_text("\n".join(text_lines), reply_markup=kb, parse_mode="Markdown")
+
+        # Аналитика
+        if ANALYTICS_AVAILABLE:
+            analytics = get_analytics_tracker()
+            analytics.track_event("skincare_show_all", user_id, {"total_products": total_products})
+
+        await cb.answer()
+
+    except Exception as e:
+        print(f"❌ Error in skincare_show_all: {e}")
+        await cb.answer("⚠️ Ошибка при показе полного списка рекомендаций")

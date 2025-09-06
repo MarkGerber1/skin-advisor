@@ -212,6 +212,7 @@ async def add_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
             brand=product_data.get('brand'),
             name=product_data.get('name'),
             price=product_data.get('price'),
+            price_currency=product_data.get('price_currency', 'RUB'),
             ref_link=product_data.get('ref_link'),
             category=product_data.get('category'),
             variant_id=variant_id
@@ -338,7 +339,7 @@ async def show_cart_callback(cb: CallbackQuery, state: FSMContext) -> None:
 
     for i, item in enumerate(items, 1):
         price = item.price or 0.0
-        qty = item.qty
+        qty = item.quantity
         total += price * qty
 
         # Формируем название товара
@@ -360,7 +361,7 @@ async def show_cart_callback(cb: CallbackQuery, state: FSMContext) -> None:
             InlineKeyboardButton(text="➖", callback_data=f"cart:dec:{item.product_id}"),
             InlineKeyboardButton(text=f"{qty}", callback_data=f"cart:show:{item.product_id}"),
             InlineKeyboardButton(text="➕", callback_data=f"cart:inc:{item.product_id}"),
-            InlineKeyboardButton(text="🗑️", callback_data=f"cart:rm:{item.product_id}")
+            InlineKeyboardButton(text="🗑️", callback_data=f"cart:del:{item.product_id}")
         ])
 
     # Итоговая информация
@@ -1095,5 +1096,153 @@ async def checkout_cart(cb: CallbackQuery, state: FSMContext) -> None:
         "items_count": len(cart),
         "total_price": total_price
     })
-    
+
     await cb.answer()
+
+
+@router.callback_query(F.data.startswith("cart:inc:"))
+async def cart_increment(cb: CallbackQuery):
+    """Увеличить количество товара в корзине"""
+    try:
+        user_id = cb.from_user.id
+        product_id = cb.data.split(":")[2]
+
+        print(f"📈 Incrementing {product_id} for user {user_id}")
+
+        # Получаем корзину
+        store = get_cart_store()
+        cart = store.get_cart(user_id)
+
+        # Находим товар и увеличиваем количество
+        for item in cart:
+            if item.product_id == product_id:
+                item.quantity += 1
+                store._save_cart(user_id, cart)
+                print(f"✅ Incremented {product_id} to {item.quantity}")
+
+                # Аналитика
+                if ANALYTICS_AVAILABLE:
+                    analytics = get_analytics_tracker()
+                    analytics.track_event("cart_quantity_changed", user_id, {
+                        "product_id": product_id,
+                        "action": "increment",
+                        "new_quantity": item.quantity
+                    })
+                break
+
+        # Перерисовываем корзину
+        await show_cart_callback(cb)
+
+    except Exception as e:
+        print(f"❌ Error incrementing cart item: {e}")
+        await cb.answer("⚠️ Ошибка при увеличении количества")
+
+
+@router.callback_query(F.data.startswith("cart:dec:"))
+async def cart_decrement(cb: CallbackQuery):
+    """Уменьшить количество товара в корзине"""
+    try:
+        user_id = cb.from_user.id
+        product_id = cb.data.split(":")[2]
+
+        print(f"📉 Decrementing {product_id} for user {user_id}")
+
+        # Получаем корзину
+        store = get_cart_store()
+        cart = store.get_cart(user_id)
+
+        # Находим товар и уменьшаем количество
+        for i, item in enumerate(cart):
+            if item.product_id == product_id:
+                if item.quantity > 1:
+                    item.quantity -= 1
+                    print(f"✅ Decremented {product_id} to {item.quantity}")
+                else:
+                    # Удаляем товар если количество = 1
+                    cart.pop(i)
+                    print(f"🗑️ Removed {product_id} from cart")
+
+                store._save_cart(user_id, cart)
+
+                # Аналитика
+                if ANALYTICS_AVAILABLE:
+                    analytics = get_analytics_tracker()
+                    analytics.track_event("cart_quantity_changed", user_id, {
+                        "product_id": product_id,
+                        "action": "decrement" if item.quantity > 0 else "remove",
+                        "new_quantity": item.quantity if item.quantity > 0 else 0
+                    })
+                break
+
+        # Перерисовываем корзину
+        await show_cart_callback(cb)
+
+    except Exception as e:
+        print(f"❌ Error decrementing cart item: {e}")
+        await cb.answer("⚠️ Ошибка при уменьшении количества")
+
+
+@router.callback_query(F.data.startswith("cart:del:"))
+async def cart_delete(cb: CallbackQuery):
+    """Удалить товар из корзины"""
+    try:
+        user_id = cb.from_user.id
+        product_id = cb.data.split(":")[2]
+
+        print(f"🗑️ Deleting {product_id} from cart for user {user_id}")
+
+        # Удаляем товар из корзины
+        store = get_cart_store()
+        cart = store.get_cart(user_id)
+
+        # Находим и удаляем товар
+        for i, item in enumerate(cart):
+            if item.product_id == product_id:
+                removed_item = cart.pop(i)
+                store._save_cart(user_id, cart)
+                print(f"✅ Removed {product_id} from cart")
+
+                # Аналитика
+                if ANALYTICS_AVAILABLE:
+                    analytics = get_analytics_tracker()
+                    analytics.track_event("cart_item_removed", user_id, {
+                        "product_id": product_id,
+                        "brand": removed_item.brand,
+                        "name": removed_item.name
+                    })
+                break
+
+        # Перерисовываем корзину
+        await show_cart_callback(cb)
+
+    except Exception as e:
+        print(f"❌ Error deleting cart item: {e}")
+        await cb.answer("⚠️ Ошибка при удалении товара")
+
+
+@router.callback_query(F.data == "cart:clear")
+async def cart_clear(cb: CallbackQuery):
+    """Очистить всю корзину"""
+    try:
+        user_id = cb.from_user.id
+        print(f"🧹 Clearing cart for user {user_id}")
+
+        # Очищаем корзину
+        store = get_cart_store()
+        store.clear_cart(user_id)
+
+        print("✅ Cart cleared")
+
+        # Аналитика
+        if ANALYTICS_AVAILABLE:
+            analytics = get_analytics_tracker()
+            analytics.track_event("cart_cleared", user_id)
+
+        await cb.answer("🗑️ Корзина очищена!")
+
+        # Перерисовываем корзину (будет пустая)
+        await show_cart_callback(cb)
+
+    except Exception as e:
+        print(f"❌ Error clearing cart: {e}")
+        await cb.answer("⚠️ Ошибка при очистке корзины")

@@ -17,11 +17,17 @@ class AffiliateService:
     """Сервис для работы с партнерскими ссылками"""
 
     def __init__(self):
-        try:
-            self.settings = get_settings()
-        except Exception as e:
-            print(f"⚠️ Could not load settings: {e}, using defaults")
-            # Create a mock settings object
+        if get_settings is not None:
+            try:
+                self.settings = get_settings()
+            except Exception as e:
+                print(f"⚠️ Could not load settings: {e}, using defaults")
+                self.settings = None
+        else:
+            self.settings = None
+
+        # Create mock settings if needed
+        if self.settings is None:
             class MockSettings:
                 goldapple_partner_code = 'BEAUTYCARE'
                 ru_official_partner_code = 'BEAUTYCARE_RU'
@@ -177,7 +183,45 @@ def get_affiliate_service() -> AffiliateService:
         _affiliate_service = AffiliateService()
     return _affiliate_service
 
+def build_affiliate_link_safe(product_link: str | None, cfg: dict | None) -> str | None:
+    """Безопасная функция для генерации партнерской ссылки с фолбэком"""
+    if not product_link:
+        return None
+
+    if not cfg:
+        return product_link  # Фолбэк к оригинальной ссылке
+
+    try:
+        # Попытка определить источник и добавить параметры
+        service = get_affiliate_service()
+        source = service._detect_source({"link": product_link})
+
+        if not source or source not in service.affiliate_configs:
+            return product_link  # Фолбэк к оригинальной ссылке
+
+        affiliate_url = service._add_affiliate_params(product_link, source, "recommendation")
+        return affiliate_url
+
+    except Exception as e:
+        print(f"⚠️ Error building affiliate link: {e}")
+        return product_link  # Фолбэк к оригинальной ссылке
+
+
 def build_ref_link(product: Dict[str, Any], campaign: str = "recommendation") -> Optional[str]:
     """Удобная функция для генерации партнерской ссылки"""
-    service = get_affiliate_service()
-    return service.build_ref_link(product, campaign)
+    try:
+        service = get_affiliate_service()
+        result = service.build_ref_link(product, campaign)
+
+        # Если результат None, используем фолбэк
+        if result is None:
+            product_link = product.get('link') or product.get('url')
+            if product_link:
+                return product_link
+
+        return result
+
+    except Exception as e:
+        print(f"⚠️ Error in build_ref_link: {e}")
+        # Фолбэк к оригинальной ссылке
+        return product.get('link') or product.get('url')
