@@ -208,15 +208,12 @@ async def add_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
 
         cart_item = CartItem(
             product_id=product_id,
-            qty=1,
+            quantity=1,
             brand=product_data.get('brand'),
             name=product_data.get('name'),
             price=product_data.get('price'),
-            price_currency=product_data.get('price_currency', 'RUB'),
             ref_link=product_data.get('ref_link'),
-            explain=product_data.get('explain'),
             category=product_data.get('category'),
-            in_stock=product_data.get('in_stock', True),
             variant_id=variant_id
         )
         print(f"📝 Created cart item: {cart_item}")
