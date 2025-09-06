@@ -10,6 +10,23 @@ from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 
+# Default MAKEUP_CATEGORIES (fallback if i18n fails)
+MAKEUP_CATEGORIES = [
+    ("foundation", "Тональный крем"),
+    ("concealer", "Консилер"),
+    ("corrector", "Корректор"),
+    ("powder", "Пудра"),
+    ("blush", "Румяна"),
+    ("bronzer", "Бронзер"),
+    ("contour", "Скульптор"),
+    ("highlighter", "Хайлайтер"),
+    ("brows", "Брови"),
+    ("eyeshadow", "Тени"),
+    ("eyeliner", "Лайнер/Карандаш"),
+    ("mascara", "Тушь"),
+    ("lips", "Губы")
+]
+
 # Добавляем пути для импорта
 possible_paths = [
     os.getcwd(),
@@ -93,23 +110,6 @@ except ImportError:
         CATEGORY_EYELINER = BTN_MAKEUP_EYELINER
         CATEGORY_MASCARA = BTN_MAKEUP_MASCARA
         CATEGORY_LIPS = BTN_MAKEUP_LIPS
-
-        # Categories for makeup picker
-        MAKEUP_CATEGORIES = [
-            (CAT_TONE, BTN_MAKEUP_TONE),
-            (CAT_CONCEALER, BTN_MAKEUP_CONCEALER),
-            (CAT_CORRECTOR, BTN_MAKEUP_CORRECTOR),
-            (CAT_POWDER, BTN_MAKEUP_POWDER),
-            (CAT_BLUSH, BTN_MAKEUP_BLUSH),
-            (CAT_BRONZER, BTN_MAKEUP_BRONZER),
-            (CAT_CONTOUR, BTN_MAKEUP_CONTOUR),
-            (CAT_HIGHLIGHTER, BTN_MAKEUP_HIGHLIGHTER),
-            (CAT_BROWS, BTN_MAKEUP_BROWS),
-            (CAT_EYESHADOW, BTN_MAKEUP_EYESHADOW),
-            (CAT_EYELINER, BTN_MAKEUP_EYELINER),
-            (CAT_MASCARA, BTN_MAKEUP_MASCARA),
-            (CAT_LIPS, BTN_MAKEUP_LIPS)
-        ]
 
 # Fix import for cart module
 try:
