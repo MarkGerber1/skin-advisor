@@ -384,7 +384,7 @@ async def show_cart_callback(cb: CallbackQuery, state: FSMContext) -> None:
 
     # Сравниваем текст и разметку
     text_changed = current_text != text
-    markup_changed = self._compare_keyboards(current_markup, kb) if current_markup else True
+    markup_changed = _compare_keyboards(current_markup, kb) if current_markup else True
 
     if text_changed or markup_changed:
         await cb.message.edit_text(text, reply_markup=kb, parse_mode="Markdown")

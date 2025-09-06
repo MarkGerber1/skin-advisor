@@ -143,11 +143,15 @@ class AffiliateService:
             parsed = urllib.parse.urlparse(url)
             params = urllib.parse.parse_qs(parsed.query)
 
-            # Добавляем партнерские параметры
-            params[config['aff_param']] = [config['partner_code']]
-            params[config['source_param']] = [source]
-            params[config['medium_param']] = ['affiliate']
-            params[config['campaign_param']] = [campaign]
+            # Добавляем партнерские параметры с проверкой
+            if 'aff_param' in config and 'partner_code' in config:
+                params[config['aff_param']] = [config['partner_code']]
+            if 'source_param' in config:
+                params[config['source_param']] = [source]
+            if 'medium_param' in config:
+                params[config['medium_param']] = ['affiliate']
+            if 'campaign_param' in config:
+                params[config['campaign_param']] = [campaign]
 
             # Реконструируем URL
             new_query = urllib.parse.urlencode(params, doseq=True)
