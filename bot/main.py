@@ -226,10 +226,18 @@ async def main() -> None:
 
     # Fallback handler removed - was intercepting all callbacks before routers!
 
-    print("Starting polling...")
+    # Определяем режим работы: webhook или polling
+    use_webhook = os.getenv("USE_WEBHOOK", "0").lower() in ("1", "true", "yes")
+    webhook_url = os.getenv("WEBHOOK_URL")
+    webhook_path = os.getenv("WEBHOOK_PATH", "/webhook")
 
-    # Проверяем lock-файл для предотвращения конфликта polling
-    lock_file = "/tmp/skin-advisor.lock"
+    if use_webhook and webhook_url:
+        print("🌐 Starting in WEBHOOK mode...")
+    else:
+        print("📡 Starting in POLLING mode...")
+
+        # Проверяем lock-файл для предотвращения конфликта polling
+        lock_file = "/tmp/skin-advisor.lock"
     if os.path.exists(lock_file):
         print("❌ Другой инстанс бота уже запущен! Удалите lock-файл или остановите другой процесс.")
         print(f"Lock file: {lock_file}")
@@ -294,15 +302,60 @@ async def main() -> None:
         except Exception as e:
             print(f"⚠️ Could not clear webhook: {e}")
         
-        # Start polling with conflict resolution
-        print("🚀 Starting polling...")
-        await dp.start_polling(
-            bot,
-            skip_updates=True,  # Skip pending updates to avoid conflicts
-            handle_signals=False,  # We handle signals manually
-            timeout=20,  # Shorter timeout to detect conflicts faster
-            retry_after=3  # Shorter retry delay
-        )
+        if use_webhook and webhook_url:
+            # WEBHOOK MODE
+            print("🌐 Setting up webhook...")
+            webhook_full_url = f"{webhook_url.rstrip('/')}{webhook_path}"
+
+            # Set webhook
+            await bot.set_webhook(
+                url=webhook_full_url,
+                drop_pending_updates=True,
+                allowed_updates=["message", "callback_query", "inline_query"]
+            )
+            print(f"✅ Webhook set to: {webhook_full_url}")
+
+            # Start webhook server (simple aiohttp)
+            from aiohttp import web
+            import aiohttp
+            from aiohttp.web import Application, Request
+
+            app = web.Application()
+
+            async def telegram_webhook(request: Request):
+                """Handle Telegram webhook"""
+                try:
+                    update_data = await request.json()
+                    update = types.Update(**update_data)
+                    await dp.feed_update(bot, update)
+                    return web.Response(text="OK")
+                except Exception as e:
+                    print(f"❌ Webhook error: {e}")
+                    return web.Response(text="ERROR", status=500)
+
+            app.router.add_post(webhook_path, telegram_webhook)
+
+            # Start server
+            runner = web.AppRunner(app)
+            await runner.setup()
+            site = web.TCPSite(runner, '0.0.0.0', int(os.getenv('PORT', 8080)))
+            await site.start()
+            print("🌐 Webhook server started")
+
+            # Wait for shutdown
+            await shutdown_event.wait()
+
+        else:
+            # POLLING MODE
+            # Start polling with conflict resolution
+            print("🚀 Starting polling...")
+            await dp.start_polling(
+                bot,
+                skip_updates=True,  # Skip pending updates to avoid conflicts
+                handle_signals=False,  # We handle signals manually
+                timeout=20,  # Shorter timeout to detect conflicts faster
+                retry_after=3  # Shorter retry delay
+            )
     except KeyboardInterrupt:
         print("🛑 Received shutdown signal")
     except Exception as e:

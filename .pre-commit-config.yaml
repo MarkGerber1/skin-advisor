@@ -1,0 +1,15 @@
+repos:
+  - repo: local
+    hooks:
+      - id: python-syntax-check
+        name: Python syntax check
+        entry: python -m py_compile
+        language: system
+        files: \.py$
+        pass_filenames: true
+      - id: python-import-check
+        name: Python import check
+        entry: python -c "import sys; [__import__(f.replace('/', '.').replace('.py', '')) for f in sys.argv[1:]]"
+        language: system
+        files: \.py$
+        pass_filenames: true

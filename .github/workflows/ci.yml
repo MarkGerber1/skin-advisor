@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Python syntax check
+      run: |
+        echo "Checking Python syntax..."
+        python -m py_compile $(find . -name "*.py" -not -path "./tests/*" | head -20)
+
+    - name: Run render smoke tests
+      run: |
+        echo "Running render smoke tests..."
+        python -m pytest tests/test_render_smoke.py -v
+
+    - name: Run flow smoke tests
+      run: |
+        echo "Running flow smoke tests..."
+        python -m pytest tests/test_flow_smoke.py -v
+
+    - name: Run cart integration tests
+      run: |
+        echo "Running cart integration tests..."
+        python -m pytest tests/test_cart_integration.py -v
+
+    - name: Run affiliate integration tests
+      run: |
+        echo "Running affiliate integration tests..."
+        python -m pytest tests/test_affiliate_integration.py -v

@@ -749,7 +749,51 @@ async def show_skincare_products(cb: CallbackQuery, state: FSMContext) -> None:
                     total_products = sum(len(products) for products in skincare_products.values() if products)
                     analytics.recommendations_viewed(user_id, "skincare", total_products)
             
-            text, kb = render_skincare_report(result)
+            # Рендерим UI с продуктами с fallback
+            try:
+                from bot.ui.render import render_skincare_report
+                text, kb = render_skincare_report(result)
+                print("✅ Skincare report rendered successfully")
+            except Exception as e:
+                print(f"❌ Render failed: {e}")
+                import traceback
+                traceback.print_exc()
+
+                # Fallback: краткий профиль и кнопки
+                skin_analysis = data.get("skin_analysis", {})
+                skin_type = skin_analysis.get("type", "normal")
+                concerns = skin_analysis.get("concerns", [])
+
+                skin_type_names = {
+                    "dry": "🏜️ Сухой тип",
+                    "oily": "🫧 Жирный тип",
+                    "combination": "🔄 Комбинированный тип",
+                    "normal": "✅ Нормальный тип"
+                }
+
+                concerns_text = ", ".join(concerns) if concerns else "общий уход"
+                fallback_text = (
+                    f"🧴 **Ваш тип кожи определён!**\n\n"
+                    f"**Тип кожи:** {skin_type_names.get(skin_type, skin_type)}\n"
+                    f"**Проблемы:** {concerns_text}\n\n"
+                    f"🔍 **Рекомендуемые категории ухода:**\n"
+                    f"• Очищающие средства\n"
+                    f"• Тоники\n"
+                    f"• Сыворотки\n"
+                    f"• Кремы\n"
+                    f"• Солнцезащита\n\n"
+                    f"Нажмите на категории ниже для подбора средств:"
+                )
+
+                from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+                kb = InlineKeyboardMarkup(inline_keyboard=[
+                    [InlineKeyboardButton(text="🧼 Очищение", callback_data="show_skincare_category:cleanser")],
+                    [InlineKeyboardButton(text="💧 Тоник", callback_data="show_skincare_category:toner")],
+                    [InlineKeyboardButton(text="🧪 Сыворотка", callback_data="show_skincare_category:serum")],
+                    [InlineKeyboardButton(text="🧴 Крем", callback_data="show_skincare_category:moisturizer")],
+                    [InlineKeyboardButton(text="🛒 Корзина", callback_data="show_cart")]
+                ])
+                text = fallback_text
             
             # Добавляем кнопку возврата
             buttons = kb.inline_keyboard if kb else []

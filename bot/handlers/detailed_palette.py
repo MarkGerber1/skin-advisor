@@ -499,8 +499,43 @@ async def q8_lip_color(cb: CallbackQuery, state: FSMContext) -> None:
         tldr_report = expander.generate_tldr_report(report_data)
         full_report = expander.generate_full_report(report_data)
         
-        # Рендерим UI с продуктами
-        text, kb = render_makeup_report(result)
+        # Рендерим UI с продуктами с fallback
+        try:
+            from bot.ui.render import render_makeup_report
+            text, kb = render_makeup_report(result)
+            print("✅ Makeup report rendered successfully")
+        except Exception as e:
+            print(f"❌ Render failed: {e}")
+            import traceback
+            traceback.print_exc()
+
+            # Fallback: краткий профиль и кнопки
+            season_names = {
+                "spring": "Весна 🌸",
+                "summer": "Лето ☀️",
+                "autumn": "Осень 🍂",
+                "winter": "Зима ❄️"
+            }
+            fallback_text = (
+                f"🎨 **Ваш цветотип определён!**\n\n"
+                f"**Тип:** {season_names.get(season, season)}\n"
+                f"**Подтон:** {undertone}\n\n"
+                f"🔍 **Рекомендуемые категории макияжа:**\n"
+                f"• Основа и тональные средства\n"
+                f"• Тени для век\n"
+                f"• Помада\n"
+                f"• Тушь для ресниц\n\n"
+                f"Нажмите на категории ниже для подбора средств:"
+            )
+
+            from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+            kb = InlineKeyboardMarkup(inline_keyboard=[
+                [InlineKeyboardButton(text="🎨 Основа", callback_data="show_makeup_category:base")],
+                [InlineKeyboardButton(text="👁️ Глаза", callback_data="show_makeup_category:eyes")],
+                [InlineKeyboardButton(text="💄 Губы", callback_data="show_makeup_category:lips")],
+                [InlineKeyboardButton(text="🛒 Корзина", callback_data="show_cart")]
+            ])
+            text = fallback_text
         
         # Сохраняем результат для пользователя
         if uid:

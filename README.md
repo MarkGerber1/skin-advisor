@@ -1,5 +1,36 @@
 # �� Skin Advisor Bot
 
+## 🚀 DEPLOYMENT
+
+### Railway (Production)
+```bash
+# Environment Variables
+BOT_TOKEN=your_telegram_bot_token_here
+USE_WEBHOOK=0  # Use polling for Railway
+PORT=8080
+DEBUG=0
+```
+
+### Railway with Webhook (Alternative)
+```bash
+# For webhook mode (requires public HTTPS URL)
+USE_WEBHOOK=1
+WEBHOOK_URL=https://your-railway-app.railway.app
+WEBHOOK_PATH=/webhook
+```
+
+### Local Development
+```bash
+# Copy environment template
+cp env.example .env
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run bot
+python bot/main.py
+```
+
 ## 🚀 АВТОМАТИЧЕСКИЙ PUSH
 
 ### Быстрые команды для коммита и пуша:

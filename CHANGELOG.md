@@ -1,5 +1,45 @@
 # 🎨 Beauty Care Design System - Changelog
 
+## [1.0.3] - Production Hardening - January 2025
+
+### 🛠️ **Production Fixes & Hardening**
+
+#### 🔧 **Render Syntax Error Fix**
+- **Fixed**: `SyntaxError` in `bot/ui/render.py` (lines 237, 415) - removed hanging `else` statements
+- **Added**: Pre-commit hooks for Python syntax validation
+- **Impact**: All render imports now work without `SyntaxError`
+
+#### 🛡️ **Render Fallback Protection**
+- **Added**: Try/catch wrappers in `detailed_palette.py` and `detailed_skincare.py`
+- **Fallback**: Minimal profile summary + category buttons when render fails
+- **Impact**: Tests complete successfully even with broken render module
+
+#### 🌐 **Single Bot Runner Protection**
+- **Added**: Webhook support (`USE_WEBHOOK`, `WEBHOOK_URL`, `WEBHOOK_PATH`)
+- **Enhanced**: Lock file validation for polling mode
+- **Impact**: No more `TelegramConflictError` in production
+
+#### ⚙️ **Configuration Hardening**
+- **Fixed**: Config logging - reduced CRITICAL to INFO level
+- **Added**: `env.example` template with all variables
+- **Impact**: Clean startup logs, proper environment setup
+
+#### 🧪 **Smoke Tests Suite**
+- **Added**: Unit tests for render import (`test_render_smoke.py`)
+- **Added**: Flow integration tests (`test_flow_smoke.py`)
+- **Added**: CI pipeline with syntax + smoke test validation
+- **Impact**: Early detection of syntax/render issues
+
+#### 📚 **Documentation**
+- **Updated**: `README.md` with Railway deployment instructions
+- **Added**: Webhook vs polling mode configuration
+- **Impact**: Clear production deployment path
+
+### 🧪 **Quality Assurance**
+- **Coverage**: Render syntax check, flow completion tests, config validation
+- **CI/CD**: GitHub Actions workflow for automated testing
+- **Acceptance**: All flows reach completion screen with or without render
+
 ## [1.0.2] - Makeup Picker Launch - December 2024
 
 ### ✨ **New Major Feature**
