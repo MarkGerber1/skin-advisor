@@ -54,6 +54,15 @@ RUN chmod +x entrypoint.sh
 # Use entrypoint for flexible startup
 ENTRYPOINT ["/bin/sh", "/usr/src/app/entrypoint.sh"]
 
+# Alternative CMD for Railway compatibility
+CMD ["python", "start.py"]
+
+# Debug: Test imports before starting
+RUN python -c "import sys; print('Python version:', sys.version)" && \
+    python -c "from bot.main import main; print('✅ Main function imported successfully')" && \
+    echo "✅ All imports work correctly" && \
+    echo "🚀 Docker build completed successfully"
+
 
 
 

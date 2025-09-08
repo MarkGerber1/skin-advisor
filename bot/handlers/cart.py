@@ -290,7 +290,7 @@ async def add_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
             brand=product_data.get('brand'),
             name=product_data.get('name'),
             price=product_data.get('price'),
-            currency=product_data.get('price_currency', 'RUB'),
+            currency=product_data.get('currency', product_data.get('price_currency', 'RUB')),
             ref_link=product_data.get('ref_link'),
             category=product_data.get('category'),
             variant_id=variant_id
@@ -642,7 +642,7 @@ async def refresh_cart(cb: CallbackQuery, state: FSMContext) -> None:
                 brand=current_product.get("brand", item.brand),
                 name=current_product.get("name", item.name),
                 price=current_product.get("price", item.price),
-                currency=current_product.get("price_currency", item.currency),
+                currency=current_product.get("currency", current_product.get("price_currency", item.currency)),
                 ref_link=current_product.get("ref_link", item.ref_link),
                 explain=current_product.get("explain", item.explain),
                 category=current_product.get("category", item.category),
@@ -806,7 +806,7 @@ async def handle_unavailable_product(cb: CallbackQuery, state: FSMContext) -> No
     
     for i, alt in enumerate(alternatives, 1):
         brand_name = f"{alt.get('brand', '')} {alt.get('name', '')}".strip()
-        price_text = f"{alt.get('price', 0)} {alt.get('price_currency', '₽')}"
+        price_text = f"{alt.get('price', 0)} {alt.get('currency', alt.get('price_currency', '₽'))}"
         explain = alt.get('explain', '')
         
         lines.append(f"{i}. **{brand_name}**")
