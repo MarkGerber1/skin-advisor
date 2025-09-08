@@ -157,19 +157,67 @@ class CartStore:
 
         return False
 
-    def clear_cart(self, user_id: int):
-        """Очистить корзину"""
-        self._carts[user_id] = []
-        cart_file = self._get_cart_file(user_id)
-        if cart_file.exists():
-            cart_file.unlink()
-
-    def get_cart_total(self, user_id: int) -> Tuple[int, float]:
-        """Получить общее количество товаров и сумму"""
+    def inc_quantity(self, user_id: int, product_id: str, variant_id: Optional[str], max_qty: int = 10) -> Tuple[bool, int]:
+        """Увеличить количество товара на 1 (с ограничением)"""
         cart = self.get_cart(user_id)
-        total_quantity = sum(item.quantity for item in cart)
-        total_price = sum((item.price or 0) * item.quantity for item in cart)
-        return total_quantity, total_price
+
+        for item in cart:
+            if item.product_id == product_id and item.variant_id == variant_id:
+                new_qty = min(item.quantity + 1, max_qty)
+                if new_qty != item.quantity:
+                    item.quantity = new_qty
+                    self._save_cart(user_id, cart)
+                    return True, new_qty
+                return True, item.quantity  # Уже максимум
+
+        return False, 0  # Товар не найден
+
+    def dec_quantity(self, user_id: int, product_id: str, variant_id: Optional[str]) -> Tuple[bool, int]:
+        """Уменьшить количество товара на 1 (удаляет при qty=1)"""
+        cart = self.get_cart(user_id)
+
+        for item in cart:
+            if item.product_id == product_id and item.variant_id == variant_id:
+                if item.quantity > 1:
+                    item.quantity -= 1
+                    self._save_cart(user_id, cart)
+                    return True, item.quantity
+                else:
+                    # Удаляем товар если остался последний
+                    cart.remove(item)
+                    self._save_cart(user_id, cart)
+                    return True, 0
+
+        return False, 0  # Товар не найден
+
+    def clear_cart(self, user_id: int) -> int:
+        """Очистить корзину пользователя"""
+        if user_id in self._carts:
+            cleared_count = len(self._carts[user_id])
+            self._carts[user_id] = []
+            self._save_cart(user_id, [])
+            return cleared_count
+        return 0
+
+    def get_cart_count(self, user_id: int) -> int:
+        """Получить количество товаров в корзине"""
+        cart = self.get_cart(user_id)
+        return sum(item.quantity for item in cart)
+
+    def get_cart_total(self, user_id: int) -> Tuple[float, str]:
+        """Получить общую стоимость корзины"""
+        cart = self.get_cart(user_id)
+        total = 0.0
+        currency = "RUB"  # По умолчанию
+
+        for item in cart:
+            if item.price:
+                total += item.price * item.quantity
+                currency = item.currency or currency
+
+        return total, currency
+
+    # Старые методы удалены - используем новые с улучшенной сигнатурой
 
     def list_all_carts(self) -> Dict[int, List[CartItem]]:
         """Получить все корзины (для диагностики)"""

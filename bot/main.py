@@ -238,18 +238,38 @@ async def main() -> None:
 
         # Проверяем lock-файл для предотвращения конфликта polling
         lock_file = "/tmp/skin-advisor.lock"
-    if os.path.exists(lock_file):
-        print("❌ Другой инстанс бота уже запущен! Удалите lock-файл или остановите другой процесс.")
-        print(f"Lock file: {lock_file}")
-        return
 
-    # Создаем lock-файл
-    try:
-        with open(lock_file, 'w') as f:
-            f.write(str(os.getpid()))
-        print(f"✅ Lock file created: {lock_file}")
-    except Exception as e:
-        print(f"⚠️ Could not create lock file: {e}")
+        if os.path.exists(lock_file):
+            try:
+                with open(lock_file, 'r') as f:
+                    old_pid = f.read().strip()
+
+                # Проверяем, работает ли еще процесс с этим PID
+                if old_pid and os.path.exists(f"/proc/{old_pid}"):
+                    print("❌ Другой инстанс бота уже запущен!")
+                    print(f"   Running PID: {old_pid}")
+                    print(f"   Lock file: {lock_file}")
+                    print("💡 Решение: остановите другой процесс или удалите lock-файл")
+                    return
+                else:
+                    print(f"⚠️ Найден устаревший lock-файл от PID {old_pid}, удаляем...")
+                    os.remove(lock_file)
+            except Exception as e:
+                print(f"⚠️ Ошибка при проверке lock-файла: {e}")
+                # Пытаемся удалить поврежденный файл
+                try:
+                    os.remove(lock_file)
+                except:
+                    pass
+
+        # Создаем новый lock-файл
+        try:
+            with open(lock_file, 'w') as f:
+                f.write(str(os.getpid()))
+            print(f"✅ Lock file created: {lock_file} (PID: {os.getpid()})")
+        except Exception as e:
+            print(f"⚠️ Could not create lock file: {e}")
+            print("🚨 ВНИМАНИЕ: Возможны конфликты при одновременном запуске нескольких инстансов!")
 
     # Add graceful shutdown handler
     import signal

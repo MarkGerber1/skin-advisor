@@ -88,6 +88,17 @@ CATEGORY_EYE_CARE = "Зона вокруг глаз"
 CATEGORY_SUN_PROTECTION = "Солнцезащита"
 CATEGORY_MASK = "Снятие макияжа"
 
+# Alias map для категорий - маппинг входных слагов к списку алиасов для поиска
+CATEGORY_ALIAS_MAP = {
+    "cleanser": ["очищение", "гель для умывания", "пенка", "мицеллярная вода", "мусс", "cleanser", "cleanse", "очищающее средство"],
+    "toner": ["тоник", "софтнер", "пилинг", "пилинг-пэды", "пилинг-скатка", "toner", "toning", "тонизирование"],
+    "serum": ["сыворотка", "serum"],
+    "moisturizer": ["крем", "эмульсия", "гель", "флюид", "масло", "moisturizer", "moisturizing", "увлажнение"],
+    "eye_care": ["крем для глаз", "зона вокруг глаз", "eye cream", "eye_care", "глаза", "под глазами"],
+    "sunscreen": ["солнцезащита", "spf", "spf крем", "флюид spf", "стик spf", "sunscreen", "sun_protection"],
+    "mask": ["маска", "mask", "masks", "снятие макияжа", "makeup_remover"]
+}
+
 try:
     from i18n.ru import *
 except ImportError:
@@ -278,12 +289,34 @@ def _get_products_by_category(user_id: int, category_slug: str, page: int = 1) -
             partner_code="S1"
         )
 
-        # Получаем товары из нужной категории
-        engine_category = CATEGORY_TO_ENGINE.get(category_slug, category_slug)
+        # Получаем товары из нужной категории с использованием alias_map
         skincare_data = result.get("skincare", {})
+
+        # Сначала пробуем найти по прямому маппингу
+        engine_category = CATEGORY_TO_ENGINE.get(category_slug, category_slug)
         category_products = skincare_data.get(engine_category, [])
 
+        # Если не нашли, пробуем найти по алиасам
         if not category_products:
+            aliases = CATEGORY_ALIAS_MAP.get(category_slug, [category_slug])
+            for alias in aliases:
+                if alias in skincare_data:
+                    category_products = skincare_data[alias]
+                    print(f"✅ Found category '{category_slug}' via alias '{alias}'")
+                    break
+
+        # Если все еще не нашли, попробуем найти по частичному совпадению
+        if not category_products:
+            for key, products in skincare_data.items():
+                aliases = CATEGORY_ALIAS_MAP.get(category_slug, [])
+                if any(alias.lower() in key.lower() for alias in aliases) or category_slug.lower() in key.lower():
+                    category_products = products
+                    print(f"✅ Found category '{category_slug}' via partial match with '{key}'")
+                    break
+
+        if not category_products:
+            print(f"⚠️ No products found for category '{category_slug}'")
+            # Возвращаем пустой результат вместо [], 0 чтобы показать сообщение об отсутствии
             return [], 0
 
         # Приоритизация источников и разрешение
@@ -446,19 +479,66 @@ async def show_category_products(cb: CallbackQuery, state: FSMContext) -> None:
         products, total_pages = _get_products_by_category(user_id, category_slug, page)
 
         if not products:
-            # Нет товаров в категории
-            kb = InlineKeyboardMarkup(inline_keyboard=[
-                [InlineKeyboardButton(text=BTN_BACK, callback_data="c:back:categories")],
-                [InlineKeyboardButton(text=BTN_BACK_CAT, callback_data="skincare_result:products")]
-            ])
+            # Нет товаров в категории - показываем альтернативы
+            category_name = CATEGORY_MAPPING.get(category_slug, category_slug)
 
-            await cb.message.edit_text(
-                f"😔 **{CATEGORY_MAPPING.get(category_slug, category_slug)}**\n\n"
+            # Находим альтернативные категории
+            alternative_buttons = []
+            try:
+                from bot.handlers.user_profile_store import get_user_profile_store
+                profile_store = get_user_profile_store()
+                user_profile = profile_store.load_profile(user_id)
+
+                if user_profile:
+                    # Получаем все доступные категории из профиля
+                    catalog_path = os.getenv("CATALOG_PATH", "assets/fixed_catalog.yaml")
+                    catalog_store = CatalogStore.instance(catalog_path)
+                    catalog = catalog_store.get()
+
+                    selector = SelectorV2()
+                    result = selector.select_products_v2(
+                        profile=user_profile,
+                        catalog=catalog,
+                        partner_code="S1"
+                    )
+
+                    skincare_data = result.get("skincare", {})
+
+                    # Добавляем кнопки альтернативных категорий с товарами
+                    for alt_slug, alt_name in CATEGORY_MAPPING.items():
+                        if alt_slug != category_slug:
+                            alt_engine = CATEGORY_TO_ENGINE.get(alt_slug, alt_slug)
+                            alt_products = skincare_data.get(alt_engine, [])
+                            if alt_products:  # Только если есть товары
+                                alternative_buttons.append([
+                                    InlineKeyboardButton(
+                                        text=f"🔄 {alt_name}",
+                                        callback_data=f"c:cat:{alt_slug}"
+                                    )
+                                ])
+            except Exception as e:
+                print(f"⚠️ Error loading alternatives: {e}")
+
+            # Создаем клавиатуру
+            buttons = alternative_buttons + [
+                [InlineKeyboardButton(text=BTN_BACK, callback_data="c:back:categories")],
+                [InlineKeyboardButton(text="🏠 Главное меню", callback_data="universal:home")]
+            ]
+
+            kb = InlineKeyboardMarkup(inline_keyboard=buttons)
+
+            message_text = (
+                f"😔 **{category_name}**\n\n"
                 f"К сожалению, подходящие продукты в этой категории сейчас недоступны.\n\n"
-                f"Выберите другую категорию или попробуйте позже.",
-                reply_markup=kb
             )
-            await cb.answer()
+
+            if alternative_buttons:
+                message_text += "**Попробуйте альтернативы:**\n"
+            else:
+                message_text += "Попробуйте другие категории или вернитесь позже."
+
+            await cb.message.edit_text(message_text, reply_markup=kb)
+            await cb.answer("Категория пуста")
             return
 
         # Создаем список товаров

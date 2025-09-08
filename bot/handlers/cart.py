@@ -7,11 +7,71 @@ from datetime import datetime
 from aiogram import Router, F
 from aiogram.types import CallbackQuery, Message, InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.fsm.context import FSMContext
+from aiogram.exceptions import TelegramBadRequest
 
 from services.cart_store import get_cart_store, CartStore, CartItem
 from engine.selector import SelectorV2
 from engine.business_metrics import get_metrics_tracker
 from engine.analytics import get_analytics_tracker
+
+
+def _compare_keyboards(kb1: Optional[InlineKeyboardMarkup], kb2: Optional[InlineKeyboardMarkup]) -> bool:
+    """Сравнить две клавиатуры на эквивалентность"""
+    if kb1 is None and kb2 is None:
+        return True
+    if kb1 is None or kb2 is None:
+        return False
+    if not hasattr(kb1, 'inline_keyboard') or not hasattr(kb2, 'inline_keyboard'):
+        return False
+
+    kb1_buttons = kb1.inline_keyboard
+    kb2_buttons = kb2.inline_keyboard
+
+    if len(kb1_buttons) != len(kb2_buttons):
+        return False
+
+    for row1, row2 in zip(kb1_buttons, kb2_buttons):
+        if len(row1) != len(row2):
+            return False
+        for btn1, btn2 in zip(row1, row2):
+            if (btn1.text != btn2.text or
+                btn1.callback_data != btn2.callback_data or
+                getattr(btn1, 'url', None) != getattr(btn2, 'url', None)):
+                return False
+    return True
+
+
+async def safe_edit_text(cb: CallbackQuery, text: str, reply_markup: Optional[InlineKeyboardMarkup] = None) -> bool:
+    """Безопасное редактирование сообщения с проверкой изменений"""
+    try:
+        # Проверяем, изменилось ли содержимое
+        current_text = cb.message.text or ""
+        current_markup = cb.message.reply_markup
+
+        text_changed = current_text != text
+        markup_changed = not _compare_keyboards(current_markup, reply_markup)
+
+        if not text_changed and not markup_changed:
+            # Ничего не изменилось - просто отвечаем на callback
+            await cb.answer("Без изменений")
+            return True
+
+        # Редактируем сообщение
+        await cb.message.edit_text(text, reply_markup=reply_markup, parse_mode="Markdown")
+        return True
+
+    except TelegramBadRequest as e:
+        if "message is not modified" in str(e):
+            # Игнорируем ошибку "сообщение не изменено"
+            await cb.answer("Без изменений")
+            return True
+        else:
+            # Другая ошибка - логируем и возвращаем False
+            print(f"❌ safe_edit_text error: {e}")
+            return False
+    except Exception as e:
+        print(f"❌ safe_edit_text unexpected error: {e}")
+        return False
 
 # Cart service removed - using direct CartStore operations
 print("[OK] Using CartStore directly (services/cart_service removed)")
@@ -343,8 +403,7 @@ async def show_cart_callback(cb: CallbackQuery, state: FSMContext) -> None:
         kb = InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(text="🔄 Получить рекомендации", callback_data="get_recommendations")]
         ])
-        await cb.message.edit_text("🛒 Ваша корзина пуста.\n\nДобавьте товары из рекомендаций!", reply_markup=kb)
-        await cb.answer()
+        await safe_edit_text(cb, "🛒 Ваша корзина пуста.\n\nДобавьте товары из рекомендаций!", kb)
         return
 
     # Метрика: просмотр корзины
@@ -383,16 +442,32 @@ async def show_cart_callback(cb: CallbackQuery, state: FSMContext) -> None:
             InlineKeyboardButton(text="🗑️", callback_data=f"cart:del:{item.product_id}")
         ])
 
-    # Итоговая информация
+    # Итоговая информация с улучшенным UX
     lines.append(f"\n💰 **Итого:** {total:.0f} ₽")
     lines.append(f"📦 Доступно: {available_items}/{len(items)} товаров")
 
-    # Кнопки управления
-    all_buttons = item_buttons + [
-        [InlineKeyboardButton(text="🗑️ Очистить корзину", callback_data="cart:clear")],
-        [InlineKeyboardButton(text="📋 Создать заказ", callback_data="cart:checkout")],
-        [InlineKeyboardButton(text="🔙 Назад", callback_data="back:main")]
-    ]
+    # CTA кнопки в зависимости от состояния корзины
+    cta_buttons = []
+
+    if total > 0:
+        # Корзина не пуста - показываем основные действия
+        cta_buttons.append([
+            InlineKeyboardButton(text="📋 Оформить заказ", callback_data="cart:checkout"),
+            InlineKeyboardButton(text="🗑️ Очистить", callback_data="cart:clear")
+        ])
+    else:
+        # Корзина пуста - мотивируем добавить товары
+        cta_buttons.append([
+            InlineKeyboardButton(text="🔄 Получить рекомендации", callback_data="get_recommendations")
+        ])
+
+    # Всегда добавляем кнопку "Назад"
+    cta_buttons.append([
+        InlineKeyboardButton(text="🏠 Главное меню", callback_data="back:main")
+    ])
+
+    # Кнопки управления товарами + CTA
+    all_buttons = item_buttons + cta_buttons
     kb = InlineKeyboardMarkup(inline_keyboard=all_buttons)
 
     text = "\n".join(lines)
@@ -401,16 +476,8 @@ async def show_cart_callback(cb: CallbackQuery, state: FSMContext) -> None:
     current_text = cb.message.text or ""
     current_markup = cb.message.reply_markup
 
-    # Сравниваем текст и разметку
-    text_changed = current_text != text
-    markup_changed = _compare_keyboards(current_markup, kb) if current_markup else True
-
-    if text_changed or markup_changed:
-        await cb.message.edit_text(text, reply_markup=kb, parse_mode="Markdown")
-    else:
-        print("ℹ️ Cart content unchanged, skipping edit_message_text")
-
-    await cb.answer()
+    # Используем safe_edit_text для безопасного редактирования
+    await safe_edit_text(cb, text, kb)
 
 @router.message(F.text == "🛒 Корзина")
 async def show_cart(m: Message, state: FSMContext) -> None:
@@ -542,8 +609,8 @@ async def clear_cart(cb: CallbackQuery, state: FSMContext) -> None:
     
     store.clear(user_id)
     metrics.track_event("cart_clear", user_id, {})
-    await cb.message.edit_text("🗑️ Корзина очищена")
-    await cb.answer("Корзина очищена")
+    await safe_edit_text(cb, "🗑️ Корзина очищена")
+    await cb.answer("🗑️ Корзина очищена")
 
 
 @router.callback_query(F.data == "cart:refresh")
@@ -992,25 +1059,22 @@ async def increase_quantity(cb: CallbackQuery, state: FSMContext) -> None:
         return
 
     product_id = cb.data.split(":", 2)[2]
-    cart = store.get_cart(user_id)
 
-    for item in cart:
-        if item.product_id == product_id:
-            new_qty = min(item.quantity + 1, 10)  # Максимум 10 штук
-            store.update_quantity(user_id, product_id, item.variant_id, new_qty)
+    # Используем новый метод inc_quantity
+    success, new_qty = store.inc_quantity(user_id, product_id, None, max_qty=10)
 
-            # Логирование изменения количества
-            print(f"📈 product_inc_qty: user={user_id}, product={product_id}, old_qty={item.quantity}, new_qty={new_qty}")
+    if success:
+        print(f"📈 product_inc_qty: user={user_id}, product={product_id}, new_qty={new_qty}")
 
-            metrics.track_event("cart_qty_change", user_id, {
-                "product_id": product_id,
-                "variant_id": item.variant_id,
-                "new_qty": new_qty,
-                "action": "increase"
-            })
+        metrics.track_event("cart_qty_change", user_id, {
+            "product_id": product_id,
+            "new_qty": new_qty,
+            "action": "increase"
+        })
 
-            await cb.answer(f"Количество: {new_qty}")
-            break
+        await cb.answer(f"➕ Количество: {new_qty}")
+    else:
+        await cb.answer("❌ Товар не найден")
 
     await show_cart_callback(cb, state)
 
@@ -1024,26 +1088,34 @@ async def decrease_quantity(cb: CallbackQuery, state: FSMContext) -> None:
         return
     
     product_id = cb.data.split(":", 2)[2]
-    cart = store.get_cart(user_id)
 
-    for item in cart:
-        if item.product_id == product_id:
-            old_qty = item.quantity
-            new_qty = max(item.quantity - 1, 1)  # Минимум 1 штука
-            store.update_quantity(user_id, product_id, item.variant_id, new_qty)
+    # Используем новый метод dec_quantity
+    success, new_qty = store.dec_quantity(user_id, product_id, None)
 
-            # Логирование изменения количества
-            print(f"📉 product_dec_qty: user={user_id}, product={product_id}, old_qty={old_qty}, new_qty={new_qty}")
+    if success:
+        if new_qty == 0:
+            print(f"🗑️ product_removed: user={user_id}, product={product_id}")
+
+            # Аналитика удаления
+            if ANALYTICS_AVAILABLE:
+                analytics = get_analytics_tracker()
+                analytics.track_event("cart_item_removed", user_id, {
+                    "product_id": product_id
+                })
+
+            await cb.answer("🗑️ Товар удалён")
+        else:
+            print(f"📉 product_dec_qty: user={user_id}, product={product_id}, new_qty={new_qty}")
 
             metrics.track_event("cart_qty_change", user_id, {
                 "product_id": product_id,
-                "variant_id": item.variant_id,
                 "new_qty": new_qty,
                 "action": "decrease"
             })
 
-            await cb.answer(f"Количество: {new_qty}")
-            break
+            await cb.answer(f"➖ Количество: {new_qty}")
+    else:
+        await cb.answer("❌ Товар не найден")
 
     await show_cart_callback(cb, state)
 
@@ -1153,7 +1225,7 @@ async def checkout_cart(cb: CallbackQuery, state: FSMContext) -> None:
     ])
     
     kb = InlineKeyboardMarkup(inline_keyboard=buttons)
-    await cb.message.edit_text("\\n".join(text_lines), reply_markup=kb)
+    await safe_edit_text(cb, "\n".join(text_lines), kb)
     
     # Логирование
     metrics.track_event("cart_checkout_opened", user_id, {
@@ -1274,10 +1346,13 @@ async def cart_delete(cb: CallbackQuery):
                         "brand": removed_item.brand,
                         "name": removed_item.name
                     })
-                break
 
-        # Перерисовываем корзину
-        await show_cart_callback(cb)
+                await cb.answer("🗑️ Товар удалён")
+                await show_cart_callback(cb)
+                return
+
+        # Если товар не найден
+        await cb.answer("❌ Товар не найден")
 
     except Exception as e:
         print(f"❌ Error deleting cart item: {e}")

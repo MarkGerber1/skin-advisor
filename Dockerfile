@@ -3,6 +3,13 @@ FROM python:3.11-slim
 
 WORKDIR /usr/src/app
 
+# Install system dependencies for fonts and PDF generation
+RUN apt-get update && apt-get install -y \
+    fonts-dejavu \
+    fonts-dejavu-core \
+    fonts-dejavu-extra \
+    && rm -rf /var/lib/apt/lists/*
+
 # First, copy only requirements to leverage Docker cache
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt

@@ -67,6 +67,10 @@ class StructuredPDFGenerator:
         try:
             # Попытка загрузить DejaVu шрифт
             font_paths = [
+                # Системные пути (Docker)
+                "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+                "/usr/share/fonts/dejavu/DejaVuSans.ttf",
+                # Локальные пути
                 ".skin-advisor/assets/DejaVuSans.ttf",
                 "assets/fonts/DejaVuSans.ttf",
                 os.path.join(os.path.dirname(__file__), "..", "..", ".skin-advisor", "assets", "DejaVuSans.ttf"),

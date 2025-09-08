@@ -571,6 +571,10 @@ async def q8_lip_color(cb: CallbackQuery, state: FSMContext) -> None:
         }
         
         print(f"🎭 About to show result buttons with state: {await state.get_state()}")
+
+        # Импортируем здесь чтобы избежать UnboundLocalError
+        from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+
         await cb.message.edit_text(
             f"🎉 **РЕЗУЛЬТАТ ТЕСТА**\n\n"
             f"**Ваш цветотип:** {season_names[season]}\n\n"
