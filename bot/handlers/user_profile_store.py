@@ -20,23 +20,25 @@ class UserProfileStore:
         """Получить путь к файлу профиля пользователя"""
         return os.path.join(self.storage_path, f"user_{user_id}.json")
 
-    def save_profile(self, user_id: int, profile: UserProfile, metadata: Optional[Dict[str, Any]] = None) -> bool:
+    def save_profile(self, user_id: int, profile_data: Dict[str, Any], metadata: Optional[Dict[str, Any]] = None) -> bool:
         """Сохранить профиль пользователя"""
         try:
-            profile_data = {
-                "user_id": profile.user_id,
-                "skin_type": profile.skin_type,
-                "concerns": profile.concerns,
-                "season": getattr(profile, 'season', 'spring'),
-                "undertone": getattr(profile, 'undertone', 'neutral'),
-                "contrast": getattr(profile, 'contrast', 'medium'),
+            # Нормализуем данные профиля
+            normalized_data = {
+                "user_id": user_id,
+                "skin_type": profile_data.get("skin_type", "normal"),
+                "concerns": profile_data.get("concerns", []),
+                "sensitivity": profile_data.get("sensitivity", "normal"),
+                "season": profile_data.get("season", "spring"),
+                "undertone": profile_data.get("undertone", "neutral"),
+                "contrast": profile_data.get("contrast", "medium"),
                 "saved_at": datetime.now().isoformat(),
                 "metadata": metadata or {},
             }
 
             profile_path = self._get_profile_path(user_id)
             with open(profile_path, 'w', encoding='utf-8') as f:
-                json.dump(profile_data, f, ensure_ascii=False, indent=2)
+                json.dump(normalized_data, f, ensure_ascii=False, indent=2)
 
             print(f"✅ Profile saved for user {user_id}")
             return True

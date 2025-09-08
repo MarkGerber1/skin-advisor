@@ -220,7 +220,7 @@ CATEGORY_TO_ENGINE = {
 def _format_price(product: Dict) -> str:
     """Форматирование цены с валютой"""
     price = product.get("price", 0)
-    currency = product.get("price_currency", "RUB")
+    currency = product.get("currency", "RUB")
 
     if currency in ("RUB", "₽"):
         return f"{int(price)} ₽"
@@ -584,7 +584,7 @@ async def show_product_variants(cb: CallbackQuery, state: FSMContext) -> None:
         buttons = []
 
         for i, variant in enumerate(variants, 1):
-            price_text = _format_price({"price": variant["price"], "price_currency": "RUB"})
+            price_text = _format_price({"price": variant["price"], "currency": "RUB"})
 
             text_lines.append(f"{i}. {variant['name']} • {price_text}")
 
@@ -777,7 +777,7 @@ async def show_out_of_stock_alternatives(cb: CallbackQuery, state: FSMContext) -
         buttons = []
 
         for i, alt in enumerate(alternatives, 1):
-            price_text = _format_price({"price": alt["price"], "price_currency": "RUB"})
+            price_text = _format_price({"price": alt["price"], "currency": "RUB"})
             text_lines.append(f"{i}. {alt['brand']} {alt['name']} • {price_text}")
 
             buttons.append([
@@ -843,10 +843,10 @@ async def get_skincare_recommendations(user_id: int, profile):
             # Фолбэк с тестовыми данными
             return {
                 "cleanser": [
-                    {"id": "test_cleanser", "brand": "Test Brand", "name": "Test Cleanser", "price": 1500, "price_currency": "RUB"}
+                    {"id": "test_cleanser", "brand": "Test Brand", "name": "Test Cleanser", "price": 1500, "currency": "RUB"}
                 ],
                 "toner": [
-                    {"id": "test_toner", "brand": "Test Brand", "name": "Test Toner", "price": 1200, "price_currency": "RUB"}
+                    {"id": "test_toner", "brand": "Test Brand", "name": "Test Toner", "price": 1200, "currency": "RUB"}
                 ]
             }
     except Exception as e:

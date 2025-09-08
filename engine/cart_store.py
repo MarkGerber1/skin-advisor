@@ -14,7 +14,7 @@ class CartItem:
     brand: Optional[str] = None
     name: Optional[str] = None
     price: Optional[float] = None
-    price_currency: Optional[str] = None
+    currency: Optional[str] = None
     ref_link: Optional[str] = None
     explain: Optional[str] = None
     category: Optional[str] = None
@@ -156,7 +156,7 @@ class CartStore:
                 brand=old_item.brand,
                 name=old_item.name,
                 price=old_item.price,
-                price_currency=old_item.price_currency,
+                currency=old_item.currency,
                 ref_link=old_item.ref_link,
                 explain=old_item.explain,
                 category=old_item.category,

@@ -73,7 +73,7 @@ def _add_to_cart_button(item: Dict) -> InlineKeyboardButton | None:
 
 def _price_row(it: Dict) -> str:
     value = int(it.get("price") or 0)
-    currency = it.get("price_currency") or "₽"
+    currency = it.get("currency") or "₽"
     # В тестах ожидается символ ₽ рядом с числом
     if currency in ("RUB", "₽"):
         return f"{value} ₽"
@@ -172,11 +172,29 @@ def render_skincare_report(result: Dict) -> Tuple[str, InlineKeyboardMarkup]:
     for product in products_with_id:
         if not product.get("ref_link"):
             try:
+                # Проверяем, что у продукта есть необходимые поля
+                if not product.get("id"):
+                    print(f"⚠️ Skincare product missing ID, skipping affiliate link generation")
+                    products_with_ref_link.append(product)
+                    continue
+
+                if not product.get("link") and not product.get("url"):
+                    print(f"⚠️ Skincare product {product.get('id')} has no link, skipping affiliate link generation")
+                    products_with_ref_link.append(product)
+                    continue
+
                 from services.affiliates import build_ref_link
-                product["ref_link"] = build_ref_link(product, "skincare_recommendation")
-                print(f"🔗 Generated affiliate link for {product.get('id')}: {product['ref_link'][:50]}...")
+                ref_link = build_ref_link(product, "skincare_recommendation")
+                if ref_link:
+                    product["ref_link"] = ref_link
+                    print(f"🔗 Generated affiliate link for {product.get('id')}: {ref_link[:50]}...")
+                else:
+                    print(f"⚠️ Failed to generate affiliate link for {product.get('id')} (returned None)")
+
             except Exception as e:
                 print(f"⚠️ Failed to generate affiliate link for {product.get('id')}: {e}")
+                import traceback
+                traceback.print_exc()
         products_with_ref_link.append(product)
 
     print(f"🌐 Skincare products with ref_link: {len([p for p in products_with_ref_link if p.get('ref_link')])}")
@@ -215,7 +233,7 @@ def render_skincare_report(result: Dict) -> Tuple[str, InlineKeyboardMarkup]:
     # Return keyboard or noop
     if buttons:
         print(f"🛒 Created {len(buttons)} total skincare buttons")
-        kb = InlineKeyboardMarkup(inline_keyboard=buttons)
+    kb = InlineKeyboardMarkup(inline_keyboard=buttons)
     else:
         print("⚠️ No skincare products with ID found, returning noop keyboard")
         kb = _noop_keyboard()
@@ -334,11 +352,29 @@ def render_makeup_report(result: Dict) -> Tuple[str, InlineKeyboardMarkup]:
     for product in products_with_id:
         if not product.get("ref_link"):
             try:
+                # Проверяем, что у продукта есть необходимые поля
+                if not product.get("id"):
+                    print(f"⚠️ Product missing ID, skipping affiliate link generation")
+                    products_with_ref_link.append(product)
+                    continue
+
+                if not product.get("link") and not product.get("url"):
+                    print(f"⚠️ Product {product.get('id')} has no link, skipping affiliate link generation")
+                    products_with_ref_link.append(product)
+                    continue
+
                 from services.affiliates import build_ref_link
-                product["ref_link"] = build_ref_link(product, "makeup_recommendation")
-                print(f"🔗 Generated affiliate link for {product.get('id')}: {product['ref_link'][:50]}...")
+                ref_link = build_ref_link(product, "makeup_recommendation")
+                if ref_link:
+                    product["ref_link"] = ref_link
+                    print(f"🔗 Generated affiliate link for {product.get('id')}: {ref_link[:50]}...")
+                else:
+                    print(f"⚠️ Failed to generate affiliate link for {product.get('id')} (returned None)")
+
             except Exception as e:
                 print(f"⚠️ Failed to generate affiliate link for {product.get('id')}: {e}")
+                import traceback
+                traceback.print_exc()
         products_with_ref_link.append(product)
 
     print(f"🌐 Products with ref_link: {len([p for p in products_with_ref_link if p.get('ref_link')])}")
@@ -376,7 +412,7 @@ def render_makeup_report(result: Dict) -> Tuple[str, InlineKeyboardMarkup]:
     # Return keyboard or noop
     if buttons:
         print(f"🛒 Created {len(buttons)} total buttons")
-        kb = InlineKeyboardMarkup(inline_keyboard=buttons)
+    kb = InlineKeyboardMarkup(inline_keyboard=buttons)
     else:
         print("⚠️ No products with ID found, returning noop keyboard")
         kb = _noop_keyboard()

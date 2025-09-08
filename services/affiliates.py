@@ -9,15 +9,17 @@ from typing import Dict, List, Optional, Any
 # Try to import config, fallback to mock if not available
 try:
     from config.env import get_settings
+    _settings_available = True
 except ImportError:
     print("⚠️ Config module not available, using mock settings")
     get_settings = None
+    _settings_available = False
 
 class AffiliateService:
     """Сервис для работы с партнерскими ссылками"""
 
     def __init__(self):
-        if get_settings is not None:
+        if _settings_available and get_settings is not None:
             try:
                 self.settings = get_settings()
             except Exception as e:
@@ -166,25 +168,35 @@ class AffiliateService:
     def _add_affiliate_params(self, url: str, source: str, campaign: str) -> str:
         """Добавить партнерские параметры к URL"""
         if not url or not source:
+            print(f"⚠️ Invalid parameters for affiliate: url={bool(url)}, source={source}")
             return url
 
         config = self.affiliate_configs.get(source)
         if not config:
+            print(f"⚠️ No config found for source: {source}")
             return url
 
         try:
             parsed = urllib.parse.urlparse(url)
             params = urllib.parse.parse_qs(parsed.query)
 
-            # Добавляем партнерские параметры с проверкой
-            if 'aff_param' in config and 'partner_code' in config:
-                params[config['aff_param']] = [config['partner_code']]
-            if 'source_param' in config:
-                params[config['source_param']] = [source]
-            if 'medium_param' in config:
-                params[config['medium_param']] = ['affiliate']
-            if 'campaign_param' in config:
-                params[config['campaign_param']] = [campaign]
+            # Безопасное добавление партнерских параметров
+            aff_param = config.get('aff_param')
+            partner_code = config.get('partner_code')
+            if aff_param and partner_code:
+                params[aff_param] = [partner_code]
+
+            source_param = config.get('source_param')
+            if source_param:
+                params[source_param] = [source]
+
+            medium_param = config.get('medium_param')
+            if medium_param:
+                params[medium_param] = ['affiliate']
+
+            campaign_param = config.get('campaign_param')
+            if campaign_param:
+                params[campaign_param] = [campaign]
 
             # Реконструируем URL
             new_query = urllib.parse.urlencode(params, doseq=True)
@@ -193,7 +205,9 @@ class AffiliateService:
             return new_url
 
         except Exception as e:
-            print(f"Error adding affiliate params to {url}: {e}")
+            print(f"❌ Error adding affiliate params to {url}: {e}")
+            import traceback
+            traceback.print_exc()
             return url
 
     def get_source_priority(self, source: str) -> int:

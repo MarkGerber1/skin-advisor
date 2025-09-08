@@ -567,7 +567,7 @@ async def q8_desired_effect(cb: CallbackQuery, state: FSMContext) -> None:
             "undertone": "neutral",  # default
             "contrast": "medium"  # default
         }
-        await profile_store.save_profile(uid, profile_data)
+        profile_store.save_profile(uid, profile_data)
         print(f"✅ Profile saved to user_profile_store for user {uid}")
 
         # Сохраняем результат в состояние

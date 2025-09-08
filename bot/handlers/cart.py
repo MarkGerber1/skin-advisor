@@ -230,7 +230,7 @@ async def add_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
             brand=product_data.get('brand'),
             name=product_data.get('name'),
             price=product_data.get('price'),
-            price_currency=product_data.get('price_currency', 'RUB'),
+            currency=product_data.get('price_currency', 'RUB'),
             ref_link=product_data.get('ref_link'),
             category=product_data.get('category'),
             variant_id=variant_id
@@ -279,7 +279,7 @@ async def add_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
         
         # Формируем красивое уведомление
         brand_name = f"{cart_item.brand or ''} {cart_item.name or ''}".strip()
-        price_text = f"{cart_item.price} {cart_item.price_currency}"
+        price_text = f"{cart_item.price} {cart_item.currency}"
         
         message = f"✅ Добавлено в корзину!\n\n🛍️ {brand_name}"
         variant_name = getattr(cart_item, "variant_name", None)
@@ -363,7 +363,7 @@ async def show_cart_callback(cb: CallbackQuery, state: FSMContext) -> None:
 
         # Формируем название товара
         brand_name = f"{item.brand or ''} {item.name or item.product_id}".strip()
-        price_text = f"{price} {item.price_currency or '₽'}" if price > 0 else "Цена уточняется"
+        price_text = f"{price} {item.currency or '₽'}" if price > 0 else "Цена уточняется"
 
         # Статус наличия
         stock_emoji = "✅" if item.in_stock else "❌"
@@ -456,7 +456,7 @@ async def show_cart(m: Message, state: FSMContext) -> None:
         
         # Формируем название товара
         brand_name = f"{item.brand or ''} {item.name or item.product_id}".strip()
-        price_text = f"{price} {item.price_currency or '₽'}" if price > 0 else "Цена уточняется"
+        price_text = f"{price} {item.currency or '₽'}" if price > 0 else "Цена уточняется"
 
         # Статус наличия (безопасное обращение)
         in_stock = getattr(item, "in_stock", True)
@@ -465,7 +465,7 @@ async def show_cart(m: Message, state: FSMContext) -> None:
             available_items += 1
         
         lines.append(f"{i}. {stock_emoji} **{brand_name}**")
-        lines.append(f"   💰 {price_text} × {qty} = {price * qty} {item.price_currency or '₽'}")
+        lines.append(f"   💰 {price_text} × {qty} = {price * qty} {item.currency or '₽'}")
         
         if item.explain:
             lines.append(f"   💡 {item.explain}")
@@ -575,7 +575,7 @@ async def refresh_cart(cb: CallbackQuery, state: FSMContext) -> None:
                 brand=current_product.get("brand", item.brand),
                 name=current_product.get("name", item.name),
                 price=current_product.get("price", item.price),
-                price_currency=current_product.get("price_currency", item.price_currency),
+                currency=current_product.get("price_currency", item.currency),
                 ref_link=current_product.get("ref_link", item.ref_link),
                 explain=current_product.get("explain", item.explain),
                 category=current_product.get("category", item.category),
@@ -846,7 +846,6 @@ async def get_recommendations(cb: CallbackQuery, state: FSMContext) -> None:
     current_markup = cb.message.reply_markup
 
     # Получаем актуальную информацию о корзине
-    store = get_cart_store()
     cart_items = store.get_cart(user_id)
     cart_text = "🛒 Ваша корзина пуста.\n\nДобавьте товары из рекомендаций!" if not cart_items else f"🛒 Ваша корзина ({len(cart_items)} товаров)"
 
@@ -885,7 +884,7 @@ async def show_cart_details(cb: CallbackQuery, state: FSMContext) -> None:
         if item.category:
             lines.append(f"📂 Категория: {item.category}")
         
-        price_text = f"{item.price} {item.price_currency}" if item.price else "Цена уточняется"
+        price_text = f"{item.price} {item.currency}" if item.price else "Цена уточняется"
         lines.append(f"💰 Цена: {price_text}")
         lines.append(f"📦 Количество: {item.quantity}")
         
@@ -1175,7 +1174,6 @@ async def cart_increment(cb: CallbackQuery):
         print(f"📈 Incrementing {product_id} for user {user_id}")
 
         # Получаем корзину
-        store = get_cart_store()
         cart = store.get_cart(user_id)
 
         # Находим товар и увеличиваем количество
@@ -1213,7 +1211,6 @@ async def cart_decrement(cb: CallbackQuery):
         print(f"📉 Decrementing {product_id} for user {user_id}")
 
         # Получаем корзину
-        store = get_cart_store()
         cart = store.get_cart(user_id)
 
         # Находим товар и уменьшаем количество
@@ -1257,7 +1254,6 @@ async def cart_delete(cb: CallbackQuery):
         print(f"🗑️ Deleting {product_id} from cart for user {user_id}")
 
         # Удаляем товар из корзины
-        store = get_cart_store()
         cart = store.get_cart(user_id)
 
         # Находим и удаляем товар
@@ -1296,7 +1292,6 @@ async def cart_clear(cb: CallbackQuery):
         print(f"🧹 Clearing cart for user {user_id}")
 
         # Очищаем корзину
-        store = get_cart_store()
         cart_before = store.get_cart(user_id)
         store.clear_cart(user_id)
 
