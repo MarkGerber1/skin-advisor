@@ -82,7 +82,14 @@ class AffiliateService:
         }
 
     def build_ref_link(self, product: Dict[str, Any], campaign: str = "recommendation") -> Optional[str]:
-        """Создать партнерскую ссылку для продукта
+        """Создать партнерскую ссылку для продукта с приоритетом источников
+
+        Приоритеты:
+        1. Gold Apple (RU официальный)
+        2. RU официальные магазины (LETO, RIVE GAUCHE, SEPHORA)
+        3. RU маркетплейсы (Wildberries, Ozon, Yandex Market)
+        4. Международные (Sephora US, Amazon)
+        5. Default
 
         Args:
             product: Словарь с данными продукта
@@ -92,41 +99,45 @@ class AffiliateService:
             Партнерская ссылка или None если не удалось создать
         """
         try:
-            # Получаем оригинальную ссылку
-            original_link = product.get('link') or product.get('url')
-            if not original_link:
-                print(f"⚠️ No link found for product {product.get('id', 'unknown')}")
-                return None
+            product_id = product.get('id', 'unknown')
+            print(f"🔗 Building affiliate link for product {product_id}")
 
-            # Если уже есть ref_link, используем его
+            # 1. Если уже есть ref_link в продукте, используем его (высший приоритет)
             if product.get('ref_link'):
+                print(f"✅ Using existing ref_link for {product_id}")
                 return product['ref_link']
 
-            # Определяем источник по ссылке или названию
-            source = self._detect_source(product)
-            print(f"🔍 Detected source for {product.get('id', 'unknown')}: {source}")
+            # 2. Получаем оригинальную ссылку
+            original_link = product.get('link') or product.get('url')
+            if not original_link:
+                print(f"⚠️ No link found for product {product_id}")
+                return None
 
-            # Проверяем конфигурацию
-            if not self.affiliate_configs:
-                print(f"⚠️ No affiliate configs available, returning original link")
-                print(f"🔗 affiliate_link_built: product={product.get('id', 'unknown')}, source=None, used_fallback=True")
+            # 3. Определяем источник по ссылке
+            source = self._detect_source(product)
+            print(f"🔍 Detected source for {product_id}: {source}")
+
+            # 4. Приоритизация источников
+            if source == 'goldapple':
+                config_key = 'goldapple'
+            elif source == 'ru_official':
+                config_key = 'ru_official'
+            elif source == 'ru_marketplace':
+                config_key = 'ru_marketplace'
+            elif source == 'intl_authorized':
+                config_key = 'intl_authorized'
+            else:
+                config_key = 'default'
+
+            # 5. Проверяем конфигурацию
+            if not self.affiliate_configs or config_key not in self.affiliate_configs:
+                print(f"⚠️ No affiliate config for {config_key}, returning original link")
                 return original_link
 
-            # Проверяем источник
-            if not source or source not in self.affiliate_configs:
-                # Пробуем default конфигурацию
-                if 'default' in self.affiliate_configs:
-                    source = 'default'
-                    print(f"🔄 Using default affiliate config for {product.get('id', 'unknown')}")
-                else:
-                    print(f"⚠️ No affiliate config for source {source}, returning original link")
-                    print(f"🔗 affiliate_link_built: product={product.get('id', 'unknown')}, source={source}, used_fallback=True")
-                    return original_link
-
-            # Генерируем партнерскую ссылку
-            affiliate_url = self._add_affiliate_params(original_link, source, campaign)
-            print(f"✅ Generated affiliate link: {affiliate_url[:50]}...")
-            print(f"🔗 affiliate_link_built: product={product.get('id', 'unknown')}, source={source}, used_fallback=False")
+            # 6. Генерируем партнерскую ссылку
+            affiliate_url = self._add_affiliate_params(original_link, config_key, campaign)
+            print(f"✅ Generated affiliate link for {product_id}: {affiliate_url[:60]}...")
+            print(f"🔗 affiliate_link_built: product={product_id}, source={config_key}, priority={self.affiliate_configs[config_key]['priority']}")
 
             return affiliate_url
 
@@ -138,29 +149,42 @@ class AffiliateService:
             return product.get('link') or product.get('url')
 
     def _detect_source(self, product: Dict[str, Any]) -> Optional[str]:
-        """Определить источник продукта"""
-        # Проверяем по ссылке
+        """Определить источник продукта с приоритетом"""
+        # Проверяем по ссылке (высший приоритет)
         link = product.get('link') or product.get('url', '')
         if link:
             link_lower = link.lower()
+
+            # Gold Apple - высший приоритет
             if 'goldapple' in link_lower:
                 return 'goldapple'
-            elif 'wildberries' in link_lower or 'ozon' in link_lower:
-                return 'ru_marketplace'
-            elif 'official' in link_lower or 'brand' in link_lower:
+
+            # RU официальные магазины
+            if any(domain in link_lower for domain in ['letu.ru', 'rive-gauche.ru', 'sephora.ru']):
                 return 'ru_official'
-            elif 'sephora' in link_lower or 'amazon' in link_lower:
+
+            # RU маркетплейсы
+            if any(domain in link_lower for domain in ['wildberries.ru', 'ozon.ru', 'yandex.market.ru', 'market.yandex.ru']):
+                return 'ru_marketplace'
+
+            # Международные
+            if any(domain in link_lower for domain in ['amazon.com', 'sephora.com', 'ulta.com']):
                 return 'intl_authorized'
 
-        # Проверяем по названию/бренду
+        # Проверяем по названию/бренду (если не нашли по ссылке)
         brand = product.get('brand', '').lower()
         name = product.get('name', '').lower()
 
+        # Gold Apple
         if 'goldapple' in brand or 'goldapple' in name:
             return 'goldapple'
-        elif any(x in brand or x in name for x in ['wildberries', 'ozon', 'marketplace']):
+
+        # RU маркетплейсы
+        if any(x in brand or x in name for x in ['wildberries', 'ozon', 'marketplace', 'яндекс']):
             return 'ru_marketplace'
-        elif any(x in brand or x in name for x in ['official', 'brand']):
+
+        # Официальные магазины
+        if any(x in brand or x in name for x in ['official', 'brand', 'официальный']):
             return 'ru_official'
 
         return None

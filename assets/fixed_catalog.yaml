@@ -11,6 +11,7 @@ products:
     price: 899
     price_currency: RUB
     link: https://www.letu.ru/product/cerave-gel-dlya-umyvaniya/100300184
+    ref_link: https://www.letu.ru/product/cerave-gel-dlya-umyvaniya/100300184?partner=skincare_bot
     in_stock: true
     
   - id: "lrp-001"
@@ -51,6 +52,7 @@ products:
     price: 1290
     price_currency: RUB
     link: https://goldapple.ru/19000082592-aha-bha-clarifying-treatment-toner
+    ref_link: https://goldapple.ru/19000082592-aha-bha-clarifying-treatment-toner?partner=skincare_bot
     in_stock: true
     
   - id: "klairs-001"
@@ -251,7 +253,7 @@ products:
     volume_ml: 50
     price: 1899
     price_currency: RUB
-    link: https://www.letu.ru/product/la-roche-posay-anthelios-shaka/100100567
+    link: https://www.wildberries.ru/catalog/12345678/detail.aspx?targetUrl=SP
     in_stock: true
     
   - id: "isntree-001"
@@ -265,7 +267,8 @@ products:
     volume_ml: 50
     price: 1790
     price_currency: RUB
-    link: https://goldapple.ru/19000095678-hyaluronic-acid-watery-sun-gel
+    link: https://www.ozon.ru/product/isntree-hyaluronic-acid-watery-sun-gel-spf50-123456
+    ref_link: https://www.ozon.ru/product/isntree-hyaluronic-acid-watery-sun-gel-spf50-123456?partner=skincare_bot
     in_stock: true
 
   # === ПИЛИНГИ ===

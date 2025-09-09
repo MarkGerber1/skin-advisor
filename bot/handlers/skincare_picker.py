@@ -15,6 +15,7 @@ try:
     from engine.catalog_store import CatalogStore
     from engine.models import Product
     from engine.selector import SelectorV2
+    from engine.selector_schema import canon_slug, safe_get_skincare_data
     from engine.affiliate_validator import AffiliateManager
     from engine.ab_testing import get_ab_testing_framework
     from services.affiliates import build_ref_link
@@ -44,11 +45,20 @@ except ImportError:
         def log_add_to_cart(self, *args, **kwargs):
             pass
         def get_category_order_variant(self, user_id):
-            return ["cleansing", "toning", "serum", "moisturizing", "eye_care", "sun_protection", "masks"]
+            return ["cleanser", "toner", "serum", "moisturizer", "eye_care", "sunscreen", "mask"]
 
         @staticmethod
         def emit_analytics(*args, **kwargs):
             pass
+
+    # Fallback functions for schema
+    def canon_slug(slug: str) -> str:
+        return slug
+
+    def safe_get_skincare_data(data: Dict, slug: str) -> List:
+        if not data or not isinstance(data, dict):
+            return []
+        return data.get(slug, [])
 
 # Fix import for Railway environment
 import sys
@@ -70,14 +80,14 @@ for path in possible_paths:
         sys.path.insert(0, path)
         print(f"Added to sys.path: {path}")
 
-# Define category constants outside try/except
-CAT_CLEANSE = "cleansing"
-CAT_TONE = "toning"
+# Define category constants outside try/except (канонические слаги)
+CAT_CLEANSE = "cleanser"
+CAT_TONE = "toner"
 CAT_SERUM = "serum"
-CAT_MOIST = "moisturizing"
+CAT_MOIST = "moisturizer"
 CAT_EYE = "eye_care"
-CAT_SPF = "sun_protection"
-CAT_MASK = "masks"
+CAT_SPF = "sunscreen"
+CAT_MASK = "mask"
 
 # Define UI category names outside try/except
 CATEGORY_CLEANSER = "Очищение"
@@ -216,13 +226,13 @@ CATEGORY_MAPPING = {
     CAT_MASK: CATEGORY_MASK
 }
 
-# Обратный маппинг для поиска товаров по категориям
+# Обратный маппинг для поиска товаров по категориям (теперь канонические)
 CATEGORY_TO_ENGINE = {
     CAT_CLEANSE: "cleanser",
     CAT_TONE: "toner",
     CAT_SERUM: "serum",
     CAT_MOIST: "moisturizer",
-    CAT_EYE: "eye_cream",
+    CAT_EYE: "eye_care",
     CAT_SPF: "sunscreen",
     CAT_MASK: "mask"
 }
@@ -268,18 +278,27 @@ def _resolve_product_source(product: Dict) -> Dict:
 def _get_products_by_category(user_id: int, category_slug: str, page: int = 1) -> Tuple[List[Dict], int]:
     """Получить товары по категории с пагинацией"""
     try:
+        # Нормализуем слаг к каноническому виду
+        canonical_slug = canon_slug(category_slug)
+        print(f"🔍 Looking for category '{category_slug}' → canonical '{canonical_slug}'")
+
         # Получаем сохраненный профиль пользователя
         from bot.handlers.user_profile_store import get_user_profile_store
         profile_store = get_user_profile_store()
         user_profile = profile_store.load_profile(user_id)
 
         if not user_profile:
+            print(f"⚠️ No profile found for user {user_id}")
             return [], 0
 
         # Получаем каталог
         catalog_path = os.getenv("CATALOG_PATH", "assets/fixed_catalog.yaml")
         catalog_store = CatalogStore.instance(catalog_path)
         catalog = catalog_store.get()
+
+        if not catalog:
+            print("⚠️ Catalog not loaded")
+            return [], 0
 
         # Используем SelectorV2 для получения рекомендаций
         selector = SelectorV2()
@@ -289,35 +308,19 @@ def _get_products_by_category(user_id: int, category_slug: str, page: int = 1) -
             partner_code="S1"
         )
 
-        # Получаем товары из нужной категории с использованием alias_map
-        skincare_data = result.get("skincare", {})
-
-        # Сначала пробуем найти по прямому маппингу
-        engine_category = CATEGORY_TO_ENGINE.get(category_slug, category_slug)
-        category_products = skincare_data.get(engine_category, [])
-
-        # Если не нашли, пробуем найти по алиасам
-        if not category_products:
-            aliases = CATEGORY_ALIAS_MAP.get(category_slug, [category_slug])
-            for alias in aliases:
-                if alias in skincare_data:
-                    category_products = skincare_data[alias]
-                    print(f"✅ Found category '{category_slug}' via alias '{alias}'")
-                    break
-
-        # Если все еще не нашли, попробуем найти по частичному совпадению
-        if not category_products:
-            for key, products in skincare_data.items():
-                aliases = CATEGORY_ALIAS_MAP.get(category_slug, [])
-                if any(alias.lower() in key.lower() for alias in aliases) or category_slug.lower() in key.lower():
-                    category_products = products
-                    print(f"✅ Found category '{category_slug}' via partial match with '{key}'")
-                    break
-
-        if not category_products:
-            print(f"⚠️ No products found for category '{category_slug}'")
-            # Возвращаем пустой результат вместо [], 0 чтобы показать сообщение об отсутствии
+        if not result:
+            print("⚠️ No results from selector")
             return [], 0
+
+        # Безопасно извлекаем данные по каноническому слагу
+        category_products = safe_get_skincare_data(result.get("skincare"), canonical_slug)
+
+        if not category_products:
+            print(f"⚠️ No products found for canonical category '{canonical_slug}' (original: '{category_slug}')")
+            print(f"   Available categories: {list(result.get('skincare', {}).keys())}")
+            return [], 0
+
+        print(f"✅ Found {len(category_products)} products for category '{canonical_slug}'")
 
         # Приоритизация источников и разрешение
         resolved_products = []
@@ -325,6 +328,10 @@ def _get_products_by_category(user_id: int, category_slug: str, page: int = 1) -
             resolved = _resolve_product_source(product)
             if resolved:
                 resolved_products.append(resolved)
+
+        if not resolved_products:
+            print(f"⚠️ No resolved products for category '{canonical_slug}'")
+            return [], 0
 
         # Пагинация (8 товаров на страницу)
         per_page = 8
@@ -338,6 +345,8 @@ def _get_products_by_category(user_id: int, category_slug: str, page: int = 1) -
 
     except Exception as e:
         print(f"❌ Error getting products for category {category_slug}: {e}")
+        import traceback
+        traceback.print_exc()
         return [], 0
 
 
@@ -507,8 +516,9 @@ async def show_category_products(cb: CallbackQuery, state: FSMContext) -> None:
                     # Добавляем кнопки альтернативных категорий с товарами
                     for alt_slug, alt_name in CATEGORY_MAPPING.items():
                         if alt_slug != category_slug:
-                            alt_engine = CATEGORY_TO_ENGINE.get(alt_slug, alt_slug)
-                            alt_products = skincare_data.get(alt_engine, [])
+                            # Используем канонические слаги для поиска
+                            alt_canonical = canon_slug(alt_slug)
+                            alt_products = safe_get_skincare_data(skincare_data, alt_canonical)
                             if alt_products:  # Только если есть товары
                                 alternative_buttons.append([
                                     InlineKeyboardButton(
