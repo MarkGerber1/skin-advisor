@@ -67,13 +67,21 @@ class StructuredPDFGenerator:
         try:
             # Попытка загрузить DejaVu шрифт
             font_paths = [
-                # Системные пути (Docker)
+                # Docker системные пути (новые)
                 "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
                 "/usr/share/fonts/dejavu/DejaVuSans.ttf",
+                "/usr/share/fonts-dejavu-core/DejaVuSans.ttf",
+                "/usr/share/fonts-dejavu/DejaVuSans.ttf",
+                # Docker системные пути (альтернативные)
+                "/usr/share/fonts/TTF/DejaVuSans.ttf",
+                "/usr/share/fonts/truetype/ttf-dejavu/DejaVuSans.ttf",
                 # Локальные пути
-                ".skin-advisor/assets/DejaVuSans.ttf",
                 "assets/fonts/DejaVuSans.ttf",
-                os.path.join(os.path.dirname(__file__), "..", "..", ".skin-advisor", "assets", "DejaVuSans.ttf"),
+                os.path.join(os.path.dirname(__file__), "..", "..", "assets", "fonts", "DejaVuSans.ttf"),
+                # Системные пути Windows
+                "C:/Windows/Fonts/DejaVuSans.ttf",
+                # Резервные пути
+                ".skin-advisor/assets/DejaVuSans.ttf",
             ]
             
             font_found = False
@@ -85,11 +93,37 @@ class StructuredPDFGenerator:
                     print(f"✅ PDF v2: Using DejaVu font from: {font_path}")
                     break
             
+            # Если DejaVu не найден, пробуем Noto Sans
+            noto_found = False
             if not font_found:
-                print("⚠️ PDF v2: DejaVu font not found, using Arial")
-                pdf.set_font("Arial", size=self.font_size_text)
-            else:
+                noto_paths = [
+                    "/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf",
+                    "/usr/share/fonts/noto/NotoSans-Regular.ttf",
+                    "/usr/share/fonts/opentype/noto/NotoSans-Regular.ttf",
+                    "assets/fonts/NotoSans-Regular.ttf",
+                    os.path.join(os.path.dirname(__file__), "..", "..", "assets", "fonts", "NotoSans-Regular.ttf"),
+                ]
+
+                for noto_path in noto_paths:
+                    if os.path.exists(noto_path):
+                        try:
+                            pdf.add_font("NotoSans", "", noto_path)
+                            noto_found = True
+                            print(f"✅ PDF v2: Using Noto Sans font from: {noto_path}")
+                            break
+                        except Exception as e:
+                            print(f"⚠️ PDF v2: Failed to load Noto font from {noto_path}: {e}")
+
+            # Выбираем шрифт в порядке приоритета
+            if font_found:
                 pdf.set_font("DejaVu", size=self.font_size_text)
+                print("✅ PDF v2: Using DejaVu font")
+            elif noto_found:
+                pdf.set_font("NotoSans", size=self.font_size_text)
+                print("✅ PDF v2: Using Noto Sans font")
+            else:
+                pdf.set_font("Arial", size=self.font_size_text)
+                print("⚠️ PDF v2: Using Arial fallback (limited Cyrillic support)")
                 
         except Exception as e:
             print(f"⚠️ PDF v2: Font setup error: {e}, using Arial")

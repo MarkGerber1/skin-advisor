@@ -65,26 +65,67 @@ class SimplePDFGenerator:
             try:
                 # Ищем DejaVu шрифт
                 font_paths = [
-                    # Системные пути (Docker)
+                    # Docker системные пути (новые)
                     "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
                     "/usr/share/fonts/dejavu/DejaVuSans.ttf",
+                    "/usr/share/fonts-dejavu-core/DejaVuSans.ttf",
+                    "/usr/share/fonts-dejavu/DejaVuSans.ttf",
+                    # Docker системные пути (альтернативные)
+                    "/usr/share/fonts/TTF/DejaVuSans.ttf",
+                    "/usr/share/fonts/truetype/ttf-dejavu/DejaVuSans.ttf",
                     # Локальные пути
+                    "assets/fonts/DejaVuSans.ttf",
+                    os.path.join(os.path.dirname(__file__), "..", "..", "assets", "fonts", "DejaVuSans.ttf"),
+                    # Системные пути Windows
+                    "C:/Windows/Fonts/DejaVuSans.ttf",
+                    # Резервные пути
                     ".skin-advisor/assets/DejaVuSans.ttf",
-                    os.path.join(os.path.dirname(__file__), "..", "..", ".skin-advisor", "assets", "DejaVuSans.ttf"),
                 ]
-                
+
                 font_found = False
+                noto_found = False
+
+                # Ищем DejaVu
                 for font_path in font_paths:
                     if os.path.exists(font_path):
-                        pdf.add_font("DejaVu", "", font_path)
-                        pdf.set_font("DejaVu", size=self.font_size_text)
-                        font_found = True
-                        print(f"✅ Simple PDF: Using DejaVu font from: {font_path}")
-                        break
-                
+                        try:
+                            pdf.add_font("DejaVu", "", font_path)
+                            pdf.set_font("DejaVu", size=self.font_size_text)
+                            font_found = True
+                            print(f"✅ Simple PDF: Using DejaVu font from: {font_path}")
+                            break
+                        except Exception as e:
+                            print(f"⚠️ Simple PDF: Failed to load DejaVu from {font_path}: {e}")
+
+                # Если DejaVu не найден, пробуем Noto Sans
                 if not font_found:
+                    noto_paths = [
+                        "/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf",
+                        "/usr/share/fonts/noto/NotoSans-Regular.ttf",
+                        "/usr/share/fonts/opentype/noto/NotoSans-Regular.ttf",
+                        "assets/fonts/NotoSans-Regular.ttf",
+                        os.path.join(os.path.dirname(__file__), "..", "..", "assets", "fonts", "NotoSans-Regular.ttf"),
+                    ]
+
+                    for noto_path in noto_paths:
+                        if os.path.exists(noto_path):
+                            try:
+                                pdf.add_font("NotoSans", "", noto_path)
+                                pdf.set_font("NotoSans", size=self.font_size_text)
+                                noto_found = True
+                                print(f"✅ Simple PDF: Using Noto Sans font from: {noto_path}")
+                                break
+                            except Exception as e:
+                                print(f"⚠️ Simple PDF: Failed to load Noto from {noto_path}: {e}")
+
+                # Выбираем шрифт
+                if font_found:
+                    pdf.set_font("DejaVu", size=self.font_size_text)
+                elif noto_found:
+                    pdf.set_font("NotoSans", size=self.font_size_text)
+                else:
                     pdf.set_font("Arial", size=self.font_size_text)
-                    print("⚠️ Simple PDF: Using Arial font")
+                    print("⚠️ Simple PDF: Using Arial fallback (limited Cyrillic support)")
                     
             except Exception as e:
                 print(f"⚠️ Simple PDF: Font error: {e}, using Arial")

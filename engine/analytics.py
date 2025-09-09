@@ -20,7 +20,8 @@ logger.setLevel(logging.INFO)
 # Если хэндлер не настроен, добавляем вывод в консоль
 if not logger.handlers:
     handler = logging.StreamHandler()
-    formatter = logging.Formatter('%(asctime)s - analytics - INFO - %(message)s')
+    # Исправленный formatter без [err] префикса
+    formatter = logging.Formatter('%(asctime)s | ANALYTICS | %(levelname)s | %(message)s')
     handler.setFormatter(formatter)
     logger.addHandler(handler)
 

@@ -184,3 +184,82 @@ class CartStore:
     def get(self, user_id: int) -> List[CartItem]:
         with self._lock:
             return list(self._load(user_id).values())
+
+    def inc_quantity(self, user_id: int, product_id: str, variant_id: Optional[str] = None) -> bool:
+        """Увеличить количество товара на 1"""
+        with self._lock:
+            items = self._load(user_id)
+
+            if variant_id:
+                composite_key = f"{product_id}:{variant_id}"
+            else:
+                composite_key = f"{product_id}:default"
+                if composite_key not in items:
+                    # Ищем любой вариант этого товара
+                    for key in items.keys():
+                        if key.startswith(f"{product_id}:"):
+                            composite_key = key
+                            break
+
+            if composite_key in items:
+                items[composite_key].qty += 1
+                self._save(user_id, items)
+                print(f"➕ Cart: Increased qty for {composite_key}: {items[composite_key].qty}")
+                return True
+
+            return False
+
+    def dec_quantity(self, user_id: int, product_id: str, variant_id: Optional[str] = None) -> bool:
+        """Уменьшить количество товара на 1 (если станет 0 - удалить)"""
+        with self._lock:
+            items = self._load(user_id)
+
+            if variant_id:
+                composite_key = f"{product_id}:{variant_id}"
+            else:
+                composite_key = f"{product_id}:default"
+                if composite_key not in items:
+                    # Ищем любой вариант этого товара
+                    for key in items.keys():
+                        if key.startswith(f"{product_id}:"):
+                            composite_key = key
+                            break
+
+            if composite_key in items:
+                items[composite_key].qty -= 1
+                if items[composite_key].qty <= 0:
+                    del items[composite_key]
+                    print(f"🗑️ Cart: Removed item {composite_key} (qty became 0)")
+                else:
+                    print(f"➖ Cart: Decreased qty for {composite_key}: {items[composite_key].qty}")
+
+                self._save(user_id, items)
+                return True
+
+            return False
+
+    def get_cart_count(self, user_id: int) -> int:
+        """Получить общее количество товаров в корзине"""
+        with self._lock:
+            items = self._load(user_id)
+            return sum(item.qty for item in items.values())
+
+    def get_cart_total(self, user_id: int) -> tuple[int, float]:
+        """Получить количество позиций и общую сумму"""
+        with self._lock:
+            items = self._load(user_id)
+            total_items = sum(item.qty for item in items.values())
+            total_price = sum((item.price or 0) * item.qty for item in items.values())
+            return total_items, total_price
+
+    def has_item(self, user_id: int, product_id: str, variant_id: Optional[str] = None) -> bool:
+        """Проверить наличие товара в корзине"""
+        with self._lock:
+            items = self._load(user_id)
+
+            if variant_id:
+                composite_key = f"{product_id}:{variant_id}"
+            else:
+                composite_key = f"{product_id}:default"
+
+            return composite_key in items

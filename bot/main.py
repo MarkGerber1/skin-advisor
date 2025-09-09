@@ -109,6 +109,40 @@ CATALOG_PATH = os.getenv("CATALOG_PATH", "assets/fixed_catalog.yaml")
 
 
 async def main() -> None:
+    # Настройка логирования
+    import logging
+    from config.env import get_settings
+
+    # Загружаем настройки
+    try:
+        settings = get_settings()
+        log_level = getattr(settings, 'log_level', 'INFO')
+        log_file = getattr(settings, 'log_file', 'logs/bot.log')
+    except Exception as e:
+        print(f"⚠️ Could not load settings for logging: {e}, using defaults")
+        log_level = 'INFO'
+        log_file = 'logs/bot.log'
+
+    # Настраиваем основной логгер
+    logging.basicConfig(
+        level=getattr(logging, log_level.upper(), logging.INFO),
+        format='%(asctime)s | %(name)s | %(levelname)s | %(message)s',
+        handlers=[
+            logging.StreamHandler(),  # Вывод в stdout
+            logging.FileHandler(log_file, encoding='utf-8')  # Файловый вывод
+        ]
+    )
+
+    # Отдельный логгер для ошибок (stderr)
+    error_logger = logging.getLogger('errors')
+    error_handler = logging.StreamHandler()
+    error_handler.setLevel(logging.ERROR)
+    error_formatter = logging.Formatter('%(asctime)s | ERROR | %(name)s | %(message)s')
+    error_handler.setFormatter(error_formatter)
+    error_logger.addHandler(error_handler)
+
+    print(f"📝 Logging configured: level={log_level}, file={log_file}")
+
     # Preload catalog cache
     print(f"Loading catalog from: {CATALOG_PATH}")
     if not os.path.exists(CATALOG_PATH):

@@ -22,20 +22,20 @@ class AffiliateService:
         if _settings_available and get_settings is not None:
             try:
                 self.settings = get_settings()
+                print("✅ AffiliateService: Settings loaded successfully")
             except Exception as e:
-                print(f"⚠️ Could not load settings: {e}, using defaults")
+                print(f"⚠️ AffiliateService: Could not load settings: {e}, using defaults")
                 self.settings = None
         else:
+            print("⚠️ AffiliateService: Settings module not available, using defaults")
             self.settings = None
 
-        # Create mock settings if needed
+        # Use default values if settings not available
         if self.settings is None:
-            class MockSettings:
-                goldapple_partner_code = 'BEAUTYCARE'
-                ru_official_partner_code = 'BEAUTYCARE_RU'
-                ru_marketplace_partner_code = 'BEAUTYCARE_MP'
-                intl_partner_code = 'BEAUTYCARE_INT'
-            self.settings = MockSettings()
+            self.settings = type('MockSettings', (), {
+                'affiliate_tag': 'skincare_bot',
+                'partner_code': 'aff_skincare_bot'
+            })()
 
         # Конфигурация партнерских параметров для разных источников
         self.affiliate_configs = {
@@ -44,7 +44,7 @@ class AffiliateService:
                 'campaign_param': 'utm_campaign',
                 'source_param': 'utm_source',
                 'medium_param': 'utm_medium',
-                'partner_code': getattr(self.settings, 'goldapple_partner_code', 'BEAUTYCARE'),
+                'partner_code': getattr(self.settings, 'affiliate_tag', 'skincare_bot'),
                 'priority': 1
             },
             'ru_official': {
@@ -52,7 +52,7 @@ class AffiliateService:
                 'campaign_param': 'campaign',
                 'source_param': 'source',
                 'medium_param': 'medium',
-                'partner_code': getattr(self.settings, 'ru_official_partner_code', 'BEAUTYCARE_RU'),
+                'partner_code': getattr(self.settings, 'partner_code', 'aff_skincare_bot'),
                 'priority': 2
             },
             'ru_marketplace': {
@@ -60,7 +60,7 @@ class AffiliateService:
                 'campaign_param': 'campaign',
                 'source_param': 'ref',
                 'medium_param': 'medium',
-                'partner_code': getattr(self.settings, 'ru_marketplace_partner_code', 'BEAUTYCARE_MP'),
+                'partner_code': getattr(self.settings, 'affiliate_tag', 'skincare_bot'),
                 'priority': 3
             },
             'intl_authorized': {
@@ -68,7 +68,7 @@ class AffiliateService:
                 'campaign_param': 'campaign',
                 'source_param': 'source',
                 'medium_param': 'medium',
-                'partner_code': getattr(self.settings, 'intl_partner_code', 'BEAUTYCARE_INT'),
+                'partner_code': getattr(self.settings, 'partner_code', 'aff_skincare_bot'),
                 'priority': 4
             },
             'default': {
@@ -76,7 +76,7 @@ class AffiliateService:
                 'campaign_param': 'utm_campaign',
                 'source_param': 'utm_source',
                 'medium_param': 'utm_medium',
-                'partner_code': 'BEAUTYCARE_DEFAULT',
+                'partner_code': getattr(self.settings, 'affiliate_tag', 'skincare_bot'),
                 'priority': 5
             }
         }

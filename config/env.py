@@ -78,18 +78,23 @@ class AdminConfig(BaseModel):
 
 class Settings(BaseSettings):
     """Main Settings Class - Reads from Environment Variables"""
-    
+
     class Config:
         env_prefix = ""
         case_sensitive = False
-    
-    # Telegram
+        env_file = ".env"
+        env_file_encoding = "utf-8"
+
+    # Telegram (required)
     bot_token: str
+
+    # Webhook Configuration
+    use_webhook: bool = False
     webhook_secret: Optional[str] = None
     webhook_base: Optional[str] = None
     webhook_path: str = "/webhook"
     webapp_port: int = 8080
-    
+
     # Partner & Affiliate
     affiliate_tag: str = "skincare_bot"
     partner_code: str = "aff_skincare_bot"
@@ -97,31 +102,37 @@ class Settings(BaseSettings):
     deeplink_network: Optional[str] = None
     user_discount: float = 0.05
     owner_commission: float = 0.10
-    
+
     # Catalog & Data
     catalog_path: str = "assets/fixed_catalog.yaml"
-    
+    cache_enabled: bool = True
+    only_in_stock: bool = True
+
     # Database
     database_url: str = "sqlite:///data/bot.db"
-    
+
     # Logging
     log_level: str = "INFO"
     log_file: str = "logs/bot.log"
-    
+    catalog_errors_file: str = "logs/catalog_errors.jsonl"
+
     # Analytics
     analytics_enabled: bool = True
     ab_testing: bool = True
-    
+
     # Development
     debug: bool = False
     development_mode: bool = False
-    
+
     # External APIs
     openai_api_key: Optional[str] = None
-    
+
     # Admin
     admin_ids: str = ""  # Comma-separated IDs
     owner_id: Optional[int] = None
+
+    # Legacy compatibility
+    port: int = 8080  # Alias for webapp_port
     
     @property
     def telegram(self) -> TelegramConfig:

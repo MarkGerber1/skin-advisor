@@ -390,14 +390,10 @@ async def show_cart_callback(cb: CallbackQuery, state: FSMContext) -> None:
     print(f"  🔑 Processed user ID: {user_id}")
 
     # Диагностируем состояние корзины
-    items: List[CartItem] = store.get_cart(user_id)
-    print(f"  🛒 Cart items for user {user_id}: {len(items)}")
-
-    # Показываем все корзины в store для диагностики
-    all_carts = store._carts if hasattr(store, '_carts') else {}
-    print(f"  📦 All carts in store: {list(all_carts.keys())}")
-    for cart_user_id, cart_items in all_carts.items():
-        print(f"    User {cart_user_id}: {len(cart_items)} items")
+    cart_store = get_cart_store()
+    items: List[CartItem] = cart_store.get(user_id)
+    cart_count = cart_store.get_cart_count(user_id)
+    print(f"  🛒 Cart items for user {user_id}: {len(items)} total qty: {cart_count}")
 
     if not items:
         kb = InlineKeyboardMarkup(inline_keyboard=[
@@ -407,10 +403,11 @@ async def show_cart_callback(cb: CallbackQuery, state: FSMContext) -> None:
         return
 
     # Метрика: просмотр корзины
-    metrics.track_event("cart_view", user_id, {"items_count": len(items)})
+    if hasattr(metrics, 'track_event'):
+        metrics.track_event("cart_view", user_id, {"items_count": len(items), "total_qty": cart_count})
 
     # Формируем сообщение с полной информацией
-    lines = ["🛒 **ВАША КОРЗИНА**\n"]
+    lines = [f"🛒 **ВАША КОРЗИНА** ({cart_count} шт.)\n"]
     total = 0.0
     available_items = 0
     item_buttons = []
@@ -443,13 +440,14 @@ async def show_cart_callback(cb: CallbackQuery, state: FSMContext) -> None:
         ])
 
     # Итоговая информация с улучшенным UX
-    lines.append(f"\n💰 **Итого:** {total:.0f} ₽")
-    lines.append(f"📦 Доступно: {available_items}/{len(items)} товаров")
+    total_items, total_price = cart_store.get_cart_total(user_id)
+    lines.append(f"\n💰 **Итого:** {total_price:.0f} ₽")
+    lines.append(f"📦 Доступно: {available_items}/{len(items)} товаров ({total_items} шт.)")
 
     # CTA кнопки в зависимости от состояния корзины
     cta_buttons = []
 
-    if total > 0:
+    if total_price > 0:
         # Корзина не пуста - показываем основные действия
         cta_buttons.append([
             InlineKeyboardButton(text="📋 Оформить заказ", callback_data="cart:checkout"),
@@ -607,7 +605,8 @@ async def clear_cart(cb: CallbackQuery, state: FSMContext) -> None:
         await cb.answer("Ошибка пользователя")
         return
     
-    store.clear(user_id)
+    cart_store = get_cart_store()
+    cart_store.clear(user_id)
     metrics.track_event("cart_clear", user_id, {})
     await safe_edit_text(cb, "🗑️ Корзина очищена")
     await cb.answer("🗑️ Корзина очищена")
@@ -1031,16 +1030,16 @@ async def remove_from_cart(cb: CallbackQuery, state: FSMContext) -> None:
     product_id = parts[2]
     variant_id = parts[3] if len(parts) > 3 else None
 
-    success = store.remove_item(user_id, product_id, variant_id)
+    cart_store = get_cart_store()
+    cart_store.remove(user_id, product_id, variant_id)
 
-    if success:
+    # Всегда успешно, так как remove не возвращает статус
+    if hasattr(metrics, 'track_event'):
         metrics.track_event("cart_item_removed", user_id, {
             "product_id": product_id,
             "variant_id": variant_id
         })
-        await cb.answer("Товар удален из корзины")
-    else:
-        await cb.answer("Товар не найден")
+    await cb.answer("🗑️ Товар удален из корзины")
 
     await show_cart_callback(cb, state)
 
@@ -1060,17 +1059,27 @@ async def increase_quantity(cb: CallbackQuery, state: FSMContext) -> None:
 
     product_id = cb.data.split(":", 2)[2]
 
-    # Используем новый метод inc_quantity
-    success, new_qty = store.inc_quantity(user_id, product_id, None, max_qty=10)
+    # Используем новый метод CartStore.inc_quantity
+    cart_store = get_cart_store()
+    success = cart_store.inc_quantity(user_id, product_id, None)
 
     if success:
+        # Получаем новое количество
+        items = cart_store.get(user_id)
+        new_qty = 0
+        for item in items:
+            if item.product_id == product_id:
+                new_qty = item.qty
+                break
+
         print(f"📈 product_inc_qty: user={user_id}, product={product_id}, new_qty={new_qty}")
 
-        metrics.track_event("cart_qty_change", user_id, {
-            "product_id": product_id,
-            "new_qty": new_qty,
-            "action": "increase"
-        })
+        if hasattr(metrics, 'track_event'):
+            metrics.track_event("cart_qty_change", user_id, {
+                "product_id": product_id,
+                "new_qty": new_qty,
+                "action": "increase"
+            })
 
         await cb.answer(f"➕ Количество: {new_qty}")
     else:
@@ -1089,11 +1098,23 @@ async def decrease_quantity(cb: CallbackQuery, state: FSMContext) -> None:
     
     product_id = cb.data.split(":", 2)[2]
 
-    # Используем новый метод dec_quantity
-    success, new_qty = store.dec_quantity(user_id, product_id, None)
+    # Используем новый метод CartStore.dec_quantity
+    cart_store = get_cart_store()
+    success = cart_store.dec_quantity(user_id, product_id, None)
 
     if success:
-        if new_qty == 0:
+        # Проверяем, удален ли товар
+        items = cart_store.get(user_id)
+        item_found = False
+        new_qty = 0
+
+        for item in items:
+            if item.product_id == product_id:
+                item_found = True
+                new_qty = item.qty
+                break
+
+        if not item_found:
             print(f"🗑️ product_removed: user={user_id}, product={product_id}")
 
             # Аналитика удаления
@@ -1107,11 +1128,12 @@ async def decrease_quantity(cb: CallbackQuery, state: FSMContext) -> None:
         else:
             print(f"📉 product_dec_qty: user={user_id}, product={product_id}, new_qty={new_qty}")
 
-            metrics.track_event("cart_qty_change", user_id, {
-                "product_id": product_id,
-                "new_qty": new_qty,
-                "action": "decrease"
-            })
+            if hasattr(metrics, 'track_event'):
+                metrics.track_event("cart_qty_change", user_id, {
+                    "product_id": product_id,
+                    "new_qty": new_qty,
+                    "action": "decrease"
+                })
 
             await cb.answer(f"➖ Количество: {new_qty}")
     else:
