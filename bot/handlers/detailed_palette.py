@@ -744,6 +744,35 @@ async def show_products(cb: CallbackQuery, state: FSMContext) -> None:
 
 @router.callback_query(F.data == "pl:back:results", DetailedPaletteFlow.RESULT)
 async def back_to_results(cb: CallbackQuery, state: FSMContext) -> None:
+    """Вернуться к результатам теста"""
+    try:
+        print(f"🔙 back:results called by user {cb.from_user.id if cb.from_user else 'Unknown'}")
+        data = await state.get_data()
+        season = data.get("season", "spring")
+        tldr_report = data.get("tldr_report", "Анализ цветотипа завершен")
+
+        season_names = {
+            "winter": "❄️ Холодная Зима",
+            "spring": "🌸 Весенняя Весна",
+            "summer": "🌊 Летняя Лето",
+            "autumn": "🍂 Осенняя Осень"
+        }
+
+        print(f"🎭 About to show result buttons with state: {await state.get_state()}")
+
+        await cb.message.edit_text(
+            f"🎉 **РЕЗУЛЬТАТ ТЕСТА**\n\n"
+            f"**Ваш цветотип:** {season_names[season]}\n\n"
+            f"📊 **Краткий анализ:**\n{tldr_report}\n\n"
+            f"Что вы хотите увидеть?",
+            reply_markup=create_post_test_navigation("palette", "description")
+        )
+        print(f"✅ Result buttons displayed for state: {await state.get_state()}")
+
+    except Exception as e:
+        print(f"❌ Error in back_to_results: {e}")
+        await cb.answer("⚠️ Ошибка при возврате к результатам")
+
 
 # Навигационные обработчики
 @router.callback_query(F.data == "pl:nav:description", DetailedPaletteFlow.RESULT)
@@ -767,35 +796,3 @@ async def nav_to_products(cb: CallbackQuery, state: FSMContext) -> None:
     """Навигация к товарам"""
     await show_products(cb, state)
 
-@router.callback_query(F.data == "pl:back:results", DetailedPaletteFlow.RESULT)
-async def back_to_results(cb: CallbackQuery, state: FSMContext) -> None:
-    """Вернуться к результатам теста"""
-    try:
-        print(f"🔙 back:results called by user {cb.from_user.id if cb.from_user else 'Unknown'}")
-        data = await state.get_data()
-        season = data.get("season", "spring")
-        tldr_report = data.get("tldr_report", "")
-        print(f"🌸 Returning to results for season: {season}")
-        
-        season_names = {
-            "spring": "🌸 Яркая Весна",
-            "summer": "🌊 Мягкое Лето", 
-            "autumn": "🍂 Глубокая Осень",
-            "winter": "❄️ Холодная Зима"
-        }
-        
-        # Показываем краткий анализ если он есть
-        analysis_text = f"\n\n📊 **Краткий анализ:**\n{tldr_report}" if tldr_report else ""
-        
-        await cb.message.edit_text(
-            f"🎉 **РЕЗУЛЬТАТ ТЕСТА**\n\n"
-            f"**Ваш цветотип:** {season_names[season]}{analysis_text}\n\n"
-            f"Что вы хотите увидеть?",
-            reply_markup=create_post_test_navigation("palette", "products")
-        )
-        await cb.answer("🔙 Возврат к результатам")
-        print("✅ Back to results displayed successfully")
-        
-    except Exception as e:
-        print(f"❌ Error in back_to_results: {e}")
-        await cb.answer("⚠️ Ошибка при возврате")
