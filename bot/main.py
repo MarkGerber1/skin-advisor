@@ -111,13 +111,27 @@ CATALOG_PATH = os.getenv("CATALOG_PATH", "assets/fixed_catalog.yaml")
 async def main() -> None:
     # Настройка логирования
     import logging
-    from config.env import get_settings
 
-    # Загружаем настройки
+    # Загружаем настройки с fallback
     try:
+        from config.env import get_settings
         settings = get_settings()
         log_level = getattr(settings, 'log_level', 'INFO')
-        log_file = getattr(settings, 'log_file', 'logs/bot.log')
+        print(f"✅ Settings loaded from config.env, log_level: {log_level}")
+    except ImportError as e:
+        print(f"⚠️ Config module not available ({e}), using mock settings")
+        # Mock settings для Railway
+        class MockSettings:
+            bot_token = None  # Будет установлено из переменной окружения
+            webhook_base = None
+            use_webhook = True
+            log_level = "INFO"
+            log_file = "logs/bot.log"
+            affiliate_tag = "skincarebot"
+
+        settings = MockSettings()
+        log_level = settings.log_level
+        log_file = settings.log_file
     except Exception as e:
         print(f"⚠️ Could not load settings for logging: {e}, using defaults")
         log_level = 'INFO'
