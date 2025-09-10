@@ -43,7 +43,41 @@ TASKS.md
 
 
 
-Токен.txt
-Токен.txt
+# Sensitive files
 .env
 .env.backup
+.env.local
+.env.production
+.env.development
+
+# Tokens and secrets
+*token*
+*secret*
+*key*
+*password*
+*credential*
+
+# Railway
+railway.json
+
+# Telegram
+bot_token*
+admin_ids*
+
+# API Keys
+openai_api_key*
+telegram_token*
+
+# Logs with sensitive data
+logs/*.log
+logs/catalog_errors.jsonl
+
+# Data files that might contain sensitive info
+data/carts/*
+data/analytics/*
+data/metrics/*
+data/reports/*
+
+# Backups
+*.backup
+*.bak
