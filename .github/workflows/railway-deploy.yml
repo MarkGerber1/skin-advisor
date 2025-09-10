@@ -9,11 +9,8 @@ on:
       - completed
   workflow_dispatch: {}
 
-env:
-  RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-  # Optional – set if you want to force a specific project/service
-  RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
-  RAILWAY_SERVICE_ID: ${{ secrets.RAILWAY_SERVICE_ID }}
+# Environment variables for Railway
+# Note: RAILWAY_TOKEN must be set in GitHub repository secrets
 
 jobs:
   deploy:
@@ -30,15 +27,16 @@ jobs:
           node-version: 20
 
       - name: Install Railway CLI
-        run: npm i -g @railway/cli
+        run: |
+          curl -fsSL https://railway.app/install.sh | sh
+          echo "$HOME/.railway/bin" >> $GITHUB_PATH
 
       - name: Verify Railway CLI
         run: railway --version
 
       - name: Deploy to Railway
         run: |
-          railway up --service skin-advisor
+          railway login --token ${{ secrets.RAILWAY_TOKEN }}
+          railway up
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-          RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
-          RAILWAY_SERVICE_ID: ${{ secrets.RAILWAY_SERVICE_ID }}
