@@ -1,0 +1,74 @@
+name: Preview Deploy (PR)
+
+on:
+  pull_request:
+    branches: [ master ]
+    types: [opened, synchronize, reopened, closed]
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    if: github.event.action != 'closed'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Railway CLI
+        run: |
+          curl -fsSL https://railway.app/install.sh | sh
+          echo "$HOME/.railway/bin" >> $GITHUB_PATH
+
+      - name: Deploy Preview
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          railway login --token ${{ secrets.RAILWAY_TOKEN }}
+          railway up --detach
+
+      - name: Get Preview URL
+        id: preview-url
+        run: |
+          echo "preview-url=https://$(railway domain)" >> $GITHUB_OUTPUT
+
+      - name: Comment PR with Preview URL
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `🚀 **Preview Deployment Ready!**\n\n🌐 **URL:** ${{ steps.preview-url.outputs.preview-url }}\n\nThis preview will be automatically destroyed when the PR is merged or closed.`
+            })
+
+  cleanup:
+    runs-on: ubuntu-latest
+    if: github.event.action == 'closed'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Railway CLI
+        run: |
+          curl -fsSL https://railway.app/install.sh | sh
+          echo "$HOME/.railway/bin" >> $GITHUB_PATH
+
+      - name: Cleanup Preview
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          railway login --token ${{ secrets.RAILWAY_TOKEN }}
+          railway down
