@@ -2,6 +2,8 @@
 
 ## 🚀 DEPLOYMENT
 
+**Last smoke deploy:** $(date +"%Y-%m-%d %H:%M:%S")
+
 ### Railway (Production)
 ```bash
 # Environment Variables
