@@ -84,6 +84,7 @@ class Settings(BaseSettings):
         case_sensitive = False
         env_file = ".env"
         env_file_encoding = "utf-8"
+        extra = "allow"  # Allow extra fields for backward compatibility
 
     # Telegram (required)
     bot_token: str
@@ -126,6 +127,13 @@ class Settings(BaseSettings):
 
     # External APIs
     openai_api_key: Optional[str] = None
+
+    # Legacy/Extra fields (for backward compatibility)
+    mode: Optional[str] = None
+    loyalty_rate: Optional[str] = None
+    referral_rate: Optional[str] = None
+    postback_secret: Optional[str] = None
+    reco_diag: Optional[str] = None
 
     # Admin
     admin_ids: str = ""  # Comma-separated IDs

@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+`# -*- coding: utf-8 -*-
 """
 Visual Cards Generator
 Генератор визуальных карточек результатов тестов
@@ -134,3 +134,4 @@ def generate_visual_cards(profile: Dict[str, Any], recommendations: List[Dict[st
             results.append(card_path)
 
     return results
+    

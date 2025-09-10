@@ -391,7 +391,7 @@ async def show_cart_callback(cb: CallbackQuery, state: FSMContext) -> None:
 
     # Диагностируем состояние корзины
     cart_store = get_cart_store()
-    items: List[CartItem] = cart_store.get(user_id)
+    items: List[CartItem] = cart_store.get_cart(user_id)
     cart_count = cart_store.get_cart_count(user_id)
     print(f"  🛒 Cart items for user {user_id}: {len(items)} total qty: {cart_count}")
 
@@ -1065,7 +1065,7 @@ async def increase_quantity(cb: CallbackQuery, state: FSMContext) -> None:
 
     if success:
         # Получаем новое количество
-        items = cart_store.get(user_id)
+        items = cart_store.get_cart(user_id)
         new_qty = 0
         for item in items:
             if item.product_id == product_id:
@@ -1104,7 +1104,7 @@ async def decrease_quantity(cb: CallbackQuery, state: FSMContext) -> None:
 
     if success:
         # Проверяем, удален ли товар
-        items = cart_store.get(user_id)
+        items = cart_store.get_cart(user_id)
         item_found = False
         new_qty = 0
 

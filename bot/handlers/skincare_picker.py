@@ -294,8 +294,11 @@ def _get_products_by_category(user_id: int, category_slug: str, page: int = 1) -
         # Получаем каталог
         catalog_path = os.getenv("CATALOG_PATH", "assets/fixed_catalog.yaml")
         catalog_store = CatalogStore.instance(catalog_path)
-        catalog = catalog_store.get()
+        if catalog_store is None:
+            print("❌ CatalogStore is None")
+            return [], 0
 
+        catalog = catalog_store.get()
         if not catalog:
             print("⚠️ Catalog not loaded")
             return [], 0
