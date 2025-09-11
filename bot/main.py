@@ -111,6 +111,11 @@ CATALOG_PATH = os.getenv("CATALOG_PATH", "assets/fixed_catalog.yaml")
 async def main() -> None:
     # Настройка логирования
     import logging
+    import os
+
+    # Инициализация переменных с дефолтными значениями
+    log_level = "INFO"
+    log_file = "logs/bot.log"
 
     # Загружаем настройки с fallback
     try:
@@ -136,8 +141,12 @@ async def main() -> None:
         log_file = settings.log_file
     except Exception as e:
         print(f"⚠️ Could not load settings for logging: {e}, using defaults")
-        log_level = "INFO"
-        log_file = "logs/bot.log"
+        # Переменные уже инициализированы в начале функции
+
+    # Создаем папку для логов, если не существует
+    log_dir = os.path.dirname(log_file)
+    if log_dir and not os.path.exists(log_dir):
+        os.makedirs(log_dir, exist_ok=True)
 
     # Настраиваем основной логгер
     logging.basicConfig(
