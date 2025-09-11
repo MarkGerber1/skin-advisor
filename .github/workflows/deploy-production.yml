@@ -38,12 +38,27 @@ jobs:
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: |
+          echo "🔍 Checking Railway token..."
+          echo "Token length: ${#RAILWAY_TOKEN}"
+          echo "Token prefix: ${RAILWAY_TOKEN:0:10}"
+
+          echo "🔍 Checking Railway CLI..."
+          railway --version
+
+          echo "🔍 Testing Railway authentication..."
+          railway whoami || echo "⚠️  Authentication failed"
+
           echo "🔍 Checking Railway project status..."
-          railway status || echo "⚠️  Status check failed, trying to link project..."
+          railway status || echo "⚠️  Status check failed"
+
+          echo "🔍 Listing Railway projects..."
+          railway list || echo "⚠️  List failed"
+
           echo "🔗 Attempting to link Railway project..."
-          railway link --yes || echo "⚠️  Link failed, but continuing..."
+          railway link --yes || echo "⚠️  Link failed"
+
           echo "🚀 Starting deployment..."
-          railway up --detach
+          railway up --detach --verbose
 
       - name: Notify on success
         if: success()
