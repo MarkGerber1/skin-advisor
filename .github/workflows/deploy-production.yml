@@ -29,12 +29,20 @@ jobs:
           echo "$(npm config get prefix)/bin" >> $GITHUB_PATH
 
       - name: Verify Railway CLI
-        run: railway --version
+        run: |
+          railway --version
+          echo "🔑 Testing Railway authentication..."
+          railway whoami || echo "⚠️  Authentication check failed"
 
       - name: Deploy to Railway
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: |
+          echo "🔍 Checking Railway project status..."
+          railway status || echo "⚠️  Status check failed, trying to link project..."
+          echo "🔗 Attempting to link Railway project..."
+          railway link --yes || echo "⚠️  Link failed, but continuing..."
+          echo "🚀 Starting deployment..."
           railway up --detach
 
       - name: Notify on success
