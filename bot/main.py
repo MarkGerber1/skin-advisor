@@ -120,6 +120,7 @@ async def main() -> None:
     # Пытаемся загрузить настройки из config.env
     try:
         from config.env import get_settings
+
         settings = get_settings()
         if settings:
             log_level = getattr(settings, "log_level", log_level)
