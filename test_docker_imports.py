@@ -17,9 +17,7 @@ def test_imports():
 
         print("✅ asyncio imported")
 
-
         print("✅ aiogram imported")
-
 
         print("✅ bot.main.main imported")
 

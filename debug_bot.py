@@ -29,7 +29,6 @@ try:
 
     print("   ✅ skincare_picker OK")
 
-
     print("   ✅ makeup_picker OK")
 
     print("\n🎉 ALL IMPORTS SUCCESSFUL!")
