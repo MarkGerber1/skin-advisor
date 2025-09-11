@@ -4,6 +4,7 @@
 
 **Last smoke deploy:** $(date +"%Y-%m-%d %H:%M:%S")
 **Preview test:** feature branch for PR testing
+**Auto-deploy test:** $(date +"%Y-%m-%d %H:%M:%S")
 
 ### Railway (Production)
 ```bash
