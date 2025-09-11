@@ -28,7 +28,7 @@ except ImportError as e:
 
 # Тест создания карточки
 try:
-    from report.cards import VisualCardGenerator, CardConfig
+    from report.cards import VisualCardGenerator
     from engine.models import UserProfile, Season, Undertone
 
     print("\n🎯 Testing card generation...")
@@ -48,7 +48,7 @@ try:
     generator = VisualCardGenerator()
     result = generator.generate_makeup_card(test_profile, {})
 
-    print(f"✅ Makeup card generated:")
+    print("✅ Makeup card generated:")
     print(f"   SVG: {result.get('svg', 'N/A')}")
     print(f"   PNG: {result.get('png', 'N/A')}")
 

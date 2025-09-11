@@ -53,7 +53,7 @@ def run_functional_e2e_tests():
         )
 
     # Запускаем функциональные тесты
-    print(f"\n🚀 Starting functional E2E execution...")
+    print("\n🚀 Starting functional E2E execution...")
 
     passed = 0
     failed = 0
@@ -70,11 +70,11 @@ def run_functional_e2e_tests():
 
             if has_critical_error:
                 critical_failures += 1
-                print(f"    ⚠️ CRITICAL FAILURE detected!")
+                print("    ⚠️ CRITICAL FAILURE detected!")
 
             if result.passed:
                 passed += 1
-                print(f"    ✅ Functional requirements met")
+                print("    ✅ Functional requirements met")
             else:
                 failed += 1
                 # Проверяем основные функции
@@ -82,7 +82,7 @@ def run_functional_e2e_tests():
                 profile_ok = result.verification_details.get("profile_creation") == "SUCCESS"
                 selection_ok = result.verification_details.get("product_selection") == "SUCCESS"
 
-                print(f"    📊 Component status:")
+                print("    📊 Component status:")
                 print(f"       Profile creation: {'✅' if profile_ok else '❌'}")
                 print(f"       Product selection: {'✅' if selection_ok else '❌'}")
                 print(f"       PDF generation: {'✅' if pdf_ok else '❌'}")
@@ -105,7 +105,7 @@ def run_functional_e2e_tests():
         (len(functional_scenarios) - critical_failures) / len(functional_scenarios)
     ) * 100
 
-    print(f"\n📊 FUNCTIONAL E2E RESULTS:")
+    print("\n📊 FUNCTIONAL E2E RESULTS:")
     print(f"Total scenarios: {len(functional_scenarios)}")
     print(f"Passed: {passed}")
     print(f"Failed: {failed}")
@@ -114,7 +114,7 @@ def run_functional_e2e_tests():
     print(f"Stability rate: {stability_rate:.1f}%")
 
     # Анализ компонентов
-    print(f"\n🔍 COMPONENT ANALYSIS:")
+    print("\n🔍 COMPONENT ANALYSIS:")
 
     pdf_success = sum(
         1
@@ -147,8 +147,8 @@ def run_functional_e2e_tests():
 
     # Функциональная готовность
     if stability_rate >= 90 and pdf_success >= len(functional_scenarios) * 0.8:
-        print(f"\n🎉 SYSTEM FUNCTIONALLY READY!")
-        print(f"Core components working, acceptable for production")
+        print("\n🎉 SYSTEM FUNCTIONALLY READY!")
+        print("Core components working, acceptable for production")
         return {
             "status": "FUNCTIONAL",
             "success_rate": success_rate,
@@ -156,8 +156,8 @@ def run_functional_e2e_tests():
             "ready_for_production": True,
         }
     elif stability_rate >= 70:
-        print(f"\n⚠️ SYSTEM PARTIALLY FUNCTIONAL")
-        print(f"Some issues detected but core functionality works")
+        print("\n⚠️ SYSTEM PARTIALLY FUNCTIONAL")
+        print("Some issues detected but core functionality works")
         return {
             "status": "PARTIAL",
             "success_rate": success_rate,
@@ -165,8 +165,8 @@ def run_functional_e2e_tests():
             "ready_for_production": False,
         }
     else:
-        print(f"\n💥 SYSTEM NOT FUNCTIONAL")
-        print(f"Critical issues prevent production readiness")
+        print("\n💥 SYSTEM NOT FUNCTIONAL")
+        print("Critical issues prevent production readiness")
         return {
             "status": "CRITICAL",
             "success_rate": success_rate,
@@ -180,10 +180,10 @@ if __name__ == "__main__":
         results = run_functional_e2e_tests()
 
         if results["ready_for_production"]:
-            print(f"\n🚀 SYSTEM READY FOR PRODUCTION")
+            print("\n🚀 SYSTEM READY FOR PRODUCTION")
             exit(0)
         else:
-            print(f"\n⚠️ SYSTEM NEEDS ATTENTION BEFORE PRODUCTION")
+            print("\n⚠️ SYSTEM NEEDS ATTENTION BEFORE PRODUCTION")
             exit(1)
 
     except Exception as e:

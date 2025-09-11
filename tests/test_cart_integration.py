@@ -1,8 +1,7 @@
 """Интеграционные тесты для корзины"""
 
 import pytest
-from unittest.mock import Mock, patch
-from services.cart_store import CartStore, CartItem
+from services.cart_store import CartStore
 
 
 class TestCartIntegration:

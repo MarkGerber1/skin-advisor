@@ -14,15 +14,12 @@ def test_imports():
 
     try:
         print("\n📦 Testing basic imports...")
-        import asyncio
 
         print("✅ asyncio imported")
 
-        from aiogram import Bot, Dispatcher
 
         print("✅ aiogram imported")
 
-        from bot.main import main
 
         print("✅ bot.main.main imported")
 

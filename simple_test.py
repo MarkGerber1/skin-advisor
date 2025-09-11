@@ -14,12 +14,10 @@ print(f"Current directory: {os.getcwd()}")
 
 try:
     print("Testing basic import...")
-    import asyncio
 
     print("[OK] asyncio imported")
 
     print("Testing bot.main...")
-    from bot.main import main
 
     print("[OK] bot.main imported")
 

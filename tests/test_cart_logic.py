@@ -8,8 +8,6 @@ import pytest
 import tempfile
 import shutil
 import os
-from dataclasses import asdict
-from unittest.mock import AsyncMock, MagicMock
 
 # Импорты из проекта
 import sys
@@ -17,7 +15,6 @@ import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 from engine.cart_store import CartStore, CartItem
-from bot.handlers.cart import _find_product_in_recommendations
 
 
 class TestCartStore:

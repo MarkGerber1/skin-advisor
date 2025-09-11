@@ -39,7 +39,7 @@ def run_sample_e2e_tests():
         print(f"  {i}. {scenario.scenario_id}: {scenario.name}")
 
     # Запускаем тесты
-    print(f"\n🚀 Starting sample E2E execution...")
+    print("\n🚀 Starting sample E2E execution...")
 
     passed = 0
     failed = 0
@@ -55,7 +55,7 @@ def run_sample_e2e_tests():
             failed += 1
 
     # Итоги
-    print(f"\n📊 SAMPLE E2E RESULTS:")
+    print("\n📊 SAMPLE E2E RESULTS:")
     print(f"Total scenarios: {len(sample_scenarios)}")
     print(f"Passed: {passed}")
     print(f"Failed: {failed}")
@@ -63,7 +63,7 @@ def run_sample_e2e_tests():
 
     # Детали по провалившимся тестам
     if failed > 0:
-        print(f"\n❌ Failed scenarios:")
+        print("\n❌ Failed scenarios:")
         for result in results:
             if not result.passed:
                 print(f"  - {result.scenario_id}:")
@@ -74,7 +74,7 @@ def run_sample_e2e_tests():
     if failed > 0:
         failure_analysis = tester.get_failure_analysis()
         if "most_common_issues" in failure_analysis:
-            print(f"\n🔍 Most common issues:")
+            print("\n🔍 Most common issues:")
             for issue, count in failure_analysis["most_common_issues"]:
                 print(f"  - {issue}: {count} times")
 
@@ -92,13 +92,13 @@ if __name__ == "__main__":
         results = run_sample_e2e_tests()
 
         if results["success_rate"] >= 50:  # Снижаем требования для прохождения
-            print(f"\n🎉 SAMPLE E2E TESTS ACCEPTABLE!")
-            print(f"System demonstrates basic functionality")
-            print(f"Ready for full E2E execution (39 scenarios)")
+            print("\n🎉 SAMPLE E2E TESTS ACCEPTABLE!")
+            print("System demonstrates basic functionality")
+            print("Ready for full E2E execution (39 scenarios)")
             exit(0)
         else:
-            print(f"\n💥 SAMPLE E2E TESTS NEED ATTENTION")
-            print(f"Critical system failures detected")
+            print("\n💥 SAMPLE E2E TESTS NEED ATTENTION")
+            print("Critical system failures detected")
             exit(1)
 
     except Exception as e:

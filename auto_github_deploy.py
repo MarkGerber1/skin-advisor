@@ -7,7 +7,6 @@ import subprocess
 import sys
 import os
 from datetime import datetime
-from pathlib import Path
 
 
 def run_command(command, description):
@@ -48,7 +47,7 @@ def check_git_status():
         return False
 
     if result.stdout.strip():
-        print(f"⚠️  Есть незакоммиченные изменения:")
+        print("⚠️  Есть незакоммиченные изменения:")
         print(result.stdout)
         return False
 

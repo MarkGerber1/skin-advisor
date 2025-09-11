@@ -6,9 +6,8 @@
 import os
 import json
 import hashlib
-from typing import Dict, Any, List
+from typing import Dict, Any
 from pathlib import Path
-import tempfile
 
 
 class WorkingPDFSnapshotTester:
@@ -308,7 +307,7 @@ This report is generated based on your personal color analysis and skin assessme
 
         # Итоги
         success_rate = (results["passed"] / results["total_tests"]) * 100
-        print(f"\n📊 FINAL SNAPSHOT TEST RESULTS:")
+        print("\n📊 FINAL SNAPSHOT TEST RESULTS:")
         print(f"Total tests: {results['total_tests']}")
         print(f"Passed: {results['passed']}")
         print(f"Failed: {results['failed']}")
@@ -351,7 +350,7 @@ if __name__ == "__main__":
     results = tester.run_comprehensive_tests()
 
     # Финальная сводка
-    print(f"\n📋 Updated snapshots summary:")
+    print("\n📋 Updated snapshots summary:")
     summary = tester.get_snapshot_summary()
     for key, value in summary.items():
         print(f"  {key}: {value}")

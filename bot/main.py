@@ -389,8 +389,7 @@ async def main() -> None:
 
             # Start webhook server (simple aiohttp)
             from aiohttp import web
-            import aiohttp
-            from aiohttp.web import Application, Request
+            from aiohttp.web import Request
 
             app = web.Application()
 

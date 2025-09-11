@@ -6,10 +6,9 @@
 import os
 import json
 import hashlib
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List
 from pathlib import Path
 import tempfile
-import pytest
 
 
 class PDFSnapshotTester:
@@ -293,7 +292,7 @@ class PDFSnapshotTester:
                 print(f"❌ {scenario['name']}: Test error: {e}")
 
         # Итоговый отчет
-        print(f"\n📊 SNAPSHOT TEST RESULTS:")
+        print("\n📊 SNAPSHOT TEST RESULTS:")
         print(f"Total tests: {results['total_tests']}")
         print(f"Passed: {results['passed']}")
         print(f"Failed: {results['failed']}")

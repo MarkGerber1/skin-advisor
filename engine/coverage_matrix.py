@@ -4,7 +4,7 @@ Analyzes rule coverage for all makeup/skincare combinations
 """
 
 import json
-from typing import Dict, List, Set, Tuple, Optional, Any
+from typing import Dict, List, Any
 from itertools import product
 from dataclasses import dataclass, asdict
 from .models import UserProfile, Product
@@ -465,11 +465,11 @@ def run_coverage_analysis():
     print(f"Total Combinations: {report['overall']['total_combinations']}")
     print(f"Covered: {report['overall']['covered_combinations']}")
 
-    print(f"\nMAKEUP CATEGORIES:")
+    print("\nMAKEUP CATEGORIES:")
     for category, stats in report["makeup"]["category_coverage"].items():
         print(f"  {category:12} {stats['percentage']:6.1f}% ({stats['covered']}/{stats['total']})")
 
-    print(f"\nSKINCARE CATEGORIES:")
+    print("\nSKINCARE CATEGORIES:")
     for category, stats in report["skincare"]["category_coverage"].items():
         print(f"  {category:12} {stats['percentage']:6.1f}% ({stats['covered']}/{stats['total']})")
 

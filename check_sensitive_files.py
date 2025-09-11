@@ -60,7 +60,7 @@ def scan_file_for_sensitive_data(file_path):
                         }
                     )
 
-    except Exception as e:
+    except Exception:
         pass  # Skip files that can't be read
 
     return findings
@@ -90,7 +90,7 @@ def main():
                 all_findings.extend(findings)
 
     # Report results
-    print(f"\n📊 RESULTS:")
+    print("\n📊 RESULTS:")
     print(f"Files scanned: {total_files_scanned}")
     print(f"Sensitive items found: {len(all_findings)}")
 

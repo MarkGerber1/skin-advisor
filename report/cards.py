@@ -4,7 +4,6 @@ Visual Cards Generator
 Генератор визуальных карточек результатов тестов
 """
 
-import os
 from typing import Dict, List, Any, Optional
 from pathlib import Path
 

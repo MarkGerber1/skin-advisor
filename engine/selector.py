@@ -7,7 +7,7 @@ from .explain_generator import get_explain_generator
 from pathlib import Path
 import yaml
 
-from .models import Product, UserProfile, Undertone, Season, SkinType, Sensitivity
+from .models import Product, UserProfile
 
 
 def _with_affiliate(link: str | None, partner_code: str, redirect_base: str | None) -> str | None:

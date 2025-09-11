@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from typing import List, Literal, Optional, Dict, Any
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel, Field
 from enum import Enum
 
 

@@ -6,7 +6,7 @@ import unittest
 import tempfile
 import shutil
 from pathlib import Path
-from services.cart_store import CartStore, CartItem
+from services.cart_store import CartStore
 
 
 class TestCartStore(unittest.TestCase):

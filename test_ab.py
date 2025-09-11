@@ -2,7 +2,6 @@
 """Test A/B testing system"""
 
 import sys
-import os
 
 # Test A/B framework
 try:

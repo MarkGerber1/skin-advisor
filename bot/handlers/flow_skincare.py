@@ -9,8 +9,8 @@ from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 
 from engine.catalog_store import CatalogStore
-from engine.models import UserProfile, SkinType, Sensitivity, ReportData
-from engine.selector import select_products, SelectorV2
+from engine.models import UserProfile, SkinType, ReportData
+from engine.selector import SelectorV2
 from engine.answer_expander import AnswerExpanderV2
 
 try:

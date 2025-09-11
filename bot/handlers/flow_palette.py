@@ -10,7 +10,7 @@ from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, C
 
 from engine.catalog_store import CatalogStore
 from engine.models import UserProfile, Season, Undertone, ReportData
-from engine.selector import select_products, SelectorV2
+from engine.selector import SelectorV2
 from engine.answer_expander import AnswerExpanderV2
 
 try:

@@ -4,8 +4,7 @@
 """
 
 import os
-import json
-from typing import Dict, Any, Optional, List, Tuple
+from typing import Dict, Any, List
 from pathlib import Path
 from fpdf import FPDF
 import re

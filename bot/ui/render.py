@@ -189,7 +189,7 @@ def render_skincare_report(result: Dict) -> Tuple[str, InlineKeyboardMarkup]:
             try:
                 # Проверяем, что у продукта есть необходимые поля
                 if not product.get("id"):
-                    print(f"⚠️ Skincare product missing ID, skipping affiliate link generation")
+                    print("⚠️ Skincare product missing ID, skipping affiliate link generation")
                     products_with_ref_link.append(product)
                     continue
 
@@ -412,7 +412,7 @@ def render_makeup_report(result: Dict) -> Tuple[str, InlineKeyboardMarkup]:
             try:
                 # Проверяем, что у продукта есть необходимые поля
                 if not product.get("id"):
-                    print(f"⚠️ Product missing ID, skipping affiliate link generation")
+                    print("⚠️ Product missing ID, skipping affiliate link generation")
                     products_with_ref_link.append(product)
                     continue
 

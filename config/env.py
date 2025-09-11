@@ -234,7 +234,6 @@ def load_env():
         raise ValueError("BOT_TOKEN is required")
 
     # Validate paths exist
-    import os
 
     if not os.path.exists(os.path.dirname(settings.catalog_path)):
         os.makedirs(os.path.dirname(settings.catalog_path), exist_ok=True)

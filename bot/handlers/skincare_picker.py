@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 import os
-from typing import List, Dict, Optional, Tuple
+from typing import List, Dict, Tuple
 from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
@@ -74,7 +74,6 @@ except ImportError:
 
 # Fix import for Railway environment
 import sys
-import os
 
 # Add project root to sys.path for Railway compatibility
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -967,7 +966,7 @@ async def show_out_of_stock_alternatives(cb: CallbackQuery, state: FSMContext) -
             {"id": "alt_3", "name": "Альтернатива 3", "brand": "Brand C", "price": 2100},
         ]
 
-        text_lines = [f"🔄 **Альтернативы для товара**\n"]
+        text_lines = ["🔄 **Альтернативы для товара**\n"]
         buttons = []
 
         for i, alt in enumerate(alternatives, 1):
@@ -1098,7 +1097,7 @@ async def skincare_show_all(cb: CallbackQuery) -> None:
                     buttons.append(
                         [
                             InlineKeyboardButton(
-                                text=f"➕ Добавить", callback_data=f"c:add:{product['id']}:default"
+                                text="➕ Добавить", callback_data=f"c:add:{product['id']}:default"
                             )
                         ]
                     )

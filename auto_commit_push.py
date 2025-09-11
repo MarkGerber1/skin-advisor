@@ -76,7 +76,7 @@ def auto_commit_push(commit_message):
     print("✅ Все изменения закоммичены и отправлены в репозиторий")
     print(f"🔗 Ветка: {current_branch}")
     print(f"📋 Сообщение: {commit_message}")
-    print(f"🔗 Репозиторий: https://github.com/MarkGerber1/skin-advisor")
+    print("🔗 Репозиторий: https://github.com/MarkGerber1/skin-advisor")
 
     # Показываем последний коммит
     last_commit = subprocess.run("git log --oneline -1", shell=True, capture_output=True, text=True)

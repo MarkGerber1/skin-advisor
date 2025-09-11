@@ -4,7 +4,6 @@
 
 import pytest
 import tempfile
-import os
 from engine.cart_store import CartStore, CartItem
 from engine.selector_schema import canon_slug, safe_get_skincare_data
 from services.affiliates import AffiliateService

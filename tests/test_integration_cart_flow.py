@@ -9,14 +9,12 @@ import tempfile
 import shutil
 import os
 import sys
-from unittest.mock import AsyncMock, MagicMock, patch
 
 # Импорты из проекта
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 from engine.cart_store import CartStore, CartItem
 from engine.source_prioritizer import SourcePrioritizer
-from engine.models import UserProfile
 
 
 class TestCartFlowIntegration:

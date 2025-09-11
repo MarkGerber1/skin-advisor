@@ -29,7 +29,7 @@ def main():
         with_actives = sum(1 for p in products if p.actives)
         with_price = sum(1 for p in products if p.price)
 
-        print(f"\n✨ Качество данных:")
+        print("\n✨ Качество данных:")
         print(f"  • Продукты с ссылками: {with_links}/{len(products)}")
         print(f"  • Продукты с активами: {with_actives}/{len(products)}")
         print(f"  • Продукты с ценами: {with_price}/{len(products)}")

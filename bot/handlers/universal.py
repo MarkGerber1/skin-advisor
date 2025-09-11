@@ -167,7 +167,7 @@ async def handle_any_unhandled_callback(cb: CallbackQuery, state: FSMContext) ->
         ]
     ):
         print(f"🧪 Test callback detected: {cb.data} - should be handled by test router")
-        print(f"⚠️ State mismatch - resetting to allow proper handling")
+        print("⚠️ State mismatch - resetting to allow proper handling")
 
         # Clear state to allow proper handling
         await state.clear()

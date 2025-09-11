@@ -8,7 +8,7 @@ import sys
 from typing import List, Dict, Optional, Tuple
 from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
-from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 
 # Default MAKEUP_CATEGORIES (fallback if i18n fails)
 MAKEUP_CATEGORIES = [
@@ -521,7 +521,7 @@ async def start_makeup_picker(cb: CallbackQuery, state: FSMContext) -> None:
             # Преобразуем dict обратно в UserProfile
             profile_data = data["profile"]
             if ENGINE_AVAILABLE:
-                from engine.models import UserProfile, Season, Undertone, EyeColor
+                from engine.models import UserProfile
 
                 user_profile = UserProfile(**profile_data)
 

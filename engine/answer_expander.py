@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import yaml
-from typing import Dict, List, Optional, Any, Tuple
+from typing import Dict, List, Any, Tuple
 from pathlib import Path
 
-from .models import UserProfile, Product, Routine, ReportData, Undertone, Season, SkinType
+from .models import UserProfile, Product, ReportData, Undertone
 
 
 class AnswerExpanderV2:

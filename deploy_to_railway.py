@@ -8,7 +8,6 @@ import subprocess
 import sys
 import os
 import time
-from pathlib import Path
 
 
 def run_command(command, description, cwd=None):

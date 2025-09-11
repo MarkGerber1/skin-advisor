@@ -3,13 +3,11 @@
 Обеспечивает устойчивость UX и восстановление сеансов
 """
 
-import json
 import time
 from typing import Dict, Optional, Any, Tuple
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
-from aiogram.fsm.state import State
 
 
 @dataclass

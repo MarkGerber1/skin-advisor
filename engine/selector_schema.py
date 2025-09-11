@@ -3,7 +3,7 @@
 Обеспечивает единообразное маппинг между UI и данными селектора
 """
 
-from typing import Dict, List, Set
+from typing import Dict, List
 
 # Каноническая карта слагов для ухода за кожей
 SKINCARE_CANONICAL_SLUGS = {

@@ -2,7 +2,6 @@
 Тесты улучшенной корзины с полной информацией о товарах
 """
 
-import pytest
 from datetime import datetime
 from engine.cart_store import CartStore, CartItem
 

@@ -4,7 +4,6 @@ Unified Cart Store Service
 """
 
 import json
-import os
 import threading
 from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass, asdict

@@ -5,7 +5,7 @@ This module handles shade matching and OOS fallback logic
 
 import json
 import os
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 from dataclasses import dataclass
 
 

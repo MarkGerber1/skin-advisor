@@ -6,7 +6,7 @@
 import os
 import json
 import hashlib
-from typing import Dict, Any, List
+from typing import Dict, Any
 from pathlib import Path
 import tempfile
 
@@ -302,7 +302,7 @@ class SimplePDFSnapshotTester:
 
         # Итоги
         success_rate = (results["passed"] / results["total_tests"]) * 100
-        print(f"\n📊 SNAPSHOT TEST RESULTS:")
+        print("\n📊 SNAPSHOT TEST RESULTS:")
         print(f"Total: {results['total_tests']}")
         print(f"Passed: {results['passed']}")
         print(f"Failed: {results['failed']}")

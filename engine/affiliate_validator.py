@@ -4,7 +4,7 @@
 """
 
 import urllib.parse
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
 from config.env import get_settings
 from engine.analytics import AnalyticsTracker
@@ -433,14 +433,14 @@ def run_affiliate_validation_test():
         print(f"  {status} {result}")
 
     # Тест 2: Проверка конфигурации
-    print(f"\n2. Configuration check:")
+    print("\n2. Configuration check:")
     config = validator.standardize_affiliate_configs()
     print(f"  Partner code: {config['PARTNER_CODE']}")
     print(f"  Affiliate tag: {config['AFFILIATE_TAG']}")
     print(f"  Redirect base: {config['REDIRECT_BASE']}")
 
     # Тест 3: Генерация тестовых данных
-    print(f"\n3. Testing with selector:")
+    print("\n3. Testing with selector:")
     try:
         from engine.selector import SelectorV2
         from engine.models import UserProfile
@@ -487,7 +487,7 @@ def run_affiliate_validation_test():
     except Exception as e:
         print(f"  [ERROR] Selector test failed: {e}")
 
-    print(f"\n[SUCCESS] VALIDATION COMPLETE")
+    print("\n[SUCCESS] VALIDATION COMPLETE")
     return validator
 
 
@@ -505,7 +505,7 @@ if __name__ == "__main__":
     validator = run_affiliate_validation_test()
 
     # Дополнительный тест конкретного URL
-    print(f"\n🔧 MANUAL URL TEST:")
+    print("\n🔧 MANUAL URL TEST:")
     test_url = "https://example.com/product"
     affiliate_url = validator.validate_url(
         test_url, test_url + "?aff=" + validator.expected_affiliate_tag

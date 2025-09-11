@@ -5,17 +5,12 @@
 
 from __future__ import annotations
 
-import os
-from typing import List, Dict
+from typing import Dict
 from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 
-from engine.catalog_store import CatalogStore
-from engine.models import UserProfile, SkinType, ReportData
-from engine.selector import SelectorV2
-from engine.answer_expander import AnswerExpanderV2
 from bot.ui.keyboards import add_home_button
 
 # Analytics import with fallback
@@ -435,7 +430,6 @@ async def q8_desired_effect(cb: CallbackQuery, state: FSMContext) -> None:
         from engine.answer_expander import AnswerExpanderV2
         from engine.models import ReportData
         from bot.ui.pdf import save_last_json, save_text_pdf
-        from bot.ui.render import render_skincare_report
         import os
 
         # Определяем тип лица для Engine
@@ -480,7 +474,7 @@ async def q8_desired_effect(cb: CallbackQuery, state: FSMContext) -> None:
         catalog = catalog_store.get()
 
         # ДИАГНОСТИКА: Проверяем каталог перед селектором
-        print(f"📊 CATALOG DIAGNOSTIC:")
+        print("📊 CATALOG DIAGNOSTIC:")
         print(f"  📦 Total products in catalog: {len(catalog)}")
 
         # Подсчитываем товары по категориям
@@ -636,7 +630,7 @@ async def q8_desired_effect(cb: CallbackQuery, state: FSMContext) -> None:
             tldr_report=tldr_report,
             full_report=full_report,
         )
-        print(f"✅ Profile and results saved successfully")
+        print("✅ Profile and results saved successfully")
 
         # Показываем результат
         skin_type_names = {

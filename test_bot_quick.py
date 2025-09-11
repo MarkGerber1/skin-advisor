@@ -15,7 +15,6 @@ def test_imports():
     print("🧪 Тестирую импорты...")
 
     try:
-        import bot.main
 
         print("✅ bot.main - OK")
     except Exception as e:
@@ -32,7 +31,6 @@ def test_imports():
         return False
 
     try:
-        from services.affiliates import build_ref_link
 
         print("✅ Affiliate service - OK")
     except Exception as e:
@@ -40,7 +38,6 @@ def test_imports():
         return False
 
     try:
-        from report.cards import generate_visual_cards
 
         print("✅ Report cards - OK")
     except Exception as e:

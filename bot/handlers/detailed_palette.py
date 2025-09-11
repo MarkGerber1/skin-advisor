@@ -5,18 +5,13 @@
 
 from __future__ import annotations
 
-import os
-from typing import List, Dict
+from typing import Dict
 from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
-from bot.ui.post_test_navigation import create_post_test_navigation, create_product_buttons
+from bot.ui.post_test_navigation import create_post_test_navigation
 
-from engine.catalog_store import CatalogStore
-from engine.models import UserProfile, Season, Undertone, ReportData
-from engine.selector import SelectorV2
-from engine.answer_expander import AnswerExpanderV2
 from bot.ui.keyboards import add_home_button
 
 # Analytics import with fallback
@@ -251,7 +246,7 @@ async def start_detailed_palette_flow(message: Message, state: FSMContext) -> No
 
     await state.clear()
     await state.set_state(DetailedPaletteFlow.Q1_HAIR_COLOR)
-    print(f"✅ Set state to Q1_HAIR_COLOR")
+    print("✅ Set state to Q1_HAIR_COLOR")
 
     # Import i18n for subtitles and hints
     try:

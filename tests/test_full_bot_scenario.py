@@ -1,7 +1,7 @@
 """Интеграционный тест полного сценария использования бота"""
 
 import pytest
-from unittest.mock import Mock, patch, AsyncMock
+from unittest.mock import Mock, patch
 from services.cart_store import CartStore
 from services.affiliates import AffiliateService
 

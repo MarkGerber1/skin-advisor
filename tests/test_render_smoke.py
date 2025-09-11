@@ -1,7 +1,6 @@
 """Дымовые тесты для render модуля"""
 
 import pytest
-from unittest.mock import Mock
 
 
 def test_render_import():

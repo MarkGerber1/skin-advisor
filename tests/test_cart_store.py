@@ -4,7 +4,6 @@
 
 import pytest
 import tempfile
-import os
 from engine.cart_store import CartStore, CartItem
 
 

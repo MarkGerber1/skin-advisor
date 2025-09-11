@@ -11,7 +11,7 @@ import os
 # Импорты из проекта
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
-from engine.source_prioritizer import SourcePrioritizer, SourceInfo
+from engine.source_prioritizer import SourcePrioritizer
 
 
 class TestSourcePrioritizer:

@@ -7,7 +7,6 @@
 from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
 from urllib.parse import urlparse
-import re
 
 
 @dataclass

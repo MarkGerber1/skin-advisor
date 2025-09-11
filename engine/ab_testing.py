@@ -708,7 +708,7 @@ if __name__ == "__main__":
         print(f"    Hint: {hint}")
 
     # Имитируем конверсии
-    print(f"\nSimulating conversions...")
+    print("\nSimulating conversions...")
     for user_id in test_users:
         # Имитируем completion rate: detailed hints = 80%, simple hints = 70%
         variant = framework.assign_user_to_variant(user_id, "hints_experiment")
@@ -717,9 +717,9 @@ if __name__ == "__main__":
         framework.record_conversion(user_id, "hints_experiment", "completion_rate", completion_rate)
 
     # Анализируем результаты
-    print(f"\nAnalysis:")
+    print("\nAnalysis:")
     results = framework.analyze_test_results("hints_experiment")
     for key, value in results.items():
         print(f"  {key}: {value}")
 
-    print(f"\n✅ A/B testing framework ready!")
+    print("\n✅ A/B testing framework ready!")

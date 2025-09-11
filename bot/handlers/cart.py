@@ -2,14 +2,13 @@
 from __future__ import annotations
 
 from typing import List, Dict, Optional
-from datetime import datetime
 
 from aiogram import Router, F
 from aiogram.types import CallbackQuery, Message, InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.fsm.context import FSMContext
 from aiogram.exceptions import TelegramBadRequest
 
-from services.cart_store import get_cart_store, CartStore, CartItem
+from services.cart_store import get_cart_store, CartItem
 from engine.selector import SelectorV2
 from engine.business_metrics import get_metrics_tracker
 from engine.analytics import get_analytics_tracker
@@ -146,7 +145,7 @@ def _user_id(msg_or_cb: Message | CallbackQuery | None) -> int | None:
         print(f"🔍 _user_id: {type(msg_or_cb).__name__}.from_user.id = {user_id}")
         # Проверяем что это не bot ID (8345324302)
         if user_id == 8345324302:
-            print(f"[WARNING] Got bot ID instead of user ID!")
+            print("[WARNING] Got bot ID instead of user ID!")
             # В callback query контексте попробуем найти реальный user ID
             if hasattr(msg_or_cb, "message") and msg_or_cb.message and msg_or_cb.message.from_user:
                 real_user_id = int(msg_or_cb.message.from_user.id)
@@ -154,7 +153,7 @@ def _user_id(msg_or_cb: Message | CallbackQuery | None) -> int | None:
                     print(f"[OK] Found real user ID from callback message: {real_user_id}")
                     return real_user_id
         return user_id
-    print(f"[ERROR] _user_id: no message/callback or from_user")
+    print("[ERROR] _user_id: no message/callback or from_user")
     return None
 
 
@@ -223,7 +222,7 @@ async def _find_product_in_recommendations(user_id: int, product_id: str) -> Opt
         catalog = catalog_store.get()
 
         # Используем селектор для получения рекомендаций
-        print(f"🔧 Calling selector.select_products_v2 with profile...")
+        print("🔧 Calling selector.select_products_v2 with profile...")
         result = selector.select_products_v2(user_profile, catalog, partner_code="S1")
         print(f"📦 Selector result keys: {list(result.keys()) if result else 'None'}")
 
@@ -302,7 +301,7 @@ async def add_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
         print(
             f"🛒 DETAILED: Adding product '{product_id}' (variant: {variant_id}) to cart for user {user_id}"
         )
-        print(f"🛒 Using CartStore directly (cart_service removed)")
+        print("🛒 Using CartStore directly (cart_service removed)")
 
         # Direct CartStore operations (fallback logic)
         print(f"🔄 Using fallback cart method for {product_id}")
@@ -344,7 +343,7 @@ async def add_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
             ref_link=cart_item.ref_link,
             category=cart_item.category,
         )
-        print(f"✅ Successfully added to store")
+        print("✅ Successfully added to store")
 
         # Диагностика: проверяем что товар действительно добавился
         stored_items = store.get_cart(user_id)
@@ -432,7 +431,7 @@ async def show_cart_callback(cb: CallbackQuery, state: FSMContext) -> None:
         await cb.answer("Неизвестный пользователь", show_alert=True)
         return
 
-    print(f"🔍 CART DIAGNOSTIC: show_cart called")
+    print("🔍 CART DIAGNOSTIC: show_cart called")
     print(f"  👤 Callback user ID: {cb.from_user.id if cb.from_user else 'None'}")
     print(f"  🔑 Processed user ID: {user_id}")
 
@@ -543,7 +542,7 @@ async def show_cart_callback(cb: CallbackQuery, state: FSMContext) -> None:
 async def show_cart(m: Message, state: FSMContext) -> None:
     """Показать корзину с полной информацией и кнопками управления"""
     user_id = _user_id(m)
-    print(f"🔍 CART DIAGNOSTIC: show_cart called")
+    print("🔍 CART DIAGNOSTIC: show_cart called")
     print(f"  👤 Message user ID: {m.from_user.id if m.from_user else 'None'}")
     print(f"  🔑 Processed user ID: {user_id}")
 
@@ -611,7 +610,7 @@ async def show_cart(m: Message, state: FSMContext) -> None:
         lines.append("")
 
     # Итоги
-    lines.append(f"📊 **ИТОГО:**")
+    lines.append("📊 **ИТОГО:**")
     lines.append(f"• Позиций: {len(items)}")
     lines.append(f"• В наличии: {available_items}")
     lines.append(f"• Сумма: {total:.0f} ₽")
@@ -746,7 +745,7 @@ async def refresh_cart(cb: CallbackQuery, state: FSMContext) -> None:
         "cart_refresh", user_id, {"updated": updated_count, "removed": removed_count}
     )
 
-    message = f"🔄 Корзина обновлена"
+    message = "🔄 Корзина обновлена"
     if updated_count > 0:
         message += f"\n• Обновлено: {updated_count}"
     if removed_count > 0:
@@ -784,7 +783,7 @@ async def buy_all_items(cb: CallbackQuery, state: FSMContext) -> None:
     metrics.track_event("cart_buy_all_clicked", user_id, {"items_count": len(available_items)})
 
     await cb.message.answer(
-        f"🛍️ **ПОКУПКА ТОВАРОВ**\n\nНажимайте на кнопки ниже для покупки каждого товара:\n\n"
+        "🛍️ **ПОКУПКА ТОВАРОВ**\n\nНажимайте на кнопки ниже для покупки каждого товара:\n\n"
         + f"Всего доступно: {len(available_items)} товаров",
         reply_markup=kb,
         parse_mode="Markdown",

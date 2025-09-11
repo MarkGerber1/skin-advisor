@@ -6,7 +6,7 @@
 import os
 import json
 import time
-from typing import Dict, Any, List, Tuple, Optional
+from typing import Dict, Any, List
 from dataclasses import dataclass, asdict
 from pathlib import Path
 import itertools
@@ -253,7 +253,6 @@ class E2EScenarioTester:
 
             from engine.selector import SelectorV2
             from engine.models import UserProfile
-            from engine.catalog_store import CatalogStore
             from bot.ui.pdf import save_text_pdf, save_last_json
             from engine.affiliate_validator import AffiliateValidator
 
@@ -580,8 +579,8 @@ class E2EScenarioTester:
 
         scenarios = self.generator.get_all_scenarios()
         print(f"Total scenarios: {len(scenarios)}")
-        print(f"- Basic scenarios: 36")
-        print(f"- Ambivalent scenarios: 3")
+        print("- Basic scenarios: 36")
+        print("- Ambivalent scenarios: 3")
 
         start_time = time.time()
         passed_count = 0
@@ -686,16 +685,16 @@ if __name__ == "__main__":
     basic_scenarios = generator.generate_basic_scenarios()
     ambivalent_scenarios = generator.generate_ambivalent_scenarios()
 
-    print(f"\n📋 Generated scenarios:")
+    print("\n📋 Generated scenarios:")
     print(f"- Basic scenarios: {len(basic_scenarios)}")
     print(f"- Ambivalent scenarios: {len(ambivalent_scenarios)}")
 
     # Показываем первые несколько сценариев
-    print(f"\n🔍 Sample basic scenarios:")
+    print("\n🔍 Sample basic scenarios:")
     for scenario in basic_scenarios[:3]:
         print(f"  {scenario.scenario_id}: {scenario.name}")
 
-    print(f"\n🔍 Ambivalent scenarios:")
+    print("\n🔍 Ambivalent scenarios:")
     for scenario in ambivalent_scenarios:
         print(f"  {scenario.scenario_id}: {scenario.name}")
 

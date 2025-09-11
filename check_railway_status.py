@@ -4,9 +4,7 @@
 """
 
 import subprocess
-import sys
 import os
-import time
 
 
 def run_command(cmd, description):

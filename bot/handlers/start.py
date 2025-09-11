@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from aiogram import Router, F
-from aiogram.filters import CommandStart, StateFilter
+from aiogram.filters import CommandStart
 from aiogram.types import Message
 from aiogram.fsm.context import FSMContext
 
@@ -14,7 +14,7 @@ from bot.ui.keyboards import (
     BTN_SETTINGS,
     BTN_REPORT,
 )
-from .fsm_coordinator import get_fsm_coordinator, require_single_flow
+from .fsm_coordinator import get_fsm_coordinator
 
 
 router = Router()
@@ -27,7 +27,6 @@ async def on_start(m: Message, state: FSMContext) -> None:
 
     # Clear any webhook conflicts
     try:
-        from aiogram import Bot
 
         bot = m.bot
         await bot.delete_webhook(drop_pending_updates=True)
@@ -87,7 +86,7 @@ async def start_skincare(m: Message, state: FSMContext) -> None:
     # Check for session recovery - НЕ ДОЛЖНО срабатывать после принудительной очистки
     recovery_msg = await coordinator.get_recovery_message(user_id)
     if recovery_msg:
-        print(f"⚠️ UNEXPECTED: Recovery message still exists after cleanup!")
+        print("⚠️ UNEXPECTED: Recovery message still exists after cleanup!")
         from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
         kb = InlineKeyboardMarkup(
@@ -159,7 +158,7 @@ async def start_palette(m: Message, state: FSMContext) -> None:
     # Check for session recovery - НЕ ДОЛЖНО срабатывать после принудительной очистки
     recovery_msg = await coordinator.get_recovery_message(user_id)
     if recovery_msg:
-        print(f"⚠️ UNEXPECTED: Recovery message still exists after cleanup!")
+        print("⚠️ UNEXPECTED: Recovery message still exists after cleanup!")
         from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
         kb = InlineKeyboardMarkup(
@@ -437,7 +436,6 @@ async def handle_privacy(cb: CallbackQuery, state: FSMContext) -> None:
 @router.callback_query(F.data.startswith("recovery:"))
 async def handle_recovery(cb: CallbackQuery, state: FSMContext) -> None:
     """Handle session recovery interactions"""
-    from aiogram.types import CallbackQuery
 
     coordinator = get_fsm_coordinator()
     user_id = cb.from_user.id if cb.from_user else 0
@@ -640,20 +638,20 @@ async def debug_all_messages(m: Message, state: FSMContext) -> None:
     elif m.text and m.text.startswith("/"):
         command = m.text.lower()
         if command in ["/results", "/результаты"]:
-            print(f"📊 /results command detected - redirecting to report")
+            print("📊 /results command detected - redirecting to report")
             await report_latest(m, state)
         elif command in ["/export", "/экспорт"]:
-            print(f"📤 /export command detected - redirecting to report")
+            print("📤 /export command detected - redirecting to report")
             await report_latest(m, state)
         elif command in ["/privacy", "/конфиденциальность"]:
-            print(f"🔒 /privacy command detected - showing privacy policy")
+            print("🔒 /privacy command detected - showing privacy policy")
             await privacy_policy(m, state)
         elif command in ["/reset", "/сброс"]:
-            print(f"🔄 /reset command detected - redirecting to start")
+            print("🔄 /reset command detected - redirecting to start")
             await state.clear()
             await m.answer("🔄 Состояние сброшено", reply_markup=main_menu())
         elif command in ["/help", "/помощь"]:
-            print(f"❓ /help command detected - showing help")
+            print("❓ /help command detected - showing help")
             await help_command(m, state)
         else:
             print(f"❓ Unknown command: '{m.text}'")
