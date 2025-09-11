@@ -10,25 +10,20 @@ import os
 import time
 from pathlib import Path
 
+
 def run_command(command, description, cwd=None):
     """Выполняет команду с подробным выводом"""
     print(f"\n🔧 {description}...")
     print(f"   📝 Команда: {command}")
 
     try:
-        result = subprocess.run(
-            command,
-            shell=True,
-            capture_output=True,
-            text=True,
-            cwd=cwd or "."
-        )
+        result = subprocess.run(command, shell=True, capture_output=True, text=True, cwd=cwd or ".")
 
         if result.returncode == 0:
             print(f"✅ {description} - УСПЕХ")
             if result.stdout.strip():
                 # Выводим только последние строки если много текста
-                lines = result.stdout.strip().split('\n')
+                lines = result.stdout.strip().split("\n")
                 if len(lines) > 10:
                     print(f"   📄 ... ({len(lines)} строк)")
                     for line in lines[-5:]:
@@ -47,6 +42,7 @@ def run_command(command, description, cwd=None):
         print(f"❌ {description} - ИСКЛЮЧЕНИЕ: {e}")
         return False
 
+
 def check_prerequisites():
     """Проверяет наличие необходимых инструментов"""
     print("🔍 Проверка необходимых инструментов...")
@@ -54,7 +50,7 @@ def check_prerequisites():
     tools = [
         ("git", "Git должен быть установлен"),
         ("node", "Node.js должен быть установлен для Railway CLI"),
-        ("npm", "npm должен быть установлен")
+        ("npm", "npm должен быть установлен"),
     ]
 
     missing = []
@@ -62,7 +58,7 @@ def check_prerequisites():
         try:
             result = subprocess.run(f"{tool} --version", shell=True, capture_output=True)
             if result.returncode == 0:
-                version = result.stdout.decode().strip().split('\n')[0]
+                version = result.stdout.decode().strip().split("\n")[0]
                 print(f"   ✅ {tool}: {version}")
             else:
                 missing.append((tool, description))
@@ -92,11 +88,12 @@ def check_prerequisites():
 
     return True
 
+
 def deploy_to_github():
     """Загружает проект на GitHub"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("🚀 ЭТАП 1: ЗАГРУЗКА НА GITHUB")
-    print("="*60)
+    print("=" * 60)
 
     # Запускаем наш скрипт загрузки на GitHub
     github_script = "auto_github_deploy.py"
@@ -125,11 +122,12 @@ def deploy_to_github():
 
     return True
 
+
 def deploy_to_railway():
     """Развертывает проект на Railway"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("🚂 ЭТАП 2: РАЗВЕРТЫВАНИЕ НА RAILWAY")
-    print("="*60)
+    print("=" * 60)
 
     # Проверяем авторизацию в Railway
     print("🔐 Проверка авторизации в Railway...")
@@ -164,7 +162,7 @@ def deploy_to_railway():
         "WEBHOOK_BASE": "https://your-railway-app.railway.app",
         "AFFILIATE_TAG": "skincare_bot",
         "LOG_LEVEL": "INFO",
-        "ANALYTICS_ENABLED": "1"
+        "ANALYTICS_ENABLED": "1",
     }
 
     for var_name, default_value in env_vars.items():
@@ -185,11 +183,12 @@ def deploy_to_railway():
 
     return True
 
+
 def get_deployment_info():
     """Получает информацию о развертывании"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("📊 ИНФОРМАЦИЯ О РАЗВЕРТЫВАНИИ")
-    print("="*60)
+    print("=" * 60)
 
     try:
         # Получаем URL приложения
@@ -202,16 +201,20 @@ def get_deployment_info():
             print(f"🔗 Webhook URL: {webhook_url}")
 
             print("\n📋 Настройка Telegram бота:")
-            print("1. Зайдите к @BotFather в Telegram"            print("2. Выберите вашего бота"            print("3. Установите webhook:"            print(f"   /setwebhook {webhook_url}")
+            print("1. Зайдите к @BotFather в Telegram")
+            print("2. Выберите вашего бота")
+            print("3. Установите webhook:")
+            print(f"   /setwebhook {webhook_url}")
 
         # Получаем статус
         status_result = subprocess.run("railway status", shell=True, capture_output=True, text=True)
         if status_result.returncode == 0:
-            print("
-📊 Статус развертывания:"            print(status_result.stdout)
+            print("\n📊 Статус развертывания:")
+            print(status_result.stdout)
 
     except Exception as e:
         print(f"⚠️  Не удалось получить полную информацию: {e}")
+
 
 def create_deployment_summary():
     """Создает итоговый отчет о развертывании"""
@@ -294,11 +297,12 @@ railway restart
 """
 
     try:
-        with open(summary_file, 'w', encoding='utf-8') as f:
+        with open(summary_file, "w", encoding="utf-8") as f:
             f.write(summary_content)
         print(f"📄 Отчет сохранен: {summary_file}")
     except Exception as e:
         print(f"⚠️  Не удалось сохранить отчет: {e}")
+
 
 def main():
     """Главная функция развертывания"""
@@ -332,9 +336,9 @@ def main():
     # Создаем отчет
     create_deployment_summary()
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("🎉 РАЗВЕРТЫВАНИЕ ЗАВЕРШЕНО УСПЕШНО!")
-    print("="*60)
+    print("=" * 60)
     print()
     print("📋 ЧТО ДАЛЬШЕ:")
     print("1. ✅ Проект развернут на Railway")
@@ -348,6 +352,7 @@ def main():
 
     return True
 
+
 if __name__ == "__main__":
     try:
         success = main()
@@ -359,5 +364,6 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"\n❌ Неожиданная ошибка: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)

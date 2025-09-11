@@ -7,12 +7,14 @@ import os
 import sys
 import traceback
 
+
 def test_imports():
     """Тестируем импорты"""
     print("🔍 Тестируем импорты...")
 
     try:
         from engine.catalog_store import CatalogStore
+
         print("✅ CatalogStore imported")
     except ImportError as e:
         print(f"❌ CatalogStore import failed: {e}")
@@ -20,6 +22,7 @@ def test_imports():
 
     try:
         from engine.models import UserProfile
+
         print("✅ UserProfile imported")
     except ImportError as e:
         print(f"❌ UserProfile import failed: {e}")
@@ -27,6 +30,7 @@ def test_imports():
 
     try:
         from engine.selector import SelectorV2
+
         print("✅ SelectorV2 imported")
     except ImportError as e:
         print(f"❌ SelectorV2 import failed: {e}")
@@ -34,12 +38,14 @@ def test_imports():
 
     try:
         from engine.cart_store import CartStore
+
         print("✅ CartStore imported")
     except ImportError as e:
         print(f"❌ CartStore import failed: {e}")
         return False
 
     return True
+
 
 def test_catalog():
     """Тестируем каталог"""
@@ -55,14 +61,15 @@ def test_catalog():
 
     try:
         from engine.catalog_store import CatalogStore
+
         catalog_store = CatalogStore.instance(catalog_path)
         catalog = catalog_store.get_catalog()
 
         print(f"📊 Catalog loaded: {len(catalog)} products")
 
         # Count by type
-        skincare = [p for p in catalog if p.get('type') == 'skincare']
-        makeup = [p for p in catalog if p.get('type') == 'makeup']
+        skincare = [p for p in catalog if p.get("type") == "skincare"]
+        makeup = [p for p in catalog if p.get("type") == "makeup"]
 
         print(f"🧴 Skincare: {len(skincare)} products")
         print(f"💄 Makeup: {len(makeup)} products")
@@ -78,6 +85,7 @@ def test_catalog():
         print(f"❌ Catalog test failed: {e}")
         traceback.print_exc()
         return False
+
 
 def test_selector():
     """Тестируем селектор"""
@@ -95,7 +103,7 @@ def test_selector():
             concerns=["dryness"],
             season="spring",
             undertone="neutral",
-            contrast="medium"
+            contrast="medium",
         )
 
         # Load catalog
@@ -107,7 +115,8 @@ def test_selector():
         selector = SelectorV2()
         result = selector.select_products_v2(profile, catalog, partner_code="S1")
 
-        print("📦 Selector result keys:"        if result:
+        print("📦 Selector result keys:")
+        if result:
             print(f"  {list(result.keys())}")
 
             if result.get("skincare"):
@@ -125,6 +134,7 @@ def test_selector():
         traceback.print_exc()
         return False
 
+
 def test_cart_operations():
     """Тестируем операции с корзиной"""
     print("\n🔍 Тестируем корзину...")
@@ -141,7 +151,7 @@ def test_cart_operations():
             qty=1,
             name="Test Product",
             brand="Test Brand",
-            price=1000.0
+            price=1000.0,
         )
 
         store.add_item(user_id, item)
@@ -166,6 +176,7 @@ def test_cart_operations():
         traceback.print_exc()
         return False
 
+
 def main():
     """Основная функция"""
     print("🔧 ОТЛАДКА ПРОБЛЕМ С КОРЗИНОЙ И ПОКУПКАМИ")
@@ -175,7 +186,7 @@ def main():
         ("Импорты", test_imports),
         ("Каталог", test_catalog),
         ("Селектор", test_selector),
-        ("Корзина", test_cart_operations)
+        ("Корзина", test_cart_operations),
     ]
 
     results = []
@@ -191,7 +202,8 @@ def main():
             results.append(False)
 
     print("\n" + "=" * 50)
-    print("📊 РЕЗУЛЬТАТЫ:"    passed = sum(results)
+    print("📊 РЕЗУЛЬТАТЫ:")
+    passed = sum(results)
     total = len(results)
 
     for i, (name, _) in enumerate(tests):
@@ -208,8 +220,7 @@ def main():
 
     return passed == total
 
+
 if __name__ == "__main__":
     success = main()
     sys.exit(0 if success else 1)
-
-

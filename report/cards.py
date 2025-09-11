@@ -1,4 +1,4 @@
-`# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 """
 Visual Cards Generator
 Генератор визуальных карточек результатов тестов
@@ -8,6 +8,7 @@ import os
 from typing import Dict, List, Any, Optional
 from pathlib import Path
 
+
 class VisualCardGenerator:
     """Генератор визуальных карточек"""
 
@@ -15,14 +16,16 @@ class VisualCardGenerator:
         self.output_dir = Path("output/cards")
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
-    def generate_makeup_card(self, profile: Dict[str, Any], recommendations: List[Dict[str, Any]]) -> Optional[str]:
+    def generate_makeup_card(
+        self, profile: Dict[str, Any], recommendations: List[Dict[str, Any]]
+    ) -> Optional[str]:
         """Генерировать визуальную карточку для макияжа"""
         try:
             html_content = self._create_makeup_card_html(profile, recommendations)
             filename = f"makeup_card_{profile.get('user_id', 'unknown')}.html"
             filepath = self.output_dir / filename
 
-            with open(filepath, 'w', encoding='utf-8') as f:
+            with open(filepath, "w", encoding="utf-8") as f:
                 f.write(html_content)
 
             return str(filepath)
@@ -30,14 +33,16 @@ class VisualCardGenerator:
             print(f"Error generating makeup card: {e}")
             return None
 
-    def generate_skincare_card(self, profile: Dict[str, Any], recommendations: List[Dict[str, Any]]) -> Optional[str]:
+    def generate_skincare_card(
+        self, profile: Dict[str, Any], recommendations: List[Dict[str, Any]]
+    ) -> Optional[str]:
         """Генерировать визуальную карточку для ухода за кожей"""
         try:
             html_content = self._create_skincare_card_html(profile, recommendations)
             filename = f"skincare_card_{profile.get('user_id', 'unknown')}.html"
             filepath = self.output_dir / filename
 
-            with open(filepath, 'w', encoding='utf-8') as f:
+            with open(filepath, "w", encoding="utf-8") as f:
                 f.write(html_content)
 
             return str(filepath)
@@ -45,11 +50,13 @@ class VisualCardGenerator:
             print(f"Error generating skincare card: {e}")
             return None
 
-    def _create_makeup_card_html(self, profile: Dict[str, Any], recommendations: List[Dict[str, Any]]) -> str:
+    def _create_makeup_card_html(
+        self, profile: Dict[str, Any], recommendations: List[Dict[str, Any]]
+    ) -> str:
         """Создать HTML карточку для макияжа"""
-        user_id = profile.get('user_id', 'unknown')
-        season = profile.get('season', 'unknown')
-        undertone = profile.get('undertone', 'unknown')
+        user_id = profile.get("user_id", "unknown")
+        season = profile.get("season", "unknown")
+        undertone = profile.get("undertone", "unknown")
 
         html = f"""
         <!DOCTYPE html>
@@ -82,10 +89,12 @@ class VisualCardGenerator:
 
         return html
 
-    def _create_skincare_card_html(self, profile: Dict[str, Any], recommendations: List[Dict[str, Any]]) -> str:
+    def _create_skincare_card_html(
+        self, profile: Dict[str, Any], recommendations: List[Dict[str, Any]]
+    ) -> str:
         """Создать HTML карточку для ухода за кожей"""
-        skin_type = profile.get('skin_type', 'unknown')
-        concerns = profile.get('concerns', [])
+        skin_type = profile.get("skin_type", "unknown")
+        concerns = profile.get("concerns", [])
 
         html = f"""
         <!DOCTYPE html>
@@ -119,19 +128,20 @@ class VisualCardGenerator:
         return html
 
 
-def generate_visual_cards(profile: Dict[str, Any], recommendations: List[Dict[str, Any]]) -> List[str]:
+def generate_visual_cards(
+    profile: Dict[str, Any], recommendations: List[Dict[str, Any]]
+) -> List[str]:
     """Генерировать визуальные карточки"""
     generator = VisualCardGenerator()
     results = []
 
-    if 'season' in profile and 'undertone' in profile:
+    if "season" in profile and "undertone" in profile:
         card_path = generator.generate_makeup_card(profile, recommendations)
         if card_path:
             results.append(card_path)
-    elif 'skin_type' in profile:
+    elif "skin_type" in profile:
         card_path = generator.generate_skincare_card(profile, recommendations)
         if card_path:
             results.append(card_path)
 
     return results
-    

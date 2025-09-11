@@ -9,6 +9,7 @@ import json
 import sys
 from pathlib import Path
 
+
 def test_manifest():
     """Проверка manifest.json"""
     print("🔍 Проверка manifest.json...")
@@ -19,10 +20,10 @@ def test_manifest():
         return False
 
     try:
-        with open(manifest_path, 'r', encoding='utf-8') as f:
+        with open(manifest_path, "r", encoding="utf-8") as f:
             manifest = json.load(f)
 
-        required_fields = ['name', 'short_name', 'start_url', 'display', 'icons']
+        required_fields = ["name", "short_name", "start_url", "display", "icons"]
         missing_fields = []
 
         for field in required_fields:
@@ -34,13 +35,13 @@ def test_manifest():
             return False
 
         # Проверка иконок
-        icons = manifest.get('icons', [])
+        icons = manifest.get("icons", [])
         if not icons:
             print("❌ Не заданы иконки в manifest")
             return False
 
         # Проверка основных полей
-        if manifest.get('display') != 'standalone':
+        if manifest.get("display") != "standalone":
             print("⚠️ Рекомендуется display: 'standalone'")
 
         print("✅ manifest.json корректен")
@@ -49,6 +50,7 @@ def test_manifest():
     except json.JSONDecodeError as e:
         print(f"❌ Ошибка парсинга manifest.json: {e}")
         return False
+
 
 def test_service_worker():
     """Проверка service worker"""
@@ -60,16 +62,16 @@ def test_service_worker():
         return False
 
     try:
-        with open(sw_path, 'r', encoding='utf-8') as f:
+        with open(sw_path, "r", encoding="utf-8") as f:
             content = f.read()
 
         # Проверка основных функций
         required_functions = [
-            'addEventListener(\'install\'',
-            'addEventListener(\'activate\'',
-            'addEventListener(\'fetch\'',
-            'caches.open',
-            'fetch('
+            "addEventListener('install'",
+            "addEventListener('activate'",
+            "addEventListener('fetch'",
+            "caches.open",
+            "fetch(",
         ]
 
         missing_functions = []
@@ -88,6 +90,7 @@ def test_service_worker():
         print(f"❌ Ошибка чтения service-worker.js: {e}")
         return False
 
+
 def test_offline_page():
     """Проверка offline страницы"""
     print("🔍 Проверка offline страницы...")
@@ -98,16 +101,16 @@ def test_offline_page():
         return False
 
     try:
-        with open(offline_path, 'r', encoding='utf-8') as f:
+        with open(offline_path, "r", encoding="utf-8") as f:
             content = f.read()
 
         # Проверка основных элементов
         required_elements = [
-            '<!DOCTYPE html>',
+            "<!DOCTYPE html>",
             '<html lang="ru">',
-            '<title>',
-            'offline-container',
-            'retry-btn'
+            "<title>",
+            "offline-container",
+            "retry-btn",
         ]
 
         missing_elements = []
@@ -126,6 +129,7 @@ def test_offline_page():
         print(f"❌ Ошибка чтения offline.html: {e}")
         return False
 
+
 def test_pwa_files():
     """Проверка наличия всех PWA файлов"""
     print("🔍 Проверка наличия PWA файлов...")
@@ -135,7 +139,7 @@ def test_pwa_files():
         "BeautyCare-Site/service-worker.js",
         "BeautyCare-Site/offline.html",
         "BeautyCare-Site/pwa-install.js",
-        "BeautyCare-Site/pwa-install.html"
+        "BeautyCare-Site/pwa-install.html",
     ]
 
     missing_files = []
@@ -150,6 +154,7 @@ def test_pwa_files():
     print("✅ Все PWA файлы присутствуют")
     return True
 
+
 def test_html_integration():
     """Проверка интеграции PWA в HTML файлы"""
     print("🔍 Проверка интеграции PWA в HTML...")
@@ -157,7 +162,7 @@ def test_html_integration():
     html_files = [
         "BeautyCare-Site/index.html",
         "BeautyCare-Site/demo.html",
-        "BeautyCare-Site/brand.html"
+        "BeautyCare-Site/brand.html",
     ]
 
     for html_file in html_files:
@@ -166,7 +171,7 @@ def test_html_integration():
             continue
 
         try:
-            with open(html_file, 'r', encoding='utf-8') as f:
+            with open(html_file, "r", encoding="utf-8") as f:
                 content = f.read()
 
             # Проверка manifest ссылки
@@ -175,7 +180,7 @@ def test_html_integration():
                 return False
 
             # Проверка service worker регистрации
-            if 'serviceWorker.register' not in content:
+            if "serviceWorker.register" not in content:
                 print(f"❌ Отсутствует service worker регистрация в {html_file}")
                 return False
 
@@ -185,6 +190,7 @@ def test_html_integration():
 
     print("✅ PWA интеграция в HTML файлы корректна")
     return True
+
 
 def main():
     """Основная функция тестирования"""
@@ -196,7 +202,7 @@ def main():
         ("Manifest.json", test_manifest),
         ("Service Worker", test_service_worker),
         ("Offline страница", test_offline_page),
-        ("HTML интеграция", test_html_integration)
+        ("HTML интеграция", test_html_integration),
     ]
 
     passed = 0
@@ -211,8 +217,9 @@ def main():
             print("❌ ПРОВАЛЕН")
 
     print("\n" + "=" * 50)
-    print("📊 РЕЗУЛЬТАТЫ ТЕСТИРОВАНИЯ:"    print(f"✅ Пройдено: {passed}/{total}")
-    print(".1f"
+    print("📊 РЕЗУЛЬТАТЫ ТЕСТИРОВАНИЯ:")
+    print(f"✅ Пройдено: {passed}/{total}")
+    print(".1f")
     if passed == total:
         print("🎉 ВСЕ ТЕСТЫ ПРОЙДЕНЫ! PWA готов к использованию")
         return True
@@ -220,10 +227,7 @@ def main():
         print("⚠️ Некоторые тесты провалены. Проверьте ошибки выше")
         return False
 
+
 if __name__ == "__main__":
     success = main()
     sys.exit(0 if success else 1)
-
-
-
-

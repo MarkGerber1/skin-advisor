@@ -8,6 +8,7 @@ import sys
 import os
 import time
 
+
 def run_command(cmd, description):
     """Выполняет команду и возвращает результат"""
     print(f"\n🔍 {description}")
@@ -17,7 +18,7 @@ def run_command(cmd, description):
             shell=True,
             capture_output=True,
             text=True,
-            env={**os.environ, 'PAGER': 'cat', 'GIT_PAGER': 'cat'}
+            env={**os.environ, "PAGER": "cat", "GIT_PAGER": "cat"},
         )
 
         if result.returncode == 0:
@@ -26,13 +27,15 @@ def run_command(cmd, description):
                 print(f"   📄 {result.stdout.strip()}")
             return True
         else:
-            print("❌ ОШИБКА"            if result.stderr.strip():
+            print("❌ ОШИБКА")
+            if result.stderr.strip():
                 print(f"   ⚠️  {result.stderr.strip()}")
             return False
 
     except Exception as e:
         print(f"❌ ИСКЛЮЧЕНИЕ: {e}")
         return False
+
 
 def main():
     print("🚂 Проверка статуса Railway deployment")
@@ -45,14 +48,16 @@ def main():
     run_command("git status --porcelain", "Статус Git")
 
     # 3. Проверяем Railway CLI
-    railway_token = os.environ.get('RAILWAY_TOKEN', '')
+    railway_token = os.environ.get("RAILWAY_TOKEN", "")
     if railway_token:
         print(f"\n🔑 Найден Railway токен: {railway_token[:10]}...")
 
         # Пробуем получить список проектов
         print("\n🔍 Проверяем Railway проекты...")
         print("   💡 Если команда зависнет - Railway требует интерактивного логина")
-        print("   💡 В этом случае изменения уже запушены и Railway должен автоматически задеплоить")
+        print(
+            "   💡 В этом случае изменения уже запушены и Railway должен автоматически задеплоить"
+        )
 
         # Простая проверка - пытаемся получить статус
         try:
@@ -62,12 +67,14 @@ def main():
                 capture_output=True,
                 text=True,
                 timeout=10,
-                env={**os.environ, 'RAILWAY_TOKEN': railway_token}
+                env={**os.environ, "RAILWAY_TOKEN": railway_token},
             )
             if result.returncode == 0:
-                print("✅ Railway подключен:"                print(f"   📄 {result.stdout.strip()}")
+                print("✅ Railway подключен:")
+                print(f"   📄 {result.stdout.strip()}")
             else:
-                print("⚠️  Railway не подключен автоматически"                print("   💡 Это нормально - Railway должен автоматически задеплоить изменения")
+                print("⚠️  Railway не подключен автоматически")
+                print("   💡 Это нормально - Railway должен автоматически задеплоить изменения")
         except subprocess.TimeoutExpired:
             print("⏰ Railway требует интерактивного подключения")
             print("   ✅ Изменения запушены - Railway задеплоит автоматически")
@@ -89,6 +96,7 @@ def main():
     print("✅ Каталог должен загружаться корректно")
 
     return True
+
 
 if __name__ == "__main__":
     main()
