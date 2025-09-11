@@ -6,8 +6,9 @@ import sys
 import os
 
 # Добавляем пути
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'services'))
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'i18n'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "services"))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "i18n"))
+
 
 def test_imports():
     """Тестируем основные импорты"""
@@ -15,6 +16,7 @@ def test_imports():
 
     try:
         import bot.main
+
         print("✅ bot.main - OK")
     except Exception as e:
         print(f"❌ bot.main - FAILED: {e}")
@@ -22,6 +24,7 @@ def test_imports():
 
     try:
         from services.cart_store import get_cart_store
+
         store = get_cart_store()
         print("✅ CartStore - OK")
     except Exception as e:
@@ -30,6 +33,7 @@ def test_imports():
 
     try:
         from services.affiliates import build_ref_link
+
         print("✅ Affiliate service - OK")
     except Exception as e:
         print(f"❌ Affiliate service - FAILED: {e}")
@@ -37,6 +41,7 @@ def test_imports():
 
     try:
         from report.cards import generate_visual_cards
+
         print("✅ Report cards - OK")
     except Exception as e:
         print(f"❌ Report cards - FAILED: {e}")
@@ -44,12 +49,14 @@ def test_imports():
 
     return True
 
+
 def test_cart_operations():
     """Тестируем операции с корзиной"""
     print("\n🛒 Тестирую корзину...")
 
     try:
         from services.cart_store import get_cart_store
+
         store = get_cart_store()
 
         # Тестируем добавление товара
@@ -79,6 +86,7 @@ def test_cart_operations():
         print(f"❌ Операции с корзиной - FAILED: {e}")
         return False
 
+
 def main():
     print("🚀 Запуск быстрого теста бота...\n")
 
@@ -93,6 +101,7 @@ def main():
     print("\n✅ Все тесты пройдены успешно!")
     print("🎉 Бот готов к работе!")
     return 0
+
 
 if __name__ == "__main__":
     sys.exit(main())

@@ -13,7 +13,7 @@ SKINCARE_CANONICAL_SLUGS = {
     "moisturizer": ["moisturizer", "cream", "крем", "увлажнение", "увлажняющий"],
     "eye_cream": ["eye_cream", "eye_care", "крем для глаз", "глаза", "eye"],
     "sunscreen": ["sunscreen", "spf", "солнцезащита", "sun_protection"],
-    "mask": ["mask", "masks", "маска", "маски"]
+    "mask": ["mask", "masks", "маска", "маски"],
 }
 
 # Обратное маппинг для быстрого поиска

@@ -9,6 +9,7 @@ import os
 from datetime import datetime
 from pathlib import Path
 
+
 def run_command(command, description):
     """Выполняет команду и выводит результат"""
     print(f"\n🔧 {description}...")
@@ -29,6 +30,7 @@ def run_command(command, description):
     except Exception as e:
         print(f"❌ {description} - ИСКЛЮЧЕНИЕ: {e}")
         return False
+
 
 def check_git_status():
     """Проверяет статус git репозитория"""
@@ -53,6 +55,7 @@ def check_git_status():
     print("✅ Рабочая директория чистая")
     return True
 
+
 def check_remote():
     """Проверяет наличие и доступность удаленного репозитория"""
     print("🔍 Проверка удаленного репозитория...")
@@ -71,17 +74,21 @@ def check_remote():
     print("✅ Удаленный репозиторий настроен")
     return True
 
+
 def generate_commit_message():
     """Генерирует сообщение коммита"""
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
     return f"🚀 Auto-deploy: {timestamp}"
+
 
 def push_to_github():
     """Выполняет push на GitHub"""
     print("🚀 Загрузка на GitHub...")
 
     # Получаем текущую ветку
-    branch_result = subprocess.run("git branch --show-current", shell=True, capture_output=True, text=True)
+    branch_result = subprocess.run(
+        "git branch --show-current", shell=True, capture_output=True, text=True
+    )
     if branch_result.returncode != 0:
         print("❌ Не удалось определить текущую ветку")
         return False
@@ -93,18 +100,23 @@ def push_to_github():
     push_command = f"git push origin {current_branch}"
     return run_command(push_command, f"Push на GitHub (ветка {current_branch})")
 
+
 def create_summary_report():
     """Создает отчет о развертывании"""
     print("\n📊 ОТЧЕТ О РАЗВЕРТЫВАНИИ:")
 
     try:
         # Получаем информацию о последнем коммите
-        commit_result = subprocess.run("git log -1 --oneline", shell=True, capture_output=True, text=True)
+        commit_result = subprocess.run(
+            "git log -1 --oneline", shell=True, capture_output=True, text=True
+        )
         if commit_result.returncode == 0:
             print(f"   📝 Последний коммит: {commit_result.stdout.strip()}")
 
         # Получаем информацию об удаленном репозитории
-        remote_result = subprocess.run("git remote get-url origin", shell=True, capture_output=True, text=True)
+        remote_result = subprocess.run(
+            "git remote get-url origin", shell=True, capture_output=True, text=True
+        )
         if remote_result.returncode == 0:
             repo_url = remote_result.stdout.strip()
             print(f"   🔗 Репозиторий: {repo_url}")
@@ -124,6 +136,7 @@ def create_summary_report():
 
     except Exception as e:
         print(f"   ⚠️  Не удалось создать полный отчет: {e}")
+
 
 def main():
     """Главная функция"""
@@ -145,7 +158,9 @@ def main():
 
     if fetch_result:
         # Проверяем есть ли новые изменения
-        status_result = subprocess.run("git status -uno", shell=True, capture_output=True, text=True)
+        status_result = subprocess.run(
+            "git status -uno", shell=True, capture_output=True, text=True
+        )
         if "behind" in status_result.stdout:
             print("⚠️  Локальный репозиторий отстает от удаленного")
             print("   💡 Обновите: git pull origin main")
@@ -171,6 +186,7 @@ def main():
         print("   - Корректность токена GitHub (если используется)")
         print("   - Права на push в репозиторий")
         return False
+
 
 if __name__ == "__main__":
     try:

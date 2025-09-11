@@ -2,6 +2,7 @@
 PDF Report Generation Module
 Handles saving reports as JSON and PDF files for users
 """
+
 from __future__ import annotations
 
 import os
@@ -15,15 +16,15 @@ def save_last_json(uid: int, snapshot: Dict[str, Any]) -> str:
         # Create user reports directory
         user_dir = os.path.join("data", "reports", str(uid))
         os.makedirs(user_dir, exist_ok=True)
-        
+
         # Save JSON snapshot
         json_path = os.path.join(user_dir, "last.json")
         with open(json_path, "w", encoding="utf-8") as f:
             json.dump(snapshot, f, ensure_ascii=False, indent=2)
-        
+
         print(f"✅ Saved JSON report for user {uid}: {json_path}")
         return json_path
-        
+
     except Exception as e:
         print(f"❌ Error saving JSON report for user {uid}: {e}")
         return ""
@@ -35,16 +36,16 @@ def save_text_pdf(uid: int, title: str, body_text: str) -> str:
         # Create user reports directory
         user_dir = os.path.join("data", "reports", str(uid))
         os.makedirs(user_dir, exist_ok=True)
-        
+
         pdf_path = os.path.join(user_dir, "last.pdf")
-        
+
         # Try to create PDF using fpdf2
         try:
             from fpdf import FPDF
-            
+
             pdf = FPDF(unit="mm", format="A4")
             pdf.add_page()
-            
+
             # Try to add Unicode font for Russian text
             try:
                 # Check multiple possible font locations
@@ -53,10 +54,19 @@ def save_text_pdf(uid: int, title: str, body_text: str) -> str:
                     "assets/fonts/DejaVuSans.ttf",
                     "assets/DejaVuSans.ttf",
                     "fonts/DejaVuSans.ttf",
-                    os.path.join(os.path.dirname(__file__), "..", "..", ".skin-advisor", "assets", "DejaVuSans.ttf"),
-                    os.path.join(os.path.dirname(__file__), "..", "..", "assets", "fonts", "DejaVuSans.ttf"),
+                    os.path.join(
+                        os.path.dirname(__file__),
+                        "..",
+                        "..",
+                        ".skin-advisor",
+                        "assets",
+                        "DejaVuSans.ttf",
+                    ),
+                    os.path.join(
+                        os.path.dirname(__file__), "..", "..", "assets", "fonts", "DejaVuSans.ttf"
+                    ),
                 ]
-                
+
                 font_found = False
                 for font_path in font_paths:
                     if os.path.exists(font_path):
@@ -65,103 +75,105 @@ def save_text_pdf(uid: int, title: str, body_text: str) -> str:
                         font_found = True
                         print(f"✅ Using DejaVu font from: {font_path}")
                         break
-                
+
                 if not font_found:
                     raise Exception("DejaVu font not found in any location")
-                    
+
             except Exception as e:
                 print(f"⚠️ DejaVu font issue: {e}, falling back to Arial")
                 # Fallback to Arial
                 pdf.set_font("Arial", size=12)
-            
+
             # Add title (clean emojis first)
             pdf.set_font_size(16)
             clean_title = title
             # Remove emojis from title too
             emoji_replacements = {
-                '🎨': '[ПАЛИТРА]',
-                '🧴': '[УХОД]',
-                '✨': '',
-                '🌸': '',
-                '🌊': '',
-                '🍂': '',
-                '❄️': '',
-                '💄': '',
-                '👁️': '',
-                '💡': '',
-                '🏠': '',
-                '📄': '',
-                '🛍️': '',
-                '🔥': '',
-                '⚠️': '',
-                '❌': '',
-                '✅': ''
+                "🎨": "[ПАЛИТРА]",
+                "🧴": "[УХОД]",
+                "✨": "",
+                "🌸": "",
+                "🌊": "",
+                "🍂": "",
+                "❄️": "",
+                "💄": "",
+                "👁️": "",
+                "💡": "",
+                "🏠": "",
+                "📄": "",
+                "🛍️": "",
+                "🔥": "",
+                "⚠️": "",
+                "❌": "",
+                "✅": "",
             }
             for emoji, replacement in emoji_replacements.items():
                 clean_title = clean_title.replace(emoji, replacement)
-            
+
             # Remove any remaining unicode
             import re
-            clean_title = re.sub(r'[^\x00-\x7F]+', '', clean_title)
-            
+
+            clean_title = re.sub(r"[^\x00-\x7F]+", "", clean_title)
+
             if clean_title.strip():
                 pdf.multi_cell(0, 8, clean_title)
             pdf.ln(5)
-            
+
             # Add body text
             pdf.set_font_size(12)
-            
+
             # Split text into paragraphs and handle encoding
-            paragraphs = body_text.split('\n\n')
+            paragraphs = body_text.split("\n\n")
             for paragraph in paragraphs:
                 if paragraph.strip():
                     try:
                         # Clean text for PDF
                         clean_text = paragraph.strip()
                         # Remove markdown formatting
-                        clean_text = clean_text.replace('**', '').replace('*', '')
-                        
+                        clean_text = clean_text.replace("**", "").replace("*", "")
+
                         # Remove emojis and unsupported Unicode characters for helvetica
                         import re
+
                         # Replace common emojis with text equivalents
                         emoji_replacements = {
-                            '🎨': '[ПАЛИТРА]',
-                            '🧴': '[УХОД]',
-                            '✨': '[*]',
-                            '🌸': '[ВЕСНА]',
-                            '🌊': '[ЛЕТО]',
-                            '🍂': '[ОСЕНЬ]',
-                            '❄️': '[ЗИМА]',
-                            '💄': '[МАКИЯЖ]',
-                            '👁️': '[ГЛАЗА]',
-                            '💡': '[!]',
-                            '🏠': '[МЕНЮ]',
-                            '📄': '[ОТЧЕТ]',
-                            '🛍️': '[ТОВАРЫ]',
-                            '🔥': '[*]',
-                            '⚠️': '[!]',
-                            '❌': '[X]',
-                            '✅': '[OK]'
+                            "🎨": "[ПАЛИТРА]",
+                            "🧴": "[УХОД]",
+                            "✨": "[*]",
+                            "🌸": "[ВЕСНА]",
+                            "🌊": "[ЛЕТО]",
+                            "🍂": "[ОСЕНЬ]",
+                            "❄️": "[ЗИМА]",
+                            "💄": "[МАКИЯЖ]",
+                            "👁️": "[ГЛАЗА]",
+                            "💡": "[!]",
+                            "🏠": "[МЕНЮ]",
+                            "📄": "[ОТЧЕТ]",
+                            "🛍️": "[ТОВАРЫ]",
+                            "🔥": "[*]",
+                            "⚠️": "[!]",
+                            "❌": "[X]",
+                            "✅": "[OK]",
                         }
-                        
+
                         for emoji, replacement in emoji_replacements.items():
                             clean_text = clean_text.replace(emoji, replacement)
-                        
+
                         # Remove any remaining emojis/unicode symbols
-                        clean_text = re.sub(r'[^\x00-\x7F]+', '', clean_text)
-                        
+                        clean_text = re.sub(r"[^\x00-\x7F]+", "", clean_text)
+
                         if clean_text.strip():  # Only add if text remains
                             pdf.multi_cell(0, 6, clean_text)
                             pdf.ln(2)
                     except Exception as e:
                         print(f"Warning: Skipping paragraph due to encoding: {e}")
                         continue
-            
+
             # Save PDF
             pdf.output(pdf_path)
             print(f"✅ Saved PDF report for user {uid}: {pdf_path}")
             return pdf_path
-            
+
         except ImportError:
             print("⚠️ fpdf2 not available, creating text fallback...")
             # Fallback: save as .txt file but with .pdf extension
@@ -169,10 +181,10 @@ def save_text_pdf(uid: int, title: str, body_text: str) -> str:
                 f.write(f"{title}\n")
                 f.write("=" * len(title) + "\n\n")
                 f.write(body_text)
-            
+
             print(f"✅ Saved text fallback for user {uid}: {pdf_path}")
             return pdf_path
-            
+
     except Exception as e:
         print(f"❌ Error saving PDF report for user {uid}: {e}")
         return ""
@@ -211,5 +223,3 @@ def load_last_report_json(uid: int) -> Optional[Dict[str, Any]]:
     except Exception as e:
         print(f"❌ Error loading JSON report for user {uid}: {e}")
         return None
-
-

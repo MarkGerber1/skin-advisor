@@ -34,7 +34,7 @@ class TestCartStore(unittest.TestCase):
             quantity=2,
             brand="Test Brand",
             name="Test Product",
-            price=100.0
+            price=100.0,
         )
 
         self.assertEqual(item.product_id, "test_product")
@@ -149,6 +149,5 @@ class TestCartStore(unittest.TestCase):
         self.assertEqual(cart[0].price, 100.0)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
-

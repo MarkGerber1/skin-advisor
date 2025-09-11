@@ -11,12 +11,7 @@ class TestCartItem:
 
     def test_cart_item_creation(self):
         """Тест создания CartItem с дефолтными значениями"""
-        item = CartItem(
-            product_id="test-123",
-            quantity=2,
-            brand="Test Brand",
-            name="Test Product"
-        )
+        item = CartItem(product_id="test-123", quantity=2, brand="Test Brand", name="Test Product")
 
         assert item.product_id == "test-123"
         assert item.quantity == 2
@@ -35,7 +30,7 @@ class TestCartItem:
             variant_name="Variant A",
             in_stock=False,
             ref_link="https://example.com/affiliate",
-            image_url="https://example.com/image.jpg"
+            image_url="https://example.com/image.jpg",
         )
 
         assert item.variant_name == "Variant A"
@@ -51,11 +46,7 @@ class TestCartStore:
         """Тест добавления нового товара"""
         store = CartStore()
         item = store.add_item(
-            user_id=123,
-            product_id="test-123",
-            quantity=1,
-            brand="Test Brand",
-            name="Test Product"
+            user_id=123, product_id="test-123", quantity=1, brand="Test Brand", name="Test Product"
         )
 
         assert item.product_id == "test-123"
@@ -90,87 +81,81 @@ class TestCartStore:
 class TestAffiliateService:
     """Тесты для AffiliateService"""
 
-    @patch('services.affiliates.get_settings')
+    @patch("services.affiliates.get_settings")
     def test_build_ref_link_goldapple(self, mock_settings):
         """Тест генерации ссылки для Gold Apple"""
         mock_settings.return_value = Mock()
         service = AffiliateService()
 
         product = {
-            'id': 'goldapple-123',
-            'link': 'https://goldapple.ru/product/123',
-            'brand': 'Gold Apple'
+            "id": "goldapple-123",
+            "link": "https://goldapple.ru/product/123",
+            "brand": "Gold Apple",
         }
 
         result = service.build_ref_link(product)
         assert result is not None
-        assert 'partner=' in result
-        assert 'goldapple.ru' in result
+        assert "partner=" in result
+        assert "goldapple.ru" in result
 
-    @patch('services.affiliates.get_settings')
+    @patch("services.affiliates.get_settings")
     def test_build_ref_link_no_config(self, mock_settings):
         """Тест генерации ссылки при отсутствии конфигурации"""
         mock_settings.return_value = None
         service = AffiliateService()
 
-        product = {
-            'id': 'test-123',
-            'link': 'https://example.com/product/123'
-        }
+        product = {"id": "test-123", "link": "https://example.com/product/123"}
 
         result = service.build_ref_link(product)
-        assert result == 'https://example.com/product/123'  # Возвращает оригинальную ссылку
+        assert result == "https://example.com/product/123"  # Возвращает оригинальную ссылку
 
-    @patch('services.affiliates.get_settings')
+    @patch("services.affiliates.get_settings")
     def test_build_ref_link_unknown_source(self, mock_settings):
         """Тест генерации ссылки для неизвестного источника"""
         mock_settings.return_value = Mock()
         service = AffiliateService()
 
-        product = {
-            'id': 'unknown-123',
-            'link': 'https://unknown-shop.com/product/123'
-        }
+        product = {"id": "unknown-123", "link": "https://unknown-shop.com/product/123"}
 
         result = service.build_ref_link(product)
-        assert result == 'https://unknown-shop.com/product/123'  # Возвращает оригинальную ссылку
+        assert result == "https://unknown-shop.com/product/123"  # Возвращает оригинальную ссылку
 
-    @patch('services.affiliates.get_settings')
+    @patch("services.affiliates.get_settings")
     def test_build_ref_link_existing_ref_link(self, mock_settings):
         """Тест, что существующая ref_link не перезаписывается"""
         mock_settings.return_value = Mock()
         service = AffiliateService()
 
         product = {
-            'id': 'test-123',
-            'link': 'https://example.com/product/123',
-            'ref_link': 'https://existing-affiliate-link.com'
+            "id": "test-123",
+            "link": "https://example.com/product/123",
+            "ref_link": "https://existing-affiliate-link.com",
         }
 
         result = service.build_ref_link(product)
-        assert result == 'https://existing-affiliate-link.com'
+        assert result == "https://existing-affiliate-link.com"
 
     def test_detect_source_goldapple(self):
         """Тест определения источника Gold Apple"""
         service = AffiliateService()
 
-        product = {'link': 'https://goldapple.ru/product/123'}
+        product = {"link": "https://goldapple.ru/product/123"}
         source = service._detect_source(product)
-        assert source == 'goldapple'
+        assert source == "goldapple"
 
     def test_detect_source_ru_marketplace(self):
         """Тест определения источника Wildberries"""
         service = AffiliateService()
 
-        product = {'link': 'https://wildberries.ru/product/123'}
+        product = {"link": "https://wildberries.ru/product/123"}
         source = service._detect_source(product)
-        assert source == 'ru_marketplace'
+        assert source == "ru_marketplace"
 
     def test_detect_source_unknown(self):
         """Тест определения неизвестного источника"""
         service = AffiliateService()
 
-        product = {'link': 'https://unknown-shop.com/product/123'}
+        product = {"link": "https://unknown-shop.com/product/123"}
         source = service._detect_source(product)
         assert source is None
 
@@ -178,7 +163,7 @@ class TestAffiliateService:
 class TestIntegration:
     """Интеграционные тесты"""
 
-    @patch('services.affiliates.get_settings')
+    @patch("services.affiliates.get_settings")
     def test_full_cart_workflow(self, mock_settings):
         """Тест полного workflow корзины"""
         mock_settings.return_value = Mock()
@@ -203,16 +188,16 @@ class TestIntegration:
         cart = store.get_cart(123)
         assert len(cart) == 0
 
-    @patch('services.affiliates.get_settings')
+    @patch("services.affiliates.get_settings")
     def test_affiliate_integration(self, mock_settings):
         """Тест интеграции affiliate ссылок"""
         mock_settings.return_value = Mock()
         service = AffiliateService()
 
         products = [
-            {'id': 'goldapple-1', 'link': 'https://goldapple.ru/p1', 'brand': 'Gold Apple'},
-            {'id': 'wb-1', 'link': 'https://wildberries.ru/p1', 'brand': 'Wildberries'},
-            {'id': 'unknown-1', 'link': 'https://unknown.com/p1', 'brand': 'Unknown'}
+            {"id": "goldapple-1", "link": "https://goldapple.ru/p1", "brand": "Gold Apple"},
+            {"id": "wb-1", "link": "https://wildberries.ru/p1", "brand": "Wildberries"},
+            {"id": "unknown-1", "link": "https://unknown.com/p1", "brand": "Unknown"},
         ]
 
         for product in products:
@@ -221,13 +206,13 @@ class TestIntegration:
             assert isinstance(result, str)
 
             # Для известных источников должна добавиться партнерская информация
-            if 'goldapple' in product['link']:
-                assert 'partner=' in result
-            elif 'wildberries' in product['link']:
-                assert 'partner=' in result
+            if "goldapple" in product["link"]:
+                assert "partner=" in result
+            elif "wildberries" in product["link"]:
+                assert "partner=" in result
             else:
                 # Для неизвестных - возвращается оригинальная ссылка
-                assert result == product['link']
+                assert result == product["link"]
 
 
 if __name__ == "__main__":

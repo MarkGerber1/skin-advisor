@@ -24,7 +24,7 @@ MAKEUP_CATEGORIES = [
     ("eyeshadow", "Тени"),
     ("eyeliner", "Лайнер/Карандаш"),
     ("mascara", "Тушь"),
-    ("lips", "Губы")
+    ("lips", "Губы"),
 ]
 
 # Добавляем пути для импорта
@@ -33,7 +33,7 @@ possible_paths = [
     os.path.join(os.getcwd(), "bot"),
     os.path.join(os.getcwd(), "engine"),
     os.path.join(os.getcwd(), "services"),
-    os.path.join(os.getcwd(), "i18n")
+    os.path.join(os.getcwd(), "i18n"),
 ]
 for path in possible_paths:
     if os.path.exists(path) and path not in sys.path:
@@ -47,11 +47,13 @@ except ImportError:
     # Fallback: try to import directly
     try:
         import i18n.ru as i18n_module
+
         # Copy all attributes from i18n.ru to current namespace
         import inspect
+
         current_module = inspect.currentframe().f_globals
         for name in dir(i18n_module):
-            if not name.startswith('_'):
+            if not name.startswith("_"):
                 current_module[name] = getattr(i18n_module, name)
     except ImportError as e:
         print(f"CRITICAL: Failed to import i18n.ru: {e}")
@@ -114,12 +116,15 @@ except ImportError:
 # Fix import for cart module
 try:
     from engine.cart_store import CartStore
+
     cart_service_available = True
 except ImportError:
     print("[WARNING] CartStore not available, using fallback")
     cart_service_available = False
+
     class CartStore:
         pass
+
 
 # Fix import for engine modules
 try:
@@ -129,6 +134,7 @@ try:
     from engine.affiliate_validator import AffiliateManager
     from engine.ab_testing import get_ab_testing_framework
     from services.affiliates import build_ref_link
+
     ENGINE_AVAILABLE = True
 
     # Create resolver instance
@@ -140,14 +146,18 @@ try:
             return resolver.resolve_source(product)
         except Exception as e:
             print(f"❌ Error resolving source: {e}")
-            return type('ResolvedProduct', (), {
-                'source_name': 'Неизвестный магазин',
-                'priority': 999,
-                'source_type': 'unknown',
-                'domain': 'unknown',
-                'currency': 'RUB',
-                'is_affiliate': False
-            })()
+            return type(
+                "ResolvedProduct",
+                (),
+                {
+                    "source_name": "Неизвестный магазин",
+                    "priority": 999,
+                    "source_type": "unknown",
+                    "domain": "unknown",
+                    "currency": "RUB",
+                    "is_affiliate": False,
+                },
+            )()
 
 except ImportError as e:
     print(f"⚠️ Engine modules not available: {e}")
@@ -170,22 +180,29 @@ except ImportError as e:
 
     class SourceResolver:
         def resolve_source(self, product):
-            return type('ResolvedProduct', (), {
-                'source_name': 'Неизвестный магазин',
-                'priority': 999,
-                'source_type': 'unknown',
-                'domain': 'unknown',
-                'currency': 'RUB',
-                'is_affiliate': False
-            })()
+            return type(
+                "ResolvedProduct",
+                (),
+                {
+                    "source_name": "Неизвестный магазин",
+                    "priority": 999,
+                    "source_type": "unknown",
+                    "domain": "unknown",
+                    "currency": "RUB",
+                    "is_affiliate": False,
+                },
+            )()
 
     class AffiliateManager:
         def add_affiliate_params(self, url, source, campaign=None):
             return url
+
         def track_checkout_click(self, *args, **kwargs):
             pass
+
         def track_external_checkout_opened(self, *args, **kwargs):
             pass
+
         def get_affiliate_url(self, *args, **kwargs):
             return args[0] if args else ""
 
@@ -196,17 +213,29 @@ except ImportError as e:
     class ABTestingFramework:
         def log_button_click(self, *args, **kwargs):
             pass
+
         def log_test_completion(self, *args, **kwargs):
             pass
+
         def log_add_to_cart(self, *args, **kwargs):
             pass
+
         def get_category_order_variant(self, user_id):
-            return ["cleansing", "toning", "serum", "moisturizing", "eye_care", "sun_protection", "masks"]
+            return [
+                "cleansing",
+                "toning",
+                "serum",
+                "moisturizing",
+                "eye_care",
+                "sun_protection",
+                "masks",
+            ]
 
     resolver = SourceResolver()
 
     def resolve_source(product):
         return resolver.resolve_source(product)
+
 
 # Analytics import with fallback
 try:
@@ -219,22 +248,41 @@ try:
         track_oos_shown,
         track_alternatives_shown,
         track_error,
-        track_cart_event
+        track_cart_event,
     )
+
     ANALYTICS_AVAILABLE = True
 except ImportError:
     ANALYTICS_AVAILABLE = False
+
     def get_analytics_tracker():
         return None
+
     # Stub functions for fallback
-    def track_recommendations_viewed(*args, **kwargs): pass
-    def track_category_opened(*args, **kwargs): pass
-    def track_product_opened(*args, **kwargs): pass
-    def track_shade_selected(*args, **kwargs): pass
-    def track_oos_shown(*args, **kwargs): pass
-    def track_alternatives_shown(*args, **kwargs): pass
-    def track_error(*args, **kwargs): pass
-    def track_cart_event(*args, **kwargs): pass
+    def track_recommendations_viewed(*args, **kwargs):
+        pass
+
+    def track_category_opened(*args, **kwargs):
+        pass
+
+    def track_product_opened(*args, **kwargs):
+        pass
+
+    def track_shade_selected(*args, **kwargs):
+        pass
+
+    def track_oos_shown(*args, **kwargs):
+        pass
+
+    def track_alternatives_shown(*args, **kwargs):
+        pass
+
+    def track_error(*args, **kwargs):
+        pass
+
+    def track_cart_event(*args, **kwargs):
+        pass
+
 
 router = Router()
 
@@ -264,75 +312,75 @@ def select_shades(profile: UserProfile, product: Product) -> List[Dict]:
 
     try:
         # Извлекаем параметры профиля
-        undertone = profile.undertone if hasattr(profile, 'undertone') else 'neutral'
-        season = profile.season if hasattr(profile, 'season') else 'neutral'
-        eye_color = getattr(profile, 'eye_color', None)
-        hair_color = getattr(profile, 'hair_color', '')
-        contrast_level = getattr(profile, 'contrast_level', 'medium')
-        makeup_style = getattr(profile, 'makeup_style', '')
+        undertone = profile.undertone if hasattr(profile, "undertone") else "neutral"
+        season = profile.season if hasattr(profile, "season") else "neutral"
+        eye_color = getattr(profile, "eye_color", None)
+        hair_color = getattr(profile, "hair_color", "")
+        contrast_level = getattr(profile, "contrast_level", "medium")
+        makeup_style = getattr(profile, "makeup_style", "")
 
         # Получаем категорию продукта для специфической логики
-        product_category = getattr(product, 'category', '')
+        product_category = getattr(product, "category", "")
 
         # Расширенная логика маппинга оттенков
         shade_mapping = {
-            'foundation': {
-                'warm': ['warm beige', 'golden', 'peach', 'honey', 'amber'],
-                'cool': ['cool beige', 'ash', 'rose beige', 'porcelain', 'ivory'],
-                'neutral': ['neutral beige', 'nude', 'buff', 'taupe', 'sand']
+            "foundation": {
+                "warm": ["warm beige", "golden", "peach", "honey", "amber"],
+                "cool": ["cool beige", "ash", "rose beige", "porcelain", "ivory"],
+                "neutral": ["neutral beige", "nude", "buff", "taupe", "sand"],
             },
-            'blush': {
-                'warm': ['peach', 'coral', 'salmon', 'apricot', 'mauve'],
-                'cool': ['rose', 'berry', 'dusty rose', 'cool pink', 'plum'],
-                'neutral': ['nude', 'dusty mauve', 'soft rose', 'cinnamon']
+            "blush": {
+                "warm": ["peach", "coral", "salmon", "apricot", "mauve"],
+                "cool": ["rose", "berry", "dusty rose", "cool pink", "plum"],
+                "neutral": ["nude", "dusty mauve", "soft rose", "cinnamon"],
             },
-            'eyeshadow': {
-                'warm': ['golden', 'copper', 'bronze', 'taupe', 'cinnamon'],
-                'cool': ['charcoal', 'navy', 'emerald', 'violet', 'silver'],
-                'neutral': ['brown', 'gray', 'olive', 'beige', 'nude']
+            "eyeshadow": {
+                "warm": ["golden", "copper", "bronze", "taupe", "cinnamon"],
+                "cool": ["charcoal", "navy", "emerald", "violet", "silver"],
+                "neutral": ["brown", "gray", "olive", "beige", "nude"],
             },
-            'lipstick': {
-                'warm': ['coral', 'peach', 'terracotta', 'cinnamon', 'mauve'],
-                'cool': ['berry', 'cool pink', 'plum', 'fuchsia', 'cherry'],
-                'neutral': ['nude', 'dusty rose', 'taupe', 'auburn', 'brick']
+            "lipstick": {
+                "warm": ["coral", "peach", "terracotta", "cinnamon", "mauve"],
+                "cool": ["berry", "cool pink", "plum", "fuchsia", "cherry"],
+                "neutral": ["nude", "dusty rose", "taupe", "auburn", "brick"],
             },
-            'highlighter': {
-                'warm': ['golden', 'peach', 'copper', 'champagne'],
-                'cool': ['silver', 'rose gold', 'platinum', 'diamond'],
-                'neutral': ['beige', 'cream', 'nude', 'bronze']
-            }
+            "highlighter": {
+                "warm": ["golden", "peach", "copper", "champagne"],
+                "cool": ["silver", "rose gold", "platinum", "diamond"],
+                "neutral": ["beige", "cream", "nude", "bronze"],
+            },
         }
 
         # Специфическая логика для цвета глаз
         eye_color_mapping = {
-            'blue': ['warm', 'golden', 'copper'],  # Голубые глаза + теплые тона
-            'green': ['warm', 'golden', 'emerald'],  # Зеленые глаза + комплементарные
-            'brown': ['neutral', 'taupe', 'bronze'],  # Карие глаза + нейтральные
-            'gray': ['cool', 'silver', 'charcoal'],  # Серые глаза + холодные
-            'hazel': ['warm', 'golden', 'cinnamon']  # Ореховые глаза + теплые
+            "blue": ["warm", "golden", "copper"],  # Голубые глаза + теплые тона
+            "green": ["warm", "golden", "emerald"],  # Зеленые глаза + комплементарные
+            "brown": ["neutral", "taupe", "bronze"],  # Карие глаза + нейтральные
+            "gray": ["cool", "silver", "charcoal"],  # Серые глаза + холодные
+            "hazel": ["warm", "golden", "cinnamon"],  # Ореховые глаза + теплые
         }
 
         # Специфическая логика для цвета волос
         hair_color_mapping = {
-            'blonde': ['warm', 'golden', 'peach'],  # Светлые волосы + теплые тона
-            'brunette': ['neutral', 'taupe', 'auburn'],  # Темные волосы + нейтральные
-            'red': ['warm', 'coral', 'cinnamon'],  # Рыжие волосы + теплые тона
-            'black': ['cool', 'charcoal', 'navy'],  # Черные волосы + холодные
-            'gray': ['cool', 'silver', 'platinum']  # Седые волосы + холодные
+            "blonde": ["warm", "golden", "peach"],  # Светлые волосы + теплые тона
+            "brunette": ["neutral", "taupe", "auburn"],  # Темные волосы + нейтральные
+            "red": ["warm", "coral", "cinnamon"],  # Рыжие волосы + теплые тона
+            "black": ["cool", "charcoal", "navy"],  # Черные волосы + холодные
+            "gray": ["cool", "silver", "platinum"],  # Седые волосы + холодные
         }
 
         # Логика контраста
         contrast_mapping = {
-            'high': ['cool', 'charcoal', 'navy', 'black'],  # Высокий контраст + насыщенные
-            'low': ['warm', 'peach', 'beige', 'nude'],  # Низкий контраст + мягкие
-            'medium': ['neutral', 'taupe', 'brown', 'rose']  # Средний контраст + сбалансированные
+            "high": ["cool", "charcoal", "navy", "black"],  # Высокий контраст + насыщенные
+            "low": ["warm", "peach", "beige", "nude"],  # Низкий контраст + мягкие
+            "medium": ["neutral", "taupe", "brown", "rose"],  # Средний контраст + сбалансированные
         }
 
         # Определяем предпочтительные оттенки
         preferred_shades = []
 
         # Базовые предпочтения по подтону
-        base_mapping = shade_mapping.get(product_category, {}).get(undertone, ['nude'])
+        base_mapping = shade_mapping.get(product_category, {}).get(undertone, ["nude"])
         preferred_shades.extend(base_mapping)
 
         # Учитываем цвет глаз
@@ -355,15 +403,15 @@ def select_shades(profile: UserProfile, product: Product) -> List[Dict]:
 
         # Если предпочтений мало, добавляем базовые
         if len(preferred_shades) < 3:
-            preferred_shades.extend(['nude', 'beige', 'neutral'])
+            preferred_shades.extend(["nude", "beige", "neutral"])
 
         # Фильтруем варианты продукта
         suitable_variants = []
-        if hasattr(product, 'variants') and product.variants:
+        if hasattr(product, "variants") and product.variants:
             for variant in product.variants:
-                variant_name = getattr(variant, 'name', '').lower()
-                variant_type = getattr(variant, 'type', '').lower()
-                variant_undertone = getattr(variant, 'undertone', '').lower()
+                variant_name = getattr(variant, "name", "").lower()
+                variant_type = getattr(variant, "type", "").lower()
+                variant_undertone = getattr(variant, "undertone", "").lower()
 
                 relevance_score = 0.0
 
@@ -380,21 +428,17 @@ def select_shades(profile: UserProfile, product: Product) -> List[Dict]:
                     relevance_score += 0.3
 
                 if relevance_score > 0:
-                    suitable_variants.append({
-                        'variant': variant,
-                        'relevance_score': min(relevance_score, 1.0)
-                    })
+                    suitable_variants.append(
+                        {"variant": variant, "relevance_score": min(relevance_score, 1.0)}
+                    )
 
         # Если нет точных совпадений, берем первые доступные варианты
-        if not suitable_variants and hasattr(product, 'variants') and product.variants:
+        if not suitable_variants and hasattr(product, "variants") and product.variants:
             for variant in product.variants[:3]:  # Максимум 3 варианта
-                suitable_variants.append({
-                    'variant': variant,
-                    'relevance_score': 0.3
-                })
+                suitable_variants.append({"variant": variant, "relevance_score": 0.3})
 
         # Сортируем по релевантности
-        suitable_variants.sort(key=lambda x: x['relevance_score'], reverse=True)
+        suitable_variants.sort(key=lambda x: x["relevance_score"], reverse=True)
 
         return suitable_variants
 
@@ -403,7 +447,9 @@ def select_shades(profile: UserProfile, product: Product) -> List[Dict]:
         return []
 
 
-async def get_makeup_products_for_category(category_slug: str, user_profile: Optional[UserProfile] = None) -> Tuple[List[Dict], int]:
+async def get_makeup_products_for_category(
+    category_slug: str, user_profile: Optional[UserProfile] = None
+) -> Tuple[List[Dict], int]:
     """
     Получить продукты для категории с учетом профиля пользователя
     """
@@ -424,7 +470,7 @@ async def get_makeup_products_for_category(category_slug: str, user_profile: Opt
         # Фильтруем продукты по категории
         category_products = []
         for product in catalog:
-            if hasattr(product, 'category') and product.category == category_slug:
+            if hasattr(product, "category") and product.category == category_slug:
                 category_products.append(product)
 
         if not category_products:
@@ -438,16 +484,16 @@ async def get_makeup_products_for_category(category_slug: str, user_profile: Opt
             suitable_shades = select_shades(user_profile, product)
 
             product_dict = {
-                'product_id': getattr(product, 'id', str(id(product))),
-                'name': getattr(product, 'name', 'Без названия'),
-                'brand': getattr(product, 'brand', 'Бренд'),
-                'price': getattr(product, 'price', 0),
-                'currency': getattr(product, 'currency', 'RUB'),
-                'in_stock': getattr(product, 'in_stock', True),
-                'ref_link': getattr(product, 'ref_link', ''),
-                'category': category_slug,
-                'suitable_shades': suitable_shades,
-                'has_variants': len(suitable_shades) > 0
+                "product_id": getattr(product, "id", str(id(product))),
+                "name": getattr(product, "name", "Без названия"),
+                "brand": getattr(product, "brand", "Бренд"),
+                "price": getattr(product, "price", 0),
+                "currency": getattr(product, "currency", "RUB"),
+                "in_stock": getattr(product, "in_stock", True),
+                "ref_link": getattr(product, "ref_link", ""),
+                "category": category_slug,
+                "suitable_shades": suitable_shades,
+                "has_variants": len(suitable_shades) > 0,
             }
             result_products.append(product_dict)
 
@@ -471,23 +517,31 @@ async def start_makeup_picker(cb: CallbackQuery, state: FSMContext) -> None:
         # Получаем профиль пользователя из состояния
         data = await state.get_data()
         user_profile = None
-        if 'profile' in data:
+        if "profile" in data:
             # Преобразуем dict обратно в UserProfile
-            profile_data = data['profile']
+            profile_data = data["profile"]
             if ENGINE_AVAILABLE:
                 from engine.models import UserProfile, Season, Undertone, EyeColor
+
                 user_profile = UserProfile(**profile_data)
 
         await cb.message.edit_text(
             f"💄 **{HEAD_MAKEUP_PICK}**\n\n"
             f"_{SUB_PICK_MAKEUP}_\n\n"
             f"Выберите категорию средств:",
-            reply_markup=InlineKeyboardMarkup(inline_keyboard=[
-                [InlineKeyboardButton(text=name, callback_data=f"m:cat:{slug}")]
-                for slug, name in MAKEUP_CATEGORIES
-            ] + [
-                [InlineKeyboardButton(text="◀️ Назад к результатам", callback_data="back:results")]
-            ])
+            reply_markup=InlineKeyboardMarkup(
+                inline_keyboard=[
+                    [InlineKeyboardButton(text=name, callback_data=f"m:cat:{slug}")]
+                    for slug, name in MAKEUP_CATEGORIES
+                ]
+                + [
+                    [
+                        InlineKeyboardButton(
+                            text="◀️ Назад к результатам", callback_data="back:results"
+                        )
+                    ]
+                ]
+            ),
         )
 
         await cb.answer()
@@ -504,7 +558,9 @@ async def show_makeup_category(cb: CallbackQuery, state: FSMContext) -> None:
         # Парсим callback_data: m:cat:<slug> или m:cat:<slug>:p<page>
         data_parts = cb.data.split(":")
         category_slug = data_parts[2]
-        page = int(data_parts[3][1:]) if len(data_parts) > 3 and data_parts[3].startswith("p") else 1
+        page = (
+            int(data_parts[3][1:]) if len(data_parts) > 3 and data_parts[3].startswith("p") else 1
+        )
 
         user_id = cb.from_user.id if cb.from_user else 0
 
@@ -515,9 +571,10 @@ async def show_makeup_category(cb: CallbackQuery, state: FSMContext) -> None:
         # Получаем профиль пользователя
         data = await state.get_data()
         user_profile = None
-        if 'profile' in data and ENGINE_AVAILABLE:
+        if "profile" in data and ENGINE_AVAILABLE:
             from engine.models import UserProfile
-            user_profile = UserProfile(**data['profile'])
+
+            user_profile = UserProfile(**data["profile"])
 
         # Получаем продукты для категории
         products, total_count = await get_makeup_products_for_category(category_slug, user_profile)
@@ -526,12 +583,13 @@ async def show_makeup_category(cb: CallbackQuery, state: FSMContext) -> None:
             await cb.message.edit_text(
                 f"❌ В категории **{dict(MAKEUP_CATEGORIES)[category_slug]}** пока нет подходящих продуктов.\n\n"
                 f"Попробуйте выбрать другую категорию:",
-                reply_markup=InlineKeyboardMarkup(inline_keyboard=[
-                    [InlineKeyboardButton(text=name, callback_data=f"m:cat:{slug}")]
-                    for slug, name in MAKEUP_CATEGORIES
-                ] + [
-                    [InlineKeyboardButton(text="◀️ Назад", callback_data="makeup_picker:start")]
-                ])
+                reply_markup=InlineKeyboardMarkup(
+                    inline_keyboard=[
+                        [InlineKeyboardButton(text=name, callback_data=f"m:cat:{slug}")]
+                        for slug, name in MAKEUP_CATEGORIES
+                    ]
+                    + [[InlineKeyboardButton(text="◀️ Назад", callback_data="makeup_picker:start")]]
+                ),
             )
             return
 
@@ -549,8 +607,8 @@ async def show_makeup_category(cb: CallbackQuery, state: FSMContext) -> None:
         # Создаем кнопки для продуктов
         buttons = []
         for i, product in enumerate(page_products, start_idx + 1):
-            has_variants = product.get('has_variants', False)
-            in_stock = product.get('in_stock', True)
+            has_variants = product.get("has_variants", False)
+            in_stock = product.get("in_stock", True)
 
             # Формируем текст кнопки
             button_text = f"{i}. {product['brand']} {product['name']}"
@@ -564,32 +622,34 @@ async def show_makeup_category(cb: CallbackQuery, state: FSMContext) -> None:
                 button_text = button_text[:47] + "..."
 
             # Добавляем кнопку
-            buttons.append([
-                InlineKeyboardButton(
-                    text=button_text,
-                    callback_data=f"m:prd:{product['product_id']}"
-                )
-            ])
+            buttons.append(
+                [
+                    InlineKeyboardButton(
+                        text=button_text, callback_data=f"m:prd:{product['product_id']}"
+                    )
+                ]
+            )
 
         # Добавляем кнопки навигации
         nav_buttons = []
         if page > 1:
-            nav_buttons.append(InlineKeyboardButton(text="◀️", callback_data=f"m:cat:{category_slug}:p{page-1}"))
+            nav_buttons.append(
+                InlineKeyboardButton(text="◀️", callback_data=f"m:cat:{category_slug}:p{page-1}")
+            )
         if page < total_pages:
-            nav_buttons.append(InlineKeyboardButton(text="▶️", callback_data=f"m:cat:{category_slug}:p{page}"))
+            nav_buttons.append(
+                InlineKeyboardButton(text="▶️", callback_data=f"m:cat:{category_slug}:p{page}")
+            )
 
         if nav_buttons:
             buttons.append(nav_buttons)
 
         # Добавляем кнопку "Назад"
-        buttons.append([
-            InlineKeyboardButton(text="◀️ Назад к категориям", callback_data="makeup_picker:start")
-        ])
-
-        await cb.message.edit_text(
-            text,
-            reply_markup=InlineKeyboardMarkup(inline_keyboard=buttons)
+        buttons.append(
+            [InlineKeyboardButton(text="◀️ Назад к категориям", callback_data="makeup_picker:start")]
         )
+
+        await cb.message.edit_text(text, reply_markup=InlineKeyboardMarkup(inline_keyboard=buttons))
 
         await cb.answer()
 
@@ -611,11 +671,9 @@ async def show_makeup_product(cb: CallbackQuery, state: FSMContext) -> None:
 
         # Affiliate отслеживание открытия товара
         try:
-            affiliate_manager.emit_analytics('product_opened', {
-                'pid': product_id,
-                'source': 'makeup_picker',
-                'user_id': user_id
-            })
+            affiliate_manager.emit_analytics(
+                "product_opened", {"pid": product_id, "source": "makeup_picker", "user_id": user_id}
+            )
         except Exception as e:
             print(f"[WARNING] Product open tracking error: {e}")
 
@@ -626,7 +684,7 @@ async def show_makeup_product(cb: CallbackQuery, state: FSMContext) -> None:
 
         product = None
         for p in catalog or []:
-            if getattr(p, 'id', str(id(p))) == product_id:
+            if getattr(p, "id", str(id(p))) == product_id:
                 product = p
                 break
 
@@ -635,18 +693,20 @@ async def show_makeup_product(cb: CallbackQuery, state: FSMContext) -> None:
             return
 
         # Формируем сообщение
-        brand = getattr(product, 'brand', 'Бренд')
-        name = getattr(product, 'name', 'Название')
-        price = getattr(product, 'price', 0)
-        currency = getattr(product, 'currency', 'RUB')
-        in_stock = getattr(product, 'in_stock', True)
+        brand = getattr(product, "brand", "Бренд")
+        name = getattr(product, "name", "Название")
+        price = getattr(product, "price", 0)
+        currency = getattr(product, "currency", "RUB")
+        in_stock = getattr(product, "in_stock", True)
 
         text = f"💄 **{brand} {name}**\n\n"
         text += f"💰 Цена: {price} {currency}\n"
         text += f"📦 В наличии: {'✅' if in_stock else '❌'}\n\n"
 
         # Проверяем наличие вариантов
-        has_variants = hasattr(product, 'variants') and product.variants and len(product.variants) > 0
+        has_variants = (
+            hasattr(product, "variants") and product.variants and len(product.variants) > 0
+        )
 
         if has_variants:
             text += f"🎨 Доступно {len(product.variants)} оттенков\n\n"
@@ -660,39 +720,38 @@ async def show_makeup_product(cb: CallbackQuery, state: FSMContext) -> None:
 
         if has_variants and len(product.variants) > 1:
             # Кнопка для выбора оттенков
-            buttons.append([
-                InlineKeyboardButton(
-                    text="🎨 Выбрать оттенок",
-                    callback_data=f"m:opt:{product_id}"
-                )
-            ])
+            buttons.append(
+                [
+                    InlineKeyboardButton(
+                        text="🎨 Выбрать оттенок", callback_data=f"m:opt:{product_id}"
+                    )
+                ]
+            )
         elif has_variants and len(product.variants) == 1:
             # Один вариант - сразу добавляем
             variant = product.variants[0]
-            buttons.append([
-                InlineKeyboardButton(
-                    text=f"🛍️ {BTN_ADD_TO_CART}",
-                    callback_data=f"m:add:{product_id}:{getattr(variant, 'id', str(id(variant)))}"
-                )
-            ])
+            buttons.append(
+                [
+                    InlineKeyboardButton(
+                        text=f"🛍️ {BTN_ADD_TO_CART}",
+                        callback_data=f"m:add:{product_id}:{getattr(variant, 'id', str(id(variant)))}",
+                    )
+                ]
+            )
         else:
             # Нет вариантов - добавляем без variant_id
-            buttons.append([
-                InlineKeyboardButton(
-                    text=f"🛍️ {BTN_ADD_TO_CART}",
-                    callback_data=f"m:add:{product_id}:default"
-                )
-            ])
+            buttons.append(
+                [
+                    InlineKeyboardButton(
+                        text=f"🛍️ {BTN_ADD_TO_CART}", callback_data=f"m:add:{product_id}:default"
+                    )
+                ]
+            )
 
         # Кнопка "Назад"
-        buttons.append([
-            InlineKeyboardButton(text="◀️ Назад", callback_data="makeup_picker:start")
-        ])
+        buttons.append([InlineKeyboardButton(text="◀️ Назад", callback_data="makeup_picker:start")])
 
-        await cb.message.edit_text(
-            text,
-            reply_markup=InlineKeyboardMarkup(inline_keyboard=buttons)
-        )
+        await cb.message.edit_text(text, reply_markup=InlineKeyboardMarkup(inline_keyboard=buttons))
 
         await cb.answer()
 
@@ -715,27 +774,28 @@ async def show_makeup_shade_options(cb: CallbackQuery, state: FSMContext) -> Non
 
         product = None
         for p in catalog or []:
-            if getattr(p, 'id', str(id(p))) == product_id:
+            if getattr(p, "id", str(id(p))) == product_id:
                 product = p
                 break
 
-        if not product or not hasattr(product, 'variants') or not product.variants:
+        if not product or not hasattr(product, "variants") or not product.variants:
             await cb.answer("⚠️ Варианты не найдены")
             return
 
         # Получаем профиль пользователя для персонализации
         data = await state.get_data()
         user_profile = None
-        if 'profile' in data and ENGINE_AVAILABLE:
+        if "profile" in data and ENGINE_AVAILABLE:
             from engine.models import UserProfile
-            user_profile = UserProfile(**data['profile'])
+
+            user_profile = UserProfile(**data["profile"])
 
         # Выбираем подходящие оттенки
         suitable_shades = select_shades(user_profile, product)
 
         # Формируем сообщение
-        brand = getattr(product, 'brand', 'Бренд')
-        name = getattr(product, 'name', 'Название')
+        brand = getattr(product, "brand", "Бренд")
+        name = getattr(product, "name", "Название")
 
         text = f"💄 **{brand} {name}**\n\n"
         text += "🎨 **Выберите оттенок:**\n\n"
@@ -746,10 +806,10 @@ async def show_makeup_shade_options(cb: CallbackQuery, state: FSMContext) -> Non
         if suitable_shades:
             text += "**Рекомендуемые для вашего типа:**\n"
             for i, shade_info in enumerate(suitable_shades[:6], 1):  # Максимум 6 вариантов
-                variant = shade_info['variant']
-                variant_name = getattr(variant, 'name', f'Вариант {i}')
-                undertone = getattr(variant, 'undertone', 'neutral')
-                relevance = shade_info.get('relevance_score', 0.5)
+                variant = shade_info["variant"]
+                variant_name = getattr(variant, "name", f"Вариант {i}")
+                undertone = getattr(variant, "undertone", "neutral")
+                relevance = shade_info.get("relevance_score", 0.5)
 
                 # Индикатор релевантности
                 stars = "⭐" * int(relevance * 3) if relevance >= 0.7 else "☆"
@@ -760,17 +820,19 @@ async def show_makeup_shade_options(cb: CallbackQuery, state: FSMContext) -> Non
                 if len(button_text) > 35:
                     button_text = button_text[:32] + "..."
 
-                buttons.append([
-                    InlineKeyboardButton(
-                        text=button_text,
-                        callback_data=f"m:add:{product_id}:{getattr(variant, 'id', str(id(variant)))}"
-                    )
-                ])
+                buttons.append(
+                    [
+                        InlineKeyboardButton(
+                            text=button_text,
+                            callback_data=f"m:add:{product_id}:{getattr(variant, 'id', str(id(variant)))}",
+                        )
+                    ]
+                )
         else:
             # Показываем все доступные варианты
             for i, variant in enumerate(product.variants[:6], 1):
-                variant_name = getattr(variant, 'name', f'Вариант {i}')
-                undertone = getattr(variant, 'undertone', 'neutral')
+                variant_name = getattr(variant, "name", f"Вариант {i}")
+                undertone = getattr(variant, "undertone", "neutral")
 
                 button_text = f"{i}. {variant_name}"
                 if undertone:
@@ -778,31 +840,32 @@ async def show_makeup_shade_options(cb: CallbackQuery, state: FSMContext) -> Non
                 if len(button_text) > 35:
                     button_text = button_text[:32] + "..."
 
-                buttons.append([
-                    InlineKeyboardButton(
-                        text=button_text,
-                        callback_data=f"m:add:{product_id}:{getattr(variant, 'id', str(id(variant)))}"
-                    )
-                ])
+                buttons.append(
+                    [
+                        InlineKeyboardButton(
+                            text=button_text,
+                            callback_data=f"m:add:{product_id}:{getattr(variant, 'id', str(id(variant)))}",
+                        )
+                    ]
+                )
 
         # Добавляем кнопку "Показать все" если много вариантов
         if len(product.variants) > 6:
-            buttons.append([
-                InlineKeyboardButton(
-                    text=f"📋 Показать все ({len(product.variants)})",
-                    callback_data=f"m:all:{product_id}"
-                )
-            ])
+            buttons.append(
+                [
+                    InlineKeyboardButton(
+                        text=f"📋 Показать все ({len(product.variants)})",
+                        callback_data=f"m:all:{product_id}",
+                    )
+                ]
+            )
 
         # Кнопка "Назад"
-        buttons.append([
-            InlineKeyboardButton(text="◀️ Назад к продукту", callback_data=f"m:prd:{product_id}")
-        ])
-
-        await cb.message.edit_text(
-            text,
-            reply_markup=InlineKeyboardMarkup(inline_keyboard=buttons)
+        buttons.append(
+            [InlineKeyboardButton(text="◀️ Назад к продукту", callback_data=f"m:prd:{product_id}")]
         )
+
+        await cb.message.edit_text(text, reply_markup=InlineKeyboardMarkup(inline_keyboard=buttons))
 
         await cb.answer()
 
@@ -837,12 +900,12 @@ async def add_makeup_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
         product = None
         variant = None
         for p in catalog or []:
-            if getattr(p, 'id', str(id(p))) == product_id:
+            if getattr(p, "id", str(id(p))) == product_id:
                 product = p
                 # Ищем вариант
-                if variant_id and hasattr(p, 'variants'):
+                if variant_id and hasattr(p, "variants"):
                     for v in p.variants:
-                        if getattr(v, 'id', str(id(v))) == variant_id:
+                        if getattr(v, "id", str(id(v))) == variant_id:
                             variant = v
                             break
                 break
@@ -855,11 +918,11 @@ async def add_makeup_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
         ref_link = None
         try:
             product_data = {
-                'id': product_id,
-                'brand': getattr(product, 'brand', ''),
-                'name': getattr(product, 'name', ''),
-                'link': getattr(product, 'link', ''),
-                'source': getattr(product, 'source', 'unknown')
+                "id": product_id,
+                "brand": getattr(product, "brand", ""),
+                "name": getattr(product, "name", ""),
+                "link": getattr(product, "link", ""),
+                "source": getattr(product, "source", "unknown"),
             }
             ref_link = build_ref_link(product_data, "makeup_recommendation")
         except Exception as e:
@@ -872,35 +935,44 @@ async def add_makeup_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
                 product_id=product_id,
                 variant_id=variant_id,
                 qty=1,
-                ref_link=ref_link
+                ref_link=ref_link,
             )
 
             # Аналитика
             if ANALYTICS_AVAILABLE:
-                track_cart_event("product_added_to_cart", user_id,
+                track_cart_event(
+                    "product_added_to_cart",
+                    user_id,
                     pid=product_id,
                     vid=variant_id or "default",
-                    source=getattr(product, 'source', 'unknown'),
-                    price=getattr(product, 'price', 0),
-                    category=getattr(product, 'category', 'makeup')
+                    source=getattr(product, "source", "unknown"),
+                    price=getattr(product, "price", 0),
+                    category=getattr(product, "category", "makeup"),
                 )
 
                 # Аналитика выбора оттенка
                 if variant_id and variant:
-                    track_shade_selected(user_id, product_id, variant_id,
-                        undertone=getattr(variant, 'undertone', 'unknown'))
+                    track_shade_selected(
+                        user_id,
+                        product_id,
+                        variant_id,
+                        undertone=getattr(variant, "undertone", "unknown"),
+                    )
 
             # Affiliate отслеживание
             try:
                 # Определяем источник
-                source = getattr(product, 'source', 'unknown')
-                if not source or source == 'unknown':
+                source = getattr(product, "source", "unknown")
+                if not source or source == "unknown":
                     # Определяем по URL или названию
-                    product_url = getattr(product, 'link', '')
+                    product_url = getattr(product, "link", "")
                     if product_url:
                         if "goldapple" in product_url.lower():
                             source = "goldapple"
-                        elif "wildberries" in product_url.lower() or "marketplace" in product_url.lower():
+                        elif (
+                            "wildberries" in product_url.lower()
+                            or "marketplace" in product_url.lower()
+                        ):
                             source = "ru_marketplace"
                         elif "official" in product_url.lower():
                             source = "ru_official"
@@ -908,22 +980,20 @@ async def add_makeup_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
                             source = "intl_authorized"
 
                 # Отслеживаем клик по checkout
-                price = float(getattr(product, 'price', 0))
+                price = float(getattr(product, "price", 0))
                 affiliate_manager.track_checkout_click(
                     items_count=1,
                     total=price,
-                    currency='RUB',
+                    currency="RUB",
                     source=source,
-                    product_ids=[product_id]
+                    product_ids=[product_id],
                 )
 
                 # Отслеживаем открытие внешнего checkout
-                product_url = getattr(product, 'link', '')
+                product_url = getattr(product, "link", "")
                 if product_url:
                     affiliate_manager.track_external_checkout_opened(
-                        partner=source.title(),
-                        url=product_url,
-                        items_count=1
+                        partner=source.title(), url=product_url, items_count=1
                     )
 
             except Exception as e:
@@ -940,9 +1010,9 @@ async def add_makeup_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
             item_name = f"{getattr(product, 'brand', '')} {getattr(product, 'name', '')}".strip()
 
             message = MSG_VARIANT_ADDED.format(
-                brand=getattr(product, 'brand', ''),
-                name=getattr(product, 'name', ''),
-                variant=getattr(variant, 'name', 'стандарт') if variant else 'стандарт'
+                brand=getattr(product, "brand", ""),
+                name=getattr(product, "name", ""),
+                variant=getattr(variant, "name", "стандарт") if variant else "стандарт",
             )
 
             await cb.answer(message, show_alert=True)
@@ -969,17 +1039,17 @@ async def show_all_makeup_variants(cb: CallbackQuery, state: FSMContext) -> None
 
         product = None
         for p in catalog or []:
-            if getattr(p, 'id', str(id(p))) == product_id:
+            if getattr(p, "id", str(id(p))) == product_id:
                 product = p
                 break
 
-        if not product or not hasattr(product, 'variants') or not product.variants:
+        if not product or not hasattr(product, "variants") or not product.variants:
             await cb.answer("⚠️ Варианты не найдены")
             return
 
         # Формируем сообщение со всеми вариантами
-        brand = getattr(product, 'brand', 'Бренд')
-        name = getattr(product, 'name', 'Название')
+        brand = getattr(product, "brand", "Бренд")
+        name = getattr(product, "name", "Название")
 
         text = f"💄 **{brand} {name}**\n\n"
         text += f"🎨 **Все доступные оттенки ({len(product.variants)}):**\n\n"
@@ -987,8 +1057,8 @@ async def show_all_makeup_variants(cb: CallbackQuery, state: FSMContext) -> None
         # Создаем кнопки для всех вариантов
         buttons = []
         for i, variant in enumerate(product.variants, 1):
-            variant_name = getattr(variant, 'name', f'Вариант {i}')
-            undertone = getattr(variant, 'undertone', '')
+            variant_name = getattr(variant, "name", f"Вариант {i}")
+            undertone = getattr(variant, "undertone", "")
 
             button_text = f"{i}. {variant_name}"
             if undertone:
@@ -996,22 +1066,21 @@ async def show_all_makeup_variants(cb: CallbackQuery, state: FSMContext) -> None
             if len(button_text) > 35:
                 button_text = button_text[:32] + "..."
 
-            buttons.append([
-                InlineKeyboardButton(
-                    text=button_text,
-                    callback_data=f"m:add:{product_id}:{getattr(variant, 'id', str(id(variant)))}"
-                )
-            ])
+            buttons.append(
+                [
+                    InlineKeyboardButton(
+                        text=button_text,
+                        callback_data=f"m:add:{product_id}:{getattr(variant, 'id', str(id(variant)))}",
+                    )
+                ]
+            )
 
         # Кнопка "Назад"
-        buttons.append([
-            InlineKeyboardButton(text="◀️ Назад к выбору", callback_data=f"m:opt:{product_id}")
-        ])
-
-        await cb.message.edit_text(
-            text,
-            reply_markup=InlineKeyboardMarkup(inline_keyboard=buttons)
+        buttons.append(
+            [InlineKeyboardButton(text="◀️ Назад к выбору", callback_data=f"m:opt:{product_id}")]
         )
+
+        await cb.message.edit_text(text, reply_markup=InlineKeyboardMarkup(inline_keyboard=buttons))
 
         await cb.answer()
 
@@ -1029,14 +1098,14 @@ async def back_to_results(cb: CallbackQuery, state: FSMContext) -> None:
 
         # Получаем сохраненные данные
         data = await state.get_data()
-        season = data.get('season', 'unknown')
-        tldr_report = data.get('tldr_report', 'Нет данных')
+        season = data.get("season", "unknown")
+        tldr_report = data.get("tldr_report", "Нет данных")
 
         season_names = {
             "spring": "🌸 Яркая Весна",
             "summer": "🌊 Мягкое Лето",
             "autumn": "🍂 Глубокая Осень",
-            "winter": "❄️ Холодная Зима"
+            "winter": "❄️ Холодная Зима",
         }
 
         await cb.message.edit_text(
@@ -1044,13 +1113,23 @@ async def back_to_results(cb: CallbackQuery, state: FSMContext) -> None:
             f"**Ваш цветотип:** {season_names.get(season, season)}\n\n"
             f"📊 **Краткий анализ:**\n{tldr_report}\n\n"
             f"Что вы хотите увидеть?",
-            reply_markup=InlineKeyboardMarkup(inline_keyboard=[
-                [InlineKeyboardButton(text="ℹ️ Полное описание цветотипа", callback_data="result:description")],
-                [InlineKeyboardButton(text="🛍️ Что купить", callback_data="result:products")],
-                [InlineKeyboardButton(text="💄 Подобрать макияж", callback_data="makeup_picker:start")],
-                [InlineKeyboardButton(text="📄 Получить отчёт", callback_data="report:latest")],
-                [InlineKeyboardButton(text="🏠 Главное меню", callback_data="universal:home")]
-            ])
+            reply_markup=InlineKeyboardMarkup(
+                inline_keyboard=[
+                    [
+                        InlineKeyboardButton(
+                            text="ℹ️ Полное описание цветотипа", callback_data="result:description"
+                        )
+                    ],
+                    [InlineKeyboardButton(text="🛍️ Что купить", callback_data="result:products")],
+                    [
+                        InlineKeyboardButton(
+                            text="💄 Подобрать макияж", callback_data="makeup_picker:start"
+                        )
+                    ],
+                    [InlineKeyboardButton(text="📄 Получить отчёт", callback_data="report:latest")],
+                    [InlineKeyboardButton(text="🏠 Главное меню", callback_data="universal:home")],
+                ]
+            ),
         )
 
         await cb.answer()

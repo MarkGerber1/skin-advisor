@@ -24,8 +24,8 @@ class TestTextSanitizer:
         text = '"Русские" и «кавычки»'
         result = self.sanitizer.sanitize(text)
         assert '"' not in result or result.count('"') == 0
-        assert '«' not in result
-        assert '»' not in result
+        assert "«" not in result
+        assert "»" not in result
 
     def test_sanitize_whitespace(self):
         """Тест нормализации пробелов"""

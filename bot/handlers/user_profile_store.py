@@ -1,6 +1,7 @@
 """
 Модуль для сохранения и загрузки профилей пользователей
 """
+
 import json
 import os
 from typing import Optional, Dict, Any
@@ -20,7 +21,9 @@ class UserProfileStore:
         """Получить путь к файлу профиля пользователя"""
         return os.path.join(self.storage_path, f"user_{user_id}.json")
 
-    def save_profile(self, user_id: int, profile_data: Dict[str, Any], metadata: Optional[Dict[str, Any]] = None) -> bool:
+    def save_profile(
+        self, user_id: int, profile_data: Dict[str, Any], metadata: Optional[Dict[str, Any]] = None
+    ) -> bool:
         """Сохранить профиль пользователя"""
         try:
             # Нормализуем данные профиля
@@ -37,7 +40,7 @@ class UserProfileStore:
             }
 
             profile_path = self._get_profile_path(user_id)
-            with open(profile_path, 'w', encoding='utf-8') as f:
+            with open(profile_path, "w", encoding="utf-8") as f:
                 json.dump(normalized_data, f, ensure_ascii=False, indent=2)
 
             print(f"✅ Profile saved for user {user_id}")
@@ -56,7 +59,7 @@ class UserProfileStore:
                 print(f"⚠️ Profile not found for user {user_id}")
                 return None
 
-            with open(profile_path, 'r', encoding='utf-8') as f:
+            with open(profile_path, "r", encoding="utf-8") as f:
                 profile_data = json.load(f)
 
             # Создаем профиль из сохраненных данных
@@ -66,7 +69,7 @@ class UserProfileStore:
                 concerns=profile_data["concerns"],
                 season=profile_data.get("season", "spring"),
                 undertone=profile_data.get("undertone", "neutral"),
-                contrast=profile_data.get("contrast", "medium")
+                contrast=profile_data.get("contrast", "medium"),
             )
 
             print(f"✅ Profile loaded for user {user_id}: skin_type={profile.skin_type}")
@@ -96,12 +99,10 @@ class UserProfileStore:
 # Глобальный экземпляр хранилища профилей
 _profile_store = None
 
+
 def get_user_profile_store() -> UserProfileStore:
     """Получить глобальный экземпляр хранилища профилей"""
     global _profile_store
     if _profile_store is None:
         _profile_store = UserProfileStore()
     return _profile_store
-
-
-

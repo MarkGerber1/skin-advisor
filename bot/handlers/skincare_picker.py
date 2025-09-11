@@ -2,6 +2,7 @@
 🛍️ Инлайн-подбор ухода после теста "Портрет лица"
 Категории → Товары → Варианты → Корзина с приоритизацией источников
 """
+
 from __future__ import annotations
 
 import os
@@ -21,29 +22,39 @@ try:
     from services.affiliates import build_ref_link
 except ImportError:
     print("CRITICAL: Failed to import engine modules, using fallback")
+
     # Define fallback classes
     class CatalogStore:
         @staticmethod
         def instance(*args):
             return None
+
     class Product:
         pass
+
     class SelectorV2:
         pass
+
     class AffiliateManager:
         def add_affiliate_params(self, url, source, campaign=None):
             return url
+
         def track_checkout_click(self, *args, **kwargs):
             pass
+
         def track_external_checkout_opened(self, *args, **kwargs):
             pass
+
     class ABTestingFramework:
         def log_button_click(self, *args, **kwargs):
             pass
+
         def log_test_completion(self, *args, **kwargs):
             pass
+
         def log_add_to_cart(self, *args, **kwargs):
             pass
+
         def get_category_order_variant(self, user_id):
             return ["cleanser", "toner", "serum", "moisturizer", "eye_care", "sunscreen", "mask"]
 
@@ -60,6 +71,7 @@ except ImportError:
             return []
         return data.get(slug, [])
 
+
 # Fix import for Railway environment
 import sys
 import os
@@ -71,7 +83,7 @@ project_root = os.path.dirname(os.path.dirname(current_dir))
 # Try multiple possible paths for Railway
 possible_paths = [
     project_root,  # Local development
-    '/usr/src/app',  # Railway production
+    "/usr/src/app",  # Railway production
     os.path.dirname(project_root),  # Fallback
 ]
 
@@ -100,13 +112,55 @@ CATEGORY_MASK = "Снятие макияжа"
 
 # Alias map для категорий - маппинг входных слагов к списку алиасов для поиска
 CATEGORY_ALIAS_MAP = {
-    "cleanser": ["очищение", "гель для умывания", "пенка", "мицеллярная вода", "мусс", "cleanser", "cleanse", "очищающее средство"],
-    "toner": ["тоник", "софтнер", "пилинг", "пилинг-пэды", "пилинг-скатка", "toner", "toning", "тонизирование"],
+    "cleanser": [
+        "очищение",
+        "гель для умывания",
+        "пенка",
+        "мицеллярная вода",
+        "мусс",
+        "cleanser",
+        "cleanse",
+        "очищающее средство",
+    ],
+    "toner": [
+        "тоник",
+        "софтнер",
+        "пилинг",
+        "пилинг-пэды",
+        "пилинг-скатка",
+        "toner",
+        "toning",
+        "тонизирование",
+    ],
     "serum": ["сыворотка", "serum"],
-    "moisturizer": ["крем", "эмульсия", "гель", "флюид", "масло", "moisturizer", "moisturizing", "увлажнение"],
-    "eye_care": ["крем для глаз", "зона вокруг глаз", "eye cream", "eye_care", "глаза", "под глазами"],
-    "sunscreen": ["солнцезащита", "spf", "spf крем", "флюид spf", "стик spf", "sunscreen", "sun_protection"],
-    "mask": ["маска", "mask", "masks", "снятие макияжа", "makeup_remover"]
+    "moisturizer": [
+        "крем",
+        "эмульсия",
+        "гель",
+        "флюид",
+        "масло",
+        "moisturizer",
+        "moisturizing",
+        "увлажнение",
+    ],
+    "eye_care": [
+        "крем для глаз",
+        "зона вокруг глаз",
+        "eye cream",
+        "eye_care",
+        "глаза",
+        "под глазами",
+    ],
+    "sunscreen": [
+        "солнцезащита",
+        "spf",
+        "spf крем",
+        "флюид spf",
+        "стик spf",
+        "sunscreen",
+        "sun_protection",
+    ],
+    "mask": ["маска", "mask", "masks", "снятие макияжа", "makeup_remover"],
 }
 
 try:
@@ -115,11 +169,13 @@ except ImportError:
     # Fallback: try to import directly
     try:
         import i18n.ru as i18n_module
+
         # Copy all attributes from i18n.ru to current namespace
         import inspect
+
         current_module = inspect.currentframe().f_globals
         for name in dir(i18n_module):
-            if not name.startswith('_'):
+            if not name.startswith("_"):
                 current_module[name] = getattr(i18n_module, name)
     except ImportError as e:
         print(f"CRITICAL: Failed to import i18n.ru: {e}")
@@ -152,7 +208,7 @@ except ImportError:
             "moisturizer": "Увлажнение",
             "eye_cream": "Уход за глазами",
             "sunscreen": "Солнцезащита",
-            "mask": "Маски"
+            "mask": "Маски",
         }
         MSG_VARIANT_ADDED = "Добавлено в корзину: {brand} {name} ({variant})"
         BADGE_OOS = "Нет в наличии"
@@ -161,17 +217,22 @@ except ImportError:
 # Fix import for cart module
 try:
     from engine.cart_store import CartStore
+
     cart_service_available = True
 except ImportError:
     print("CRITICAL: Failed to import CartStore, using fallback")
     cart_service_available = False
+
     class CartStore:
         pass
+
         # Define fallback functions
         def get_cart_service():
             return None
+
         class CartServiceError(Exception):
             pass
+
 
 # Analytics import with fallback
 try:
@@ -184,22 +245,41 @@ try:
         track_oos_shown,
         track_alternatives_shown,
         track_skincare_error,
-        track_cart_event
+        track_cart_event,
     )
+
     ANALYTICS_AVAILABLE = True
 except ImportError:
     ANALYTICS_AVAILABLE = False
+
     def get_analytics_tracker():
         return None
+
     # Stub functions for fallback
-    def track_skincare_recommendations_viewed(*args, **kwargs): pass
-    def track_category_opened(*args, **kwargs): pass
-    def track_product_opened(*args, **kwargs): pass
-    def track_variant_selected(*args, **kwargs): pass
-    def track_oos_shown(*args, **kwargs): pass
-    def track_alternatives_shown(*args, **kwargs): pass
-    def track_skincare_error(*args, **kwargs): pass
-    def track_cart_event(*args, **kwargs): pass
+    def track_skincare_recommendations_viewed(*args, **kwargs):
+        pass
+
+    def track_category_opened(*args, **kwargs):
+        pass
+
+    def track_product_opened(*args, **kwargs):
+        pass
+
+    def track_variant_selected(*args, **kwargs):
+        pass
+
+    def track_oos_shown(*args, **kwargs):
+        pass
+
+    def track_alternatives_shown(*args, **kwargs):
+        pass
+
+    def track_skincare_error(*args, **kwargs):
+        pass
+
+    def track_cart_event(*args, **kwargs):
+        pass
+
 
 router = Router()
 
@@ -223,7 +303,7 @@ CATEGORY_MAPPING = {
     CAT_MOIST: CATEGORY_MOISTURIZER,
     CAT_EYE: CATEGORY_EYE_CARE,
     CAT_SPF: CATEGORY_SUN_PROTECTION,
-    CAT_MASK: CATEGORY_MASK
+    CAT_MASK: CATEGORY_MASK,
 }
 
 # Обратный маппинг для поиска товаров по категориям (теперь канонические)
@@ -234,7 +314,7 @@ CATEGORY_TO_ENGINE = {
     CAT_MOIST: "moisturizer",
     CAT_EYE: "eye_care",
     CAT_SPF: "sunscreen",
-    CAT_MASK: "mask"
+    CAT_MASK: "mask",
 }
 
 
@@ -275,7 +355,9 @@ def _resolve_product_source(product: Dict) -> Dict:
     return product
 
 
-def _get_products_by_category(user_id: int, category_slug: str, page: int = 1) -> Tuple[List[Dict], int]:
+def _get_products_by_category(
+    user_id: int, category_slug: str, page: int = 1
+) -> Tuple[List[Dict], int]:
     """Получить товары по категории с пагинацией"""
     try:
         # Нормализуем слаг к каноническому виду
@@ -284,6 +366,7 @@ def _get_products_by_category(user_id: int, category_slug: str, page: int = 1) -
 
         # Получаем сохраненный профиль пользователя
         from bot.handlers.user_profile_store import get_user_profile_store
+
         profile_store = get_user_profile_store()
         user_profile = profile_store.load_profile(user_id)
 
@@ -306,9 +389,7 @@ def _get_products_by_category(user_id: int, category_slug: str, page: int = 1) -
         # Используем SelectorV2 для получения рекомендаций
         selector = SelectorV2()
         result = selector.select_products_v2(
-            profile=user_profile,
-            catalog=catalog,
-            partner_code="S1"
+            profile=user_profile, catalog=catalog, partner_code="S1"
         )
 
         if not result:
@@ -319,7 +400,9 @@ def _get_products_by_category(user_id: int, category_slug: str, page: int = 1) -
         category_products = safe_get_skincare_data(result.get("skincare"), canonical_slug)
 
         if not category_products:
-            print(f"⚠️ No products found for canonical category '{canonical_slug}' (original: '{category_slug}')")
+            print(
+                f"⚠️ No products found for canonical category '{canonical_slug}' (original: '{category_slug}')"
+            )
             print(f"   Available categories: {list(result.get('skincare', {}).keys())}")
             return [], 0
 
@@ -349,6 +432,7 @@ def _get_products_by_category(user_id: int, category_slug: str, page: int = 1) -
     except Exception as e:
         print(f"❌ Error getting products for category {category_slug}: {e}")
         import traceback
+
         traceback.print_exc()
         return [], 0
 
@@ -373,10 +457,10 @@ async def switch_theme(message: Message) -> None:
     # await save_user_theme(user_id, new_theme)
 
     await message.answer(
-        f"🌙 Тема переключена на {theme_name}!\n\n"
-        f"Используйте команду снова для переключения.",
-        reply_markup=None
+        f"🌙 Тема переключена на {theme_name}!\n\n" f"Используйте команду снова для переключения.",
+        reply_markup=None,
     )
+
 
 @router.callback_query(F.data == "skincare_picker:start")
 async def start_skincare_picker(cb: CallbackQuery, state: FSMContext) -> None:
@@ -403,7 +487,7 @@ async def start_skincare_picker(cb: CallbackQuery, state: FSMContext) -> None:
             (CAT_CLEANSE, BTN_CLEANSE),
             (CAT_TONE, BTN_TONE),
             (CAT_SERUM, BTN_SERUM),
-            (CAT_MOIST, BTN_MOIST)
+            (CAT_MOIST, BTN_MOIST),
         ]
 
         # Добавляем специфические категории
@@ -429,21 +513,22 @@ async def start_skincare_picker(cb: CallbackQuery, state: FSMContext) -> None:
         available_categories.append((CAT_MASK, BTN_REMOVER))
 
         # A/B testing: логируем клик по кнопке с количеством категорий
-        ab_framework.log_button_click(user_id, "category_order_experiment", len(available_categories))
+        ab_framework.log_button_click(
+            user_id, "category_order_experiment", len(available_categories)
+        )
 
         # Создаем клавиатуру с категориями
         buttons = []
         for slug, name in available_categories:
-            buttons.append([InlineKeyboardButton(
-                text=name,
-                callback_data=f"c:cat:{slug}"
-            )])
+            buttons.append([InlineKeyboardButton(text=name, callback_data=f"c:cat:{slug}")])
 
         # Добавляем кнопки навигации
-        buttons.append([
-            InlineKeyboardButton(text=BTN_BACK, callback_data="back:skincare_results"),
-            InlineKeyboardButton(text="🏠 Главное меню", callback_data="universal:home")
-        ])
+        buttons.append(
+            [
+                InlineKeyboardButton(text=BTN_BACK, callback_data="back:skincare_results"),
+                InlineKeyboardButton(text="🏠 Главное меню", callback_data="universal:home"),
+            ]
+        )
 
         kb = InlineKeyboardMarkup(inline_keyboard=buttons)
 
@@ -452,7 +537,7 @@ async def start_skincare_picker(cb: CallbackQuery, state: FSMContext) -> None:
             f"{SUB_PICK}\n\n"
             f"**Ваш тип кожи:** {skin_type}\n"
             f"**Основные проблемы:** {', '.join(concerns[:3]) if concerns else 'Нет специфических проблем'}",
-            reply_markup=kb
+            reply_markup=kb,
         )
 
         await cb.answer()
@@ -498,6 +583,7 @@ async def show_category_products(cb: CallbackQuery, state: FSMContext) -> None:
             alternative_buttons = []
             try:
                 from bot.handlers.user_profile_store import get_user_profile_store
+
                 profile_store = get_user_profile_store()
                 user_profile = profile_store.load_profile(user_id)
 
@@ -509,9 +595,7 @@ async def show_category_products(cb: CallbackQuery, state: FSMContext) -> None:
 
                     selector = SelectorV2()
                     result = selector.select_products_v2(
-                        profile=user_profile,
-                        catalog=catalog,
-                        partner_code="S1"
+                        profile=user_profile, catalog=catalog, partner_code="S1"
                     )
 
                     skincare_data = result.get("skincare", {})
@@ -523,19 +607,20 @@ async def show_category_products(cb: CallbackQuery, state: FSMContext) -> None:
                             alt_canonical = canon_slug(alt_slug)
                             alt_products = safe_get_skincare_data(skincare_data, alt_canonical)
                             if alt_products:  # Только если есть товары
-                                alternative_buttons.append([
-                                    InlineKeyboardButton(
-                                        text=f"🔄 {alt_name}",
-                                        callback_data=f"c:cat:{alt_slug}"
-                                    )
-                                ])
+                                alternative_buttons.append(
+                                    [
+                                        InlineKeyboardButton(
+                                            text=f"🔄 {alt_name}", callback_data=f"c:cat:{alt_slug}"
+                                        )
+                                    ]
+                                )
             except Exception as e:
                 print(f"⚠️ Error loading alternatives: {e}")
 
             # Создаем клавиатуру
             buttons = alternative_buttons + [
                 [InlineKeyboardButton(text=BTN_BACK, callback_data="c:back:categories")],
-                [InlineKeyboardButton(text="🏠 Главное меню", callback_data="universal:home")]
+                [InlineKeyboardButton(text="🏠 Главное меню", callback_data="universal:home")],
             ]
 
             kb = InlineKeyboardMarkup(inline_keyboard=buttons)
@@ -581,49 +666,56 @@ async def show_category_products(cb: CallbackQuery, state: FSMContext) -> None:
             if in_stock:
                 if has_variants:
                     # Товар с вариантами
-                    buttons.append([
-                        InlineKeyboardButton(
-                            text=f"📦 Выбрать {i}",
-                            callback_data=f"c:prd:{product.get('id', '')}"
-                        )
-                    ])
+                    buttons.append(
+                        [
+                            InlineKeyboardButton(
+                                text=f"📦 Выбрать {i}",
+                                callback_data=f"c:prd:{product.get('id', '')}",
+                            )
+                        ]
+                    )
                 else:
                     # Товар без вариантов - сразу добавить в корзину
-                    buttons.append([
-                        InlineKeyboardButton(
-                            text=f"➕ Добавить {i}",
-                            callback_data=f"c:add:{product.get('id', '')}:default"
-                        )
-                    ])
+                    buttons.append(
+                        [
+                            InlineKeyboardButton(
+                                text=f"➕ Добавить {i}",
+                                callback_data=f"c:add:{product.get('id', '')}:default",
+                            )
+                        ]
+                    )
             else:
                 # Товар не в наличии
-                buttons.append([
-                    InlineKeyboardButton(
-                        text=f"❌ Нет в наличии {i}",
-                        callback_data=f"c:oos:{product.get('id', '')}"
-                    )
-                ])
+                buttons.append(
+                    [
+                        InlineKeyboardButton(
+                            text=f"❌ Нет в наличии {i}",
+                            callback_data=f"c:oos:{product.get('id', '')}",
+                        )
+                    ]
+                )
 
             text_lines.append("")
 
         # Навигация по страницам
         nav_buttons = []
         if page > 1:
-            nav_buttons.append(InlineKeyboardButton(
-                text=BTN_PREV,
-                callback_data=f"c:cat:{category_slug}:p{page-1}"
-            ))
+            nav_buttons.append(
+                InlineKeyboardButton(
+                    text=BTN_PREV, callback_data=f"c:cat:{category_slug}:p{page-1}"
+                )
+            )
 
-        nav_buttons.append(InlineKeyboardButton(
-            text=BTN_BACK,
-            callback_data="skincare_result:products"
-        ))
+        nav_buttons.append(
+            InlineKeyboardButton(text=BTN_BACK, callback_data="skincare_result:products")
+        )
 
         if page < total_pages:
-            nav_buttons.append(InlineKeyboardButton(
-                text=BTN_NEXT,
-                callback_data=f"c:cat:{category_slug}:p{page+1}"
-            ))
+            nav_buttons.append(
+                InlineKeyboardButton(
+                    text=BTN_NEXT, callback_data=f"c:cat:{category_slug}:p{page+1}"
+                )
+            )
 
         buttons.append(nav_buttons)
 
@@ -655,11 +747,10 @@ async def show_product_variants(cb: CallbackQuery, state: FSMContext) -> None:
 
         # Affiliate отслеживание открытия товара
         try:
-            affiliate_manager.emit_analytics('product_opened', {
-                'pid': product_id,
-                'source': 'skincare_picker',
-                'user_id': user_id
-            })
+            affiliate_manager.emit_analytics(
+                "product_opened",
+                {"pid": product_id, "source": "skincare_picker", "user_id": user_id},
+            )
         except Exception as e:
             print(f"[WARNING] Product open tracking error: {e}")
 
@@ -670,7 +761,7 @@ async def show_product_variants(cb: CallbackQuery, state: FSMContext) -> None:
         variants = [
             {"id": "variant_30ml", "name": "30 мл", "price": 2500, "in_stock": True},
             {"id": "variant_50ml", "name": "50 мл", "price": 3200, "in_stock": True},
-            {"id": "variant_100ml", "name": "100 мл", "price": 4800, "in_stock": False}
+            {"id": "variant_100ml", "name": "100 мл", "price": 4800, "in_stock": False},
         ]
 
         text_lines = ["📦 **Выберите вариант товара**\n"]
@@ -682,27 +773,29 @@ async def show_product_variants(cb: CallbackQuery, state: FSMContext) -> None:
             text_lines.append(f"{i}. {variant['name']} • {price_text}")
 
             if variant["in_stock"]:
-                buttons.append([
-                    InlineKeyboardButton(
-                        text=f"➕ Добавить {i}",
-                        callback_data=f"c:add:{product_id}:{variant['id']}"
-                    )
-                ])
+                buttons.append(
+                    [
+                        InlineKeyboardButton(
+                            text=f"➕ Добавить {i}",
+                            callback_data=f"c:add:{product_id}:{variant['id']}",
+                        )
+                    ]
+                )
             else:
                 text_lines[-1] += f" ({BADGE_OOS})"
-                buttons.append([
-                    InlineKeyboardButton(
-                        text=f"🔄 Альтернативы {i}",
-                        callback_data=f"c:alt:{product_id}:{variant['id']}"
-                    )
-                ])
+                buttons.append(
+                    [
+                        InlineKeyboardButton(
+                            text=f"🔄 Альтернативы {i}",
+                            callback_data=f"c:alt:{product_id}:{variant['id']}",
+                        )
+                    ]
+                )
 
             text_lines.append("")
 
         # Кнопка назад
-        buttons.append([
-            InlineKeyboardButton(text=BTN_BACK, callback_data="c:back:category")
-        ])
+        buttons.append([InlineKeyboardButton(text=BTN_BACK, callback_data="c:back:category")])
 
         kb = InlineKeyboardMarkup(inline_keyboard=buttons)
 
@@ -741,7 +834,7 @@ async def add_product_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
                 selector = SelectorV2()
                 products = selector.select_products(user_id, category="all", limit=100)
                 for prod in products:
-                    if str(prod.get('id', '')) == product_id:
+                    if str(prod.get("id", "")) == product_id:
                         product_data = prod
                         break
             except Exception as e:
@@ -761,16 +854,18 @@ async def add_product_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
                 product_id=product_id,
                 variant_id=variant_id,
                 qty=1,
-                ref_link=ref_link
+                ref_link=ref_link,
             )
 
             # Аналитика
-            track_cart_event("product_added_to_cart", user_id,
+            track_cart_event(
+                "product_added_to_cart",
+                user_id,
                 pid=product_id,
                 vid=variant_id or "default",
                 source=cart_item.ref_link or "unknown",
                 price=cart_item.price,
-                category=cart_item.category
+                category=cart_item.category,
             )
 
             # Affiliate отслеживание
@@ -780,28 +875,32 @@ async def add_product_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
                 if cart_item.ref_link:
                     if "goldapple" in cart_item.ref_link.lower():
                         source = "goldapple"
-                    elif "wildberries" in cart_item.ref_link.lower() or "marketplace" in cart_item.ref_link.lower():
+                    elif (
+                        "wildberries" in cart_item.ref_link.lower()
+                        or "marketplace" in cart_item.ref_link.lower()
+                    ):
                         source = "ru_marketplace"
                     elif "official" in cart_item.ref_link.lower():
                         source = "ru_official"
-                    elif "amazon" in cart_item.ref_link.lower() or "sephora" in cart_item.ref_link.lower():
+                    elif (
+                        "amazon" in cart_item.ref_link.lower()
+                        or "sephora" in cart_item.ref_link.lower()
+                    ):
                         source = "intl_authorized"
 
                 # Отслеживаем клик по checkout
                 affiliate_manager.track_checkout_click(
                     items_count=1,
                     total=float(cart_item.price) if cart_item.price else 0,
-                    currency='RUB',
+                    currency="RUB",
                     source=source,
-                    product_ids=[product_id]
+                    product_ids=[product_id],
                 )
 
                 # Отслеживаем открытие внешнего checkout
                 if cart_item.ref_link:
                     affiliate_manager.track_external_checkout_opened(
-                        partner=source.title(),
-                        url=cart_item.ref_link,
-                        items_count=1
+                        partner=source.title(), url=cart_item.ref_link, items_count=1
                     )
 
             except Exception as e:
@@ -819,7 +918,7 @@ async def add_product_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
             message = MSG_VARIANT_ADDED.format(
                 brand=cart_item.brand or "",
                 name=cart_item.name or "",
-                variant=cart_item.variant_name or "стандарт"
+                variant=cart_item.variant_name or "стандарт",
             )
 
             await cb.answer(message, show_alert=True)
@@ -832,7 +931,9 @@ async def add_product_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
             await cb.answer(MSG_ADD_FAILED)
 
             # Аналитика ошибки
-            track_skincare_error(user_id, e.code.value if hasattr(e, 'code') else "unknown", "cart_add")
+            track_skincare_error(
+                user_id, e.code.value if hasattr(e, "code") else "unknown", "cart_add"
+            )
 
     except Exception as e:
         print(f"❌ Unexpected error in add_product_to_cart: {e}")
@@ -863,7 +964,7 @@ async def show_out_of_stock_alternatives(cb: CallbackQuery, state: FSMContext) -
         alternatives = [
             {"id": "alt_1", "name": "Альтернатива 1", "brand": "Brand A", "price": 2200},
             {"id": "alt_2", "name": "Альтернатива 2", "brand": "Brand B", "price": 2400},
-            {"id": "alt_3", "name": "Альтернатива 3", "brand": "Brand C", "price": 2100}
+            {"id": "alt_3", "name": "Альтернатива 3", "brand": "Brand C", "price": 2100},
         ]
 
         text_lines = [f"🔄 **Альтернативы для товара**\n"]
@@ -873,18 +974,17 @@ async def show_out_of_stock_alternatives(cb: CallbackQuery, state: FSMContext) -
             price_text = _format_price({"price": alt["price"], "currency": "RUB"})
             text_lines.append(f"{i}. {alt['brand']} {alt['name']} • {price_text}")
 
-            buttons.append([
-                InlineKeyboardButton(
-                    text=f"➕ Добавить {i}",
-                    callback_data=f"c:add:{alt['id']}:default"
-                )
-            ])
+            buttons.append(
+                [
+                    InlineKeyboardButton(
+                        text=f"➕ Добавить {i}", callback_data=f"c:add:{alt['id']}:default"
+                    )
+                ]
+            )
 
             text_lines.append("")
 
-        buttons.append([
-            InlineKeyboardButton(text=BTN_BACK, callback_data="c:back:category")
-        ])
+        buttons.append([InlineKeyboardButton(text=BTN_BACK, callback_data="c:back:category")])
 
         kb = InlineKeyboardMarkup(inline_keyboard=buttons)
 
@@ -917,6 +1017,7 @@ async def get_user_profile(user_id: int):
     """Получить профиль пользователя"""
     try:
         from bot.handlers.user_profile_store import get_user_profile_store
+
         store = get_user_profile_store()
         return await store.get_profile(user_id)
     except Exception as e:
@@ -936,11 +1037,23 @@ async def get_skincare_recommendations(user_id: int, profile):
             # Фолбэк с тестовыми данными
             return {
                 "cleanser": [
-                    {"id": "test_cleanser", "brand": "Test Brand", "name": "Test Cleanser", "price": 1500, "currency": "RUB"}
+                    {
+                        "id": "test_cleanser",
+                        "brand": "Test Brand",
+                        "name": "Test Cleanser",
+                        "price": 1500,
+                        "currency": "RUB",
+                    }
                 ],
                 "toner": [
-                    {"id": "test_toner", "brand": "Test Brand", "name": "Test Toner", "price": 1200, "currency": "RUB"}
-                ]
+                    {
+                        "id": "test_toner",
+                        "brand": "Test Brand",
+                        "name": "Test Toner",
+                        "price": 1200,
+                        "currency": "RUB",
+                    }
+                ],
             }
     except Exception as e:
         print(f"❌ Error getting skincare recommendations: {e}")
@@ -982,20 +1095,23 @@ async def skincare_show_all(cb: CallbackQuery) -> None:
                     text_lines.append(f"• {product['brand']} {product['name']} • {price_text}")
 
                     # Добавляем кнопку для каждого товара
-                    buttons.append([
-                        InlineKeyboardButton(
-                            text=f"➕ Добавить",
-                            callback_data=f"c:add:{product['id']}:default"
-                        )
-                    ])
+                    buttons.append(
+                        [
+                            InlineKeyboardButton(
+                                text=f"➕ Добавить", callback_data=f"c:add:{product['id']}:default"
+                            )
+                        ]
+                    )
 
         text_lines.append(f"\n📊 Всего товаров: {total_products}")
 
         # Добавляем кнопки навигации
-        buttons.append([
-            InlineKeyboardButton(text="🏠 Главное меню", callback_data="back:main"),
-            InlineKeyboardButton(text="🔄 Обновить", callback_data="skincare:show_all")
-        ])
+        buttons.append(
+            [
+                InlineKeyboardButton(text="🏠 Главное меню", callback_data="back:main"),
+                InlineKeyboardButton(text="🔄 Обновить", callback_data="skincare:show_all"),
+            ]
+        )
 
         kb = InlineKeyboardMarkup(inline_keyboard=buttons)
         await cb.message.edit_text("\n".join(text_lines), reply_markup=kb, parse_mode="Markdown")

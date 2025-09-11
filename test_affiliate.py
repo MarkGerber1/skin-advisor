@@ -5,7 +5,8 @@
 
 import sys
 import os
-sys.path.append('.')
+
+sys.path.append(".")
 
 try:
     from engine.affiliate_validator import AffiliateManager, test_affiliate_manager
@@ -23,4 +24,3 @@ except ImportError as e:
     print(f"❌ Ошибка импорта: {e}")
 except Exception as e:
     print(f"❌ Ошибка выполнения: {e}")
-

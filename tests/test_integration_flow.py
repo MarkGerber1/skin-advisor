@@ -24,6 +24,7 @@ class TestIntegrationFlow:
     def teardown_method(self):
         """Очистка после каждого теста"""
         import shutil
+
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def test_full_cart_workflow(self):
@@ -34,7 +35,7 @@ class TestIntegrationFlow:
         products = [
             CartItem(product_id="cleanser1", qty=1, price=500.0, brand="CeraVe"),
             CartItem(product_id="toner1", qty=2, price=800.0, brand="Klairs"),
-            CartItem(product_id="serum1", qty=1, price=1500.0, brand="The Ordinary")
+            CartItem(product_id="serum1", qty=1, price=1500.0, brand="The Ordinary"),
         ]
 
         for product in products:
@@ -67,7 +68,7 @@ class TestIntegrationFlow:
         product_goldapple = {
             "id": "test_goldapple",
             "link": "https://goldapple.ru/product123",
-            "brand": "Test Brand"
+            "brand": "Test Brand",
         }
 
         link = self.affiliate_service.build_ref_link(product_goldapple)
@@ -78,7 +79,7 @@ class TestIntegrationFlow:
         product_wb = {
             "id": "test_wb",
             "link": "https://wildberries.ru/product456",
-            "brand": "Test Brand"
+            "brand": "Test Brand",
         }
 
         link = self.affiliate_service.build_ref_link(product_wb)
@@ -91,7 +92,7 @@ class TestIntegrationFlow:
             "skincare": {
                 "cleanser": [{"id": "clean1", "brand": "CeraVe"}],
                 "toner": [{"id": "toner1", "brand": "Klairs"}],
-                "очищающее средство": [{"id": "clean2", "brand": "Bioderma"}]
+                "очищающее средство": [{"id": "clean2", "brand": "Bioderma"}],
             }
         }
 
@@ -142,7 +143,7 @@ class TestIntegrationFlow:
             qty=1,
             price=1000.0,
             brand="Test Brand",
-            ref_link="https://example.com/product?partner=test"
+            ref_link="https://example.com/product?partner=test",
         )
 
         self.cart_store.add(user_id, product)

@@ -8,6 +8,7 @@ def test_render_import():
     """Тест импорта render модуля без SyntaxError"""
     try:
         from bot.ui.render import render_skincare_report, render_makeup_report
+
         print("✅ render.py syntax OK, imports successful")
         assert True
     except SyntaxError as e:
@@ -71,7 +72,7 @@ def test_render_skincare_with_data():
                         "currency": "RUB",
                         "link": "https://example.com/product/1",
                         "ref_link": "https://affiliate.example.com/product/1",
-                        "category": "Очищение"
+                        "category": "Очищение",
                     }
                 ]
             }
@@ -106,7 +107,7 @@ def test_render_makeup_with_data():
                         "currency": "RUB",
                         "link": "https://example.com/foundation/1",
                         "ref_link": "https://affiliate.example.com/foundation/1",
-                        "category": "Тональный крем"
+                        "category": "Тональный крем",
                     }
                 ]
             }

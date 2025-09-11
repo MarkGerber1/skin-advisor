@@ -70,19 +70,20 @@ class ClimateProfile(BaseModel):
 
 class UserProfile(BaseModel):
     """Engine v2 User Profile with extended schemas"""
+
     # Basic info
     user_id: int
     name: Optional[str] = None
     age: Optional[int] = Field(None, ge=0, le=120)
     sex: Optional[Sex] = None
     pregnant_or_lactating: Optional[bool] = None
-    
+
     # Sensitivity & Allergies
     sensitivity: Optional[Sensitivity] = None
     allergies: List[str] = Field(default_factory=list)  # fragrance, alcohol_denat, e.oils
-    triggers: List[str] = Field(default_factory=list)   # heat, sweat, stress
+    triggers: List[str] = Field(default_factory=list)  # heat, sweat, stress
     climate_profile: Optional[ClimateProfile] = None
-    
+
     # Skin (Fitzpatrick + Baumann + Traditional)
     fitzpatrick: Optional[Fitzpatrick] = None
     baumann: Optional[str] = Field(None, pattern=r"^[OD][SR][PN][WT]$")  # 16 types
@@ -90,7 +91,7 @@ class UserProfile(BaseModel):
     dehydrated: Optional[bool] = None
     concerns: List[str] = Field(default_factory=list)  # blackheads, acne, pigmentation, etc.
     uses_retinoids: Optional[bool] = None
-    
+
     # Color Palette
     undertone: Optional[Undertone] = Undertone.UNKNOWN
     season: Optional[Season] = None
@@ -103,25 +104,26 @@ class UserProfile(BaseModel):
 
 class Product(BaseModel):
     """Engine v2 Product with extended properties"""
+
     # Core identification
     key: str = Field(..., alias="id")  # Backward compatibility
     title: str = Field(..., alias="name")  # Backward compatibility
     brand: str
     category: str  # DecorCategory | CareCategory
     subcategory: Optional[str] = None
-    
+
     # Pricing & Availability
     price: Optional[float] = Field(None, ge=0)
     display_price: Optional[str] = None
     in_stock: bool = False
     buy_url: Optional[str] = None
     source: Optional[Literal["gp", "gp_like", "wb", "ozon"]] = None
-    
+
     # Visual & Meta
     image_url: Optional[str] = None
     tags: List[str] = Field(default_factory=list)
     allergenic_flags: List[str] = Field(default_factory=list)
-    
+
     # Formula & Properties
     actives: List[str] = Field(default_factory=list)
     ph_range: Optional[str] = None
@@ -130,12 +132,12 @@ class Product(BaseModel):
     spf: Optional[int] = None
     volume_ml: Optional[float] = None
     weight_g: Optional[float] = None
-    
+
     # Color properties (for makeup)
     shade_name: Optional[str] = None
     undertone_match: Optional[Undertone] = None
     coverage: Optional[Literal["light", "medium", "full"]] = None
-    
+
     # Legacy compatibility
     id: Optional[str] = Field(None, alias="key")
     name: Optional[str] = Field(None, alias="title")
@@ -144,6 +146,7 @@ class Product(BaseModel):
 
 class CartItem(BaseModel):
     """Shopping cart item"""
+
     product_key: str
     quantity: int = 1
     added_at: Optional[str] = None
@@ -151,6 +154,7 @@ class CartItem(BaseModel):
 
 class RoutineStep(BaseModel):
     """Single step in skincare routine"""
+
     order: int
     product_key: str
     instructions: Optional[str] = None
@@ -159,6 +163,7 @@ class RoutineStep(BaseModel):
 
 class Routine(BaseModel):
     """Complete skincare routine"""
+
     name: str
     type: Literal["AM", "PM", "weekly", "SOS"]
     steps: List[RoutineStep] = Field(default_factory=list)
@@ -167,6 +172,7 @@ class Routine(BaseModel):
 
 class ReportData(BaseModel):
     """Data for PDF report generation"""
+
     user_profile: UserProfile
     skincare_products: List[Product] = Field(default_factory=list)
     makeup_products: List[Product] = Field(default_factory=list)

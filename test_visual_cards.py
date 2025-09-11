@@ -14,12 +14,14 @@ print("=" * 50)
 # Проверка зависимостей
 try:
     from PIL import Image, ImageDraw, ImageFont
+
     print("✅ Pillow: Available")
 except ImportError as e:
     print(f"❌ Pillow: Not available - {e}")
 
 try:
     import cairosvg
+
     print("✅ CairoSVG: Available")
 except ImportError as e:
     print(f"❌ CairoSVG: Not available - {e}")
@@ -33,16 +35,13 @@ try:
 
     # Создаем тестовый профиль
     test_profile = UserProfile(
-        user_id=12345,
-        season=Season.SPRING,
-        undertone=Undertone.WARM,
-        age=25
+        user_id=12345, season=Season.SPRING, undertone=Undertone.WARM, age=25
     )
 
     test_result = {
-        'skin_type': 'Комбинированная',
-        'concerns': ['шелушение', 'расширенные поры'],
-        'sensitivity': 'нормальная'
+        "skin_type": "Комбинированная",
+        "concerns": ["шелушение", "расширенные поры"],
+        "sensitivity": "нормальная",
     }
 
     # Генерируем карточку
@@ -54,12 +53,12 @@ try:
     print(f"   PNG: {result.get('png', 'N/A')}")
 
     # Проверяем файлы
-    if result.get('svg') and os.path.exists(result['svg']):
+    if result.get("svg") and os.path.exists(result["svg"]):
         print("   ✅ SVG file created")
     else:
         print("   ❌ SVG file not created")
 
-    if result.get('png') and os.path.exists(result['png']):
+    if result.get("png") and os.path.exists(result["png"]):
         print("   ✅ PNG file created")
     else:
         print("   ❌ PNG file not created (CairoSVG may not be available)")
@@ -69,13 +68,10 @@ try:
 except Exception as e:
     print(f"❌ Error during card generation: {e}")
     import traceback
+
     traceback.print_exc()
 
 print("\n📋 Recommendations:")
 print("- Install Pillow: pip install Pillow")
 print("- Install CairoSVG: pip install CairoSVG")
 print("- For production: ensure both libraries are available")
-
-
-
-

@@ -13,8 +13,24 @@ class TestCartIntegration:
         store = CartStore()
 
         # Добавляем товары
-        store.add_item(123, "product-1", quantity=1, brand="Brand1", name="Product 1", price=100.0, currency="RUB")
-        store.add_item(123, "product-2", quantity=2, brand="Brand2", name="Product 2", price=200.0, currency="RUB")
+        store.add_item(
+            123,
+            "product-1",
+            quantity=1,
+            brand="Brand1",
+            name="Product 1",
+            price=100.0,
+            currency="RUB",
+        )
+        store.add_item(
+            123,
+            "product-2",
+            quantity=2,
+            brand="Brand2",
+            name="Product 2",
+            price=200.0,
+            currency="RUB",
+        )
 
         # Проверяем корзину
         cart = store.get_cart(123)
@@ -44,7 +60,15 @@ class TestCartIntegration:
         assert product2.quantity == 1
 
         # Добавляем еще один товар того же типа
-        store.add_item(123, "product-1", quantity=2, brand="Brand1", name="Product 1", price=100.0, currency="RUB")
+        store.add_item(
+            123,
+            "product-1",
+            quantity=2,
+            brand="Brand1",
+            name="Product 1",
+            price=100.0,
+            currency="RUB",
+        )
         cart = store.get_cart(123)
         product1 = next(item for item in cart if item.product_id == "product-1")
         assert product1.quantity == 5  # 3 + 2 = 5
@@ -59,8 +83,26 @@ class TestCartIntegration:
         store = CartStore()
 
         # Добавляем разные варианты одного товара
-        store.add_item(123, "product-1", variant_id="red", quantity=1, brand="Brand1", name="Product 1 Red", price=100.0, currency="RUB")
-        store.add_item(123, "product-1", variant_id="blue", quantity=2, brand="Brand1", name="Product 1 Blue", price=100.0, currency="RUB")
+        store.add_item(
+            123,
+            "product-1",
+            variant_id="red",
+            quantity=1,
+            brand="Brand1",
+            name="Product 1 Red",
+            price=100.0,
+            currency="RUB",
+        )
+        store.add_item(
+            123,
+            "product-1",
+            variant_id="blue",
+            quantity=2,
+            brand="Brand1",
+            name="Product 1 Blue",
+            price=100.0,
+            currency="RUB",
+        )
 
         cart = store.get_cart(123)
         assert len(cart) == 2
@@ -73,7 +115,16 @@ class TestCartIntegration:
         assert blue_variant.quantity == 2
 
         # Добавляем еще к красному варианту
-        store.add_item(123, "product-1", variant_id="red", quantity=3, brand="Brand1", name="Product 1 Red", price=100.0, currency="RUB")
+        store.add_item(
+            123,
+            "product-1",
+            variant_id="red",
+            quantity=3,
+            brand="Brand1",
+            name="Product 1 Red",
+            price=100.0,
+            currency="RUB",
+        )
         cart = store.get_cart(123)
         red_variant = next(item for item in cart if item.variant_id == "red")
         assert red_variant.quantity == 4  # 1 + 3 = 4
@@ -83,8 +134,24 @@ class TestCartIntegration:
         store = CartStore()
 
         # Добавляем товары
-        store.add_item(123, "product-1", quantity=2, brand="Brand1", name="Product 1", price=100.0, currency="RUB")
-        store.add_item(123, "product-2", quantity=1, brand="Brand2", name="Product 2", price=200.0, currency="RUB")
+        store.add_item(
+            123,
+            "product-1",
+            quantity=2,
+            brand="Brand1",
+            name="Product 1",
+            price=100.0,
+            currency="RUB",
+        )
+        store.add_item(
+            123,
+            "product-2",
+            quantity=1,
+            brand="Brand2",
+            name="Product 2",
+            price=200.0,
+            currency="RUB",
+        )
 
         # Проверяем сохранение
         cart1 = store.get_cart(123)
@@ -106,7 +173,15 @@ class TestCartIntegration:
         store = CartStore()
 
         # Добавляем товар
-        store.add_item(123, "product-1", quantity=1, brand="Brand1", name="Product 1", price=100.0, currency="RUB")
+        store.add_item(
+            123,
+            "product-1",
+            quantity=1,
+            brand="Brand1",
+            name="Product 1",
+            price=100.0,
+            currency="RUB",
+        )
 
         # Множественные обновления количества
         for _ in range(3):
@@ -125,7 +200,9 @@ class TestCartIntegration:
         assert result is None  # Должно вернуть None для несуществующего товара
 
         # Попытка добавить товар с некорректными данными
-        store.add_item(123, "", quantity=1, brand="Brand1", name="Product 1", price=100.0, currency="RUB")
+        store.add_item(
+            123, "", quantity=1, brand="Brand1", name="Product 1", price=100.0, currency="RUB"
+        )
         cart = store.get_cart(123)
         # Товар с пустым ID не должен добавиться
         assert len(cart) == 0
@@ -135,8 +212,24 @@ class TestCartIntegration:
         store = CartStore()
 
         # Добавляем товары с разными валютами
-        store.add_item(123, "product-1", quantity=1, brand="Brand1", name="Product 1", price=100.0, currency="RUB")
-        store.add_item(123, "product-2", quantity=1, brand="Brand2", name="Product 2", price=50.0, currency="USD")
+        store.add_item(
+            123,
+            "product-1",
+            quantity=1,
+            brand="Brand1",
+            name="Product 1",
+            price=100.0,
+            currency="RUB",
+        )
+        store.add_item(
+            123,
+            "product-2",
+            quantity=1,
+            brand="Brand2",
+            name="Product 2",
+            price=50.0,
+            currency="USD",
+        )
 
         cart = store.get_cart(123)
         assert len(cart) == 2

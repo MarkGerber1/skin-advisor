@@ -10,9 +10,11 @@ from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass, asdict
 from pathlib import Path
 
+
 @dataclass
 class CartItem:
     """Элемент корзины"""
+
     product_id: str
     variant_id: Optional[str] = None
     quantity: int = 1
@@ -32,6 +34,7 @@ class CartItem:
         """Уникальный ключ товара в корзине"""
         return f"{self.product_id}:{self.variant_id or 'default'}"
 
+
 class CartStore:
     """Единое хранилище корзин"""
 
@@ -46,7 +49,7 @@ class CartStore:
         return cls._instance
 
     def __init__(self):
-        if hasattr(self, '_initialized'):
+        if hasattr(self, "_initialized"):
             return
 
         self._initialized = True
@@ -66,9 +69,9 @@ class CartStore:
             return []
 
         try:
-            with open(cart_file, 'r', encoding='utf-8') as f:
+            with open(cart_file, "r", encoding="utf-8") as f:
                 data = json.load(f)
-                return [CartItem(**item) for item in data.get('items', [])]
+                return [CartItem(**item) for item in data.get("items", [])]
         except Exception as e:
             print(f"Error loading cart for user {user_id}: {e}")
             return []
@@ -77,8 +80,8 @@ class CartStore:
         """Сохранить корзину пользователя"""
         cart_file = self._get_cart_file(user_id)
         try:
-            data = {'user_id': user_id, 'items': [asdict(item) for item in items]}
-            with open(cart_file, 'w', encoding='utf-8') as f:
+            data = {"user_id": user_id, "items": [asdict(item) for item in items]}
+            with open(cart_file, "w", encoding="utf-8") as f:
                 json.dump(data, f, ensure_ascii=False, indent=2)
         except Exception as e:
             print(f"Error saving cart for user {user_id}: {e}")
@@ -90,7 +93,7 @@ class CartStore:
 
         for cart_file in self.data_dir.glob("cart_*.json"):
             try:
-                user_id = int(cart_file.stem.split('_')[1])
+                user_id = int(cart_file.stem.split("_")[1])
                 self._carts[user_id] = self._load_cart(user_id)
             except Exception as e:
                 print(f"Error loading cart file {cart_file}: {e}")
@@ -101,8 +104,14 @@ class CartStore:
             self._carts[user_id] = self._load_cart(user_id)
         return self._carts[user_id]
 
-    def add_item(self, user_id: int, product_id: str, variant_id: Optional[str] = None,
-                 quantity: int = 1, **kwargs) -> CartItem:
+    def add_item(
+        self,
+        user_id: int,
+        product_id: str,
+        variant_id: Optional[str] = None,
+        quantity: int = 1,
+        **kwargs,
+    ) -> CartItem:
         """Добавить товар в корзину"""
         cart = self.get_cart(user_id)
 
@@ -120,18 +129,16 @@ class CartStore:
         else:
             # Создать новый элемент
             item = CartItem(
-                product_id=product_id,
-                variant_id=variant_id,
-                quantity=quantity,
-                **kwargs
+                product_id=product_id, variant_id=variant_id, quantity=quantity, **kwargs
             )
             cart.append(item)
 
         self._save_cart(user_id, cart)
         return item
 
-    def update_quantity(self, user_id: int, product_id: str, variant_id: Optional[str],
-                       new_quantity: int) -> bool:
+    def update_quantity(
+        self, user_id: int, product_id: str, variant_id: Optional[str], new_quantity: int
+    ) -> bool:
         """Обновить количество товара"""
         cart = self.get_cart(user_id)
 
@@ -158,7 +165,9 @@ class CartStore:
 
         return False
 
-    def inc_quantity(self, user_id: int, product_id: str, variant_id: Optional[str], max_qty: int = 10) -> Tuple[bool, int]:
+    def inc_quantity(
+        self, user_id: int, product_id: str, variant_id: Optional[str], max_qty: int = 10
+    ) -> Tuple[bool, int]:
         """Увеличить количество товара на 1 (с ограничением)"""
         cart = self.get_cart(user_id)
 
@@ -173,7 +182,9 @@ class CartStore:
 
         return False, 0  # Товар не найден
 
-    def dec_quantity(self, user_id: int, product_id: str, variant_id: Optional[str]) -> Tuple[bool, int]:
+    def dec_quantity(
+        self, user_id: int, product_id: str, variant_id: Optional[str]
+    ) -> Tuple[bool, int]:
         """Уменьшить количество товара на 1 (удаляет при qty=1)"""
         cart = self.get_cart(user_id)
 
@@ -232,16 +243,17 @@ class CartStore:
         total_quantity, total_price = self.get_cart_total(user_id)
 
         return {
-            'user_id': user_id,
-            'items_count': len(cart),
-            'total_quantity': total_quantity,
-            'total_price': total_price,
-            'items': [asdict(item) for item in cart]
+            "user_id": user_id,
+            "items_count": len(cart),
+            "total_quantity": total_quantity,
+            "total_price": total_price,
+            "items": [asdict(item) for item in cart],
         }
 
 
 # Глобальный экземпляр
 _cart_store_instance = None
+
 
 def get_cart_store() -> CartStore:
     """Получить глобальный экземпляр CartStore"""
@@ -249,4 +261,3 @@ def get_cart_store() -> CartStore:
     if _cart_store_instance is None:
         _cart_store_instance = CartStore()
     return _cart_store_instance
-

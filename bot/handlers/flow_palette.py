@@ -14,7 +14,7 @@ from engine.selector import select_products, SelectorV2
 from engine.answer_expander import AnswerExpanderV2
 
 try:
-    from bot.ui.pdf import save_text_pdf, save_last_json # type: ignore
+    from bot.ui.pdf import save_text_pdf, save_last_json  # type: ignore
 except ImportError as e:
     print(f"Warning: Could not import pdf module: {e}")
 
@@ -32,7 +32,7 @@ def _determine_season(data: dict) -> Season:
     """Determine season based on palette data"""
     undertone = data.get("undertone", "unknown")
     value = data.get("value", "medium")
-    
+
     # Simple season determination logic
     if undertone == "warm":
         if value in ["light", "medium"]:
@@ -351,7 +351,7 @@ async def a7(cb: CallbackQuery, state: FSMContext) -> None:
 
         d = await state.get_data()
         uid = int(cb.from_user.id) if cb.from_user and cb.from_user.id else 1
-        
+
         # Create Engine v2 UserProfile with color analysis
         profile = UserProfile(
             user_id=uid,
@@ -359,19 +359,19 @@ async def a7(cb: CallbackQuery, state: FSMContext) -> None:
             season=_determine_season(d),
             contrast=d.get("contrast"),
             hair_color=d.get("hair_depth"),
-            eye_color=d.get("eye_color")
+            eye_color=d.get("eye_color"),
         )
 
         catalog_path = os.getenv("CATALOG_PATH", "assets/fixed_catalog.yaml")
         catalog = CatalogStore.instance(catalog_path).get()
-        
+
         # Use Engine v2 Selector for makeup
         selector = SelectorV2()
         result = selector.select_products_v2(
             profile=profile,
             catalog=catalog,
             partner_code=os.getenv("PARTNER_CODE", "aff_123"),
-            redirect_base=os.getenv("REDIRECT_BASE")
+            redirect_base=os.getenv("REDIRECT_BASE"),
         )
 
         # Extract makeup products for ReportData
@@ -379,6 +379,7 @@ async def a7(cb: CallbackQuery, state: FSMContext) -> None:
         for category_products in result.get("makeup", {}).values():
             for prod_dict in category_products:
                 from engine.models import Product
+
                 product = Product(
                     key=prod_dict["id"],
                     title=prod_dict["name"],
@@ -387,28 +388,30 @@ async def a7(cb: CallbackQuery, state: FSMContext) -> None:
                     price=prod_dict.get("price"),
                     actives=prod_dict.get("actives", []),
                     tags=prod_dict.get("tags", []),
-                    buy_url=prod_dict.get("link")
+                    buy_url=prod_dict.get("link"),
                 )
                 makeup_products.append(product)
 
         # Generate Engine v2 reports
         report_data = ReportData(
-            user_profile=profile,
-            skincare_products=[],
-            makeup_products=makeup_products
+            user_profile=profile, skincare_products=[], makeup_products=makeup_products
         )
-        
+
         expander = AnswerExpanderV2()
         tldr_report = expander.generate_tldr_report(report_data)
         full_report = expander.generate_full_report(report_data)
 
         from bot.ui.render import render_makeup_report
+
         text, kb = render_makeup_report(result)
 
         # Сохраняем профиль пользователя для будущих рекомендаций
         from bot.handlers.user_profile_store import get_user_profile_store
+
         profile_store = get_user_profile_store()
-        profile_store.save_profile(uid, profile, metadata={"test_type": "palette", "completed_at": "now"})
+        profile_store.save_profile(
+            uid, profile, metadata={"test_type": "palette", "completed_at": "now"}
+        )
         print(f"💾 Profile saved for user {uid} after palette test completion")
 
         enriched = {"tl_dr": tldr_report, "full_text": full_report}
