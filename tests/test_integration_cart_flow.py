@@ -35,34 +35,6 @@ class TestCartFlowIntegration:
         """Тест полного потока: рекомендации → добавление → управление корзиной"""
 
         # 1. Симулируем рекомендации от селектора с приоритизацией источников
-        mock_recommendations = [
-            {
-                "id": "lipstick-mac-001",
-                "brand": "MAC",
-                "name": "Ruby Woo",
-                "category": "lipstick",
-                "price": 2500.0,
-                "price_currency": "₽",
-                "link": "https://goldapple.ru/mac-ruby-woo",
-                "ref_link": "https://goldapple.ru/mac-ruby-woo?ref=S1",
-                "source_priority": 1,
-                "source_name": "Золотое Яблоко",
-                "source_category": "golden_apple",
-            },
-            {
-                "id": "foundation-fenty-001",
-                "brand": "Fenty Beauty",
-                "name": "Pro Filt'r Foundation",
-                "category": "foundation",
-                "price": 3200.0,
-                "price_currency": "₽",
-                "link": "https://sephora.ru/fenty-foundation",
-                "ref_link": "https://sephora.ru/fenty-foundation?ref=S1",
-                "source_priority": 2,
-                "source_name": "Sephora Russia",
-                "source_category": "ru_official",
-            },
-        ]
 
         # 2. Добавляем товары в корзину (имитируем user action)
         lipstick_item = CartItem(

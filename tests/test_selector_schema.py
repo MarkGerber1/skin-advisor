@@ -29,7 +29,7 @@ class TestCanonSlug:
         """Тест неизвестных слагов"""
         assert canon_slug("unknown_category") == "unknown_category"
         assert canon_slug("") == ""
-        assert canon_slug(None) == None
+        assert canon_slug(None) is None
 
 
 class TestSafeGetSkincareData:

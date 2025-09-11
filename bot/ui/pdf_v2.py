@@ -735,7 +735,7 @@ if __name__ == "__main__":
                 try:
                     # Получаем размеры страницы
                     page_width = pdf.w - self.margin_left - self.margin_right
-                    page_height = pdf.h - self.margin_top - 50
+                    pdf.h - self.margin_top - 50
 
                     # Вычисляем размеры изображения (подгоняем под страницу)
                     img_width = min(page_width, 150)  # Максимум 150mm шириной

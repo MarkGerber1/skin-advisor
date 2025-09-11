@@ -177,7 +177,6 @@ class SourceResolver:
             product_category = product.get("category", "").lower()
             product_id = product.get("id", "")
 
-            alternatives = []
             best_alternative = None
             best_priority = 999
 

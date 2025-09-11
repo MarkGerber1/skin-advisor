@@ -60,7 +60,7 @@ def _add_to_cart_button(item: Dict) -> InlineKeyboardButton | None:
     # Design System: Краткий и понятный текст кнопки
     brand = item.get("brand", "").strip()
     name = item.get("name", "").strip()
-    price = item.get("price", "")
+    item.get("price", "")
 
     # Короткий текст для мобильных устройств
     if brand and name:

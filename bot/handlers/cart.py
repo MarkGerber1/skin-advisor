@@ -531,8 +531,6 @@ async def show_cart_callback(cb: CallbackQuery, state: FSMContext) -> None:
     text = "\n".join(lines)
 
     # Проверяем, изменилось ли сообщение, чтобы избежать "message is not modified"
-    current_text = cb.message.text or ""
-    current_markup = cb.message.reply_markup
 
     # Используем safe_edit_text для безопасного редактирования
     await safe_edit_text(cb, text, kb)

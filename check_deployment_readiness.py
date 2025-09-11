@@ -133,7 +133,6 @@ def check_env_variables():
     print("\n🔧 Проверка переменных окружения:")
 
     critical_vars = ["BOT_TOKEN"]
-    optional_vars = ["USE_WEBHOOK", "WEBHOOK_BASE", "LOG_LEVEL", "CATALOG_PATH"]
 
     # Проверим .env файл
     env_files = [".env", "env.example", ".env.local.example"]
@@ -223,7 +222,6 @@ def main():
 
     all_passed = True
     for check_name, result in results:
-        status = "✅ ПРОЙДЕНА" if result else "❌ ПРОВАЛЕНА"
         print("30")
         if not result:
             all_passed = False

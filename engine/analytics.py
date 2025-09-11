@@ -487,8 +487,8 @@ def track_recommendations_viewed(
 
 def track_cart_event(event_type: str, user_id: int, **kwargs) -> None:
     """Отследить событие корзины"""
-    tracker = get_analytics_tracker()
-    method_name = event_type.replace("cart_", "").replace("product_added_to_", "product_added_to_")
+    get_analytics_tracker()
+    event_type.replace("cart_", "").replace("product_added_to_", "product_added_to_")
 
 
 # События инлайн-потока подбора ухода

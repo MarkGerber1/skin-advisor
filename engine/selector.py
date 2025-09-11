@@ -320,7 +320,7 @@ class SelectorV2:
 
         filtered_products = []
         season_colors = self._get_season_colors(profile.season) if profile.season else []
-        season_finishes = self._get_season_finishes(profile.season) if profile.season else []
+        self._get_season_finishes(profile.season) if profile.season else []
 
         for product in products:
             score = 0

@@ -440,16 +440,13 @@ def _get_products_by_category(
 @router.message(F.text == "/theme")
 async def switch_theme(message: Message) -> None:
     """Переключатель тем (светлая/темная)"""
-    user_id = message.from_user.id if message.from_user else 0
 
     # Имитируем переключение темы (в реальности нужно хранить в БД)
     current_theme = "light"  # В реальности брать из user preferences
 
     if current_theme == "light":
-        new_theme = "dark"
         theme_name = "темную"
     else:
-        new_theme = "light"
         theme_name = "светлую"
 
     # Сохранить новую тему для пользователя (в будущем)
@@ -912,8 +909,7 @@ async def add_product_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
                 print(f"[WARNING] A/B tracking error: {e}")
 
             # Формируем сообщение об успехе
-            variant_text = f" ({cart_item.variant_name})" if cart_item.variant_name else ""
-            item_name = f"{cart_item.brand or ''} {cart_item.name or ''}".strip()
+            f"{cart_item.brand or ''} {cart_item.name or ''}".strip()
             message = MSG_VARIANT_ADDED.format(
                 brand=cart_item.brand or "",
                 name=cart_item.name or "",

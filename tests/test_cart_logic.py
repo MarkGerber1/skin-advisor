@@ -144,11 +144,6 @@ class TestSourcePrioritization:
 
     def test_golden_apple_priority(self):
         """Золотое Яблоко должно иметь наивысший приоритет"""
-        sources = [
-            {"domain": "sephora.com", "ref_link": "https://sephora.com/product/123"},
-            {"domain": "goldenappletree.ru", "ref_link": "https://goldenappletree.ru/product/123"},
-            {"domain": "wildberries.ru", "ref_link": "https://wildberries.ru/catalog/123"},
-        ]
 
         # TODO: Реализовать SourcePrioritizer
         # prioritizer = SourcePrioritizer()
@@ -160,11 +155,6 @@ class TestSourcePrioritization:
 
     def test_russian_official_priority(self):
         """Российские официальные должны быть выше маркетплейсов"""
-        sources = [
-            {"domain": "wildberries.ru", "ref_link": "https://wildberries.ru/catalog/123"},
-            {"domain": "sephora.ru", "ref_link": "https://sephora.ru/product/123"},
-            {"domain": "ozon.ru", "ref_link": "https://ozon.ru/product/123"},
-        ]
 
         # TODO: Реализовать приоритизацию
         pytest.skip("SourcePrioritizer not implemented yet")

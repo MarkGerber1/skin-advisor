@@ -575,7 +575,7 @@ async def q8_lip_color(cb: CallbackQuery, state: FSMContext) -> None:
                 "autumn": "Осень 🍂",
                 "winter": "Зима ❄️",
             }
-            fallback_text = (
+            (
                 f"🎨 **Ваш цветотип определён!**\n\n"
                 f"**Тип:** {season_names.get(season, season)}\n"
                 f"**Подтон:** {undertone}\n\n"
@@ -589,7 +589,7 @@ async def q8_lip_color(cb: CallbackQuery, state: FSMContext) -> None:
 
             from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
-            kb = InlineKeyboardMarkup(
+            InlineKeyboardMarkup(
                 inline_keyboard=[
                     [
                         InlineKeyboardButton(
@@ -609,7 +609,6 @@ async def q8_lip_color(cb: CallbackQuery, state: FSMContext) -> None:
                     [InlineKeyboardButton(text="🛒 Корзина", callback_data="show_cart")],
                 ]
             )
-            text = fallback_text
 
         # Сохраняем результат для пользователя
         if uid:

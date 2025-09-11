@@ -38,8 +38,8 @@ async def test_palette_flow_smoke():
             patch("bot.handlers.detailed_palette.UserProfile") as mock_user_profile,
             patch("bot.handlers.detailed_palette.SelectorV2") as mock_selector,
             patch("bot.handlers.detailed_palette.AnswerExpanderV2") as mock_expander,
-            patch("bot.handlers.detailed_palette.save_last_json") as mock_save_json,
-            patch("bot.handlers.detailed_palette.save_text_pdf") as mock_save_pdf,
+            patch("bot.handlers.detailed_palette.save_last_json"),
+            patch("bot.handlers.detailed_palette.save_text_pdf"),
             patch("bot.ui.render.render_makeup_report") as mock_render,
         ):
 
@@ -108,8 +108,8 @@ async def test_skincare_flow_smoke():
             patch("bot.handlers.detailed_skincare.UserProfile") as mock_user_profile,
             patch("bot.handlers.detailed_skincare.SelectorV2") as mock_selector,
             patch("bot.handlers.detailed_skincare.AnswerExpanderV2") as mock_expander,
-            patch("bot.handlers.detailed_skincare.save_last_json") as mock_save_json,
-            patch("bot.handlers.detailed_skincare.save_text_pdf") as mock_save_pdf,
+            patch("bot.handlers.detailed_skincare.save_last_json"),
+            patch("bot.handlers.detailed_skincare.save_text_pdf"),
             patch("bot.handlers.detailed_skincare.get_user_profile_store") as mock_profile_store,
             patch("bot.ui.render.render_skincare_report") as mock_render,
         ):
@@ -188,8 +188,8 @@ async def test_render_fallback_smoke():
             patch("bot.handlers.detailed_palette.UserProfile") as mock_user_profile,
             patch("bot.handlers.detailed_palette.SelectorV2") as mock_selector,
             patch("bot.handlers.detailed_palette.AnswerExpanderV2") as mock_expander,
-            patch("bot.handlers.detailed_palette.save_last_json") as mock_save_json,
-            patch("bot.handlers.detailed_palette.save_text_pdf") as mock_save_pdf,
+            patch("bot.handlers.detailed_palette.save_last_json"),
+            patch("bot.handlers.detailed_palette.save_text_pdf"),
             patch("bot.ui.render.render_makeup_report", side_effect=Exception("Render failed")),
         ):
 

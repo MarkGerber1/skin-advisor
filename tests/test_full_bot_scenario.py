@@ -15,16 +15,6 @@ class TestFullBotScenario:
         mock_settings.return_value = Mock()
 
         # Шаг 1: Имитируем данные теста "Портрет лица"
-        test_data = {
-            "hair": "a",  # Blonde
-            "eyes": "a",  # Blue
-            "undertone": "b",  # Cool
-            "contrast": "a",  # Low
-            "sun": "c",  # Medium
-            "face_shape": "a",  # Oval
-            "makeup_style": "a",  # Natural
-            "lips": "a",  # Neutral
-        }
 
         # Шаг 2: Имитируем результат подбора продуктов
         makeup_result = {
@@ -135,14 +125,6 @@ class TestFullBotScenario:
         mock_settings.return_value = Mock()
 
         # Шаг 1: Имитируем данные теста skincare
-        skincare_test_data = {
-            "skin_type": "combination",
-            "concerns": ["pigmentation", "redness", "aging"],
-            "sensitivity": "sensitive",
-            "season": "spring",
-            "undertone": "neutral",
-            "contrast": "medium",
-        }
 
         # Шаг 2: Имитируем результат подбора skincare продуктов
         skincare_result = {

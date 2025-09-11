@@ -80,7 +80,7 @@ class TestCartStore:
         self.cart_store.add(123, item)
 
         success = self.cart_store.inc_quantity(123, "prod1")
-        assert success == True
+        assert success
 
         items = self.cart_store.get(123)
         assert items[0].qty == 2
@@ -91,7 +91,7 @@ class TestCartStore:
         self.cart_store.add(123, item)
 
         success = self.cart_store.dec_quantity(123, "prod1")
-        assert success == True
+        assert success
 
         items = self.cart_store.get(123)
         assert items[0].qty == 2
@@ -102,7 +102,7 @@ class TestCartStore:
         self.cart_store.add(123, item)
 
         success = self.cart_store.dec_quantity(123, "prod1")
-        assert success == True
+        assert success
 
         items = self.cart_store.get(123)
         assert len(items) == 0  # Товар удален
@@ -146,8 +146,8 @@ class TestCartStore:
         """Тест проверки наличия товара"""
         self.cart_store.add(123, CartItem(product_id="prod1", qty=1))
 
-        assert self.cart_store.has_item(123, "prod1") == True
-        assert self.cart_store.has_item(123, "prod2") == False
+        assert self.cart_store.has_item(123, "prod1")
+        assert not self.cart_store.has_item(123, "prod2")
 
 
 if __name__ == "__main__":

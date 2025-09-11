@@ -24,7 +24,7 @@ def test_imports():
     try:
         from services.cart_store import get_cart_store
 
-        store = get_cart_store()
+        get_cart_store()
         print("✅ CartStore - OK")
     except Exception as e:
         print(f"❌ CartStore - FAILED: {e}")

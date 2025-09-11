@@ -160,7 +160,7 @@ class TestIntegrationFlow:
 
         # Тест несуществующего товара в корзине
         success = self.cart_store.inc_quantity(12345, "nonexistent")
-        assert success == False
+        assert not success
 
 
 if __name__ == "__main__":

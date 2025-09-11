@@ -313,11 +313,11 @@ def select_shades(profile: UserProfile, product: Product) -> List[Dict]:
     try:
         # Извлекаем параметры профиля
         undertone = profile.undertone if hasattr(profile, "undertone") else "neutral"
-        season = profile.season if hasattr(profile, "season") else "neutral"
+        profile.season if hasattr(profile, "season") else "neutral"
         eye_color = getattr(profile, "eye_color", None)
         hair_color = getattr(profile, "hair_color", "")
         contrast_level = getattr(profile, "contrast_level", "medium")
-        makeup_style = getattr(profile, "makeup_style", "")
+        getattr(profile, "makeup_style", "")
 
         # Получаем категорию продукта для специфической логики
         product_category = getattr(product, "category", "")
@@ -516,14 +516,13 @@ async def start_makeup_picker(cb: CallbackQuery, state: FSMContext) -> None:
 
         # Получаем профиль пользователя из состояния
         data = await state.get_data()
-        user_profile = None
         if "profile" in data:
             # Преобразуем dict обратно в UserProfile
             profile_data = data["profile"]
             if ENGINE_AVAILABLE:
                 from engine.models import UserProfile
 
-                user_profile = UserProfile(**profile_data)
+                UserProfile(**profile_data)
 
         await cb.message.edit_text(
             f"💄 **{HEAD_MAKEUP_PICK}**\n\n"
@@ -765,7 +764,6 @@ async def show_makeup_shade_options(cb: CallbackQuery, state: FSMContext) -> Non
     """Показать варианты оттенков для выбора"""
     try:
         product_id = cb.data.split(":")[2]
-        user_id = cb.from_user.id if cb.from_user else 0
 
         # Получаем продукт из каталога
         catalog_path = os.getenv("CATALOG_PATH", "assets/fixed_catalog.yaml")
@@ -930,7 +928,7 @@ async def add_makeup_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
 
         # Добавляем в корзину
         try:
-            cart_item = cart_store.add_item(
+            cart_store.add_item(
                 user_id=user_id,
                 product_id=product_id,
                 variant_id=variant_id,
@@ -1006,8 +1004,8 @@ async def add_makeup_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
                 print(f"[WARNING] A/B tracking error: {e}")
 
             # Формируем сообщение об успехе
-            variant_text = f" ({getattr(variant, 'name', '')})" if variant else ""
-            item_name = f"{getattr(product, 'brand', '')} {getattr(product, 'name', '')}".strip()
+            f" ({getattr(variant, 'name', '')})" if variant else ""
+            f"{getattr(product, 'brand', '')} {getattr(product, 'name', '')}".strip()
 
             message = MSG_VARIANT_ADDED.format(
                 brand=getattr(product, "brand", ""),
@@ -1030,7 +1028,6 @@ async def show_all_makeup_variants(cb: CallbackQuery, state: FSMContext) -> None
     """Показать все варианты продукта"""
     try:
         product_id = cb.data.split(":")[2]
-        user_id = cb.from_user.id if cb.from_user else 0
 
         # Получаем продукт из каталога
         catalog_path = os.getenv("CATALOG_PATH", "assets/fixed_catalog.yaml")

@@ -53,7 +53,7 @@ class VisualCardGenerator:
         self, profile: Dict[str, Any], recommendations: List[Dict[str, Any]]
     ) -> str:
         """Создать HTML карточку для макияжа"""
-        user_id = profile.get("user_id", "unknown")
+        profile.get("user_id", "unknown")
         season = profile.get("season", "unknown")
         undertone = profile.get("undertone", "unknown")
 
@@ -93,7 +93,7 @@ class VisualCardGenerator:
     ) -> str:
         """Создать HTML карточку для ухода за кожей"""
         skin_type = profile.get("skin_type", "unknown")
-        concerns = profile.get("concerns", [])
+        profile.get("concerns", [])
 
         html = f"""
         <!DOCTYPE html>
