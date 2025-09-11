@@ -11,21 +11,24 @@ from aiogram.fsm.context import FSMContext
 # Temporary fallback: import cart_service with try/except
 try:
     from services.cart_service import get_cart_service, CartServiceError, CartErrorCode
+
     CART_SERVICE_AVAILABLE = True
 except ImportError:
     print("⚠️ services.cart_service not available in cart_enhanced, disabling advanced features")
     CART_SERVICE_AVAILABLE = False
+
     # Define fallback classes
     class CartServiceError(Exception):
         def __init__(self, message, code=None):
             self.message = message
             self.code = code
             super().__init__(message)
-    
+
     class CartErrorCode:
         INVALID_PRODUCT_ID = "invalid_product_id"
         PRODUCT_NOT_FOUND = "product_not_found"
         OUT_OF_STOCK = "out_of_stock"
+
 
 from engine.business_metrics import get_metrics_tracker
 from engine.analytics import get_analytics_tracker
@@ -46,49 +49,54 @@ async def change_item_variant(cb: CallbackQuery, state: FSMContext) -> None:
     if not user_id:
         await cb.answer("Ошибка пользователя")
         return
-    
+
     try:
         # Парсим callback: cart:change_variant:product_id:old_variant_id:new_variant_id
         parts = cb.data.split(":", 5)
         if len(parts) < 5:
             await cb.answer("⚠️ Некорректные параметры")
             return
-            
+
         product_id = parts[2]
         old_variant_id = parts[3] if parts[3] != "default" else None
         new_variant_id = parts[4] if parts[4] != "default" else None
-        
+
         cart_service = get_cart_service()
-        
+
         # Обновляем вариант
         updated_item = await cart_service.update_item_variant(
             user_id=user_id,
             product_id=product_id,
             old_variant_id=old_variant_id,
-            new_variant_id=new_variant_id
+            new_variant_id=new_variant_id,
         )
-        
+
         # Analytics: Cart item updated (variant changed)
         analytics = get_analytics_tracker()
         analytics.cart_item_updated(user_id, product_id, old_variant_id, 1, 1)
-        
-        metrics.track_event("cart_variant_changed", user_id, {
-            "product_id": product_id,
-            "old_variant": old_variant_id,
-            "new_variant": new_variant_id
-        })
-        
+
+        metrics.track_event(
+            "cart_variant_changed",
+            user_id,
+            {
+                "product_id": product_id,
+                "old_variant": old_variant_id,
+                "new_variant": new_variant_id,
+            },
+        )
+
         variant_name = updated_item.variant_name or "стандартный"
         await cb.answer(f"✅ Вариант изменен на: {variant_name}")
-        
+
         # Обновляем отображение корзины
         from bot.handlers.cart import show_cart
+
         await show_cart(cb.message, state)
-        
+
     except CartServiceError as e:
         print(f"❌ Error changing variant: {e}")
         await cb.answer(f"⚠️ {e.message}")
-        
+
     except Exception as e:
         print(f"❌ Unexpected error in change_item_variant: {e}")
         await cb.answer("⚠️ Произошла ошибка")
@@ -101,61 +109,61 @@ async def set_item_quantity(cb: CallbackQuery, state: FSMContext) -> None:
     if not user_id:
         await cb.answer("Ошибка пользователя")
         return
-    
+
     try:
         # Парсим callback: cart:set_qty:product_id:variant_id:qty
         parts = cb.data.split(":", 5)
         if len(parts) < 5:
             await cb.answer("⚠️ Некорректные параметры")
             return
-            
+
         product_id = parts[2]
         variant_id = parts[3] if parts[3] != "default" else None
         qty = int(parts[4])
-        
+
         cart_service = get_cart_service()
-        
+
         # Устанавливаем количество
         result_item = cart_service.set_item_quantity(
-            user_id=user_id,
-            product_id=product_id,
-            variant_id=variant_id,
-            qty=qty
+            user_id=user_id, product_id=product_id, variant_id=variant_id, qty=qty
         )
-        
+
         # Analytics: Cart item updated or removed
         analytics = get_analytics_tracker()
-        
+
         if result_item:
-            analytics.cart_item_updated(user_id, product_id, variant_id, qty_before=0, qty_after=qty)
-            
-            metrics.track_event("cart_quantity_changed", user_id, {
-                "product_id": product_id,
-                "variant_id": variant_id,
-                "new_qty": qty
-            })
+            analytics.cart_item_updated(
+                user_id, product_id, variant_id, qty_before=0, qty_after=qty
+            )
+
+            metrics.track_event(
+                "cart_quantity_changed",
+                user_id,
+                {"product_id": product_id, "variant_id": variant_id, "new_qty": qty},
+            )
             await cb.answer(f"✅ Количество изменено: {qty}")
         else:
             analytics.cart_item_removed(user_id, product_id, variant_id)
-            
-            metrics.track_event("cart_item_removed", user_id, {
-                "product_id": product_id,
-                "variant_id": variant_id,
-                "reason": "qty_zero"
-            })
+
+            metrics.track_event(
+                "cart_item_removed",
+                user_id,
+                {"product_id": product_id, "variant_id": variant_id, "reason": "qty_zero"},
+            )
             await cb.answer("✅ Товар удален из корзины")
-        
+
         # Обновляем отображение корзины
         from bot.handlers.cart import show_cart
+
         await show_cart(cb.message, state)
-        
+
     except (ValueError, IndexError):
         await cb.answer("⚠️ Некорректные параметры")
-        
+
     except CartServiceError as e:
         print(f"❌ Error setting quantity: {e}")
         await cb.answer(f"⚠️ {e.message}")
-        
+
     except Exception as e:
         print(f"❌ Unexpected error in set_item_quantity: {e}")
         await cb.answer("⚠️ Произошла ошибка")
@@ -168,48 +176,47 @@ async def remove_exact_item(cb: CallbackQuery, state: FSMContext) -> None:
     if not user_id:
         await cb.answer("Ошибка пользователя")
         return
-    
+
     try:
         # Парсим callback: cart:remove_exact:product_id:variant_id
         parts = cb.data.split(":", 4)
         if len(parts) < 4:
             await cb.answer("⚠️ Некорректные параметры")
             return
-            
+
         product_id = parts[2]
         variant_id = parts[3] if parts[3] != "default" else None
-        
+
         cart_service = get_cart_service()
-        
+
         # Удаляем товар
         success = cart_service.remove_item(
-            user_id=user_id,
-            product_id=product_id,
-            variant_id=variant_id
+            user_id=user_id, product_id=product_id, variant_id=variant_id
         )
-        
+
         if success:
-            # Analytics: Cart item removed  
+            # Analytics: Cart item removed
             analytics = get_analytics_tracker()
             analytics.cart_item_removed(user_id, product_id, variant_id)
-            
-            metrics.track_event("cart_item_removed", user_id, {
-                "product_id": product_id,
-                "variant_id": variant_id,
-                "reason": "manual"
-            })
+
+            metrics.track_event(
+                "cart_item_removed",
+                user_id,
+                {"product_id": product_id, "variant_id": variant_id, "reason": "manual"},
+            )
             await cb.answer("✅ Товар удален из корзины")
         else:
             await cb.answer("⚠️ Товар не найден в корзине")
-        
+
         # Обновляем отображение корзины
         from bot.handlers.cart import show_cart
+
         await show_cart(cb.message, state)
-        
+
     except CartServiceError as e:
         print(f"❌ Error removing item: {e}")
         await cb.answer(f"⚠️ {e.message}")
-        
+
     except Exception as e:
         print(f"❌ Unexpected error in remove_exact_item: {e}")
         await cb.answer("⚠️ Произошла ошибка")
@@ -222,21 +229,23 @@ async def clear_cart_enhanced(cb: CallbackQuery, state: FSMContext) -> None:
     if not user_id:
         await cb.answer("Ошибка пользователя")
         return
-    
+
     # Показываем кнопки подтверждения
-    confirm_kb = InlineKeyboardMarkup(inline_keyboard=[
-        [
-            InlineKeyboardButton(text="✅ Да, очистить", callback_data="cart:clear_confirmed"),
-            InlineKeyboardButton(text="❌ Отмена", callback_data="cart:clear_cancelled")
+    confirm_kb = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text="✅ Да, очистить", callback_data="cart:clear_confirmed"),
+                InlineKeyboardButton(text="❌ Отмена", callback_data="cart:clear_cancelled"),
+            ]
         ]
-    ])
-    
+    )
+
     await cb.message.edit_text(
         "🗑️ **ОЧИСТКА КОРЗИНЫ**\n\n"
         "Вы уверены, что хотите удалить все товары из корзины?\n"
         "Это действие нельзя отменить.",
         reply_markup=confirm_kb,
-        parse_mode="Markdown"
+        parse_mode="Markdown",
     )
 
 
@@ -247,23 +256,20 @@ async def clear_cart_confirmed(cb: CallbackQuery, state: FSMContext) -> None:
     if not user_id:
         await cb.answer("Ошибка пользователя")
         return
-    
+
     try:
         cart_service = get_cart_service()
         cart_service.clear_cart(user_id)
-        
+
         metrics.track_event("cart_cleared", user_id, {"reason": "manual"})
-        
-        await cb.message.edit_text(
-            "✅ **КОРЗИНА ОЧИЩЕНА**\n\n"
-            "Все товары удалены из корзины."
-        )
+
+        await cb.message.edit_text("✅ **КОРЗИНА ОЧИЩЕНА**\n\n" "Все товары удалены из корзины.")
         await cb.answer("Корзина очищена")
-        
+
     except CartServiceError as e:
         print(f"❌ Error clearing cart: {e}")
         await cb.answer(f"⚠️ {e.message}")
-        
+
     except Exception as e:
         print(f"❌ Unexpected error in clear_cart_confirmed: {e}")
         await cb.answer("⚠️ Произошла ошибка")
@@ -273,7 +279,8 @@ async def clear_cart_confirmed(cb: CallbackQuery, state: FSMContext) -> None:
 async def clear_cart_cancelled(cb: CallbackQuery, state: FSMContext) -> None:
     """Отмена очистки корзины"""
     await cb.answer("Очистка отменена")
-    
+
     # Возвращаемся к корзине
     from bot.handlers.cart import show_cart
+
     await show_cart(cb.message, state)

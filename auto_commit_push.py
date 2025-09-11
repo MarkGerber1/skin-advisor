@@ -9,6 +9,7 @@ import sys
 import os
 from datetime import datetime
 
+
 def run_command(cmd, description=""):
     """Выполнить команду и вернуть результат"""
     try:
@@ -28,6 +29,7 @@ def run_command(cmd, description=""):
     except Exception as e:
         print(f"❌ Ошибка выполнения команды: {e}")
         return False
+
 
 def auto_commit_push(commit_message):
     """Автоматический коммит и пуш изменений"""
@@ -53,7 +55,9 @@ def auto_commit_push(commit_message):
         return False
 
     # 4. Получаем текущую ветку
-    branch_result = subprocess.run("git branch --show-current", shell=True, capture_output=True, text=True)
+    branch_result = subprocess.run(
+        "git branch --show-current", shell=True, capture_output=True, text=True
+    )
     if branch_result.returncode != 0:
         print("❌ Не удалось определить текущую ветку")
         return False
@@ -81,10 +85,11 @@ def auto_commit_push(commit_message):
 
     return True
 
+
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("❌ Ошибка: Укажите сообщение коммита")
-        print("Использование: python auto_commit_push.py \"commit message\"")
+        print('Использование: python auto_commit_push.py "commit message"')
         sys.exit(1)
 
     commit_message = " ".join(sys.argv[1:])
@@ -100,7 +105,3 @@ if __name__ == "__main__":
 
     print()
     print("✨ ГОТОВО! Изменения в репозитории.")
-
-
-
-

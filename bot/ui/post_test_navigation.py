@@ -11,7 +11,7 @@ def create_post_test_navigation(
     test_type: str,  # "palette" или "skincare"
     current_screen: Optional[str] = None,  # "description", "recommendations", "products", "cart"
     show_cart: bool = True,
-    cart_count: int = 0
+    cart_count: int = 0,
 ) -> InlineKeyboardMarkup:
     """
     Создает унифицированную навигацию для пост-тестового состояния
@@ -34,42 +34,29 @@ def create_post_test_navigation(
 
     # Описание
     desc_text = "📋 Описание" if current_screen != "description" else "📋 Описание ✓"
-    nav_row.append(InlineKeyboardButton(
-        text=desc_text,
-        callback_data=f"{prefix}nav:description"
-    ))
+    nav_row.append(InlineKeyboardButton(text=desc_text, callback_data=f"{prefix}nav:description"))
 
     # Рекомендации
     rec_text = "💡 Рекомендации" if current_screen != "recommendations" else "💡 Рекомендации ✓"
-    nav_row.append(InlineKeyboardButton(
-        text=rec_text,
-        callback_data=f"{prefix}nav:recommendations"
-    ))
+    nav_row.append(
+        InlineKeyboardButton(text=rec_text, callback_data=f"{prefix}nav:recommendations")
+    )
 
     buttons.append(nav_row)
 
     # Что купить
     buy_text = "🛍️ Что купить" if current_screen != "products" else "🛍️ Что купить ✓"
-    buttons.append([InlineKeyboardButton(
-        text=buy_text,
-        callback_data=f"{prefix}nav:products"
-    )])
+    buttons.append([InlineKeyboardButton(text=buy_text, callback_data=f"{prefix}nav:products")])
 
     # Корзина (если есть товары или всегда показывать)
     if show_cart or cart_count > 0:
         cart_text = f"🛒 Корзина ({cart_count})" if cart_count > 0 else "🛒 Корзина"
         if current_screen == "cart":
             cart_text += " ✓"
-        buttons.append([InlineKeyboardButton(
-            text=cart_text,
-            callback_data="show_cart"
-        )])
+        buttons.append([InlineKeyboardButton(text=cart_text, callback_data="show_cart")])
 
     # В меню
-    buttons.append([InlineKeyboardButton(
-        text="⤴️ В меню",
-        callback_data="universal:home"
-    )])
+    buttons.append([InlineKeyboardButton(text="⤴️ В меню", callback_data="universal:home")])
 
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
@@ -79,7 +66,7 @@ def create_product_buttons(
     product_id: str,
     has_ref_link: bool = False,
     in_cart: bool = False,
-    variant_id: Optional[str] = None
+    variant_id: Optional[str] = None,
 ) -> List[List[InlineKeyboardButton]]:
     """
     Создает кнопки для товара: "В корзину" и опционально "Купить на сайте"
@@ -102,10 +89,12 @@ def create_product_buttons(
 
     if has_ref_link:
         # Две кнопки в ряд
-        buttons.append([
-            InlineKeyboardButton(text=cart_text, callback_data=cart_callback),
-            InlineKeyboardButton(text="🌐 Купить на сайте", callback_data=f"buy:{product_id}")
-        ])
+        buttons.append(
+            [
+                InlineKeyboardButton(text=cart_text, callback_data=cart_callback),
+                InlineKeyboardButton(text="🌐 Купить на сайте", callback_data=f"buy:{product_id}"),
+            ]
+        )
     else:
         # Только корзина
         buttons.append([InlineKeyboardButton(text=cart_text, callback_data=cart_callback)])
@@ -114,9 +103,7 @@ def create_product_buttons(
 
 
 def create_cart_controls(
-    item_count: int,
-    total_price: float,
-    currency: str = "RUB"
+    item_count: int, total_price: float, currency: str = "RUB"
 ) -> InlineKeyboardMarkup:
     """
     Создает элементы управления корзиной
@@ -134,28 +121,29 @@ def create_cart_controls(
     # Информация о корзине
     if item_count > 0:
         price_text = f"{total_price:.0f} ₽" if currency == "RUB" else f"${total_price:.0f}"
-        buttons.append([InlineKeyboardButton(
-            text=f"📊 Итого: {price_text} ({item_count} шт.)",
-            callback_data="cart_info"
-        )])
+        buttons.append(
+            [
+                InlineKeyboardButton(
+                    text=f"📊 Итого: {price_text} ({item_count} шт.)", callback_data="cart_info"
+                )
+            ]
+        )
 
     # Управление товарами (будет реализовано в cart handler)
-    buttons.append([
-        InlineKeyboardButton(text="➕ Добавить товар", callback_data="cart:add_item"),
-        InlineKeyboardButton(text="🗑️ Очистить корзину", callback_data="cart:clear")
-    ])
+    buttons.append(
+        [
+            InlineKeyboardButton(text="➕ Добавить товар", callback_data="cart:add_item"),
+            InlineKeyboardButton(text="🗑️ Очистить корзину", callback_data="cart:clear"),
+        ]
+    )
 
     # Оформление
-    buttons.append([InlineKeyboardButton(
-        text="✅ Оформить заказ",
-        callback_data="cart:checkout"
-    )])
+    buttons.append([InlineKeyboardButton(text="✅ Оформить заказ", callback_data="cart:checkout")])
 
     # Навигация обратно
-    buttons.append([InlineKeyboardButton(
-        text="⬅️ Назад к товарам",
-        callback_data="nav:back_to_products"
-    )])
+    buttons.append(
+        [InlineKeyboardButton(text="⬅️ Назад к товарам", callback_data="nav:back_to_products")]
+    )
 
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 

@@ -4,6 +4,7 @@
 import sys
 import os
 
+
 def test_imports():
     """Тестируем все необходимые импорты"""
 
@@ -14,12 +15,15 @@ def test_imports():
     try:
         print("\n📦 Testing basic imports...")
         import asyncio
+
         print("✅ asyncio imported")
 
         from aiogram import Bot, Dispatcher
+
         print("✅ aiogram imported")
 
         from bot.main import main
+
         print("✅ bot.main.main imported")
 
         print("\n🎉 All imports successful!")
@@ -28,8 +32,10 @@ def test_imports():
     except Exception as e:
         print(f"\n❌ Import error: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 if __name__ == "__main__":
     success = test_imports()

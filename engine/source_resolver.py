@@ -2,6 +2,7 @@
 🎯 Source Resolver - Приоритизация источников товаров
 Золотое Яблоко → RU официальные → RU маркетплейсы → Зарубежные
 """
+
 from __future__ import annotations
 
 import time
@@ -15,6 +16,7 @@ from engine.catalog_store import CatalogStore
 @dataclass
 class SourceInfo:
     """Информация об источнике товара"""
+
     name: str
     priority: int
     category: str  # goldapple, ru_official, ru_marketplace, intl
@@ -26,6 +28,7 @@ class SourceInfo:
 @dataclass
 class ResolvedProduct:
     """Разрешенный товар с информацией об источнике"""
+
     original: Dict[str, Any]
     source_info: SourceInfo
     is_available: bool
@@ -41,26 +44,39 @@ class SourceResolver:
         # Приоритизация источников (меньше число = выше приоритет)
         self.source_priorities = {
             # 🥇 Золотое Яблоко (наивысший приоритет)
-            "goldapple.ru": SourceInfo("Золотое Яблоко", 1, "goldapple", "goldapple.ru", "RUB", True),
-            "золотоеяблочко.рф": SourceInfo("Золотое Яблоко", 1, "goldapple", "золотоеяблочко.рф", "RUB", True),
-
+            "goldapple.ru": SourceInfo(
+                "Золотое Яблоко", 1, "goldapple", "goldapple.ru", "RUB", True
+            ),
+            "золотоеяблочко.рф": SourceInfo(
+                "Золотое Яблоко", 1, "goldapple", "золотоеяблочко.рф", "RUB", True
+            ),
             # 🥈 Российские официальные магазины
             "sephora.ru": SourceInfo("SEPHORA Russia", 2, "ru_official", "sephora.ru", "RUB", True),
             "letu.ru": SourceInfo("Л'Этуаль", 2, "ru_official", "letu.ru", "RUB", True),
-            "rive-gauche.ru": SourceInfo("Рив Гош", 2, "ru_official", "rive-gauche.ru", "RUB", True),
-            "aroma-zone.ru": SourceInfo("Aroma-Zone", 2, "ru_official", "aroma-zone.ru", "RUB", True),
-
+            "rive-gauche.ru": SourceInfo(
+                "Рив Гош", 2, "ru_official", "rive-gauche.ru", "RUB", True
+            ),
+            "aroma-zone.ru": SourceInfo(
+                "Aroma-Zone", 2, "ru_official", "aroma-zone.ru", "RUB", True
+            ),
             # 🥉 Российские маркетплейсы
-            "wildberries.ru": SourceInfo("Wildberries", 3, "ru_marketplace", "wildberries.ru", "RUB", False),
+            "wildberries.ru": SourceInfo(
+                "Wildberries", 3, "ru_marketplace", "wildberries.ru", "RUB", False
+            ),
             "ozon.ru": SourceInfo("Ozon", 3, "ru_marketplace", "ozon.ru", "RUB", False),
-            "yandex.market.ru": SourceInfo("Яндекс.Маркет", 3, "ru_marketplace", "yandex.market.ru", "RUB", False),
+            "yandex.market.ru": SourceInfo(
+                "Яндекс.Маркет", 3, "ru_marketplace", "yandex.market.ru", "RUB", False
+            ),
             "lamoda.ru": SourceInfo("Lamoda", 3, "ru_marketplace", "lamoda.ru", "RUB", False),
-
             # 🌍 Зарубежные магазины (низший приоритет)
-            "sephora.com": SourceInfo("SEPHORA International", 4, "intl", "sephora.com", "USD", False),
+            "sephora.com": SourceInfo(
+                "SEPHORA International", 4, "intl", "sephora.com", "USD", False
+            ),
             "ulta.com": SourceInfo("Ulta", 4, "intl", "ulta.com", "USD", False),
             "cultbeauty.com": SourceInfo("Cult Beauty", 4, "intl", "cultbeauty.com", "GBP", False),
-            "lookfantastic.com": SourceInfo("LookFantastic", 4, "intl", "lookfantastic.com", "GBP", False),
+            "lookfantastic.com": SourceInfo(
+                "LookFantastic", 4, "intl", "lookfantastic.com", "GBP", False
+            ),
         }
 
     def _extract_domain_from_url(self, url: str) -> str:
@@ -105,7 +121,9 @@ class SourceResolver:
         """
         try:
             # Получаем URL товара
-            product_url = product.get("link", "") or product.get("buy_url", "") or product.get("url", "")
+            product_url = (
+                product.get("link", "") or product.get("buy_url", "") or product.get("url", "")
+            )
 
             # Определяем источник
             source_info = self._get_source_info(product_url)
@@ -128,7 +146,7 @@ class SourceResolver:
                 is_available=in_stock and price > 0,
                 alternative=alternative,
                 alternative_reason=alternative_reason,
-                checked_at=datetime.now().isoformat()
+                checked_at=datetime.now().isoformat(),
             )
 
         except Exception as e:
@@ -138,7 +156,7 @@ class SourceResolver:
                 original=product,
                 source_info=SourceInfo("Ошибка", 999, "error", "unknown", "RUB", False),
                 is_available=False,
-                checked_at=datetime.now().isoformat()
+                checked_at=datetime.now().isoformat(),
             )
 
     def _find_alternative(self, product: Dict[str, Any]) -> Optional[Dict[str, Any]]:
@@ -166,54 +184,54 @@ class SourceResolver:
 
             for item in catalog:
                 # Пропускаем тот же товар
-                if item.id == product_id or str(getattr(item, 'key', '')) == str(product_id):
+                if item.id == product_id or str(getattr(item, "key", "")) == str(product_id):
                     continue
 
                 # Проверяем доступность
-                if not getattr(item, 'in_stock', True) or getattr(item, 'price', 0) <= 0:
+                if not getattr(item, "in_stock", True) or getattr(item, "price", 0) <= 0:
                     continue
 
-                item_brand = getattr(item, 'brand', '').lower()
-                item_category = getattr(item, 'category', '').lower()
+                item_brand = getattr(item, "brand", "").lower()
+                item_category = getattr(item, "category", "").lower()
 
                 # Стратегия 1: Тот же бренд, другая модель (высокий приоритет)
                 if item_brand == product_brand and item_category == product_category:
-                    url = getattr(item, 'buy_url', '') or getattr(item, 'link', '')
+                    url = getattr(item, "buy_url", "") or getattr(item, "link", "")
                     source_info = self._get_source_info(url)
 
                     if source_info.priority < best_priority:
                         best_priority = source_info.priority
                         best_alternative = {
                             "id": item.id,
-                            "name": getattr(item, 'title', item.name),
+                            "name": getattr(item, "title", item.name),
                             "brand": item.brand,
                             "price": item.price,
-                            "price_currency": getattr(item, 'price_currency', 'RUB'),
+                            "price_currency": getattr(item, "price_currency", "RUB"),
                             "category": item.category,
                             "link": url,
                             "source_name": source_info.name,
                             "source_priority": source_info.priority,
-                            "alternative_reason": "другой_вариант_товара"
+                            "alternative_reason": "другой_вариант_товара",
                         }
 
                 # Стратегия 2: Другая марка, та же категория (средний приоритет)
                 elif item_category == product_category and not best_alternative:
-                    url = getattr(item, 'buy_url', '') or getattr(item, 'link', '')
+                    url = getattr(item, "buy_url", "") or getattr(item, "link", "")
                     source_info = self._get_source_info(url)
 
                     if source_info.priority < best_priority:
                         best_priority = source_info.priority
                         best_alternative = {
                             "id": item.id,
-                            "name": getattr(item, 'title', item.name),
+                            "name": getattr(item, "title", item.name),
                             "brand": item.brand,
                             "price": item.price,
-                            "price_currency": getattr(item, 'price_currency', 'RUB'),
+                            "price_currency": getattr(item, "price_currency", "RUB"),
                             "category": item.category,
                             "link": url,
                             "source_name": source_info.name,
                             "source_priority": source_info.priority,
-                            "alternative_reason": "аналог_категории"
+                            "alternative_reason": "аналог_категории",
                         }
 
             return best_alternative
@@ -224,7 +242,9 @@ class SourceResolver:
 
     def get_source_display_name(self, product: Dict[str, Any]) -> str:
         """Получение отображаемого имени источника для товара"""
-        product_url = product.get("link", "") or product.get("buy_url", "") or product.get("url", "")
+        product_url = (
+            product.get("link", "") or product.get("buy_url", "") or product.get("url", "")
+        )
         source_info = self._get_source_info(product_url)
 
         # Маппинг для отображения
@@ -233,20 +253,23 @@ class SourceResolver:
             "ru_official": "Официал. магазин",
             "ru_marketplace": "Маркетплейс",
             "intl": "Зарубежный магазин",
-            "unknown": "Неизвестный источник"
+            "unknown": "Неизвестный источник",
         }
 
         return display_names.get(source_info.category, source_info.name)
 
     def get_source_priority(self, product: Dict[str, Any]) -> int:
         """Получение приоритета источника для товара"""
-        product_url = product.get("link", "") or product.get("buy_url", "") or product.get("url", "")
+        product_url = (
+            product.get("link", "") or product.get("buy_url", "") or product.get("url", "")
+        )
         source_info = self._get_source_info(product_url)
         return source_info.priority
 
 
 # Глобальный экземпляр
 _source_resolver = None
+
 
 def get_source_resolver() -> SourceResolver:
     """Получить глобальный экземпляр SourceResolver"""

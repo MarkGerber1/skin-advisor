@@ -27,25 +27,27 @@ async def test_palette_flow_smoke():
             "sun": "c",
             "face_shape": "a",
             "makeup_style": "a",
-            "lips": "a"
+            "lips": "a",
         }
         mock_state.update_data = AsyncMock()
         mock_state.set_state = AsyncMock()
 
         # Mock внешние зависимости
-        with patch('bot.handlers.detailed_palette.determine_skin_type') as mock_determine, \
-             patch('bot.handlers.detailed_palette.UserProfile') as mock_user_profile, \
-             patch('bot.handlers.detailed_palette.SelectorV2') as mock_selector, \
-             patch('bot.handlers.detailed_palette.AnswerExpanderV2') as mock_expander, \
-             patch('bot.handlers.detailed_palette.save_last_json') as mock_save_json, \
-             patch('bot.handlers.detailed_palette.save_text_pdf') as mock_save_pdf, \
-             patch('bot.ui.render.render_makeup_report') as mock_render:
+        with (
+            patch("bot.handlers.detailed_palette.determine_skin_type") as mock_determine,
+            patch("bot.handlers.detailed_palette.UserProfile") as mock_user_profile,
+            patch("bot.handlers.detailed_palette.SelectorV2") as mock_selector,
+            patch("bot.handlers.detailed_palette.AnswerExpanderV2") as mock_expander,
+            patch("bot.handlers.detailed_palette.save_last_json") as mock_save_json,
+            patch("bot.handlers.detailed_palette.save_text_pdf") as mock_save_pdf,
+            patch("bot.ui.render.render_makeup_report") as mock_render,
+        ):
 
             # Настройка моков
             mock_determine.return_value = {
                 "season": "spring",
                 "undertone": "cool",
-                "profile": {"season": "spring"}
+                "profile": {"season": "spring"},
             }
 
             mock_user_profile.return_value = Mock()
@@ -55,7 +57,7 @@ async def test_palette_flow_smoke():
                 "skincare": {},
                 "makeup": {"base": []},
                 "compatibility_warnings": [],
-                "routine_suggestions": []
+                "routine_suggestions": [],
             }
 
             mock_expander.return_value = Mock()
@@ -95,39 +97,41 @@ async def test_skincare_flow_smoke():
             "concerns": ["pigmentation", "redness"],
             "sensitivity": "sensitive",
             "age": 25,
-            "effect": "a"
+            "effect": "a",
         }
         mock_state.update_data = AsyncMock()
         mock_state.set_state = AsyncMock()
 
         # Mock внешние зависимости
-        with patch('bot.handlers.detailed_skincare.determine_skin_type') as mock_determine, \
-             patch('bot.handlers.detailed_skincare.UserProfile') as mock_user_profile, \
-             patch('bot.handlers.detailed_skincare.SelectorV2') as mock_selector, \
-             patch('bot.handlers.detailed_skincare.AnswerExpanderV2') as mock_expander, \
-             patch('bot.handlers.detailed_skincare.save_last_json') as mock_save_json, \
-             patch('bot.handlers.detailed_skincare.save_text_pdf') as mock_save_pdf, \
-             patch('bot.handlers.detailed_skincare.get_user_profile_store') as mock_profile_store, \
-             patch('bot.ui.render.render_skincare_report') as mock_render:
+        with (
+            patch("bot.handlers.detailed_skincare.determine_skin_type") as mock_determine,
+            patch("bot.handlers.detailed_skincare.UserProfile") as mock_user_profile,
+            patch("bot.handlers.detailed_skincare.SelectorV2") as mock_selector,
+            patch("bot.handlers.detailed_skincare.AnswerExpanderV2") as mock_expander,
+            patch("bot.handlers.detailed_skincare.save_last_json") as mock_save_json,
+            patch("bot.handlers.detailed_skincare.save_text_pdf") as mock_save_pdf,
+            patch("bot.handlers.detailed_skincare.get_user_profile_store") as mock_profile_store,
+            patch("bot.ui.render.render_skincare_report") as mock_render,
+        ):
 
             # Настройка моков
             mock_determine.return_value = {
                 "type": "combination",
                 "concerns": ["pigmentation", "redness"],
-                "sensitivity": "sensitive"
+                "sensitivity": "sensitive",
             }
 
             mock_user_profile.return_value = Mock()
             mock_user_profile.return_value.model_dump.return_value = {
                 "skin_type": "combination",
-                "concerns": ["pigmentation", "redness"]
+                "concerns": ["pigmentation", "redness"],
             }
 
             mock_selector.return_value.select.return_value = {
                 "skincare": {"cleanser": [], "toner": []},
                 "makeup": {},
                 "compatibility_warnings": [],
-                "routine_suggestions": []
+                "routine_suggestions": [],
             }
 
             mock_expander.return_value = Mock()
@@ -166,20 +170,28 @@ async def test_render_fallback_smoke():
 
         mock_state = AsyncMock()
         mock_state.get_data.return_value = {
-            "hair": "a", "eyes": "a", "undertone": "b", "contrast": "a",
-            "sun": "c", "face_shape": "a", "makeup_style": "a", "lips": "a"
+            "hair": "a",
+            "eyes": "a",
+            "undertone": "b",
+            "contrast": "a",
+            "sun": "c",
+            "face_shape": "a",
+            "makeup_style": "a",
+            "lips": "a",
         }
         mock_state.update_data = AsyncMock()
         mock_state.set_state = AsyncMock()
 
         # Mock с ошибкой рендера
-        with patch('bot.handlers.detailed_palette.determine_skin_type') as mock_determine, \
-             patch('bot.handlers.detailed_palette.UserProfile') as mock_user_profile, \
-             patch('bot.handlers.detailed_palette.SelectorV2') as mock_selector, \
-             patch('bot.handlers.detailed_palette.AnswerExpanderV2') as mock_expander, \
-             patch('bot.handlers.detailed_palette.save_last_json') as mock_save_json, \
-             patch('bot.handlers.detailed_palette.save_text_pdf') as mock_save_pdf, \
-             patch('bot.ui.render.render_makeup_report', side_effect=Exception("Render failed")):
+        with (
+            patch("bot.handlers.detailed_palette.determine_skin_type") as mock_determine,
+            patch("bot.handlers.detailed_palette.UserProfile") as mock_user_profile,
+            patch("bot.handlers.detailed_palette.SelectorV2") as mock_selector,
+            patch("bot.handlers.detailed_palette.AnswerExpanderV2") as mock_expander,
+            patch("bot.handlers.detailed_palette.save_last_json") as mock_save_json,
+            patch("bot.handlers.detailed_palette.save_text_pdf") as mock_save_pdf,
+            patch("bot.ui.render.render_makeup_report", side_effect=Exception("Render failed")),
+        ):
 
             # Настройка моков
             mock_determine.return_value = {"season": "spring", "undertone": "cool"}

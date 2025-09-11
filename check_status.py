@@ -14,7 +14,7 @@ required_files = [
     "i18n/ru.py",
     "COMMITS_TO_MAKE.md",
     "push_changes.bat",
-    "test_imports.py"
+    "test_imports.py",
 ]
 
 for file_path in required_files:
@@ -30,15 +30,17 @@ print("\n=== CHECK COMPLETE ===")
 print("\n=== CHECKING FOR CHANGES ===")
 import time
 
+
 def get_file_age_days(filepath):
     if os.path.exists(filepath):
         return (time.time() - os.path.getmtime(filepath)) / (24 * 3600)
     return -1
 
+
 recent_files = []
-for root, dirs, files in os.walk('.'):
+for root, dirs, files in os.walk("."):
     for file in files:
-        if file.endswith(('.py', '.md', '.bat')):
+        if file.endswith((".py", ".md", ".bat")):
             filepath = os.path.join(root, file)
             age_days = get_file_age_days(filepath)
             if age_days >= 0 and age_days < 1:  # Modified within last 24 hours
@@ -50,7 +52,3 @@ for filepath, age in recent_files[:10]:  # Show first 10
 
 if len(recent_files) > 10:
     print(f"... and {len(recent_files) - 10} more")
-
-
-
-

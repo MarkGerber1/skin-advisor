@@ -8,120 +8,127 @@ from typing import Dict, Any
 from pathlib import Path
 from fpdf import FPDF
 
+
 def generate_minimal_pdf(uid: int, snapshot: Dict[str, Any]) -> str:
     """Генерирует минимальный PDF отчет (только ASCII)"""
     try:
         # Создаем директорию
         user_dir = Path("data") / "reports" / str(uid)
         user_dir.mkdir(parents=True, exist_ok=True)
-        
+
         pdf_path = user_dir / "last_v2_minimal.pdf"
-        
+
         # Создаем PDF
         pdf = FPDF()
         pdf.add_page()
         pdf.set_font("Arial", size=12)
-        
+
         # Заголовок
-        pdf.multi_cell(0, 10, "PERSONAL BEAUTY REPORT", align='C')
+        pdf.multi_cell(0, 10, "PERSONAL BEAUTY REPORT", align="C")
         pdf.ln(10)
-        
+
         # Резюме (ASCII только)
         pdf.multi_cell(0, 6, "1. SUMMARY")
         pdf.ln(5)
-        
-        profile = snapshot.get('profile', {})
-        result = snapshot.get('result', {})
-        
+
+        profile = snapshot.get("profile", {})
+        result = snapshot.get("result", {})
+
         # Профиль пользователя
-        if profile.get('undertone'):
+        if profile.get("undertone"):
             pdf.multi_cell(0, 5, f"Undertone: {profile['undertone']}")
-        
-        if profile.get('season'):
+
+        if profile.get("season"):
             pdf.multi_cell(0, 5, f"Season: {profile['season']}")
-            
-        if profile.get('skin_type'):
+
+        if profile.get("skin_type"):
             pdf.multi_cell(0, 5, f"Skin type: {profile['skin_type']}")
-        
+
         pdf.ln(5)
-        
+
         # Продукты макияжа
-        if 'makeup' in result:
+        if "makeup" in result:
             pdf.multi_cell(0, 6, "2. MAKEUP RECOMMENDATIONS")
             pdf.ln(3)
-            
+
             product_count = 0
-            for section, products in result['makeup'].items():
+            for section, products in result["makeup"].items():
                 for product in products[:2]:  # Максимум 2 продукта
                     product_count += 1
-                    name = product.get('name', 'Product').encode('ascii', 'ignore').decode('ascii')
-                    brand = product.get('brand', '').encode('ascii', 'ignore').decode('ascii')
-                    
-                    product_text = f"{product_count}. {brand} - {name}" if brand else f"{product_count}. {name}"
-                    
+                    name = product.get("name", "Product").encode("ascii", "ignore").decode("ascii")
+                    brand = product.get("brand", "").encode("ascii", "ignore").decode("ascii")
+
+                    product_text = (
+                        f"{product_count}. {brand} - {name}"
+                        if brand
+                        else f"{product_count}. {name}"
+                    )
+
                     # Обрезаем до безопасной длины
                     if len(product_text) > 80:
                         product_text = product_text[:77] + "..."
-                    
+
                     pdf.multi_cell(0, 5, product_text)
-                    
+
                     # Цена
-                    price = product.get('price')
+                    price = product.get("price")
                     if price:
                         pdf.multi_cell(0, 5, f"   Price: {price} RUB")
-                    
+
                     # Статус
-                    if not product.get('in_stock', True):
+                    if not product.get("in_stock", True):
                         pdf.multi_cell(0, 5, "   Status: OUT OF STOCK")
-                    
+
                     pdf.ln(2)
-        
+
         # Уход за кожей
-        if 'skincare' in result:
+        if "skincare" in result:
             pdf.multi_cell(0, 6, "3. SKINCARE ROUTINE")
             pdf.ln(3)
-            
+
             routine_count = 0
-            for routine_type, products in result['skincare'].items():
+            for routine_type, products in result["skincare"].items():
                 if products:
                     routine_count += 1
-                    routine_name = routine_type.replace('AM', 'Morning').replace('PM', 'Evening')
+                    routine_name = routine_type.replace("AM", "Morning").replace("PM", "Evening")
                     pdf.multi_cell(0, 5, f"3.{routine_count}. {routine_name} routine:")
-                    
+
                     for product in products[:2]:
-                        name = product.get('name', 'Product').encode('ascii', 'ignore').decode('ascii')
-                        brand = product.get('brand', '').encode('ascii', 'ignore').decode('ascii')
-                        
+                        name = (
+                            product.get("name", "Product").encode("ascii", "ignore").decode("ascii")
+                        )
+                        brand = product.get("brand", "").encode("ascii", "ignore").decode("ascii")
+
                         product_text = f"  - {brand} {name}" if brand else f"  - {name}"
-                        
+
                         # Обрезаем до безопасной длины
                         if len(product_text) > 80:
                             product_text = product_text[:77] + "..."
-                        
+
                         pdf.multi_cell(0, 5, product_text)
-                    
+
                     pdf.ln(2)
-        
+
         # Статистика
         pdf.multi_cell(0, 6, "4. STATISTICS")
         pdf.ln(3)
-        
-        total_makeup = sum(len(products) for products in result.get('makeup', {}).values())
-        total_skincare = sum(len(products) for products in result.get('skincare', {}).values())
-        
+
+        total_makeup = sum(len(products) for products in result.get("makeup", {}).values())
+        total_skincare = sum(len(products) for products in result.get("skincare", {}).values())
+
         pdf.multi_cell(0, 5, f"Total makeup products: {total_makeup}")
         pdf.multi_cell(0, 5, f"Total skincare products: {total_skincare}")
-        
+
         # Футер
         pdf.ln(10)
-        pdf.multi_cell(0, 5, "Generated by Skin Advisor Bot", align='C')
-        
+        pdf.multi_cell(0, 5, "Generated by Skin Advisor Bot", align="C")
+
         # Сохранение
         pdf.output(str(pdf_path))
         print(f"✅ Generated minimal PDF for user {uid}: {pdf_path}")
-        
+
         return str(pdf_path)
-        
+
     except Exception as e:
         print(f"❌ Error generating minimal PDF for user {uid}: {e}")
         return ""
@@ -131,16 +138,11 @@ if __name__ == "__main__":
     # Тест минимального PDF генератора
     print("📄 MINIMAL PDF GENERATOR TEST")
     print("=" * 40)
-    
+
     # Тестовые данные
     test_snapshot = {
         "type": "detailed_palette",
-        "profile": {
-            "user_id": 12345,
-            "undertone": "warm",
-            "season": "autumn", 
-            "skin_type": "dry"
-        },
+        "profile": {"user_id": 12345, "undertone": "warm", "season": "autumn", "skin_type": "dry"},
         "result": {
             "makeup": {
                 "base": [
@@ -148,7 +150,7 @@ if __name__ == "__main__":
                         "name": "Perfect Foundation",
                         "brand": "Test Brand",
                         "price": 1500,
-                        "in_stock": True
+                        "in_stock": True,
                     }
                 ]
             },
@@ -158,16 +160,16 @@ if __name__ == "__main__":
                         "name": "Gentle Cleanser",
                         "brand": "Test Brand",
                         "price": 1200,
-                        "in_stock": True
+                        "in_stock": True,
                     }
                 ]
-            }
-        }
+            },
+        },
     }
-    
+
     # Генерируем тестовый PDF
     pdf_path = generate_minimal_pdf(999, test_snapshot)
-    
+
     if pdf_path and os.path.exists(pdf_path):
         file_size = os.path.getsize(pdf_path)
         print(f"✅ Test PDF generated: {pdf_path}")
@@ -175,9 +177,3 @@ if __name__ == "__main__":
         print("✅ Minimal PDF generator working!")
     else:
         print("❌ Minimal PDF generation failed")
-
-
-
-
-
-

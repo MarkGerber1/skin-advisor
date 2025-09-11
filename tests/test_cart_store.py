@@ -19,7 +19,7 @@ class TestCartItem:
             brand="Test Brand",
             name="Test Product",
             price=1000.0,
-            currency="RUB"
+            currency="RUB",
         )
 
         assert item.product_id == "test_123"
@@ -49,17 +49,12 @@ class TestCartStore:
     def teardown_method(self):
         """Очистка после каждого теста"""
         import shutil
+
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def test_add_item_new(self):
         """Тест добавления нового товара"""
-        item = CartItem(
-            product_id="prod1",
-            qty=1,
-            brand="Test",
-            name="Product",
-            price=100.0
-        )
+        item = CartItem(product_id="prod1", qty=1, brand="Test", name="Product", price=100.0)
 
         self.cart_store.add(123, item)
         items = self.cart_store.get(123)

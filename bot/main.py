@@ -115,11 +115,13 @@ async def main() -> None:
     # Загружаем настройки с fallback
     try:
         from config.env import get_settings
+
         settings = get_settings()
-        log_level = getattr(settings, 'log_level', 'INFO')
+        log_level = getattr(settings, "log_level", "INFO")
         print(f"✅ Settings loaded from config.env, log_level: {log_level}")
     except ImportError as e:
         print(f"⚠️ Config module not available ({e}), using mock settings")
+
         # Mock settings для Railway
         class MockSettings:
             bot_token = None  # Будет установлено из переменной окружения
@@ -134,24 +136,24 @@ async def main() -> None:
         log_file = settings.log_file
     except Exception as e:
         print(f"⚠️ Could not load settings for logging: {e}, using defaults")
-        log_level = 'INFO'
-        log_file = 'logs/bot.log'
+        log_level = "INFO"
+        log_file = "logs/bot.log"
 
     # Настраиваем основной логгер
     logging.basicConfig(
         level=getattr(logging, log_level.upper(), logging.INFO),
-        format='%(asctime)s | %(name)s | %(levelname)s | %(message)s',
+        format="%(asctime)s | %(name)s | %(levelname)s | %(message)s",
         handlers=[
             logging.StreamHandler(),  # Вывод в stdout
-            logging.FileHandler(log_file, encoding='utf-8')  # Файловый вывод
-        ]
+            logging.FileHandler(log_file, encoding="utf-8"),  # Файловый вывод
+        ],
     )
 
     # Отдельный логгер для ошибок (stderr)
-    error_logger = logging.getLogger('errors')
+    error_logger = logging.getLogger("errors")
     error_handler = logging.StreamHandler()
     error_handler.setLevel(logging.ERROR)
-    error_formatter = logging.Formatter('%(asctime)s | ERROR | %(name)s | %(message)s')
+    error_formatter = logging.Formatter("%(asctime)s | ERROR | %(name)s | %(message)s")
     error_handler.setFormatter(error_formatter)
     error_logger.addHandler(error_handler)
 
@@ -177,6 +179,7 @@ async def main() -> None:
     token = None
     try:
         from config.env import get_settings
+
         settings = get_settings()
         token = settings.bot_token
         print("✅ Config loaded from config.env")
@@ -186,35 +189,36 @@ async def main() -> None:
         token = os.getenv("BOT_TOKEN")
         if token:
             print("✅ BOT_TOKEN loaded from environment")
-    
+
     if not token:
         raise RuntimeError("BOT_TOKEN is not set - check environment variables")
 
     print(f"Starting bot with token: {token[:10]}...")
     bot = Bot(token)
     dp = Dispatcher()
-    
+
     # Add global error handler
     @dp.error()
     async def error_handler(event):
         import traceback
+
         exception = event.exception
         print(f"❌ Global error: {exception}")
         print(f"📍 Traceback: {traceback.format_exc()}")
-        
+
         # Log callback data for debugging
-        if hasattr(event, 'callback_query') and event.callback_query:
+        if hasattr(event, "callback_query") and event.callback_query:
             cb = event.callback_query
             print(f"🔗 Callback data: {cb.data}")
             print(f"👤 User: {cb.from_user.id if cb.from_user else 'Unknown'}")
             try:
                 # Use inline menu for better recovery (emergency_keyboard may cause same issue)
                 from bot.ui.keyboards import main_menu_inline
+
                 if cb.message:
                     await cb.message.edit_text(
-                        "⚠️ Произошла ошибка\n\n"
-                        "Выберите действие для восстановления:",
-                        reply_markup=main_menu_inline()
+                        "⚠️ Произошла ошибка\n\n" "Выберите действие для восстановления:",
+                        reply_markup=main_menu_inline(),
                     )
                 await cb.answer("⚠️ Ошибка исправлена")
             except Exception as e:
@@ -223,16 +227,15 @@ async def main() -> None:
                     await cb.answer("⚠️ Ошибка. Нажмите /start")
                 except:
                     pass
-        elif hasattr(event, 'message') and event.message:
+        elif hasattr(event, "message") and event.message:
             msg = event.message
             print(f"💬 Message text: {msg.text}")
             print(f"👤 User: {msg.from_user.id if msg.from_user else 'Unknown'}")
             try:
                 from bot.ui.keyboards import main_menu
+
                 await msg.answer(
-                    "⚠️ Произошла ошибка\n\n"
-                    "Возврат в главное меню:",
-                    reply_markup=main_menu()
+                    "⚠️ Произошла ошибка\n\n" "Возврат в главное меню:", reply_markup=main_menu()
                 )
             except Exception as e:
                 print(f"❌ Could not send error message: {e}")
@@ -241,7 +244,7 @@ async def main() -> None:
                 except:
                     pass
         return True  # Mark as handled
-    
+
     # ROUTER PRIORITY ORDER (CRITICAL!)
     dp.include_router(start_router)  # Side menu handlers - HIGHEST PRIORITY
     dp.include_router(detailed_palette_router)  # Detailed palette test - BEFORE universal
@@ -267,7 +270,7 @@ async def main() -> None:
         await cb.message.edit_text(
             "🏠 **Главное меню**\n\nВыберите действие:",
             reply_markup=main_menu_inline(),
-            parse_mode="Markdown"
+            parse_mode="Markdown",
         )
 
         await cb.answer()
@@ -289,7 +292,7 @@ async def main() -> None:
 
         if os.path.exists(lock_file):
             try:
-                with open(lock_file, 'r') as f:
+                with open(lock_file, "r") as f:
                     old_pid = f.read().strip()
 
                 # Проверяем, работает ли еще процесс с этим PID
@@ -312,7 +315,7 @@ async def main() -> None:
 
         # Создаем новый lock-файл
         try:
-            with open(lock_file, 'w') as f:
+            with open(lock_file, "w") as f:
                 f.write(str(os.getpid()))
             print(f"✅ Lock file created: {lock_file} (PID: {os.getpid()})")
         except Exception as e:
@@ -322,7 +325,7 @@ async def main() -> None:
     # Add graceful shutdown handler
     import signal
     import asyncio
-    
+
     async def graceful_shutdown(bot: Bot):
         print("🛑 Graceful shutdown initiated...")
         try:
@@ -341,35 +344,36 @@ async def main() -> None:
                     print(f"✅ Lock file removed: {lock_file}")
             except Exception as e:
                 print(f"⚠️ Could not remove lock file: {e}")
-    
+
     # Setup graceful shutdown signal handlers
     shutdown_event = asyncio.Event()
-    
+
     def signal_handler(signum, frame):
         print(f"📡 Received signal {signum}")
         print("🛑 Starting graceful shutdown...")
         shutdown_event.set()
-    
+
     signal.signal(signal.SIGTERM, signal_handler)
     signal.signal(signal.SIGINT, signal_handler)
-    
+
     try:
         # Clear any existing webhook first and wait for conflicts to resolve
         try:
             await bot.delete_webhook(drop_pending_updates=True)
             print("🧹 Cleared existing webhook and pending updates")
-            
+
             # Wait for Telegram to process webhook deletion
             import asyncio
+
             await asyncio.sleep(2)
-            
+
             # Test connection before starting polling
             me = await bot.get_me()
             print(f"✅ Bot connection verified: @{me.username} (ID: {me.id})")
-            
+
         except Exception as e:
             print(f"⚠️ Could not clear webhook: {e}")
-        
+
         if use_webhook and webhook_url:
             # WEBHOOK MODE
             print("🌐 Setting up webhook...")
@@ -379,7 +383,7 @@ async def main() -> None:
             await bot.set_webhook(
                 url=webhook_full_url,
                 drop_pending_updates=True,
-                allowed_updates=["message", "callback_query", "inline_query"]
+                allowed_updates=["message", "callback_query", "inline_query"],
             )
             print(f"✅ Webhook set to: {webhook_full_url}")
 
@@ -406,7 +410,7 @@ async def main() -> None:
             # Start server
             runner = web.AppRunner(app)
             await runner.setup()
-            site = web.TCPSite(runner, '0.0.0.0', int(os.getenv('PORT', 8080)))
+            site = web.TCPSite(runner, "0.0.0.0", int(os.getenv("PORT", 8080)))
             await site.start()
             print("🌐 Webhook server started")
 
@@ -422,7 +426,7 @@ async def main() -> None:
                 skip_updates=True,  # Skip pending updates to avoid conflicts
                 handle_signals=False,  # We handle signals manually
                 timeout=20,  # Shorter timeout to detect conflicts faster
-                retry_after=3  # Shorter retry delay
+                retry_after=3,  # Shorter retry delay
             )
     except KeyboardInterrupt:
         print("🛑 Received shutdown signal")

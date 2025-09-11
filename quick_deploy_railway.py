@@ -7,6 +7,7 @@ import subprocess
 import sys
 import os
 
+
 def run_command(cmd, desc):
     """Выполняет команду и выводит результат"""
     print(f"\n🔧 {desc}...")
@@ -24,6 +25,7 @@ def run_command(cmd, desc):
     except Exception as e:
         print(f"❌ {desc} - ИСКЛЮЧЕНИЕ: {e}")
         return False
+
 
 def main():
     print("🚀 Быстрое развертывание на Railway")
@@ -50,6 +52,6 @@ def main():
     print("- ✅ ModuleNotFoundError 'config' должен быть исправлен")
     print("- ✅ Бот должен запуститься с BOT_TOKEN из переменных окружения")
 
+
 if __name__ == "__main__":
     main()
-

@@ -17,6 +17,7 @@ load_dotenv()
 
 class TelegramConfig(BaseModel):
     """Telegram Bot Configuration"""
+
     token: str
     webhook_secret: Optional[str] = None
     webhook_base: Optional[str] = None
@@ -26,6 +27,7 @@ class TelegramConfig(BaseModel):
 
 class PartnerConfig(BaseModel):
     """Partner & Affiliate Configuration"""
+
     affiliate_tag: str = "skincare_bot"
     partner_code: str = "aff_skincare_bot"
     redirect_base: Optional[str] = None
@@ -36,6 +38,7 @@ class PartnerConfig(BaseModel):
 
 class CatalogConfig(BaseModel):
     """Catalog & Data Configuration"""
+
     catalog_path: str = "assets/fixed_catalog.yaml"
     cache_enabled: bool = True
     only_in_stock: bool = True
@@ -43,11 +46,13 @@ class CatalogConfig(BaseModel):
 
 class DatabaseConfig(BaseModel):
     """Database Configuration"""
+
     url: str = "sqlite:///data/bot.db"
 
 
 class LoggingConfig(BaseModel):
     """Logging Configuration"""
+
     level: str = "INFO"
     log_file: str = "logs/bot.log"
     catalog_errors_file: str = "logs/catalog_errors.jsonl"
@@ -55,23 +60,27 @@ class LoggingConfig(BaseModel):
 
 class AnalyticsConfig(BaseModel):
     """Analytics & Metrics Configuration"""
+
     enabled: bool = True
     ab_testing: bool = True
 
 
 class DevelopmentConfig(BaseModel):
     """Development Configuration"""
+
     debug: bool = False
     development_mode: bool = False
 
 
 class ExternalAPIsConfig(BaseModel):
     """External APIs Configuration"""
+
     openai_api_key: Optional[str] = None
 
 
 class AdminConfig(BaseModel):
     """Admin Configuration"""
+
     admin_ids: List[int] = []
     owner_id: Optional[int] = None
 
@@ -141,7 +150,7 @@ class Settings(BaseSettings):
 
     # Legacy compatibility
     port: int = 8080  # Alias for webapp_port
-    
+
     @property
     def telegram(self) -> TelegramConfig:
         """Get Telegram configuration"""
@@ -150,9 +159,9 @@ class Settings(BaseSettings):
             webhook_secret=self.webhook_secret,
             webhook_base=self.webhook_base,
             webhook_path=self.webhook_path,
-            webapp_port=self.webapp_port
+            webapp_port=self.webapp_port,
         )
-    
+
     @property
     def partner(self) -> PartnerConfig:
         """Get Partner configuration"""
@@ -162,52 +171,39 @@ class Settings(BaseSettings):
             redirect_base=self.redirect_base,
             deeplink_network=self.deeplink_network,
             user_discount=self.user_discount,
-            owner_commission=self.owner_commission
+            owner_commission=self.owner_commission,
         )
-    
+
     @property
     def catalog(self) -> CatalogConfig:
         """Get Catalog configuration"""
-        return CatalogConfig(
-            catalog_path=self.catalog_path
-        )
-    
+        return CatalogConfig(catalog_path=self.catalog_path)
+
     @property
     def database(self) -> DatabaseConfig:
         """Get Database configuration"""
         return DatabaseConfig(url=self.database_url)
-    
+
     @property
     def logging(self) -> LoggingConfig:
         """Get Logging configuration"""
-        return LoggingConfig(
-            level=self.log_level,
-            log_file=self.log_file
-        )
-    
+        return LoggingConfig(level=self.log_level, log_file=self.log_file)
+
     @property
     def analytics(self) -> AnalyticsConfig:
         """Get Analytics configuration"""
-        return AnalyticsConfig(
-            enabled=self.analytics_enabled,
-            ab_testing=self.ab_testing
-        )
-    
+        return AnalyticsConfig(enabled=self.analytics_enabled, ab_testing=self.ab_testing)
+
     @property
     def development(self) -> DevelopmentConfig:
         """Get Development configuration"""
-        return DevelopmentConfig(
-            debug=self.debug,
-            development_mode=self.development_mode
-        )
-    
+        return DevelopmentConfig(debug=self.debug, development_mode=self.development_mode)
+
     @property
     def external_apis(self) -> ExternalAPIsConfig:
         """Get External APIs configuration"""
-        return ExternalAPIsConfig(
-            openai_api_key=self.openai_api_key
-        )
-    
+        return ExternalAPIsConfig(openai_api_key=self.openai_api_key)
+
     @property
     def admin_list(self) -> List[int]:
         """Parse admin IDs from comma-separated string"""
@@ -232,19 +228,20 @@ def get_settings() -> Settings:
 def load_env():
     """Load and validate environment configuration"""
     settings = get_settings()
-    
+
     # Validate critical settings
     if not settings.bot_token:
         raise ValueError("BOT_TOKEN is required")
-    
+
     # Validate paths exist
     import os
+
     if not os.path.exists(os.path.dirname(settings.catalog_path)):
         os.makedirs(os.path.dirname(settings.catalog_path), exist_ok=True)
-    
+
     if not os.path.exists(os.path.dirname(settings.log_file)):
         os.makedirs(os.path.dirname(settings.log_file), exist_ok=True)
-    
+
     return settings
 
 
@@ -253,10 +250,11 @@ if __name__ == "__main__":
     try:
         settings = get_settings()
         print("✅ Configuration loaded successfully!")
-        print(f"🤖 Bot Token: {'*' * 20}...{settings.bot_token[-4:] if len(settings.bot_token) > 4 else 'NOT_SET'}")
+        print(
+            f"🤖 Bot Token: {'*' * 20}...{settings.bot_token[-4:] if len(settings.bot_token) > 4 else 'NOT_SET'}"
+        )
         print(f"📁 Catalog Path: {settings.catalog_path}")
         print(f"🏷️ Affiliate Tag: {settings.affiliate_tag}")
         print(f"💾 Database: {settings.database_url}")
     except Exception as e:
         print(f"❌ Configuration failed: {e}")
-

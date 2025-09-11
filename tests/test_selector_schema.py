@@ -41,7 +41,7 @@ class TestSafeGetSkincareData:
             "skincare": {
                 "cleanser": [{"id": "test1"}],
                 "toner": [{"id": "test2"}],
-                "serum": [{"id": "test3"}]
+                "serum": [{"id": "test3"}],
             }
         }
 

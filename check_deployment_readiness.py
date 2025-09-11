@@ -7,6 +7,7 @@ import os
 import sys
 from pathlib import Path
 
+
 def check_file_exists(path, description):
     """Проверяет существование файла"""
     if os.path.exists(path):
@@ -15,6 +16,7 @@ def check_file_exists(path, description):
     else:
         print(f"❌ {description}: {path} - НЕ НАЙДЕН")
         return False
+
 
 def check_directory_exists(path, description):
     """Проверяет существование директории"""
@@ -25,6 +27,7 @@ def check_directory_exists(path, description):
         print(f"❌ {description}: {path} - НЕ НАЙДЕНА")
         return False
 
+
 def check_dockerfile():
     """Проверяет Dockerfile"""
     dockerfile_path = "Dockerfile"
@@ -32,7 +35,7 @@ def check_dockerfile():
         return False
 
     try:
-        with open(dockerfile_path, 'r', encoding='utf-8') as f:
+        with open(dockerfile_path, "r", encoding="utf-8") as f:
             content = f.read()
 
         required_commands = [
@@ -42,7 +45,7 @@ def check_dockerfile():
             "COPY bot/",
             "COPY engine/",
             "COPY assets/",
-            "CMD ["
+            "CMD [",
         ]
 
         for cmd in required_commands:
@@ -58,6 +61,7 @@ def check_dockerfile():
     except Exception as e:
         print(f"   ❌ Ошибка чтения Dockerfile: {e}")
         return False
+
 
 def check_railway_config():
     """Проверяет конфигурацию Railway"""
@@ -76,6 +80,7 @@ def check_railway_config():
 
     return True
 
+
 def check_entry_points():
     """Проверяет точки входа"""
     entry_points = ["start.py", "entrypoint.sh", "bot/main.py"]
@@ -86,7 +91,7 @@ def check_entry_points():
     # Проверим что start.py импортирует main
     if os.path.exists("start.py"):
         try:
-            with open("start.py", 'r', encoding='utf-8') as f:
+            with open("start.py", "r", encoding="utf-8") as f:
                 content = f.read()
                 if "from bot.main import main" in content:
                     print("   ✅ start.py корректно импортирует main")
@@ -95,6 +100,7 @@ def check_entry_points():
         except Exception as e:
             print(f"   ❌ Ошибка чтения start.py: {e}")
 
+
 def check_requirements():
     """Проверяет requirements.txt"""
     req_path = "requirements.txt"
@@ -102,7 +108,7 @@ def check_requirements():
         return False
 
     try:
-        with open(req_path, 'r', encoding='utf-8') as f:
+        with open(req_path, "r", encoding="utf-8") as f:
             content = f.read()
 
         required_packages = ["aiogram", "fpdf", "python-dotenv", "pydantic"]
@@ -122,6 +128,7 @@ def check_requirements():
     except Exception as e:
         print(f"   ❌ Ошибка чтения requirements.txt: {e}")
         return False
+
 
 def check_env_variables():
     """Проверяет переменные окружения"""
@@ -151,6 +158,7 @@ def check_env_variables():
         else:
             print(f"   ❌ {var}: НЕ УСТАНОВЛЕНА (КРИТИЧНО!)")
 
+
 def check_project_structure():
     """Проверяет структуру проекта"""
     print("\n📁 Проверка структуры проекта:")
@@ -161,7 +169,7 @@ def check_project_structure():
         ("assets", "Каталог и ресурсы"),
         ("services", "Сервисы (affiliate, cart)"),
         ("config", "Конфигурация"),
-        ("i18n", "Интернационализация")
+        ("i18n", "Интернационализация"),
     ]
 
     required_files = [
@@ -169,7 +177,7 @@ def check_project_structure():
         ("engine/selector_schema.py", "Схема селектора"),
         ("assets/fixed_catalog.yaml", "Каталог товаров"),
         ("services/affiliates.py", "Affiliate сервис"),
-        ("services/text_sanitizer.py", "Очистка текста")
+        ("services/text_sanitizer.py", "Очистка текста"),
     ]
 
     all_good = True
@@ -183,6 +191,7 @@ def check_project_structure():
             all_good = False
 
     return all_good
+
 
 def main():
     """Главная функция проверки"""
@@ -211,7 +220,7 @@ def main():
     check_env_variables()
 
     # Итоги
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("📊 РЕЗУЛЬТАТЫ ПРОВЕРКИ:")
 
     all_passed = True
@@ -234,7 +243,8 @@ def main():
         print("Исправьте отмеченные проблемы перед развертыванием.")
 
     print("\n📖 Подробная инструкция: RAILWAY_DEPLOY_GUIDE.md")
-    print("="*60)
+    print("=" * 60)
+
 
 if __name__ == "__main__":
     main()

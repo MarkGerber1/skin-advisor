@@ -20,12 +20,12 @@ class CartItem:
     category: Optional[str] = None
     in_stock: bool = True
     added_at: Optional[str] = None
-    
+
     # NEW: Support for product variants (shade, volume, size)
     variant_id: Optional[str] = None  # e.g., "shade-01-fair", "volume-30ml", "size-medium"
     variant_name: Optional[str] = None  # e.g., "Fair", "30ml", "Medium"
     variant_type: Optional[str] = None  # e.g., "shade", "volume", "size"
-    
+
     def get_composite_key(self) -> str:
         """Returns composite key for idempotent operations: product_id:variant_id"""
         if self.variant_id:
@@ -53,10 +53,10 @@ class CartStore:
         out: Dict[str, CartItem] = {}
         for composite_key, payload in raw.items():
             # Handle legacy items without variant fields
-            if 'variant_id' not in payload:
-                payload['variant_id'] = None
-                payload['variant_name'] = None
-                payload['variant_type'] = None
+            if "variant_id" not in payload:
+                payload["variant_id"] = None
+                payload["variant_name"] = None
+                payload["variant_type"] = None
             out[composite_key] = CartItem(**payload)
         return out
 
@@ -64,7 +64,10 @@ class CartStore:
         path = self._path(user_id)
         with open(path, "w", encoding="utf-8") as f:
             json.dump(
-                {composite_key: asdict(ci) for composite_key, ci in items.items()}, f, ensure_ascii=False, indent=2
+                {composite_key: asdict(ci) for composite_key, ci in items.items()},
+                f,
+                ensure_ascii=False,
+                indent=2,
             )
 
     def add(self, user_id: int, item: CartItem) -> None:
@@ -72,7 +75,7 @@ class CartStore:
         with self._lock:
             items = self._load(user_id)
             composite_key = item.get_composite_key()
-            
+
             if composite_key in items:
                 # Same product + variant = increase quantity
                 items[composite_key].qty += item.qty
@@ -81,14 +84,14 @@ class CartStore:
                 # New product or new variant = add new item
                 items[composite_key] = item
                 print(f"✅ Cart: Added new item {composite_key}: qty={item.qty}")
-            
+
             self._save(user_id, items)
 
     def remove(self, user_id: int, product_id: str, variant_id: Optional[str] = None) -> None:
         """Remove item by product_id and optional variant_id"""
         with self._lock:
             items = self._load(user_id)
-            
+
             if variant_id:
                 composite_key = f"{product_id}:{variant_id}"
             else:
@@ -100,21 +103,23 @@ class CartStore:
                         if key.startswith(f"{product_id}:"):
                             composite_key = key
                             break
-            
+
             if composite_key in items:
                 del items[composite_key]
                 self._save(user_id, items)
                 print(f"🗑️ Cart: Removed item {composite_key}")
 
-    def set_qty(self, user_id: int, product_id: str, qty: int, variant_id: Optional[str] = None) -> None:
+    def set_qty(
+        self, user_id: int, product_id: str, qty: int, variant_id: Optional[str] = None
+    ) -> None:
         """Set quantity for specific product variant"""
         if qty <= 0:
             self.remove(user_id, product_id, variant_id)
             return
-            
+
         with self._lock:
             items = self._load(user_id)
-            
+
             if variant_id:
                 composite_key = f"{product_id}:{variant_id}"
             else:
@@ -125,19 +130,27 @@ class CartStore:
                         if key.startswith(f"{product_id}:"):
                             composite_key = key
                             break
-            
+
             if composite_key in items:
                 items[composite_key].qty = qty
                 self._save(user_id, items)
                 print(f"📊 Cart: Set qty for {composite_key}: {qty}")
 
-    def update_item_variant(self, user_id: int, product_id: str, old_variant_id: Optional[str], new_variant_id: Optional[str]) -> Optional[CartItem]:
+    def update_item_variant(
+        self,
+        user_id: int,
+        product_id: str,
+        old_variant_id: Optional[str],
+        new_variant_id: Optional[str],
+    ) -> Optional[CartItem]:
         """Update variant for an existing cart item"""
         with self._lock:
             items = self._load(user_id)
 
             # Find the old item
-            old_composite_key = f"{product_id}:{old_variant_id}" if old_variant_id else f"{product_id}:default"
+            old_composite_key = (
+                f"{product_id}:{old_variant_id}" if old_variant_id else f"{product_id}:default"
+            )
 
             if old_composite_key not in items:
                 print(f"⚠️ Cart: Item not found for update: {old_composite_key}")
@@ -163,7 +176,7 @@ class CartStore:
                 in_stock=old_item.in_stock,
                 variant_id=new_variant_id,
                 variant_name=None,  # Will be set by caller if needed
-                variant_type=None   # Will be set by caller if needed
+                variant_type=None,  # Will be set by caller if needed
             )
 
             # Add new item
