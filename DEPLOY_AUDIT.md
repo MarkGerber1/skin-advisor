@@ -10,14 +10,14 @@ $ git --no-pager remote show origin
 * remote origin
   Fetch URL: https://github.com/MarkGerber1/skin-advisor.git
   Push  URL: https://github.com/MarkGerber1/skin-advisor.git
-  HEAD branch: main  ← ⚠️ STILL NEEDS MANUAL CHANGE TO 'master'
+  HEAD branch: master  ← ✅ PERFECT!
   Remote branches:
-    demo-site tracked
-    main      tracked
-    master    tracked
+    demo-site                  tracked
+    feature/smoke-preview-test tracked
+    master                     tracked
 ```
 
-**Note:** Default branch все еще `main`, но CI/CD работает только на `master`!
+**Note:** ✅ Default branch изменен на `master`, main ветка удалена!
 
 #### ✅ Workflows Configuration
 - **CI workflow** → ✅ Only `master` branch
@@ -168,7 +168,7 @@ GitHub → Settings → Secrets and variables → Actions
 
 | Component | Status | Action Required |
 |-----------|--------|-----------------|
-| Git Branches | ✅ Synced | Change default to master |
+| Git Branches | ✅ Clean master-only | ✅ Main deleted |
 | GitHub Actions | ✅ Configured + CI works | ✅ Tested successfully |
 | Branch Protection | ❌ Missing | Add rule for master |
 | Railway Token | ✅ Available | None |
