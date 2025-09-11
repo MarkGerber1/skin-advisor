@@ -113,35 +113,30 @@ async def main() -> None:
     import logging
     import os
 
-    # Инициализация переменных с дефолтными значениями
+    # Дефолтные значения - всегда определены
     log_level = "INFO"
     log_file = "logs/bot.log"
 
-    # Загружаем настройки с fallback
+    # Пытаемся загрузить настройки из config.env
     try:
         from config.env import get_settings
-
         settings = get_settings()
-        log_level = getattr(settings, "log_level", "INFO")
+        if settings:
+            log_level = getattr(settings, "log_level", log_level)
+            log_file = getattr(settings, "log_file", log_file)
         print(f"✅ Settings loaded from config.env, log_level: {log_level}")
-    except ImportError as e:
-        print(f"⚠️ Config module not available ({e}), using mock settings")
-
-        # Mock settings для Railway
-        class MockSettings:
-            bot_token = None  # Будет установлено из переменной окружения
-            webhook_base = None
-            use_webhook = True
-            log_level = "INFO"
-            log_file = "logs/bot.log"
-            affiliate_tag = "skincarebot"
-
-        settings = MockSettings()
-        log_level = settings.log_level
-        log_file = settings.log_file
+    except ImportError:
+        print("⚠️ Config module not available, using defaults")
     except Exception as e:
-        print(f"⚠️ Could not load settings for logging: {e}, using defaults")
-        # Переменные уже инициализированы в начале функции
+        print(f"⚠️ Could not load settings: {e}, using defaults")
+
+    # Гарантируем, что переменные определены
+    if not log_level:
+        log_level = "INFO"
+    if not log_file:
+        log_file = "logs/bot.log"
+
+    print(f"🔧 Final config: log_level={log_level}, log_file={log_file}")
 
     # Создаем папку для логов, если не существует
     log_dir = os.path.dirname(log_file)
