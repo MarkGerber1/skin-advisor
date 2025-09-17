@@ -85,6 +85,28 @@ class AdminConfig(BaseModel):
     owner_id: Optional[int] = None
 
 
+class SecurityConfig(BaseModel):
+    """Security & Anti-Spam Configuration"""
+
+    # Pin control
+    allow_pin: bool = False
+    pin_whitelist: List[int] = []  # User IDs allowed to pin
+    chat_whitelist: List[int] = []  # Chat IDs allowed to receive messages
+
+    # Anti-spam keywords for auto-unpin
+    spam_keywords: List[str] = [
+        "airdrop", "token", "crypto", "FOXY", "USDT", "BTC",
+        "x100", "giveaway", "free money", "invest", "trading",
+        "wallet", "blockchain", "defi", "nft", "mining"
+    ]
+
+    # Message sanitization
+    sanitize_messages: bool = True
+
+    # Startup behavior
+    unpin_on_start: bool = True
+
+
 class Settings(BaseSettings):
     """Main Settings Class - Reads from Environment Variables"""
 
@@ -147,6 +169,13 @@ class Settings(BaseSettings):
     # Admin
     admin_ids: str = ""  # Comma-separated IDs
     owner_id: Optional[int] = None
+
+    # Security & Anti-Spam
+    allow_pin: bool = False
+    pin_whitelist: str = ""  # Comma-separated IDs
+    chat_whitelist: str = ""  # Comma-separated chat IDs
+    sanitize_messages: bool = True
+    unpin_on_start: bool = True  # Auto-unpin all messages on startup
 
     # Legacy compatibility
     port: int = 8080  # Alias for webapp_port
@@ -213,6 +242,39 @@ class Settings(BaseSettings):
             return [int(uid.strip()) for uid in self.admin_ids.split(",") if uid.strip()]
         except ValueError:
             return []
+
+    @property
+    def security(self) -> SecurityConfig:
+        """Get Security configuration"""
+        # Parse whitelists from comma-separated strings
+        pin_whitelist = []
+        if self.pin_whitelist:
+            try:
+                pin_whitelist = [int(uid.strip()) for uid in self.pin_whitelist.split(",") if uid.strip()]
+            except ValueError:
+                pin_whitelist = []
+
+        chat_whitelist = []
+        if self.chat_whitelist:
+            try:
+                chat_whitelist = [int(cid.strip()) for cid in self.chat_whitelist.split(",") if cid.strip()]
+            except ValueError:
+                chat_whitelist = []
+
+        # Add owner_id to whitelists if set
+        if self.owner_id:
+            if self.owner_id not in pin_whitelist:
+                pin_whitelist.append(self.owner_id)
+            if self.owner_id not in chat_whitelist:
+                chat_whitelist.append(self.owner_id)
+
+        return SecurityConfig(
+            allow_pin=self.allow_pin,
+            pin_whitelist=pin_whitelist,
+            chat_whitelist=chat_whitelist,
+            sanitize_messages=self.sanitize_messages,
+            unpin_on_start=self.unpin_on_start
+        )
 
 
 # Global settings instance

@@ -36,6 +36,18 @@ jobs:
         echo "Linting with Ruff..."
         python -m ruff check --fix . || echo "⚠️  Ruff found issues but continuing..."
 
+    - name: Security Check - No Raw Pin Calls
+      run: |
+        echo "🔍 Checking for raw pin/unpin calls (must use safe_pin_message)..."
+        RAW_PINS=$(grep -r "pinChatMessage\|pin_chat_message\|unpin.*chat" --include="*.py" . | grep -v "safe_pin_message\|test_" | wc -l)
+        if [ "$RAW_PINS" -gt 0 ]; then
+          echo "❌ FOUND RAW PIN CALLS: $RAW_PINS occurrences"
+          grep -r "pinChatMessage\|pin_chat_message\|unpin.*chat" --include="*.py" . | grep -v "safe_pin_message\|test_"
+          exit 1
+        else
+          echo "✅ No raw pin calls found - security check passed"
+        fi
+
     - name: Commit formatting changes
       run: |
         echo "Checking for formatting changes..."

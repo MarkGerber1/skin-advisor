@@ -104,6 +104,22 @@ except ImportError as e:
     print(f"ERROR Failed to import detailed skincare router: {e}")
     raise
 
+try:
+    from bot.handlers.anti_pin_guard import router as anti_pin_guard_router
+
+    print("OK anti-pin guard router imported")
+except ImportError as e:
+    print(f"ERROR Failed to import anti-pin guard router: {e}")
+    raise
+
+try:
+    from bot.handlers.admin import router as admin_router
+
+    print("OK admin router imported")
+except ImportError as e:
+    print(f"ERROR Failed to import admin router: {e}")
+    raise
+
 
 CATALOG_PATH = os.getenv("CATALOG_PATH", "assets/fixed_catalog.yaml")
 
@@ -202,6 +218,23 @@ async def main() -> None:
     bot = Bot(token)
     dp = Dispatcher()
 
+    # Add security middleware for chat filtering
+    @dp.message.middleware()
+    async def chat_filter_middleware(handler, event, data):
+        """Middleware to filter messages based on chat whitelist"""
+        from bot.utils.security import chat_filter
+
+        chat_id = event.chat.id
+
+        # Allow all messages if whitelist is empty (backward compatibility)
+        if not chat_filter.is_chat_allowed(chat_id):
+            print(f"🚫 MESSAGE BLOCKED: Chat {chat_id} not in whitelist")
+            # Don't call handler - message is blocked
+            return
+
+        # Continue with normal processing
+        return await handler(event, data)
+
     # Add global error handler
     @dp.error()
     async def error_handler(event):
@@ -251,7 +284,9 @@ async def main() -> None:
         return True  # Mark as handled
 
     # ROUTER PRIORITY ORDER (CRITICAL!)
-    dp.include_router(start_router)  # Side menu handlers - HIGHEST PRIORITY
+    dp.include_router(anti_pin_guard_router)  # Security guard - HIGHEST PRIORITY
+    dp.include_router(admin_router)  # Admin commands - HIGH PRIORITY
+    dp.include_router(start_router)  # Side menu handlers - HIGH PRIORITY
     dp.include_router(detailed_palette_router)  # Detailed palette test - BEFORE universal
     dp.include_router(detailed_skincare_router)  # Detailed skincare test - BEFORE universal
     dp.include_router(skincare_picker_router)  # Skincare product picker - AFTER tests
@@ -375,6 +410,17 @@ async def main() -> None:
             # Test connection before starting polling
             me = await bot.get_me()
             print(f"✅ Bot connection verified: @{me.username} (ID: {me.id})")
+
+            # Security: Auto-unpin messages on startup if configured
+            try:
+                from config.env import get_settings
+                settings = get_settings()
+
+                if settings.security.unpin_on_start and settings.owner_id:
+                    await bot.unpin_all_chat_messages(chat_id=settings.owner_id)
+                    print(f"[ANTI-PIN] Unpinned all messages in owner chat {settings.owner_id} on startup")
+            except Exception as e:
+                print(f"⚠️ Could not unpin messages on startup: {e}")
 
         except Exception as e:
             print(f"⚠️ Could not clear webhook: {e}")
