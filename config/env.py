@@ -98,12 +98,12 @@ class Settings(BaseSettings):
     # Telegram (required)
     bot_token: str
 
-    # Webhook Configuration
+    # Webhook Configuration (False for free tiers)
     use_webhook: bool = False
     webhook_secret: Optional[str] = None
     webhook_base: Optional[str] = None
     webhook_path: str = "/webhook"
-    webapp_port: int = 8080
+    webapp_port: int = int(os.getenv("PORT", 8080))
 
     # Partner & Affiliate
     affiliate_tag: str = "skincare_bot"
