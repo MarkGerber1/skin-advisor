@@ -13,6 +13,9 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Install Flask for health checks
+RUN pip install flask
+
 # Copy source code
 COPY . .
 
@@ -29,10 +32,9 @@ ENV USE_WEBHOOK=0
 # Expose port
 EXPOSE 8080
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import sys; sys.exit(0)" || exit 1
+# Health check endpoint script
+RUN echo 'from flask import Flask; app = Flask(__name__); @app.route("/health"); def health(): return "OK"; app.run(host="0.0.0.0", port=8080)' > health.py
 
-# Start command
-CMD ["python", "-m", "bot.main"]
+# Start both bot and health check server
+CMD ["sh", "-c", "python health.py & python -m bot.main"]
 

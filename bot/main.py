@@ -120,6 +120,22 @@ except ImportError as e:
     print(f"ERROR Failed to import admin router: {e}")
     raise
 
+try:
+    from bot.handlers.cart_v2 import router as cart_v2_router
+
+    print("OK cart v2 router imported")
+except ImportError as e:
+    print(f"ERROR Failed to import cart v2 router: {e}")
+    raise
+
+try:
+    from bot.handlers.recommendations import router as recommendations_router
+
+    print("OK recommendations router imported")
+except ImportError as e:
+    print(f"ERROR Failed to import recommendations router: {e}")
+    raise
+
 
 CATALOG_PATH = os.getenv("CATALOG_PATH", "assets/fixed_catalog.yaml")
 
@@ -286,6 +302,8 @@ async def main() -> None:
     # ROUTER PRIORITY ORDER (CRITICAL!)
     dp.include_router(anti_pin_guard_router)  # Security guard - HIGHEST PRIORITY
     dp.include_router(admin_router)  # Admin commands - HIGH PRIORITY
+    dp.include_router(cart_v2_router)  # New cart system - HIGH PRIORITY
+    dp.include_router(recommendations_router)  # Recommendations - HIGH PRIORITY
     dp.include_router(start_router)  # Side menu handlers - HIGH PRIORITY
     dp.include_router(detailed_palette_router)  # Detailed palette test - BEFORE universal
     dp.include_router(detailed_skincare_router)  # Detailed skincare test - BEFORE universal
