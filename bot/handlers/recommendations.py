@@ -187,36 +187,93 @@ async def show_main_recommendations(cb: CallbackQuery):
     await cb.message.edit_text(text, reply_markup=keyboard.as_markup(), parse_mode="Markdown")
 
 async def show_recommendations_after_test(bot: Bot, user_id: int, test_type: str = "skincare"):
-    """Show recommendations after completing a test"""
+    """Show recommendations after completing a test - CART V2 INTEGRATION"""
     try:
         text = "🎉 **Тест завершён!**\n\n"
-        text += "Рекомендую ознакомиться с подобранными средствами:\n\n"
+        text += "Вот персональные рекомендации для вас:\n\n"
 
-        # Quick recommendations preview
-        keyboard = InlineKeyboardBuilder()
+        # Get real recommendations using SelectorV2
+        try:
+            selector = SelectorV2()
+            recommendations = selector.select_products(user_id, category="all", limit=6)
 
-        if test_type == "skincare":
-            categories = ["cleanser", "toner", "serum"]
-        else:  # makeup
-            categories = ["foundation", "concealer", "mascara"]
+            if recommendations:
+                keyboard = InlineKeyboardBuilder()
 
-        for category in categories:
+                for i, product in enumerate(recommendations[:3]):  # Show first 3 products
+                    product_name = product.get("name", f"Товар {i+1}")
+                    product_id = product.get("id", f"unknown-{i}")
+                    price = product.get("price", 0)
+
+                    # Product info
+                    text += f"🧴 **{product_name}**\n"
+                    if price:
+                        text += f"💰 {price} ₽\n"
+                    text += "\n"
+
+                    # Add to cart button
+                    keyboard.row(InlineKeyboardButton(
+                        text=f"Добавить ▸ {product_name[:20]}...",
+                        callback_data=f"rec:add:{product_id}:default"
+                    ))
+
+                # More recommendations button
+                keyboard.row(InlineKeyboardButton(
+                    text="🛍️ Больше рекомендаций",
+                    callback_data=f"rec:more:{test_type}:1"
+                ))
+
+                # Cart button
+                keyboard.row(InlineKeyboardButton(
+                    text="🛒 Корзина",
+                    callback_data="cart:open"
+                ))
+
+                await safe_send_message(
+                    bot, user_id,
+                    text,
+                    reply_markup=keyboard.as_markup(),
+                    parse_mode="Markdown"
+                )
+            else:
+                # Fallback if no recommendations
+                text += "⚠️ Не удалось сгенерировать рекомендации.\nПопробуйте пройти тест заново."
+
+                keyboard = InlineKeyboardBuilder()
+                keyboard.row(InlineKeyboardButton(
+                    text="🔄 Пройти тест заново",
+                    callback_data=f"start:{test_type}"
+                ))
+
+                await safe_send_message(
+                    bot, user_id,
+                    text,
+                    reply_markup=keyboard.as_markup(),
+                    parse_mode="Markdown"
+                )
+
+        except Exception as e:
+            logger.error(f"Failed to get recommendations: {e}")
+            # Fallback message
+            text += "⚠️ Ошибка при генерации рекомендаций.\n\n"
+            text += "Используйте меню для выбора средств:"
+
+            keyboard = InlineKeyboardBuilder()
             keyboard.row(InlineKeyboardButton(
-                text=f"🛍️ {category.title()} средства",
-                callback_data=f"rec:more:{category}:1"
+                text="🛍️ Каталог товаров",
+                callback_data="rec:more:all:1"
+            ))
+            keyboard.row(InlineKeyboardButton(
+                text="🛒 Корзина",
+                callback_data="cart:open"
             ))
 
-        keyboard.row(InlineKeyboardButton(
-            text="🛒 Перейти в корзину",
-            callback_data="cart:open"
-        ))
-
-        await safe_send_message(
-            bot, user_id,
-            text,
-            reply_markup=keyboard.as_markup(),
-            parse_mode="Markdown"
-        )
+            await safe_send_message(
+                bot, user_id,
+                text,
+                reply_markup=keyboard.as_markup(),
+                parse_mode="Markdown"
+            )
 
     except Exception as e:
         logger.error(f"Error showing recommendations after test: {e}")

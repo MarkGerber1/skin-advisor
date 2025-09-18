@@ -709,6 +709,13 @@ async def q8_lip_color(cb: CallbackQuery, state: FSMContext) -> None:
 
         await cb.answer("🎊 Тест завершен!")
 
+        # 🎯 CART V2 INTEGRATION: Show recommendations after palette test
+        try:
+            from bot.handlers.recommendations import show_recommendations_after_test
+            await show_recommendations_after_test(cb.bot, cb.from_user.id, "palette")
+        except Exception as e:
+            print(f"⚠️ Failed to show palette recommendations: {e}")
+
     except Exception as e:
         import traceback
 
