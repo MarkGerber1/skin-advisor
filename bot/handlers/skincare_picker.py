@@ -210,7 +210,26 @@ except ImportError:
             "mask": "Маски",
         }
         MSG_VARIANT_ADDED = "Добавлено в корзину: {brand} {name} ({variant})"
+        MSG_ADD_FAILED = "❌ Не удалось добавить в корзину"
         BADGE_OOS = "Нет в наличии"
+
+        # Cart service availability flag
+        cart_service_available = True
+
+        # Cart service exception
+        class CartServiceError(Exception):
+            def __init__(self, message: str, code: str = "unknown"):
+                super().__init__(message)
+                self.code = code
+
+        # Cart store instance
+        store = None
+        try:
+            from engine.cart_store import CartStore
+            store = CartStore()
+        except ImportError:
+            cart_service_available = False
+            print("⚠️ Cart service not available - using fallback mode")
         BTN_SHOW_ALTS = "Показать альтернативы"
 
 # Fix import for cart module
@@ -823,7 +842,10 @@ async def add_product_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
             return
 
         try:
-            cart_store = store  # Используем унифицированный store
+            # Получаем cart store
+            from engine.cart_store import CartStore
+            cart_store = CartStore()
+
             # Находим продукт для генерации партнерской ссылки
             product_data = None
             try:
@@ -844,91 +866,45 @@ async def add_product_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
                 except Exception as e:
                     print(f"Warning: Could not generate affiliate link: {e}")
 
-            # Добавляем товар в корзину
-            cart_item = cart_store.add_item(
-                user_id=user_id,
+            # Создаем cart item
+            from engine.cart_store import CartItem
+            cart_item = CartItem(
                 product_id=product_id,
                 variant_id=variant_id,
-                qty=1,
-                ref_link=ref_link,
+                name="",  # Will be filled from product data
+                price=0,  # Will be filled from product data
+                source="skincare_recommendation",
+                link=ref_link or "",
             )
+
+            # Добавляем товар в корзину
+            updated_cart = await cart_store.add(user_id, cart_item)
 
             # Аналитика
-            track_cart_event(
-                "product_added_to_cart",
-                user_id,
-                pid=product_id,
-                vid=variant_id or "default",
-                source=cart_item.ref_link or "unknown",
-                price=cart_item.price,
-                category=cart_item.category,
-            )
-
-            # Affiliate отслеживание
             try:
-                # Определяем источник по ref_link
-                source = "unknown"
-                if cart_item.ref_link:
-                    if "goldapple" in cart_item.ref_link.lower():
-                        source = "goldapple"
-                    elif (
-                        "wildberries" in cart_item.ref_link.lower()
-                        or "marketplace" in cart_item.ref_link.lower()
-                    ):
-                        source = "ru_marketplace"
-                    elif "official" in cart_item.ref_link.lower():
-                        source = "ru_official"
-                    elif (
-                        "amazon" in cart_item.ref_link.lower()
-                        or "sephora" in cart_item.ref_link.lower()
-                    ):
-                        source = "intl_authorized"
-
-                # Отслеживаем клик по checkout
-                affiliate_manager.track_checkout_click(
-                    items_count=1,
-                    total=float(cart_item.price) if cart_item.price else 0,
-                    currency="RUB",
-                    source=source,
-                    product_ids=[product_id],
+                from engine.analytics import cart_item_added
+                cart_item_added(
+                    user_id=user_id,
+                    product_id=product_id,
+                    variant_id=variant_id or "",
+                    source="skincare_recommendation",
+                    price=cart_item.price,
                 )
-
-                # Отслеживаем открытие внешнего checkout
-                if cart_item.ref_link:
-                    affiliate_manager.track_external_checkout_opened(
-                        partner=source.title(), url=cart_item.ref_link, items_count=1
-                    )
-
             except Exception as e:
-                print(f"[WARNING] Affiliate tracking error: {e}")
-
-            # A/B testing: логируем добавление в корзину
-            try:
-                ab_framework.log_add_to_cart(user_id, "category_order_experiment", 1)
-            except Exception as e:
-                print(f"[WARNING] A/B tracking error: {e}")
+                print(f"Analytics error: {e}")
 
             # Формируем сообщение об успехе
-            f"{cart_item.brand or ''} {cart_item.name or ''}".strip()
-            message = MSG_VARIANT_ADDED.format(
-                brand=cart_item.brand or "",
-                name=cart_item.name or "",
-                variant=cart_item.variant_name or "стандарт",
-            )
+            product_name = product_data.get("name", "товар") if product_data else "товар"
+            message = f"✅ Добавлено в корзину: {product_name}"
 
             await cb.answer(message, show_alert=True)
 
             # Обновляем кнопку на "✓ В корзине"
             # TODO: Обновить кнопку в интерфейсе
 
-        except CartServiceError as e:
+        except Exception as e:
             print(f"❌ Cart service error: {e}")
             await cb.answer(MSG_ADD_FAILED)
-
-            # Аналитика ошибки
-            track_skincare_error(
-                user_id, e.code.value if hasattr(e, "code") else "unknown", "cart_add"
-            )
 
     except Exception as e:
         print(f"❌ Unexpected error in add_product_to_cart: {e}")
