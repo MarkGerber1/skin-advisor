@@ -6,6 +6,8 @@ import sys
 
 print("Python version:", sys.version)
 print("Starting imports...")
+print(f"Current directory: {os.getcwd()}")
+print(f"Python path: {sys.path[:3]}...")
 
 try:
     from aiogram import Bot, Dispatcher, F
@@ -141,6 +143,11 @@ CATALOG_PATH = os.getenv("CATALOG_PATH", "assets/fixed_catalog.yaml")
 
 
 async def main() -> None:
+    print("🤖 Bot main() started")
+    print(f"📊 BOT_TOKEN: {os.getenv('BOT_TOKEN', 'NOT_SET')[:15]}...")
+    print(f"📊 USE_WEBHOOK: {os.getenv('USE_WEBHOOK', 'NOT_SET')}")
+    print(f"📊 PORT: {os.getenv('PORT', 'NOT_SET')}")
+
     # Настройка логирования
     import logging
     import os
@@ -231,8 +238,13 @@ async def main() -> None:
         raise RuntimeError("BOT_TOKEN is not set - check environment variables")
 
     print(f"Starting bot with token: {token[:10]}...")
+    print("🤖 Creating Bot instance...")
     bot = Bot(token)
+    print("✅ Bot instance created")
+
+    print("📡 Creating Dispatcher...")
     dp = Dispatcher()
+    print("✅ Dispatcher created")
 
     # Add security middleware for chat filtering
     @dp.message.middleware()
