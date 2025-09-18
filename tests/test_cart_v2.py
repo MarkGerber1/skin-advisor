@@ -5,11 +5,9 @@
 Tests for CartStore, Cart, and CartItem models
 """
 
-import pytest
 import tempfile
 import os
-from unittest.mock import patch
-
+import asyncio
 from engine.cart_store import CartStore, Cart, CartItem
 
 

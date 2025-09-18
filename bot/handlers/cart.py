@@ -11,7 +11,21 @@ from aiogram.exceptions import TelegramBadRequest
 from services.cart_store import get_cart_store, CartItem
 from engine.selector import SelectorV2
 from engine.business_metrics import get_metrics_tracker
-from engine.analytics import get_analytics_tracker
+
+# Check if analytics is available
+try:
+    from engine.analytics import get_analytics_tracker
+    ANALYTICS_AVAILABLE = True
+except ImportError:
+    ANALYTICS_AVAILABLE = False
+    print("[WARNING] Analytics module not available")
+
+
+def _get_analytics_tracker():
+    """Safely get analytics tracker if available"""
+    if ANALYTICS_AVAILABLE:
+        return get_analytics_tracker()
+    return None
 
 
 def _compare_keyboards(
@@ -352,8 +366,9 @@ async def add_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
             print(f"    {i+1}. {item.brand} {item.name} (ID: {item.product_id})")
 
         # Analytics: Product added to cart
-        analytics = get_analytics_tracker()
-        analytics.product_added_to_cart(
+        analytics = _get_analytics_tracker()
+        if analytics:
+            analytics.product_added_to_cart(
             user_id=user_id,
             product_id=product_id,
             variant_id=variant_id,
@@ -943,12 +958,13 @@ async def update_item_variant(cb: CallbackQuery, state: FSMContext) -> None:
 
         if updated_item:
             # Analytics
-            analytics = get_analytics_tracker()
-            analytics.track_event(
-                "cart_variant_updated",
-                user_id,
-                {"product_id": product_id, "old_variant": old_variant, "new_variant": new_variant},
-            )
+            analytics = _get_analytics_tracker()
+            if analytics:
+                analytics.track_event(
+                    "cart_variant_updated",
+                    user_id,
+                    {"product_id": product_id, "old_variant": old_variant, "new_variant": new_variant},
+                )
 
             await cb.answer(
                 f"✅ Вариант обновлен: {updated_item.variant_name or 'Стандарт'}", show_alert=True
@@ -1177,8 +1193,8 @@ async def decrease_quantity(cb: CallbackQuery, state: FSMContext) -> None:
             print(f"🗑️ product_removed: user={user_id}, product={product_id}")
 
             # Аналитика удаления
-            if ANALYTICS_AVAILABLE:
-                analytics = get_analytics_tracker()
+            analytics = _get_analytics_tracker()
+            if analytics:
                 analytics.track_event("cart_item_removed", user_id, {"product_id": product_id})
 
             await cb.answer("🗑️ Товар удалён")
@@ -1342,8 +1358,8 @@ async def cart_increment(cb: CallbackQuery):
                 print(f"✅ Incremented {product_id} to {item.quantity}")
 
                 # Аналитика
-                if ANALYTICS_AVAILABLE:
-                    analytics = get_analytics_tracker()
+                analytics = _get_analytics_tracker()
+                if analytics:
                     analytics.track_event(
                         "cart_quantity_changed",
                         user_id,
@@ -1389,8 +1405,8 @@ async def cart_decrement(cb: CallbackQuery):
                 store._save_cart(user_id, cart)
 
                 # Аналитика
-                if ANALYTICS_AVAILABLE:
-                    analytics = get_analytics_tracker()
+                analytics = _get_analytics_tracker()
+                if analytics:
                     analytics.track_event(
                         "cart_quantity_changed",
                         user_id,
@@ -1435,8 +1451,8 @@ async def cart_delete(cb: CallbackQuery):
                 )
 
                 # Аналитика
-                if ANALYTICS_AVAILABLE:
-                    analytics = get_analytics_tracker()
+                analytics = _get_analytics_tracker()
+                if analytics:
                     analytics.track_event(
                         "cart_item_removed",
                         user_id,
@@ -1474,8 +1490,8 @@ async def cart_clear(cb: CallbackQuery):
         print(f"🗑️ cart_cleared: user={user_id}, items_removed={len(cart_before)}")
 
         # Аналитика
-        if ANALYTICS_AVAILABLE:
-            analytics = get_analytics_tracker()
+        analytics = _get_analytics_tracker()
+        if analytics:
             analytics.track_event("cart_cleared", user_id)
 
         await cb.answer("🗑️ Корзина очищена!")

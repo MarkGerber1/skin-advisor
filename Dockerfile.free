@@ -29,11 +29,11 @@ ENV CATALOG_PATH=assets/fixed_catalog.yaml
 # Force polling mode for free tiers
 ENV USE_WEBHOOK=0
 
-# Expose port
-EXPOSE 8080
+# Expose port (Render expects 10000)
+EXPOSE 10000
 
 # Health check endpoint script
-RUN echo 'from flask import Flask; app = Flask(__name__); @app.route("/health"); def health(): return "OK"; app.run(host="0.0.0.0", port=8080)' > health.py
+RUN echo 'from flask import Flask; app = Flask(__name__); @app.route("/health"); def health(): return "OK"; app.run(host="0.0.0.0", port=10000)' > health.py
 
 # Start both bot and health check server
 CMD ["sh", "-c", "python health.py & python -m bot.main"]
