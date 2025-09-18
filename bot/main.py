@@ -348,6 +348,15 @@ async def main() -> None:
         # Проверяем lock-файл для предотвращения конфликта polling
         lock_file = "/tmp/skin-advisor.lock"
 
+        # Force cleanup old lock file (for containerized environments like Render)
+        if os.path.exists(lock_file):
+            try:
+                print(f"🧹 Force removing old lock file: {lock_file}")
+                os.remove(lock_file)
+            except Exception as e:
+                print(f"⚠️ Could not remove old lock file: {e}")
+
+        # Now check for existing instances (should be clean now)
         if os.path.exists(lock_file):
             try:
                 with open(lock_file, "r") as f:
