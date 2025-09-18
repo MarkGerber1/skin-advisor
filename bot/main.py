@@ -424,17 +424,53 @@ async def main() -> None:
     signal.signal(signal.SIGINT, signal_handler)
 
     try:
-        # Clear any existing webhook first and wait for conflicts to resolve
+        # AGGRESSIVE webhook cleanup for Render/container environments
+        print("🧹 Starting aggressive webhook cleanup...")
         try:
-            await bot.delete_webhook(drop_pending_updates=True)
-            print("🧹 Cleared existing webhook and pending updates")
+            # Multiple attempts to clear webhook (sometimes Telegram needs retries)
+            for attempt in range(3):
+                try:
+                    await bot.delete_webhook(drop_pending_updates=True)
+                    print(f"🧹 Webhook cleared (attempt {attempt + 1}/3)")
+                    break
+                except Exception as e:
+                    print(f"⚠️ Webhook cleanup attempt {attempt + 1} failed: {e}")
+                    if attempt < 2:  # Wait before retry
+                        await asyncio.sleep(1)
 
-            # Wait for Telegram to process webhook deletion
-            import asyncio
+            # Wait longer for Telegram to process webhook deletion
+            print("⏳ Waiting for Telegram to process webhook deletion...")
+            await asyncio.sleep(5)
 
-            await asyncio.sleep(2)
+            # Additional cleanup - delete any pending updates
+            try:
+                await bot.get_updates(offset=-1, limit=1)
+                print("🧹 Cleared pending updates")
+            except Exception as e:
+                print(f"⚠️ Could not clear pending updates: {e}")
 
-            # Test connection before starting polling
+        except Exception as e:
+            print(f"⚠️ Could not clear webhook: {e}")
+
+            # Test connection and check for existing polling sessions
+            print("🔍 Checking for existing polling sessions...")
+            try:
+                # Try to get updates with short timeout to detect conflicts
+                updates = await asyncio.wait_for(
+                    bot.get_updates(offset=-1, limit=1, timeout=5),
+                    timeout=6
+                )
+                print(f"✅ No active polling sessions detected (got {len(updates)} updates)")
+            except asyncio.TimeoutError:
+                print("⚠️ Timeout during polling check - possible existing session")
+            except Exception as e:
+                if "Conflict" in str(e):
+                    print(f"🚨 CONFLICT DETECTED: {e}")
+                    print("💡 Another bot instance is running! Stopping startup...")
+                    return
+                else:
+                    print(f"⚠️ Unexpected error during polling check: {e}")
+
             me = await bot.get_me()
             print(f"✅ Bot connection verified: @{me.username} (ID: {me.id})")
 
