@@ -67,8 +67,20 @@ def stop():
     return "Bot stopped"
 
 if __name__ == "__main__":
+    print("🏁 Starting application...")
+    print(f"📦 Python path: {sys.path[:3]}...")  # Show first 3 paths
+    print(f"📁 Current directory: {os.getcwd()}")
+
     # Start bot on startup
-    start_bot()
+    print("🤖 Attempting to start bot...")
+    bot_started = start_bot()
+
+    if bot_started is None:
+        print("❌ CRITICAL: Bot failed to start!")
+        print("🔍 Check BOT_TOKEN and other environment variables")
+        # Continue with Flask anyway for health checks
+    else:
+        print("✅ Bot start initiated")
 
     # Handle graceful shutdown
     def signal_handler(signum, frame):
@@ -82,4 +94,15 @@ if __name__ == "__main__":
     # Start Flask server (use PORT env var for Render)
     port = int(os.getenv("PORT", "10000"))
     print(f"🌐 Starting Flask server on port {port}")
-    app.run(host="0.0.0.0", port=port)
+    print("🔍 Environment variables:")
+    for key in ['BOT_TOKEN', 'PORT', 'USE_WEBHOOK']:
+        value = os.getenv(key, 'NOT_SET')
+        if key == 'BOT_TOKEN' and value != 'NOT_SET':
+            value = value[:10] + '...'  # Hide token
+        print(f"  {key}: {value}")
+
+    try:
+        app.run(host="0.0.0.0", port=port)
+    except Exception as e:
+        print(f"❌ Flask server failed to start: {e}")
+        sys.exit(1)
