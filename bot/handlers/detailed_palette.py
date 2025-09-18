@@ -881,13 +881,15 @@ async def nav_to_description(cb: CallbackQuery, state: FSMContext) -> None:
 @router.callback_query(F.data == "pl:nav:recommendations", DetailedPaletteFlow.RESULT)
 async def nav_to_recommendations(cb: CallbackQuery, state: FSMContext) -> None:
     """Навигация к рекомендациям"""
-    # Показать краткие рекомендации
-    await cb.message.edit_text(
-        "💡 **Рекомендации по макияжу**\n\n"
-        "Здесь будут персональные рекомендации по макияжу для вашего цветотипа.",
-        reply_markup=create_post_test_navigation("palette", "recommendations"),
-    )
-    await cb.answer()
+    # Если уже на экране рекомендаций - просто ответить
+    await cb.answer("✅ Вы уже на экране рекомендаций")
+
+    # TODO: Показать реальные рекомендации вместо заглушки
+    # await cb.message.edit_text(
+    #     "💡 **Рекомендации по макияжу**\n\n"
+    #     "Здесь будут персональные рекомендации по макияжу для вашего цветотипа.",
+    #     reply_markup=create_post_test_navigation("palette", "recommendations"),
+    # )
 
 
 @router.callback_query(F.data == "pl:nav:products", DetailedPaletteFlow.RESULT)
