@@ -54,5 +54,7 @@ if __name__ == "__main__":
     signal.signal(signal.SIGTERM, signal_handler)
     signal.signal(signal.SIGINT, signal_handler)
 
-    # Start Flask server
-    app.run(host="0.0.0.0", port=10000)
+    # Start Flask server (use PORT env var for Render)
+    port = int(os.getenv("PORT", "10000"))
+    print(f"🌐 Starting Flask server on port {port}")
+    app.run(host="0.0.0.0", port=port)

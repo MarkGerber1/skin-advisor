@@ -29,8 +29,8 @@ ENV CATALOG_PATH=assets/fixed_catalog.yaml
 # Force polling mode for free tiers
 ENV USE_WEBHOOK=0
 
-# Expose port (Render expects 10000)
-EXPOSE 10000
+# Expose port (Render will set PORT env var)
+EXPOSE 8080
 
 # Copy health check script
 COPY health.py .
