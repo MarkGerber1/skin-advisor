@@ -16,7 +16,7 @@ from config.env import get_settings
 logger = logging.getLogger(__name__)
 router = Router()
 
-@router.pinned_message()
+@router.message(F.pinned_message)
 async def handle_pinned_message(message: Message, bot: Bot):
     """
     Handle pinned message events.
