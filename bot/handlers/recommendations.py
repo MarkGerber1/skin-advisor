@@ -14,6 +14,14 @@ from config.env import get_settings
 from bot.utils.security import safe_send_message
 from i18n.ru import *
 
+# Import SelectorV2 for recommendations
+try:
+    from engine.selector import SelectorV2
+    selector_available = True
+except ImportError:
+    selector_available = False
+    logger.warning("SelectorV2 not available - recommendations will use fallback")
+
 logger = logging.getLogger(__name__)
 router = Router()
 
@@ -38,21 +46,57 @@ async def handle_recommendations(cb: CallbackQuery, bot: Bot):
             product_id = parts[2]
             variant_id = parts[3] if len(parts) > 3 and parts[3] != "none" else None
 
-            # Create cart item (mock data - should come from catalog)
-            item = CartItem(
-                product_id=product_id,
-                variant_id=variant_id,
-                name=f"Продукт {product_id}",
-                price=1990,  # 19.90 RUB in cents
-                currency="RUB",
-                qty=1,
-                source="goldapple",
-                link=f"https://goldapple.ru/product/{product_id}",
-                meta={"category": "skincare"}
-            )
+            # Try to get real product data from selector
+            product_data = None
+            if selector_available:
+                try:
+                    selector = SelectorV2()
+                    all_products = selector.select_products(user_id, category="all", limit=100)
+                    for prod in all_products:
+                        if str(prod.get("id", "")) == product_id:
+                            product_data = prod
+                            break
+                except Exception as e:
+                    logger.warning(f"Could not get product data for {product_id}: {e}")
+
+            # Create cart item with real or fallback data
+            if product_data:
+                item = CartItem(
+                    product_id=product_id,
+                    variant_id=variant_id,
+                    name=product_data.get("name", f"Продукт {product_id}"),
+                    price=int(product_data.get("price", 0) * 100),  # Convert to cents
+                    currency="RUB",
+                    source="recommendations",
+                    link="",  # Will be filled by affiliate system
+                )
+            else:
+                # Fallback mock data
+                item = CartItem(
+                    product_id=product_id,
+                    variant_id=variant_id,
+                    name=f"Продукт {product_id}",
+                    price=1990,  # 19.90 RUB in cents
+                    currency="RUB",
+                    source="recommendations",
+                    link="",
+                )
 
             # Add to cart
             cart = await cart_store.add(user_id, item)
+
+            # Analytics
+            try:
+                from engine.analytics import cart_item_added
+                cart_item_added(
+                    user_id=user_id,
+                    product_id=product_id,
+                    variant_id=variant_id or "",
+                    source="recommendations",
+                    price=item.price,
+                )
+            except Exception as e:
+                logger.warning(f"Analytics error: {e}")
 
             # Update cart badge in UI
             await cb.answer(MSG_ADDED, show_alert=False)
@@ -193,9 +237,16 @@ async def show_recommendations_after_test(bot: Bot, user_id: int, test_type: str
         text += "Вот персональные рекомендации для вас:\n\n"
 
         # Get real recommendations using SelectorV2
-        try:
-            selector = SelectorV2()
-            recommendations = selector.select_products(user_id, category="all", limit=6)
+        if selector_available:
+            try:
+                selector = SelectorV2()
+                recommendations = selector.select_products(user_id, category="all", limit=6)
+            except Exception as e:
+                logger.error(f"Failed to get recommendations from SelectorV2: {e}")
+                recommendations = []
+        else:
+            logger.warning("SelectorV2 not available, using empty recommendations")
+            recommendations = []
 
             if recommendations:
                 keyboard = InlineKeyboardBuilder()
