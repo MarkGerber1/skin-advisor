@@ -150,7 +150,6 @@ async def main() -> None:
 
     # Настройка логирования
     import logging
-    import os
 
     # Дефолтные значения - всегда определены
     log_level = "INFO"
