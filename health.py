@@ -18,25 +18,26 @@ def start_bot():
         print(f"🐍 Python executable: {sys.executable}")
         print("📦 Command: python -m bot.main")
         try:
-            bot_process = subprocess.Popen(
-                [sys.executable, "-m", "bot.main"],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True
-            )
+            # Don't capture stdout/stderr - let bot log directly
+            bot_process = subprocess.Popen([sys.executable, "-m", "bot.main"])
             print(f"✅ Bot process created with PID: {bot_process.pid}")
 
-            # Check if process is still running after 2 seconds
+            # Check if process is still running after 3 seconds
             import time
-            time.sleep(2)
+            time.sleep(3)
             if bot_process.poll() is None:
-                print("✅ Bot process is running after 2 seconds")
+                print("✅ Bot process is running after 3 seconds - logs should appear above")
             else:
                 print(f"❌ Bot process exited immediately with code: {bot_process.returncode}")
-                # Read stderr to see the error
-                stderr_output = bot_process.stderr.read()
-                if stderr_output:
-                    print(f"🚨 Bot stderr: {stderr_output}")
+                # Try to get any remaining output
+                try:
+                    stdout, stderr = bot_process.communicate(timeout=5)
+                    if stdout:
+                        print(f"🚨 Bot stdout: {stdout}")
+                    if stderr:
+                        print(f"🚨 Bot stderr: {stderr}")
+                except:
+                    print("⚠️ Could not read bot output")
 
         except Exception as e:
             print(f"❌ Failed to start bot process: {e}")
