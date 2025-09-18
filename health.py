@@ -16,7 +16,7 @@ def start_bot():
     if bot_process is None or bot_process.poll() is not None:
         print("🚀 Starting bot process...")
         print(f"🐍 Python executable: {sys.executable}")
-        print("📦 Command: python -m bot.main"
+        print("📦 Command: python -m bot.main")
         try:
             bot_process = subprocess.Popen(
                 [sys.executable, "-m", "bot.main"],
