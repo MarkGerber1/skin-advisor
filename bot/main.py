@@ -123,14 +123,6 @@ except ImportError as e:
     raise
 
 try:
-    from bot.handlers.cart_v2 import router as cart_v2_router
-
-    print("OK cart v2 router imported")
-except ImportError as e:
-    print(f"ERROR Failed to import cart v2 router: {e}")
-    raise
-
-try:
     from bot.handlers.recommendations import router as recommendations_router
 
     print("OK recommendations router imported")
@@ -313,7 +305,7 @@ async def main() -> None:
     # ROUTER PRIORITY ORDER (CRITICAL!)
     dp.include_router(anti_pin_guard_router)  # Security guard - HIGHEST PRIORITY
     dp.include_router(admin_router)  # Admin commands - HIGH PRIORITY
-    dp.include_router(cart_v2_router)  # New cart system - HIGH PRIORITY
+    dp.include_router(cart_router)  # Cart system - HIGH PRIORITY
     dp.include_router(recommendations_router)  # Recommendations - HIGH PRIORITY
     dp.include_router(start_router)  # Side menu handlers - HIGH PRIORITY
     dp.include_router(detailed_palette_router)  # Detailed palette test - BEFORE universal
@@ -322,7 +314,6 @@ async def main() -> None:
     dp.include_router(makeup_picker_router)  # Makeup product picker - AFTER tests
     dp.include_router(skincare_router)
     dp.include_router(palette_router)
-    dp.include_router(cart_router)
     dp.include_router(report_router)
     dp.include_router(universal_router)  # Universal catch-all - LOWEST PRIORITY
 
@@ -574,3 +565,6 @@ async def main() -> None:
 
 if __name__ == "__main__":
     asyncio.run(main())
+
+
+

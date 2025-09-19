@@ -1,153 +1,96 @@
-"""
-Unit tests for CartStore
-"""
+"""Tests for services.cart_store and cart handlers."""
 
-import unittest
-import tempfile
-import shutil
-from pathlib import Path
-from services.cart_store import CartStore
+import importlib
+import pytest
+
+import services.cart_store as cart_store_module
 
 
-class TestCartStore(unittest.TestCase):
-    """Test CartStore functionality"""
-
-    def setUp(self):
-        """Set up test environment"""
-        self.temp_dir = Path(tempfile.mkdtemp())
-        # Create a separate instance for testing
-        self.store = CartStore()
-        self.store.data_dir = self.temp_dir / "carts"
-        self.store.data_dir.mkdir(parents=True, exist_ok=True)
-
-    def tearDown(self):
-        """Clean up test environment"""
-        shutil.rmtree(self.temp_dir)
-
-    def test_add_item_new_product(self):
-        """Test adding a new product to cart"""
-        user_id = 12345
-        item = self.store.add_item(
-            user_id=user_id,
-            product_id="test_product",
-            variant_id="variant1",
-            quantity=2,
-            brand="Test Brand",
-            name="Test Product",
-            price=100.0,
-        )
-
-        self.assertEqual(item.product_id, "test_product")
-        self.assertEqual(item.variant_id, "variant1")
-        self.assertEqual(item.quantity, 2)
-        self.assertEqual(item.brand, "Test Brand")
-        self.assertEqual(item.price, 100.0)
-
-        # Check cart contents
-        cart = self.store.get_cart(user_id)
-        self.assertEqual(len(cart), 1)
-        self.assertEqual(cart[0].quantity, 2)
-
-    def test_add_item_existing_product(self):
-        """Test adding quantity to existing product"""
-        user_id = 12345
-
-        # Add first item
-        self.store.add_item(user_id, "test_product", "variant1", 2)
-
-        # Add to existing item
-        self.store.add_item(user_id, "test_product", "variant1", 3)
-
-        cart = self.store.get_cart(user_id)
-        self.assertEqual(len(cart), 1)
-        self.assertEqual(cart[0].quantity, 5)  # 2 + 3
-
-    def test_update_quantity(self):
-        """Test updating item quantity"""
-        user_id = 12345
-
-        # Add item
-        self.store.add_item(user_id, "test_product", "variant1", 5)
-
-        # Update quantity
-        success = self.store.update_quantity(user_id, "test_product", "variant1", 3)
-
-        self.assertTrue(success)
-        cart = self.store.get_cart(user_id)
-        self.assertEqual(cart[0].quantity, 3)
-
-    def test_update_quantity_remove_when_zero(self):
-        """Test that item is removed when quantity set to 0"""
-        user_id = 12345
-
-        # Add item
-        self.store.add_item(user_id, "test_product", "variant1", 5)
-
-        # Set quantity to 0
-        success = self.store.update_quantity(user_id, "test_product", "variant1", 0)
-
-        self.assertTrue(success)
-        cart = self.store.get_cart(user_id)
-        self.assertEqual(len(cart), 0)
-
-    def test_remove_item(self):
-        """Test removing item from cart"""
-        user_id = 12345
-
-        # Add item
-        self.store.add_item(user_id, "test_product", "variant1", 5)
-
-        # Remove item
-        success = self.store.remove_item(user_id, "test_product", "variant1")
-
-        self.assertTrue(success)
-        cart = self.store.get_cart(user_id)
-        self.assertEqual(len(cart), 0)
-
-    def test_clear_cart(self):
-        """Test clearing entire cart"""
-        user_id = 12345
-
-        # Add multiple items
-        self.store.add_item(user_id, "product1", "variant1", 2)
-        self.store.add_item(user_id, "product2", "variant2", 3)
-
-        # Clear cart
-        self.store.clear_cart(user_id)
-
-        cart = self.store.get_cart(user_id)
-        self.assertEqual(len(cart), 0)
-
-    def test_get_cart_total(self):
-        """Test calculating cart total"""
-        user_id = 12345
-
-        # Add items with prices
-        self.store.add_item(user_id, "product1", "variant1", 2, price=100.0)
-        self.store.add_item(user_id, "product2", "variant2", 1, price=200.0)
-
-        total_quantity, total_price = self.store.get_cart_total(user_id)
-
-        self.assertEqual(total_quantity, 3)  # 2 + 1
-        self.assertEqual(total_price, 400.0)  # 2*100 + 1*200
-
-    def test_persistence(self):
-        """Test that cart data persists across store instances"""
-        user_id = 12345
-
-        # Add item to first store instance
-        self.store.add_item(user_id, "test_product", "variant1", 5, price=100.0)
-
-        # Create new store instance (simulating restart)
-        new_store = CartStore()
-        new_store.data_dir = self.temp_dir / "carts"
-
-        # Check that data was loaded
-        cart = new_store.get_cart(user_id)
-        self.assertEqual(len(cart), 1)
-        self.assertEqual(cart[0].quantity, 5)
-        self.assertEqual(cart[0].price, 100.0)
+class _DummySecurity:
+    spam_keywords = []
+    allow_pin = True
+    pin_whitelist = []
 
 
-if __name__ == "__main__":
-    unittest.main()
+class _DummySettings:
+    security = _DummySecurity()
+
+
+@pytest.fixture
+def store(tmp_path):
+    """Provide isolated CartStore instance per test."""
+    cart_store_module._cart_store_instance = None
+    store = cart_store_module.CartStore()
+    store.data_dir = tmp_path / "carts"
+    store.data_dir.mkdir(parents=True, exist_ok=True)
+    store._carts.clear()
+    return store
+
+
+@pytest.fixture
+def cart_module(store, monkeypatch):
+    """Bind cart handler module to the isolated store."""
+    monkeypatch.setattr("config.env.get_settings", lambda: _DummySettings())
+    cart_module = importlib.reload(importlib.import_module("bot.handlers.cart"))
+    cart_module.store = store
+    cart_module._last_operations.clear()
+    return cart_module
+
+
+def test_add_idempotent_merge(store):
+    user_id = 100
+    store.add_item(user_id, "prod-1", quantity=1, price=100.0, currency="RUB")
+    store.add_item(user_id, "prod-1", quantity=2, price=100.0, currency="RUB")
+
+    cart = store.get_cart(user_id)
+    assert len(cart) == 1
+    assert cart[0].qty == 3
+
+
+def test_inc_dec_delete(store):
+    user_id = 101
+    store.add_item(user_id, "prod-2", quantity=1)
+
+    success, qty = store.inc_quantity(user_id, "prod-2", None)
+    assert success and qty == 2
+
+    success, qty = store.dec_quantity(user_id, "prod-2", None)
+    assert success and qty == 1
+
+    success, qty = store.dec_quantity(user_id, "prod-2", None)
+    assert success and qty == 0
+    assert store.get_cart(user_id) == []
+
+
+def test_totals_quantity_price_tuple(store):
+    user_id = 102
+    store.add_item(user_id, "prod-a", quantity=2, price=150.0, currency="RUB")
+    store.add_item(user_id, "prod-b", quantity=1, price=200.0, currency="RUB")
+
+    total_qty, total_price, currency = store.get_cart_total(user_id)
+
+    assert total_qty == 3
+    assert total_price == pytest.approx(500.0)
+    assert currency == "RUB"
+
+
+def test_variant_validation(store):
+    user_id = 103
+    store.add_item(user_id, "prod-v", variant_id="shade-1", quantity=1)
+    store.add_item(user_id, "prod-v", variant_id="shade-2", quantity=1)
+
+    cart = store.get_cart(user_id)
+    assert len(cart) == 2
+    assert {item.variant_id for item in cart} == {"shade-1", "shade-2"}
+
+
+def test_currency_conflict_flag(store, cart_module):
+    user_id = 104
+    store.add_item(user_id, "prod-rub", quantity=1, price=100.0, currency="RUB")
+    store.add_item(user_id, "prod-usd", quantity=1, price=10.0, currency="USD")
+
+    text, _, _, summary = cart_module._compose_cart_view(user_id)
+
+    assert summary["currency_warning"] is True
+    assert "⚠" in text
+

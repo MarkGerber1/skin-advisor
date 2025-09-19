@@ -544,7 +544,7 @@ def recommendation_keyboard(product_id: str) -> InlineKeyboardMarkup:
         # Primary action - выделена
         [InlineKeyboardButton(
             text="🛒 Добавить в корзину",
-            callback_data=f"cart:add:{product_id}"
+            callback_data=f"cart:add:{product_id}:"
         )],
 
         # Secondary actions - в ряд
@@ -804,6 +804,7 @@ from bot.ui.keyboards import BTN_PALETTE, BTN_SKINCARE
 ---
 
 **📧 Вопросы?** Эта дизайн-система создана для упрощения разработки beauty-продуктов с фокусом на доступность и консистентность. Все компоненты протестированы и готовы к использованию!
+
 
 
 

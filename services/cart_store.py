@@ -1,53 +1,88 @@
 """
 Unified Cart Store Service
-Единое хранилище корзин для всех хендлеров
+Обновлённый слой данных корзины: qty/quantity синхронизированы,
+поддержка источников, undo и аналитики.
 """
+
+from __future__ import annotations
 
 import json
 import threading
-from typing import Dict, List, Optional, Tuple
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, field
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
 
 @dataclass
 class CartItem:
-    """Элемент корзины"""
+    """Позиция в корзине."""
 
     product_id: str
     variant_id: Optional[str] = None
-    quantity: int = 1
+    qty: int = 1
     brand: Optional[str] = None
     name: Optional[str] = None
     price: Optional[float] = None
     currency: str = "RUB"
-    price_currency: str = "RUB"  # Для совместимости с данными
+    price_currency: str = "RUB"
     ref_link: Optional[str] = None
     category: Optional[str] = None
     variant_name: Optional[str] = None
     in_stock: bool = True
-    qty: int = 1  # алиас для совместимости
     image_url: Optional[str] = None
+    source: Optional[str] = None
+    meta: Dict[str, Any] = field(default_factory=dict)
+    quantity: Optional[int] = None  # legacy alias
+
+    def __post_init__(self) -> None:
+        canonical_qty = self.quantity if self.quantity is not None else self.qty
+        try:
+            canonical_qty = max(0, int(canonical_qty))
+        except (TypeError, ValueError):
+            canonical_qty = 0
+        self.set_qty(canonical_qty)
+
+        if self.price is not None:
+            try:
+                self.price = float(self.price)
+            except (TypeError, ValueError):
+                self.price = None
+
+        if not isinstance(self.meta, dict):
+            self.meta = {}
+
+    def set_qty(self, value: int, *, max_qty: int = 99) -> None:
+        value = max(0, min(int(value), max_qty))
+        self.qty = value
+        self.quantity = value
+
+    def increase(self, delta: int = 1, *, max_qty: int = 99) -> int:
+        self.set_qty(self.qty + delta, max_qty=max_qty)
+        return self.qty
+
+    def decrease(self, delta: int = 1) -> int:
+        self.set_qty(self.qty - delta)
+        return self.qty
 
     def get_key(self) -> str:
-        """Уникальный ключ товара в корзине"""
-        return f"{self.product_id}:{self.variant_id or 'default'}"
+        variant_part = self.variant_id or "default"
+        return f"{self.product_id}:{variant_part}"
 
 
 class CartStore:
-    """Единое хранилище корзин"""
+    """Потокобезопасное файловое хранилище корзины."""
 
     _instance = None
     _lock = threading.Lock()
 
-    def __new__(cls):
+    def __new__(cls) -> "CartStore":
         if cls._instance is None:
             with cls._lock:
                 if cls._instance is None:
                     cls._instance = super().__new__(cls)
         return cls._instance
 
-    def __init__(self):
+    def __init__(self) -> None:
         if hasattr(self, "_initialized"):
             return
 
@@ -58,47 +93,51 @@ class CartStore:
         self._load_all_carts()
 
     def _get_cart_file(self, user_id: int) -> Path:
-        """Получить путь к файлу корзины пользователя"""
         return self.data_dir / f"cart_{user_id}.json"
 
     def _load_cart(self, user_id: int) -> List[CartItem]:
-        """Загрузить корзину пользователя"""
         cart_file = self._get_cart_file(user_id)
         if not cart_file.exists():
             return []
 
         try:
-            with open(cart_file, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                return [CartItem(**item) for item in data.get("items", [])]
-        except Exception as e:
-            print(f"Error loading cart for user {user_id}: {e}")
+            with cart_file.open("r", encoding="utf-8") as fh:
+                raw = json.load(fh)
+        except Exception as exc:  # pragma: no cover
+            print(f"Error loading cart for user {user_id}: {exc}")
             return []
 
-    def _save_cart(self, user_id: int, items: List[CartItem]):
-        """Сохранить корзину пользователя"""
+        items: List[CartItem] = []
+        for payload in raw.get("items", []):
+            try:
+                items.append(CartItem(**payload))
+            except TypeError as exc:
+                print(f"Error constructing CartItem for user {user_id}: {exc}")
+        return items
+
+    def _save_cart(self, user_id: int, items: List[CartItem]) -> None:
         cart_file = self._get_cart_file(user_id)
+        for item in items:
+            item.set_qty(item.qty)
         try:
             data = {"user_id": user_id, "items": [asdict(item) for item in items]}
-            with open(cart_file, "w", encoding="utf-8") as f:
-                json.dump(data, f, ensure_ascii=False, indent=2)
-        except Exception as e:
-            print(f"Error saving cart for user {user_id}: {e}")
+            with cart_file.open("w", encoding="utf-8") as fh:
+                json.dump(data, fh, ensure_ascii=False, indent=2, default=str)
+        except Exception as exc:  # pragma: no cover
+            print(f"Error saving cart for user {user_id}: {exc}")
 
-    def _load_all_carts(self):
-        """Загрузить все корзины"""
+    def _load_all_carts(self) -> None:
         if not self.data_dir.exists():
             return
 
         for cart_file in self.data_dir.glob("cart_*.json"):
             try:
                 user_id = int(cart_file.stem.split("_")[1])
-                self._carts[user_id] = self._load_cart(user_id)
-            except Exception as e:
-                print(f"Error loading cart file {cart_file}: {e}")
+            except (IndexError, ValueError):
+                continue
+            self._carts[user_id] = self._load_cart(user_id)
 
     def get_cart(self, user_id: int) -> List[CartItem]:
-        """Получить корзину пользователя"""
         if user_id not in self._carts:
             self._carts[user_id] = self._load_cart(user_id)
         return self._carts[user_id]
@@ -109,153 +148,126 @@ class CartStore:
         product_id: str,
         variant_id: Optional[str] = None,
         quantity: int = 1,
-        **kwargs,
+        **kwargs: Any,
     ) -> CartItem:
-        """Добавить товар в корзину"""
         cart = self.get_cart(user_id)
+        quantity = int(quantity or 0) if quantity is not None else 0
+        if quantity <= 0:
+            quantity = 1
 
-        # Найти существующий товар
-        existing_item = None
         for item in cart:
             if item.product_id == product_id and item.variant_id == (variant_id or None):
-                existing_item = item
-                break
+                item.increase(quantity)
+                self._save_cart(user_id, cart)
+                return item
 
-        if existing_item:
-            # Увеличить количество
-            existing_item.quantity += quantity
-            item = existing_item
-        else:
-            # Создать новый элемент
-            item = CartItem(
-                product_id=product_id, variant_id=variant_id, quantity=quantity, **kwargs
-            )
-            cart.append(item)
-
+        new_item = CartItem(
+            product_id=product_id,
+            variant_id=variant_id,
+            qty=quantity,
+            quantity=quantity,
+            **kwargs,
+        )
+        cart.append(new_item)
         self._save_cart(user_id, cart)
-        return item
+        return new_item
 
     def update_quantity(
         self, user_id: int, product_id: str, variant_id: Optional[str], new_quantity: int
     ) -> bool:
-        """Обновить количество товара"""
         cart = self.get_cart(user_id)
-
         for item in cart:
             if item.product_id == product_id and item.variant_id == variant_id:
                 if new_quantity <= 0:
                     cart.remove(item)
                 else:
-                    item.quantity = new_quantity
+                    item.set_qty(new_quantity)
                 self._save_cart(user_id, cart)
                 return True
-
         return False
 
-    def remove_item(self, user_id: int, product_id: str, variant_id: Optional[str]) -> bool:
-        """Удалить товар из корзины"""
+    def remove_item(self, user_id: int, product_id: str, variant_id: Optional[str]) -> Optional[CartItem]:
         cart = self.get_cart(user_id)
-
-        for item in cart:
+        for item in list(cart):
             if item.product_id == product_id and item.variant_id == variant_id:
                 cart.remove(item)
                 self._save_cart(user_id, cart)
-                return True
-
-        return False
+                return item
+        return None
 
     def inc_quantity(
         self, user_id: int, product_id: str, variant_id: Optional[str], max_qty: int = 10
     ) -> Tuple[bool, int]:
-        """Увеличить количество товара на 1 (с ограничением)"""
         cart = self.get_cart(user_id)
-
         for item in cart:
             if item.product_id == product_id and item.variant_id == variant_id:
-                new_qty = min(item.quantity + 1, max_qty)
-                if new_qty != item.quantity:
-                    item.quantity = new_qty
+                old_qty = item.qty
+                new_qty = item.increase(1, max_qty=max_qty)
+                if new_qty != old_qty:
                     self._save_cart(user_id, cart)
-                    return True, new_qty
-                return True, item.quantity  # Уже максимум
-
-        return False, 0  # Товар не найден
+                return True, new_qty
+        return False, 0
 
     def dec_quantity(
         self, user_id: int, product_id: str, variant_id: Optional[str]
-    ) -> Tuple[bool, int]:
-        """Уменьшить количество товара на 1 (удаляет при qty=1)"""
+    ) -> Tuple[bool, int, Optional[CartItem]]:
         cart = self.get_cart(user_id)
-
-        for item in cart:
+        for item in list(cart):
             if item.product_id == product_id and item.variant_id == variant_id:
-                if item.quantity > 1:
-                    item.quantity -= 1
-                    self._save_cart(user_id, cart)
-                    return True, item.quantity
-                else:
-                    # Удаляем товар если остался последний
+                if item.qty <= 1:
                     cart.remove(item)
                     self._save_cart(user_id, cart)
-                    return True, 0
-
-        return False, 0  # Товар не найден
+                    return True, 0, item
+                new_qty = item.decrease(1)
+                self._save_cart(user_id, cart)
+                return True, new_qty, None
+        return False, 0, None
 
     def clear_cart(self, user_id: int) -> int:
-        """Очистить корзину пользователя"""
         if user_id in self._carts:
-            cleared_count = len(self._carts[user_id])
+            removed = len(self._carts[user_id])
             self._carts[user_id] = []
             self._save_cart(user_id, [])
-            return cleared_count
+            return removed
         return 0
 
     def get_cart_count(self, user_id: int) -> int:
-        """Получить количество товаров в корзине"""
         cart = self.get_cart(user_id)
-        return sum(item.quantity for item in cart)
+        return sum(item.qty for item in cart)
 
-    def get_cart_total(self, user_id: int) -> Tuple[float, str]:
-        """Получить общую стоимость корзины"""
+    def get_cart_total(self, user_id: int) -> Tuple[int, float, str]:
         cart = self.get_cart(user_id)
-        total = 0.0
-        currency = "RUB"  # По умолчанию
-
+        total_qty = 0
+        total_price = 0.0
+        currency = "RUB"
         for item in cart:
-            if item.price:
-                total += item.price * item.quantity
+            total_qty += item.qty
+            if item.price is not None:
+                total_price += item.price * item.qty
                 currency = item.currency or currency
-
-        return total, currency
-
-    # Старые методы удалены - используем новые с улучшенной сигнатурой
+        return total_qty, total_price, currency
 
     def list_all_carts(self) -> Dict[int, List[CartItem]]:
-        """Получить все корзины (для диагностики)"""
-        # Перезагрузить все корзины
         self._load_all_carts()
-        return self._carts.copy()
+        return {user_id: items.copy() for user_id, items in self._carts.items()}
 
-    def get_cart_summary(self, user_id: int) -> Dict:
-        """Получить сводку по корзине"""
+    def get_cart_summary(self, user_id: int) -> Dict[str, Any]:
         cart = self.get_cart(user_id)
-        total_quantity, total_price = self.get_cart_total(user_id)
-
+        total_qty, total_price, currency = self.get_cart_total(user_id)
         return {
             "user_id": user_id,
             "items_count": len(cart),
-            "total_quantity": total_quantity,
+            "total_quantity": total_qty,
             "total_price": total_price,
+            "currency": currency,
             "items": [asdict(item) for item in cart],
         }
 
 
-# Глобальный экземпляр
-_cart_store_instance = None
+_cart_store_instance: Optional[CartStore] = None
 
 
 def get_cart_store() -> CartStore:
-    """Получить глобальный экземпляр CartStore"""
     global _cart_store_instance
     if _cart_store_instance is None:
         _cart_store_instance = CartStore()

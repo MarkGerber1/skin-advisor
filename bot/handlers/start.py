@@ -10,7 +10,7 @@ from bot.ui.keyboards import (
     BTN_PALETTE,
     BTN_SKINCARE,
     BTN_ABOUT,
-    BTN_PICK,
+    BTN_VIEW_CART,
     BTN_SETTINGS,
     BTN_REPORT,
 )
@@ -214,7 +214,7 @@ async def about(m: Message, state: FSMContext) -> None:
     )
 
 
-@router.message(F.text == BTN_PICK)
+@router.message(F.text == BTN_VIEW_CART)
 async def my_picks(m: Message, state: FSMContext) -> None:
     """Show user picks - works from ANY state"""
     print(f"🛒 Picks button pressed by user {m.from_user.id if m.from_user else 'Unknown'}")
@@ -631,7 +631,7 @@ async def debug_all_messages(m: Message, state: FSMContext) -> None:
     print(f"🔍 Current state: {await state.get_state()}")
 
     # Check if it's a side menu button
-    if m.text in [BTN_PALETTE, BTN_SKINCARE, BTN_ABOUT, BTN_PICK, BTN_SETTINGS, BTN_REPORT]:
+    if m.text in [BTN_PALETTE, BTN_SKINCARE, BTN_ABOUT, BTN_VIEW_CART, BTN_SETTINGS, BTN_REPORT]:
         print(f"🚨 CRITICAL: Side menu button '{m.text}' not handled by specific handlers!")
         await m.answer(f"⚠️ Кнопка '{m.text}' обнаружена, но не обработана. Проверьте логи.")
     # Handle common commands user is sending

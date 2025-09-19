@@ -1,1504 +1,709 @@
 # -*- coding: utf-8 -*-
+"""Cart handlers: единый UX, undo, быстрые рекомендации и checkout."""
+
 from __future__ import annotations
 
-from typing import List, Dict, Optional
+import asyncio
+import logging
+import os
+import secrets
+from dataclasses import dataclass
+from decimal import Decimal, InvalidOperation
+from typing import Any, Dict, List, Optional, Tuple
 
-from aiogram import Router, F
-from aiogram.types import CallbackQuery, Message, InlineKeyboardButton, InlineKeyboardMarkup
-from aiogram.fsm.context import FSMContext
+from aiogram import F, Router
 from aiogram.exceptions import TelegramBadRequest
+from aiogram.fsm.context import FSMContext
+from aiogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, Message
 
-from services.cart_store import get_cart_store, CartItem
+from services.cart_store import CartItem, get_cart_store
 from engine.selector import SelectorV2
 from engine.business_metrics import get_metrics_tracker
+from bot.utils.security import sanitize_message
+from bot.ui.keyboards import main_menu
+from i18n.ru import (
+    BTN_ADD,
+    BTN_BACK_RECO,
+    BTN_CHECKOUT,
+    BTN_CLEAR,
+    BTN_DEC,
+    BTN_DEL,
+    BTN_DETAILS,
+    BTN_INC,
+    BTN_MORE,
+    BTN_UNDO,
+    BTN_VIEW_CART,
+    CART_EMPTY,
+    CART_TITLE,
+    CART_TOTAL,
+    CHECKOUT_LINKS_READY,
+    CHECKOUT_NO_LINK,
+    CHECKOUT_TITLE,
+    MSG_ADDED,
+    MSG_BAD_VARIANT,
+    MSG_CART_UPDATED,
+    MSG_REMOVED,
+    MSG_UNAVAILABLE,
+    MSG_UNDO_EXPIRED,
+    MSG_UNDO_SUCCESS,
+)
 
-# Check if analytics is available
 try:
-    from engine.analytics import get_analytics_tracker
+    from engine.analytics import (
+        cart_cleared,
+        cart_item_added,
+        cart_item_removed,
+        cart_opened,
+        cart_qty_changed,
+        checkout_links_generated,
+        checkout_started,
+    )
     ANALYTICS_AVAILABLE = True
-except ImportError:
+except ImportError:  # pragma: no cover
     ANALYTICS_AVAILABLE = False
-    print("[WARNING] Analytics module not available")
 
+    def cart_cleared(*args, **kwargs):
+        return None
 
-def _get_analytics_tracker():
-    """Safely get analytics tracker if available"""
-    if ANALYTICS_AVAILABLE:
-        return get_analytics_tracker()
-    return None
+    def cart_item_added(*args, **kwargs):
+        return None
 
+    def cart_item_removed(*args, **kwargs):
+        return None
 
-def _compare_keyboards(
-    kb1: Optional[InlineKeyboardMarkup], kb2: Optional[InlineKeyboardMarkup]
-) -> bool:
-    """Сравнить две клавиатуры на эквивалентность"""
-    if kb1 is None and kb2 is None:
-        return True
-    if kb1 is None or kb2 is None:
-        return False
-    if not hasattr(kb1, "inline_keyboard") or not hasattr(kb2, "inline_keyboard"):
-        return False
+    def cart_opened(*args, **kwargs):
+        return None
 
-    kb1_buttons = kb1.inline_keyboard
-    kb2_buttons = kb2.inline_keyboard
+    def cart_qty_changed(*args, **kwargs):
+        return None
 
-    if len(kb1_buttons) != len(kb2_buttons):
-        return False
+    def checkout_links_generated(*args, **kwargs):
+        return None
 
-    for row1, row2 in zip(kb1_buttons, kb2_buttons):
-        if len(row1) != len(row2):
-            return False
-        for btn1, btn2 in zip(row1, row2):
-            if (
-                btn1.text != btn2.text
-                or btn1.callback_data != btn2.callback_data
-                or getattr(btn1, "url", None) != getattr(btn2, "url", None)
-            ):
-                return False
-    return True
+    def checkout_started(*args, **kwargs):
+        return None
 
-
-async def safe_edit_text(
-    cb: CallbackQuery, text: str, reply_markup: Optional[InlineKeyboardMarkup] = None
-) -> bool:
-    """Безопасное редактирование сообщения с проверкой изменений"""
-    try:
-        # Проверяем, изменилось ли содержимое
-        current_text = cb.message.text or ""
-        current_markup = cb.message.reply_markup
-
-        text_changed = current_text != text
-        markup_changed = not _compare_keyboards(current_markup, reply_markup)
-
-        if not text_changed and not markup_changed:
-            # Ничего не изменилось - просто отвечаем на callback
-            await cb.answer("Без изменений")
-            return True
-
-        # Редактируем сообщение
-        await cb.message.edit_text(text, reply_markup=reply_markup, parse_mode="Markdown")
-        return True
-
-    except TelegramBadRequest as e:
-        if "message is not modified" in str(e):
-            # Игнорируем ошибку "сообщение не изменено"
-            await cb.answer("Без изменений")
-            return True
-        else:
-            # Другая ошибка - логируем и возвращаем False
-            print(f"❌ safe_edit_text error: {e}")
-            return False
-    except Exception as e:
-        print(f"❌ safe_edit_text unexpected error: {e}")
-        return False
-
-
-# Cart service removed - using direct CartStore operations
-print("[OK] Using CartStore directly (services/cart_service removed)")
-CART_SERVICE_AVAILABLE = False
-
-# Debounce mechanism for cart operations
-_last_cart_operation: Dict[str, float] = {}
-DEBOUNCE_SECONDS = 2.0
-
-
-def _check_debounce(user_id: int, operation: str) -> bool:
-    """Check if operation should be debounced"""
-    import time
-
-    key = f"{user_id}:{operation}"
-    now = time.time()
-
-    if key in _last_cart_operation:
-        if now - _last_cart_operation[key] < DEBOUNCE_SECONDS:
-            return False  # Debounce
-
-    _last_cart_operation[key] = now
-    return True  # Allow operation
-
-
+logger = logging.getLogger(__name__)
 router = Router()
 store = get_cart_store()
 selector = SelectorV2()
 metrics = get_metrics_tracker()
 
+NARROW_NBSP = "\u202f"
+UNDO_TTL_SECONDS = 5
+SOURCE_PRIORITY = {
+    "goldapple": 0,
+    "gold_apple": 0,
+    "gold-apple": 0,
+    "official": 1,
+    "official_ru": 1,
+    "brand": 1,
+    "ru_marketplace": 2,
+    "marketplace": 2,
+    "wildberries": 2,
+    "ozon": 2,
+    "intl": 3,
+    "international": 3,
+}
+CURRENCY_SYMBOLS = {
+    "RUB": "₽",
+    "RUR": "₽",
+    "USD": "$",
+    "EUR": "€",
+}
 
-def _compare_keyboards(kb1: InlineKeyboardMarkup | None, kb2: InlineKeyboardMarkup | None) -> bool:
-    """Сравнить две клавиатуры"""
-    if not kb1 and not kb2:
-        return True
-    if not kb1 or not kb2:
+_last_operations: Dict[str, float] = {}
+_undo_buffer: Dict[str, Tuple[int, CartItem]] = {}
+
+
+def _format_price(value: Optional[float], currency: Optional[str]) -> str:
+    if value is None:
+        return "—"
+    try:
+        dec = Decimal(str(value))
+    except (InvalidOperation, ValueError):
+        dec = Decimal(0)
+    if dec == dec.quantize(Decimal("1")):
+        amount = f"{int(dec):,}".replace(",", NARROW_NBSP)
+    else:
+        amount = f"{dec:.2f}".replace(",", NARROW_NBSP)
+    symbol = CURRENCY_SYMBOLS.get((currency or "RUB").upper(), (currency or "").upper())
+    return f"{amount}{NARROW_NBSP}{symbol}".strip()
+
+
+def _encode_key(product_id: str, variant_id: Optional[str]) -> str:
+    from urllib.parse import quote_plus
+
+    pid = quote_plus(product_id or "")
+    vid = quote_plus(variant_id or "") if variant_id else ""
+    return f"{pid}:{vid}"
+
+
+def _decode_key(key: str) -> Tuple[str, Optional[str]]:
+    from urllib.parse import unquote_plus
+
+    if ":" in key:
+        pid, vid = key.split(":", 1)
+    else:
+        pid, vid = key, ""
+    return unquote_plus(pid), unquote_plus(vid) or None
+
+
+def _normalize_source(source: Optional[str]) -> str:
+    if not source:
+        return "unknown"
+    return source.replace(" ", "_").lower()
+
+
+def _debounce(user_id: int, token: str, ttl: float = 1.5) -> bool:
+    loop = asyncio.get_running_loop()
+    now = loop.time()
+    key = f"{user_id}:{token}"
+    last = _last_operations.get(key)
+    if last and now - last < ttl:
         return False
-
-    if len(kb1.inline_keyboard) != len(kb2.inline_keyboard):
-        return False
-
-    for row1, row2 in zip(kb1.inline_keyboard, kb2.inline_keyboard):
-        if len(row1) != len(row2):
-            return False
-        for btn1, btn2 in zip(row1, row2):
-            if (
-                btn1.text != btn2.text
-                or btn1.callback_data != btn2.callback_data
-                or btn1.url != btn2.url
-            ):
-                return False
-
+    _last_operations[key] = now
     return True
 
 
-def _user_id(msg_or_cb: Message | CallbackQuery | None) -> int | None:
-    """Extract real user ID, not bot ID from Message or CallbackQuery"""
-    if (
-        msg_or_cb
-        and hasattr(msg_or_cb, "from_user")
-        and msg_or_cb.from_user
-        and msg_or_cb.from_user.id
-    ):
-        user_id = int(msg_or_cb.from_user.id)
-        print(f"🔍 _user_id: {type(msg_or_cb).__name__}.from_user.id = {user_id}")
-        # Проверяем что это не bot ID (8345324302)
-        if user_id == 8345324302:
-            print("[WARNING] Got bot ID instead of user ID!")
-            # В callback query контексте попробуем найти реальный user ID
-            if hasattr(msg_or_cb, "message") and msg_or_cb.message and msg_or_cb.message.from_user:
-                real_user_id = int(msg_or_cb.message.from_user.id)
-                if real_user_id != 8345324302:
-                    print(f"[OK] Found real user ID from callback message: {real_user_id}")
-                    return real_user_id
-        return user_id
-    print("[ERROR] _user_id: no message/callback or from_user")
-    return None
-
-
-async def _find_product_in_recommendations(user_id: int, product_id: str) -> Optional[Dict]:
-    """Найти товар в текущих рекомендациях пользователя"""
+async def _load_recommendations(user_id: int, limit: Optional[int] = None) -> List[Dict[str, Any]]:
     try:
-        # Получаем профиль пользователя
         from engine.models import UserProfile
         from engine.catalog_store import CatalogStore
-
-        # Сначала пытаемся загрузить сохраненный профиль пользователя
         from bot.handlers.user_profile_store import get_user_profile_store
+        from bot.handlers.fsm_coordinator import get_fsm_coordinator
 
         profile_store = get_user_profile_store()
-        user_profile = profile_store.load_profile(user_id)
+        profile = profile_store.load_profile(user_id)
 
-        if user_profile:
-            print(
-                f"[OK] Using saved profile: skin_type={user_profile.skin_type}, season={user_profile.season}"
-            )
-        else:
-            # Если сохраненного профиля нет, пробуем получить из FSM coordinator
-            from bot.handlers.fsm_coordinator import get_fsm_coordinator
-
+        if not profile:
             coordinator = get_fsm_coordinator()
             session = await coordinator.get_session(user_id)
-
-            # Если есть активная сессия с данными теста, используем их
-            if session and session.flow_data:
-                profile_data = session.flow_data
-                print(f"🔍 Found session profile data: {profile_data}")
-
-                user_profile = UserProfile(
-                    user_id=user_id,
-                    skin_type=profile_data.get("skin_type", "normal"),
-                    concerns=profile_data.get("concerns", []),
-                    season=profile_data.get("season", "spring"),
-                    undertone=profile_data.get("undertone", "neutral"),
-                    contrast=profile_data.get("contrast", "medium"),
-                )
-                print(
-                    f"[OK] Using session profile: skin_type={user_profile.skin_type}, season={user_profile.season}"
-                )
-            else:
-                # Fallback: используем универсальный профиль
-                print(
-                    f"[WARNING] No saved or session profile found for user {user_id}, using fallback profile"
-                )
-                user_profile = UserProfile(
-                    user_id=user_id,
-                    skin_type="normal",
-                    concerns=[],
-                    season="spring",
-                    undertone="neutral",
-                    contrast="medium",
-                )
-                print(
-                    f"🔄 Using fallback profile: skin_type={user_profile.skin_type}, season={user_profile.season}"
-                )
-
-        # Получаем каталог и строим рекомендации
-        import os
-
-        catalog_path = os.getenv("CATALOG_PATH", "assets/fixed_catalog.yaml")
-        catalog_store = CatalogStore.instance(catalog_path)
-        catalog = catalog_store.get()
-
-        # Используем селектор для получения рекомендаций
-        print("🔧 Calling selector.select_products_v2 with profile...")
-        result = selector.select_products_v2(user_profile, catalog, partner_code="S1")
-        print(f"📦 Selector result keys: {list(result.keys()) if result else 'None'}")
-
-        # Логируем количество товаров в каждой категории
-        if result and result.get("makeup"):
-            for category, products in result["makeup"].items():
-                print(f"  💄 Makeup {category}: {len(products)} products")
-        if result and result.get("skincare"):
-            for step, products in result["skincare"].items():
-                print(f"  🧴 Skincare {step}: {len(products)} products")
-
-        # Ищем товар во всех категориях
-        all_products = []
-        if result.get("makeup"):
-            for category_products in result["makeup"].values():
-                all_products.extend(category_products)
-        if result.get("skincare"):
-            for category_products in result["skincare"].values():
-                all_products.extend(category_products)
-
-        # Ищем по ID
-        for product in all_products:
-            if str(product.get("id", "")) == product_id:
-                # Генерируем affiliate link если его нет
-                if not product.get("ref_link"):
-                    try:
-                        from services.affiliates import build_ref_link
-
-                        product["ref_link"] = build_ref_link(product, "cart_add")
-                        print(
-                            f"🔗 Generated affiliate link for {product_id}: {product['ref_link'][:50]}..."
-                        )
-                    except Exception as e:
-                        print(f"⚠️ Failed to generate affiliate link: {e}")
-                return product
-
-    except Exception as e:
-        print(f"[ERROR] Error finding product {product_id}: {e}")
-
-    return None
-
-
-@router.callback_query(F.data.startswith("cart:add:"))
-async def add_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
-    """Улучшенное добавление товара в корзину с полной валидацией и защитой от дублей"""
-    print(f"🛒 Cart add callback triggered: {cb.data}")
-
-    if not cb.data:
-        print("[ERROR] No callback data provided")
-        await cb.answer()
-        return
-
-    user_id = _user_id(cb)
-    if not user_id:
-        print("❌ No user ID found")
-        await cb.answer("Неизвестный пользователь", show_alert=True)
-        return
-
-    msg = cb.message
-    if not isinstance(msg, Message):
-        print("❌ Invalid message type")
-        await cb.answer()
-        return
-
-    try:
-        # Парсим callback data: cart:add:product_id или cart:add:product_id:variant_id
-        parts = cb.data.split(":", 3)
-        product_id = parts[2] if len(parts) > 2 else ""
-        variant_id = parts[3] if len(parts) > 3 else None
-
-        # Валидация входных параметров
-        if not product_id or not isinstance(product_id, str) or len(product_id.strip()) == 0:
-            await cb.answer("❌ Некорректный ID товара", show_alert=True)
-            return
-
-        print(
-            f"🛒 DETAILED: Adding product '{product_id}' (variant: {variant_id}) to cart for user {user_id}"
-        )
-        print("🛒 Using CartStore directly (cart_service removed)")
-
-        # Direct CartStore operations (fallback logic)
-        print(f"🔄 Using fallback cart method for {product_id}")
-        product_data = await _find_product_in_recommendations(user_id, product_id)
-        print(f"🔍 Product data found: {product_data is not None}")
-        if product_data:
-            print(
-                f"📦 Product details: brand={product_data.get('brand')}, name={product_data.get('name')}, price={product_data.get('price')}"
-            )
-
-        if not product_data:
-            print(f"❌ Product {product_id} not found in recommendations")
-            await cb.answer("❌ Товар не найден в рекомендациях", show_alert=True)
-            return
-
-        cart_item = CartItem(
-            product_id=product_id,
-            quantity=1,
-            brand=product_data.get("brand"),
-            name=product_data.get("name"),
-            price=product_data.get("price"),
-            currency=product_data.get("currency", product_data.get("price_currency", "RUB")),
-            ref_link=product_data.get("ref_link"),
-            category=product_data.get("category"),
-            variant_id=variant_id,
-        )
-        print(f"📝 Created cart item: {cart_item}")
-
-        # Add to store
-        print(f"💾 Adding to store for user {user_id}")
-        store.add_item(
-            user_id=user_id,
-            product_id=cart_item.product_id,
-            variant_id=cart_item.variant_id,
-            quantity=cart_item.quantity,
-            brand=cart_item.brand,
-            name=cart_item.name,
-            price=cart_item.price,
-            ref_link=cart_item.ref_link,
-            category=cart_item.category,
-        )
-        print("✅ Successfully added to store")
-
-        # Диагностика: проверяем что товар действительно добавился
-        stored_items = store.get_cart(user_id)
-        print(f"🔍 STORE VERIFICATION: User {user_id} now has {len(stored_items)} items in cart")
-        for i, item in enumerate(stored_items):
-            print(f"    {i+1}. {item.brand} {item.name} (ID: {item.product_id})")
-
-        # Analytics: Product added to cart
-        analytics = _get_analytics_tracker()
-        if analytics:
-            analytics.product_added_to_cart(
-            user_id=user_id,
-            product_id=product_id,
-            variant_id=variant_id,
-            source=cart_item.ref_link,
-            price=cart_item.price,
-            category=cart_item.category,
-        )
-
-        # Метрика: успешное добавление
-        metrics.track_event(
-            "cart_add_success",
-            user_id,
-            {
-                "product_id": product_id,
-                "variant_id": variant_id,
-                "category": cart_item.category,
-                "price": cart_item.price,
-            },
-        )
-
-        # Формируем красивое уведомление
-        brand_name = f"{cart_item.brand or ''} {cart_item.name or ''}".strip()
-        price_text = f"{cart_item.price} {cart_item.currency}"
-
-        message = f"✅ Добавлено в корзину!\n\n🛍️ {brand_name}"
-        variant_name = getattr(cart_item, "variant_name", None)
-        if variant_name:
-            message += f" ({variant_name})"
-        message += f"\n💰 {price_text}"
-
-        if cart_item.explain:
-            message += f"\n💡 {cart_item.explain}"
-
-        await cb.answer(message, show_alert=True)
-
-    except Exception as e:
-        print(f"❌ Cart operation error: {e}")
-        print(f"❌ Exception type: {type(e).__name__}")
-        import traceback
-
-        print(f"❌ Full traceback: {traceback.format_exc()}")
-
-        # Метрика: ошибка добавления
-        try:
-            metrics.track_event(
-                "cart_add_failed",
-                user_id,
-                {
-                    "reason": "cart_error",
-                    "product_id": parts[2] if len(parts) > 2 else "",
-                    "variant_id": parts[3] if len(parts) > 3 else None,
-                    "error_message": str(e),
-                },
-            )
-        except:
-            pass  # Ignore metrics errors
-
-        # Пользовательское сообщение об ошибке
-        await cb.answer("⚠️ Не удалось добавить товар в корзину", show_alert=True)
-
-
-@router.callback_query(F.data == "show_cart")
-async def show_cart_callback(cb: CallbackQuery, state: FSMContext) -> None:
-    """Показать корзину через inline кнопку"""
-    print(
-        f"🛒 Show cart callback triggered for user {cb.from_user.id if cb.from_user else 'unknown'}"
-    )
-    print(
-        f"🔍 CALLBACK DIAGNOSTIC: cb.from_user.id = {cb.from_user.id if cb.from_user else 'None'}"
-    )
-
-    user_id = _user_id(cb)
-    if not user_id:
-        print("❌ No user ID found in callback")
-        await cb.answer("Неизвестный пользователь", show_alert=True)
-        return
-
-    print("🔍 CART DIAGNOSTIC: show_cart called")
-    print(f"  👤 Callback user ID: {cb.from_user.id if cb.from_user else 'None'}")
-    print(f"  🔑 Processed user ID: {user_id}")
-
-    # Диагностируем состояние корзины
-    cart_store = get_cart_store()
-    items: List[CartItem] = cart_store.get_cart(user_id)
-    cart_count = cart_store.get_cart_count(user_id)
-    print(f"  🛒 Cart items for user {user_id}: {len(items)} total qty: {cart_count}")
-
-    if not items:
-        kb = InlineKeyboardMarkup(
-            inline_keyboard=[
-                [
-                    InlineKeyboardButton(
-                        text="🔄 Получить рекомендации", callback_data="get_recommendations"
-                    )
-                ]
-            ]
-        )
-        await safe_edit_text(cb, "🛒 Ваша корзина пуста.\n\nДобавьте товары из рекомендаций!", kb)
-        return
-
-    # Метрика: просмотр корзины
-    if hasattr(metrics, "track_event"):
-        metrics.track_event(
-            "cart_view", user_id, {"items_count": len(items), "total_qty": cart_count}
-        )
-
-    # Формируем сообщение с полной информацией
-    lines = [f"🛒 **ВАША КОРЗИНА** ({cart_count} шт.)\n"]
-    total = 0.0
-    available_items = 0
-    item_buttons = []
-
-    for i, item in enumerate(items, 1):
-        price = item.price or 0.0
-        qty = item.quantity
-        total += price * qty
-
-        # Формируем название товара
-        brand_name = f"{item.brand or ''} {item.name or item.product_id}".strip()
-        price_text = f"{price} {item.currency or '₽'}" if price > 0 else "Цена уточняется"
-
-        # Статус наличия
-        stock_emoji = "✅" if item.in_stock else "❌"
-        if item.in_stock:
-            available_items += 1
-
-        # Строка товара
-        lines.append(f"{i}. {stock_emoji} **{brand_name}**\n   {price_text} × {qty}")
-        if item.explain:
-            lines.append(f"   _{item.explain}_\n")
-
-        # Кнопки управления количеством для каждого товара
-        item_buttons.append(
-            [
-                InlineKeyboardButton(text="➖", callback_data=f"cart:dec:{item.product_id}"),
-                InlineKeyboardButton(text=f"{qty}", callback_data=f"cart:show:{item.product_id}"),
-                InlineKeyboardButton(text="➕", callback_data=f"cart:inc:{item.product_id}"),
-                InlineKeyboardButton(text="🗑️", callback_data=f"cart:del:{item.product_id}"),
-            ]
-        )
-
-    # Итоговая информация с улучшенным UX
-    total_items, total_price = cart_store.get_cart_total(user_id)
-    lines.append(f"\n💰 **Итого:** {total_price:.0f} ₽")
-    lines.append(f"📦 Доступно: {available_items}/{len(items)} товаров ({total_items} шт.)")
-
-    # CTA кнопки в зависимости от состояния корзины
-    cta_buttons = []
-
-    if total_price > 0:
-        # Корзина не пуста - показываем основные действия
-        cta_buttons.append(
-            [
-                InlineKeyboardButton(text="📋 Оформить заказ", callback_data="cart:checkout"),
-                InlineKeyboardButton(text="🗑️ Очистить", callback_data="cart:clear"),
-            ]
-        )
-    else:
-        # Корзина пуста - мотивируем добавить товары
-        cta_buttons.append(
-            [
-                InlineKeyboardButton(
-                    text="🔄 Получить рекомендации", callback_data="get_recommendations"
-                )
-            ]
-        )
-
-    # Всегда добавляем кнопку "Назад"
-    cta_buttons.append([InlineKeyboardButton(text="🏠 Главное меню", callback_data="back:main")])
-
-    # Кнопки управления товарами + CTA
-    all_buttons = item_buttons + cta_buttons
-    kb = InlineKeyboardMarkup(inline_keyboard=all_buttons)
-
-    text = "\n".join(lines)
-
-    # Проверяем, изменилось ли сообщение, чтобы избежать "message is not modified"
-
-    # Используем safe_edit_text для безопасного редактирования
-    await safe_edit_text(cb, text, kb)
-
-
-@router.message(F.text == "🛒 Корзина")
-async def show_cart(m: Message, state: FSMContext) -> None:
-    """Показать корзину с полной информацией и кнопками управления"""
-    user_id = _user_id(m)
-    print("🔍 CART DIAGNOSTIC: show_cart called")
-    print(f"  👤 Message user ID: {m.from_user.id if m.from_user else 'None'}")
-    print(f"  🔑 Processed user ID: {user_id}")
-
-    if not user_id:
-        print("❌ No user ID found")
-        await m.answer("Неизвестный пользователь")
-        return
-
-    # Диагностируем состояние корзины
-    items: List[CartItem] = store.get_cart(user_id)
-    print(f"  🛒 Cart items for user {user_id}: {len(items)}")
-
-    # Показываем все корзины в store для диагностики
-    all_carts = store._carts if hasattr(store, "_carts") else {}
-    print(f"  📦 All carts in store: {list(all_carts.keys())}")
-    for cart_user_id, cart_items in all_carts.items():
-        print(f"    User {cart_user_id}: {len(cart_items)} items")
-    if not items:
-        kb = InlineKeyboardMarkup(
-            inline_keyboard=[
-                [
-                    InlineKeyboardButton(
-                        text="🔄 Получить рекомендации", callback_data="get_recommendations"
-                    )
-                ]
-            ]
-        )
-        await m.answer(
-            "🛒 Ваша корзина пуста.\n\nДобавьте товары из рекомендаций!", reply_markup=kb
-        )
-        return
-
-    # Метрика: просмотр корзины
-    metrics.track_event("cart_view", user_id, {"items_count": len(items)})
-
-    # Формируем сообщение с полной информацией
-    lines = ["🛒 **ВАША КОРЗИНА**\n"]
-    total = 0.0
-    available_items = 0
-
-    for i, item in enumerate(items, 1):
-        price = item.price or 0.0
-        qty = item.quantity
-        total += price * qty
-
-        # Формируем название товара
-        brand_name = f"{item.brand or ''} {item.name or item.product_id}".strip()
-        price_text = f"{price} {item.currency or '₽'}" if price > 0 else "Цена уточняется"
-
-        # Статус наличия (безопасное обращение)
-        in_stock = getattr(item, "in_stock", True)
-        stock_emoji = "✅" if in_stock else "❌"
-        if in_stock:
-            available_items += 1
-
-        lines.append(f"{i}. {stock_emoji} **{brand_name}**")
-        lines.append(f"   💰 {price_text} × {qty} = {price * qty} {item.currency or '₽'}")
-
-        if item.explain:
-            lines.append(f"   💡 {item.explain}")
-
-        if item.category:
-            lines.append(f"   📂 {item.category}")
-
-        lines.append("")
-
-    # Итоги
-    lines.append("📊 **ИТОГО:**")
-    lines.append(f"• Позиций: {len(items)}")
-    lines.append(f"• В наличии: {available_items}")
-    lines.append(f"• Сумма: {total:.0f} ₽")
-
-    # Кнопки управления
-    buttons = []
-
-    # Кнопки для каждого товара (инкремент/декремент/удаление)
-    for item in items:
-        item_buttons = []
-        qty = getattr(item, "quantity", 1)
-
-        # Кнопки управления количеством
-        item_buttons.append(
-            InlineKeyboardButton(text="➖", callback_data=f"cart:dec:{item.product_id}")
-        )
-        item_buttons.append(
-            InlineKeyboardButton(text=f"{qty}", callback_data=f"cart:show:{item.product_id}")
-        )
-        item_buttons.append(
-            InlineKeyboardButton(text="➕", callback_data=f"cart:inc:{item.product_id}")
-        )
-        item_buttons.append(
-            InlineKeyboardButton(text="🗑️", callback_data=f"cart:rm:{item.product_id}")
-        )
-
-        buttons.append(item_buttons)
-
-    # Разделитель
-    buttons.append([])
-
-    # Кнопки покупки для товаров в наличии
-    buy_buttons = []
-    for item in items[:3]:  # Показываем только первые 3
-        in_stock = getattr(item, "in_stock", True)
-        ref_link = getattr(item, "ref_link", None)
-        if in_stock and ref_link:
-            brand_short = (item.brand or "")[:10]
-            buy_buttons.append([InlineKeyboardButton(text=f"🛒 {brand_short}", url=ref_link)])
-
-    if buy_buttons:
-        buttons.extend(buy_buttons)
-        buttons.append([InlineKeyboardButton(text="🛍️ Купить всё", callback_data="cart:buy_all")])
-
-    # Кнопки управления корзиной
-    buttons.extend(
-        [
-            [
-                InlineKeyboardButton(text="🗑️ Очистить корзину", callback_data="cart:clr"),
-                InlineKeyboardButton(text="🔄 Обновить", callback_data="cart:refresh"),
-            ],
-            [InlineKeyboardButton(text="⬅️ Назад к подбору", callback_data="back:main")],
-        ]
-    )
-
-    kb = InlineKeyboardMarkup(inline_keyboard=buttons)
-
-    await m.answer("\n".join(lines), reply_markup=kb, parse_mode="Markdown")
-
-
-@router.callback_query(F.data == "cart:clear")
-async def clear_cart(cb: CallbackQuery, state: FSMContext) -> None:
-    """Очистить корзину"""
-    user_id = _user_id(cb)
-    if not user_id:
-        await cb.answer("Ошибка пользователя")
-        return
-
-    cart_store = get_cart_store()
-    cart_store.clear(user_id)
-    metrics.track_event("cart_clear", user_id, {})
-    await safe_edit_text(cb, "🗑️ Корзина очищена")
-    await cb.answer("🗑️ Корзина очищена")
-
-
-@router.callback_query(F.data == "cart:refresh")
-async def refresh_cart(cb: CallbackQuery, state: FSMContext) -> None:
-    """Обновить информацию в корзине"""
-    user_id = _user_id(cb)
-    if not user_id:
-        await cb.answer("Ошибка пользователя")
-        return
-
-    # Проверяем актуальность товаров в корзине
-    items = store.get_cart(user_id)
-    updated_count = 0
-    removed_count = 0
-
-    for item in items:
-        # Получаем актуальную информацию о товаре
-        current_product = await _find_product_in_recommendations(user_id, item.product_id)
-
-        if not current_product:
-            # Товар больше не доступен
-            store.remove_item(user_id, item.product_id, item.variant_id)
-            removed_count += 1
-        elif (
-            current_product.get("in_stock") != item.in_stock
-            or current_product.get("price") != item.price
-        ):
-            # Обновляем информацию
-            updated_item = CartItem(
-                product_id=item.product_id,
-                qty=item.quantity,
-                brand=current_product.get("brand", item.brand),
-                name=current_product.get("name", item.name),
-                price=current_product.get("price", item.price),
-                currency=current_product.get(
-                    "currency", current_product.get("price_currency", item.currency)
-                ),
-                ref_link=current_product.get("ref_link", item.ref_link),
-                explain=current_product.get("explain", item.explain),
-                category=current_product.get("category", item.category),
-                in_stock=current_product.get("in_stock", True),
-                added_at=item.added_at,
-            )
-            store.remove_item(user_id, item.product_id, item.variant_id)
-            store.add_item(
+            data = session.flow_data if session else {}
+            profile = UserProfile(
                 user_id=user_id,
-                product_id=updated_item.product_id,
-                variant_id=updated_item.variant_id,
-                quantity=updated_item.quantity,
-                brand=updated_item.brand,
-                name=updated_item.name,
-                price=updated_item.price,
-                ref_link=updated_item.ref_link,
-                category=updated_item.category,
+                skin_type=data.get("skin_type", "normal"),
+                concerns=data.get("concerns", []),
+                season=data.get("season", "spring"),
+                undertone=data.get("undertone", "neutral"),
+                contrast=data.get("contrast", "medium"),
             )
-            updated_count += 1
-
-    metrics.track_event(
-        "cart_refresh", user_id, {"updated": updated_count, "removed": removed_count}
-    )
-
-    message = "🔄 Корзина обновлена"
-    if updated_count > 0:
-        message += f"\n• Обновлено: {updated_count}"
-    if removed_count > 0:
-        message += f"\n• Удалено недоступных: {removed_count}"
-
-    await cb.answer(message, show_alert=True)
-
-    # Показываем обновленную корзину
-    await show_cart_callback(cb, state)
-
-
-@router.callback_query(F.data == "cart:buy_all")
-async def buy_all_items(cb: CallbackQuery, state: FSMContext) -> None:
-    """Открыть все ссылки для покупки (показать инструкцию)"""
-    user_id = _user_id(cb)
-    if not user_id:
-        await cb.answer("Ошибка пользователя")
-        return
-
-    items = store.get_cart(user_id)
-    available_items = [item for item in items if item.in_stock and item.ref_link]
-
-    if not available_items:
-        await cb.answer("Нет доступных товаров для покупки", show_alert=True)
-        return
-
-    # Создаем кнопки со ссылками
-    buttons = []
-    for i, item in enumerate(available_items[:5], 1):  # Максимум 5 ссылок
-        brand_name = f"{item.brand or ''} {item.name or ''}".strip()[:20]
-        buttons.append([InlineKeyboardButton(text=f"{i}. {brand_name}", url=item.ref_link)])
-
-    kb = InlineKeyboardMarkup(inline_keyboard=buttons)
-
-    metrics.track_event("cart_buy_all_clicked", user_id, {"items_count": len(available_items)})
-
-    await cb.message.answer(
-        "🛍️ **ПОКУПКА ТОВАРОВ**\n\nНажимайте на кнопки ниже для покупки каждого товара:\n\n"
-        + f"Всего доступно: {len(available_items)} товаров",
-        reply_markup=kb,
-        parse_mode="Markdown",
-    )
-    await cb.answer("Ссылки для покупки готовы!")
-
-
-async def _find_product_alternatives(user_id: int, unavailable_product_id: str) -> List[Dict]:
-    """Найти альтернативы для недоступного товара"""
-    try:
-        from engine.models import UserProfile
-        from engine.catalog_store import CatalogStore
-
-        # Получаем профиль пользователя (тестовый)
-        test_profile = UserProfile(
-            user_id=user_id,
-            skin_type="normal",
-            concerns=[],
-            season="spring",
-            undertone="neutral",
-            contrast="medium",
-        )
-
-        # Получаем каталог и строим рекомендации с fallback
-        import os
 
         catalog_path = os.getenv("CATALOG_PATH", "assets/fixed_catalog.yaml")
         catalog_store = CatalogStore.instance(catalog_path)
         catalog = catalog_store.get()
+        result = selector.select_products_v2(profile, catalog, partner_code="S1") or {}
 
-        # Используем fallback селектор
-        result = selector.select_products_v2(test_profile, catalog, partner_code="S1")
+        buckets: List[List[Dict[str, Any]]] = []
+        for group in (result.get("skincare"), result.get("makeup")):
+            if isinstance(group, dict):
+                buckets.extend(list(group.values()))
 
-        # Ищем альтернативы в той же категории
-        alternatives = []
-        all_products = []
+        flat: Dict[str, Dict[str, Any]] = {}
+        for bucket in buckets:
+            if isinstance(bucket, list):
+                for product in bucket:
+                    if not isinstance(product, dict):
+                        continue
+                    pid = str(product.get("id")) if product.get("id") else None
+                    if pid and pid not in flat:
+                        flat[pid] = product
 
-        if result.get("makeup"):
-            for category_products in result["makeup"].values():
-                all_products.extend(category_products)
-        if result.get("skincare"):
-            for category_products in result["skincare"].values():
-                all_products.extend(category_products)
-
-        # Берем доступные товары (исключая недоступный)
-        for product in all_products:
-            if (
-                product.get("in_stock", True)
-                and str(product.get("id", "")) != unavailable_product_id
-                and len(alternatives) < 3
-            ):
-                alternatives.append(product)
-
-        return alternatives
-
-    except Exception as e:
-        print(f"❌ Error finding alternatives: {e}")
+        ordered = sorted(
+            flat.values(),
+            key=lambda prod: (
+                SOURCE_PRIORITY.get(_normalize_source(prod.get("source")), 10),
+                float(prod.get("price") or prod.get("price_value") or 0),
+            ),
+        )
+        if limit is not None:
+            ordered = ordered[:limit]
+        return ordered
+    except Exception as exc:  # pragma: no cover
+        logger.warning("Failed to load recommendations: %s", exc)
         return []
 
 
-@router.callback_query(F.data.startswith("cart:unavailable:"))
-async def handle_unavailable_product(cb: CallbackQuery, state: FSMContext) -> None:
-    """Обработать недоступный товар - показать альтернативы"""
-    if not cb.data:
-        await cb.answer()
-        return
-
-    user_id = _user_id(cb)
-    if not user_id:
-        await cb.answer("Ошибка пользователя")
-        return
-
-    product_id = cb.data.split(":", 2)[2]
-    print(f"🔍 Finding alternatives for unavailable product {product_id}")
-
-    # Ищем альтернативы
-    alternatives = await _find_product_alternatives(user_id, product_id)
-
-    metrics.track_event(
-        "cart_unavailable_viewed",
-        user_id,
-        {"product_id": product_id, "alternatives_found": len(alternatives)},
-    )
-
-    if not alternatives:
-        await cb.answer("😔 К сожалению, похожих товаров сейчас нет в наличии", show_alert=True)
-        return
-
-    # Формируем сообщение с альтернативами
-    lines = ["⚠️ **ТОВАР НЕДОСТУПЕН**\n"]
-    lines.append("Вот похожие товары в наличии:\n")
-
-    buttons = []
-
-    for i, alt in enumerate(alternatives, 1):
-        brand_name = f"{alt.get('brand', '')} {alt.get('name', '')}".strip()
-        price_text = f"{alt.get('price', 0)} {alt.get('currency', alt.get('price_currency', '₽'))}"
-        explain = alt.get("explain", "")
-
-        lines.append(f"{i}. **{brand_name}**")
-        lines.append(f"   💰 {price_text}")
-        if explain:
-            lines.append(f"   💡 {explain}")
-    lines.append("")
-
-    # Кнопки для добавления альтернативы
-    alt_id = str(alt.get("id", ""))
-    if alt_id:
-        buttons.append(
-            [
-                InlineKeyboardButton(text=f"➕ Добавить {i}", callback_data=f"cart:add:{alt_id}"),
-                InlineKeyboardButton(
-                    text=f"🛒 Купить {i}", url=alt.get("ref_link", "https://goldapple.ru/")
-                ),
-            ]
-        )
-
-    # Кнопка возврата к корзине
-    buttons.append([InlineKeyboardButton(text="⬅️ Назад к корзине", callback_data="cart:back")])
-
-    kb = InlineKeyboardMarkup(inline_keyboard=buttons)
-
-    await cb.message.answer("\n".join(lines), reply_markup=kb, parse_mode="Markdown")
-    await cb.answer("Найдены похожие товары")
+@dataclass
+class CartView:
+    text: str
+    markup: InlineKeyboardMarkup
+    total_qty: int
+    total_price: float
+    currency: str
+    currency_warning: bool
 
 
-@router.callback_query(F.data == "cart:back")
-async def back_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
-    """Вернуться к корзине"""
-    await show_cart_callback(cb, state)
-
-
-@router.callback_query(F.data.startswith("cart:update_variant:"))
-async def update_item_variant(cb: CallbackQuery, state: FSMContext) -> None:
-    """Обновить вариант товара в корзине"""
-    user_id = _user_id(cb)
-    if not user_id:
-        await cb.answer("Неизвестный пользователь")
-        return
-
-    try:
-        # Парсим: cart:update_variant:product_id:old_variant:new_variant
-        parts = cb.data.split(":", 5)
-        if len(parts) < 5:
-            await cb.answer("❌ Некорректные параметры")
-            return
-
-        product_id = parts[2]
-        old_variant = parts[3] if parts[3] != "null" else None
-        new_variant = parts[4] if parts[4] != "null" else None
-
-        # Use CartStore directly (cart_service removed)
-        updated_item = store.update_item_variant(
-            user_id=user_id,
-            product_id=product_id,
-            old_variant_id=old_variant,
-            new_variant_id=new_variant,
-        )
-
-        if updated_item:
-            # Analytics
-            analytics = _get_analytics_tracker()
-            if analytics:
-                analytics.track_event(
-                    "cart_variant_updated",
-                    user_id,
-                    {"product_id": product_id, "old_variant": old_variant, "new_variant": new_variant},
-                )
-
-            await cb.answer(
-                f"✅ Вариант обновлен: {updated_item.variant_name or 'Стандарт'}", show_alert=True
-            )
-        else:
-            await cb.answer("❌ Товар не найден в корзине", show_alert=True)
-
-    except Exception as e:
-        print(f"❌ Unexpected error in variant update: {e}")
-        await cb.answer("❌ Произошла ошибка при обновлении варианта", show_alert=True)
-
-    # Показываем обновленную корзину
-    await show_cart_callback(cb, state)
-
-
-@router.callback_query(F.data == "get_recommendations")
-async def get_recommendations(cb: CallbackQuery, state: FSMContext) -> None:
-    """Обработчик кнопки 'Получить рекомендации' в корзине"""
-    user_id = _user_id(cb)
-    if not user_id:
-        await cb.answer("Ошибка пользователя")
-        return
-
-    print(f"🎯 get_recommendations: user {user_id} wants recommendations for cart")
-
-    # Проверяем, изменилось ли сообщение и нужно ли обновлять
-    current_text = cb.message.text or ""
-    current_markup = cb.message.reply_markup
-
-    # Получаем актуальную информацию о корзине
-    cart_items = store.get_cart(user_id)
-    cart_text = (
-        "🛒 Ваша корзина пуста.\n\nДобавьте товары из рекомендаций!"
-        if not cart_items
-        else f"🛒 Ваша корзина ({len(cart_items)} товаров)"
-    )
-
-    # Проверяем, нужно ли обновлять
-    text_changed = current_text != cart_text
-    markup_changed = not _compare_keyboards(
-        current_markup, None
-    )  # Всегда обновляем разметку для рекомендаций
-
-    if text_changed or markup_changed:
-        await show_cart_callback(cb, state)
-    else:
-        print("ℹ️ Cart content unchanged, skipping update")
-
-    await cb.answer("Открываю корзину с рекомендациями")
-
-
-@router.callback_query(F.data == "cart:details")
-async def show_cart_details(cb: CallbackQuery, state: FSMContext) -> None:
-    """Показать подробную информацию о товарах в корзине"""
-    user_id = _user_id(cb)
-    if not user_id:
-        await cb.answer("Ошибка пользователя")
-        return
-
+async def _compose_cart_view(user_id: int) -> CartView:
     items = store.get_cart(user_id)
     if not items:
-        await cb.answer("Корзина пуста")
-        return
+        return await _render_empty_cart(user_id)
 
-    # Формируем детальное описание каждого товара
-    for i, item in enumerate(items, 1):
-        lines = [f"**ТОВАР {i}/{len(items)}**\n"]
+    total_qty, total_price, currency = store.get_cart_total(user_id)
+    currencies = {item.currency or currency for item in items if item.price}
+    currency_warning = len(currencies) > 1
 
-        brand_name = f"{item.brand or ''} {item.name or item.product_id}".strip()
-        lines.append(f"🏷️ **{brand_name}**")
+    lines: List[str] = [f"{CART_TITLE} ({total_qty})", ""]
+    keyboard_rows: List[List[InlineKeyboardButton]] = []
 
-        if item.category:
-            lines.append(f"📂 Категория: {item.category}")
+    for index, item in enumerate(items, start=1):
+        title_parts = [item.brand or "", item.name or item.product_id]
+        title = " ".join(part for part in title_parts if part).strip() or item.product_id
+        lines.append(f"{index}) {title}")
 
-        price_text = f"{item.price} {item.currency}" if item.price else "Цена уточняется"
-        lines.append(f"💰 Цена: {price_text}")
-        lines.append(f"📦 Количество: {item.quantity}")
+        if item.variant_name:
+            lines.append(f"   Вариант: {item.variant_name}")
 
-        stock_text = "✅ В наличии" if item.in_stock else "❌ Недоступен"
-        lines.append(f"📊 Статус: {stock_text}")
+        price_text = _format_price(item.price, item.currency)
+        line_total = _format_price((item.price or 0) * item.qty, item.currency)
+        lines.append(f"   {price_text} × {item.qty} = {line_total}")
 
-        if item.explain:
-            lines.append(f"\n💡 **Почему подходит:**\n{item.explain}")
+        if item.in_stock is False:
+            lines.append("   · Нет в наличии")
 
-        if item.added_at:
-            lines.append(f"\n📅 Добавлено: {item.added_at[:10]}")
+        source_label = item.meta.get("source_label") if isinstance(item.meta, dict) else None
+        if source_label:
+            lines.append(f"   · Источник: {source_label}")
 
-        # Кнопки для товара
-        buttons = []
+        lines.append("")
 
-        if item.in_stock and item.ref_link:
-            buttons.append([InlineKeyboardButton(text="🛒 Купить", url=item.ref_link)])
-        elif not item.in_stock:
-            buttons.append(
-                [
-                    InlineKeyboardButton(
-                        text="🔍 Найти похожие", callback_data=f"cart:unavailable:{item.product_id}"
-                    )
-                ]
-            )
-
-        buttons.extend(
+        key = _encode_key(item.product_id, item.variant_id)
+        keyboard_rows.append(
             [
-                [
-                    InlineKeyboardButton(
-                        text="🗑️ Удалить", callback_data=f"cart:remove:{item.product_id}"
-                    ),
-                    InlineKeyboardButton(text="📊 +1", callback_data=f"cart:inc:{item.product_id}"),
-                    InlineKeyboardButton(text="📉 -1", callback_data=f"cart:dec:{item.product_id}"),
-                ]
+                InlineKeyboardButton(text=BTN_DEC, callback_data=f"cart:dec:{key}"),
+                InlineKeyboardButton(text=str(item.qty), callback_data=f"cart:qty:{key}"),
+                InlineKeyboardButton(text=BTN_INC, callback_data=f"cart:inc:{key}"),
+                InlineKeyboardButton(text=BTN_DEL, callback_data=f"cart:del:{key}"),
             ]
         )
 
-        if i == len(items):  # Последний товар
-            buttons.append(
-                [InlineKeyboardButton(text="⬅️ Назад к корзине", callback_data="cart:back")]
-            )
-        else:
-            buttons.append(
-                [InlineKeyboardButton(text="➡️ Следующий товар", callback_data="cart:details")]
-            )
+    lines.append(CART_TOTAL.format(total=_format_price(total_price, currency)))
+    if currency_warning:
+        lines.append("⚠ В корзине товары с разной валютой")
 
-        kb = InlineKeyboardMarkup(inline_keyboard=buttons)
-
-        await cb.message.answer("\n".join(lines), reply_markup=kb, parse_mode="Markdown")
-
-    await cb.answer("Подробная информация")
-
-
-@router.callback_query(F.data.startswith("cart:rm:"))
-async def remove_from_cart(cb: CallbackQuery, state: FSMContext) -> None:
-    """Удалить товар из корзины"""
-    user_id = _user_id(cb)
-    if not user_id:
-        await cb.answer("Ошибка пользователя")
-        return
-
-    parts = cb.data.split(":")
-    product_id = parts[2]
-    variant_id = parts[3] if len(parts) > 3 else None
-
-    cart_store = get_cart_store()
-    cart_store.remove(user_id, product_id, variant_id)
-
-    # Всегда успешно, так как remove не возвращает статус
-    if hasattr(metrics, "track_event"):
-        metrics.track_event(
-            "cart_item_removed", user_id, {"product_id": product_id, "variant_id": variant_id}
-        )
-    await cb.answer("🗑️ Товар удален из корзины")
-
-    await show_cart_callback(cb, state)
-
-
-@router.callback_query(F.data.startswith("cart:inc:"))
-async def increase_quantity(cb: CallbackQuery, state: FSMContext) -> None:
-    """Увеличить количество товара"""
-    user_id = _user_id(cb)
-    if not user_id:
-        await cb.answer("Ошибка пользователя")
-        return
-
-    # Debounce check
-    if not _check_debounce(user_id, f"inc:{cb.data}"):
-        await cb.answer("⏳ Подождите...")
-        return
-
-    product_id = cb.data.split(":", 2)[2]
-
-    # Используем новый метод CartStore.inc_quantity
-    cart_store = get_cart_store()
-    success = cart_store.inc_quantity(user_id, product_id, None)
-
-    if success:
-        # Получаем новое количество
-        items = cart_store.get_cart(user_id)
-        new_qty = 0
-        for item in items:
-            if item.product_id == product_id:
-                new_qty = item.qty
-                break
-
-        print(f"📈 product_inc_qty: user={user_id}, product={product_id}, new_qty={new_qty}")
-
-        if hasattr(metrics, "track_event"):
-            metrics.track_event(
-                "cart_qty_change",
-                user_id,
-                {"product_id": product_id, "new_qty": new_qty, "action": "increase"},
-            )
-
-        await cb.answer(f"➕ Количество: {new_qty}")
-    else:
-        await cb.answer("❌ Товар не найден")
-
-    await show_cart_callback(cb, state)
-
-
-@router.callback_query(F.data.startswith("cart:dec:"))
-async def decrease_quantity(cb: CallbackQuery, state: FSMContext) -> None:
-    """Уменьшить количество товара"""
-    user_id = _user_id(cb)
-    if not user_id:
-        await cb.answer("Ошибка пользователя")
-        return
-
-    product_id = cb.data.split(":", 2)[2]
-
-    # Используем новый метод CartStore.dec_quantity
-    cart_store = get_cart_store()
-    success = cart_store.dec_quantity(user_id, product_id, None)
-
-    if success:
-        # Проверяем, удален ли товар
-        items = cart_store.get_cart(user_id)
-        item_found = False
-        new_qty = 0
-
-        for item in items:
-            if item.product_id == product_id:
-                item_found = True
-                new_qty = item.qty
-                break
-
-        if not item_found:
-            print(f"🗑️ product_removed: user={user_id}, product={product_id}")
-
-            # Аналитика удаления
-            analytics = _get_analytics_tracker()
-            if analytics:
-                analytics.track_event("cart_item_removed", user_id, {"product_id": product_id})
-
-            await cb.answer("🗑️ Товар удалён")
-        else:
-            print(f"📉 product_dec_qty: user={user_id}, product={product_id}, new_qty={new_qty}")
-
-            if hasattr(metrics, "track_event"):
-                metrics.track_event(
-                    "cart_qty_change",
-                    user_id,
-                    {"product_id": product_id, "new_qty": new_qty, "action": "decrease"},
-                )
-
-            await cb.answer(f"➖ Количество: {new_qty}")
-    else:
-        await cb.answer("❌ Товар не найден")
-
-    await show_cart_callback(cb, state)
-
-
-@router.callback_query(F.data.startswith("cart:inc:"))
-async def increase_quantity(cb: CallbackQuery, state: FSMContext) -> None:
-    """Увеличить количество товара"""
-    user_id = _user_id(cb)
-    if not user_id:
-        await cb.answer("Ошибка пользователя")
-        return
-
-    product_id = cb.data.split(":", 2)[2]
-    cart = store.get_cart(user_id)
-
-    for item in cart:
-        if item.product_id == product_id:
-            new_qty = item.quantity + 1
-            store.update_quantity(user_id, product_id, item.variant_id, new_qty)
-
-            metrics.track_event(
-                "cart_qty_change",
-                user_id,
-                {
-                    "product_id": product_id,
-                    "variant_id": item.variant_id,
-                    "new_qty": new_qty,
-                    "action": "increase",
-                },
-            )
-
-            await cb.answer(f"Количество: {new_qty}")
-            break
-
-    await show_cart_callback(cb, state)
-
-
-@router.callback_query(F.data.startswith("cart:rm:"))
-async def remove_from_cart(cb: CallbackQuery, state: FSMContext) -> None:
-    """Удалить товар из корзины"""
-    user_id = _user_id(cb)
-    if not user_id:
-        await cb.answer("Ошибка пользователя")
-        return
-
-    parts = cb.data.split(":")
-    product_id = parts[2]
-    variant_id = parts[3] if len(parts) > 3 else None
-
-    success = store.remove_item(user_id, product_id, variant_id)
-
-    if success:
-        metrics.track_event(
-            "cart_item_removed", user_id, {"product_id": product_id, "variant_id": variant_id}
-        )
-
-        await cb.answer("Товар удален из корзины")
-    else:
-        await cb.answer("Товар не найден")
-
-    await show_cart_callback(cb, state)
-
-
-@router.callback_query(F.data == "cart:checkout")
-async def checkout_cart(cb: CallbackQuery, state: FSMContext) -> None:
-    """Оформить заказ"""
-    user_id = _user_id(cb)
-    if not user_id:
-        await cb.answer("Ошибка пользователя")
-        return
-
-    cart = store.get_cart(user_id)
-    if not cart:
-        await cb.answer("Корзина пуста")
-        return
-
-    # Создать сообщение с товарами и ссылками
-    text_lines = ["🛒 **ОФОРМЛЕНИЕ ЗАКАЗА**\n"]
-
-    total_price = 0
-    buttons = []
-
-    for item in cart:
-        price = (item.price or 0) * item.quantity
-        total_price += price
-
-        text_lines.append(f"• {item.brand or ''} {item.name or ''}")
-        text_lines.append(f"  Количество: {item.quantity}")
-        text_lines.append(f"  Цена: {price:.0f} ₽")
-
-        # Кнопка для оформления на сайте
-        if item.ref_link:
-            buttons.append(
-                [
-                    InlineKeyboardButton(
-                        text=f"��� Купить {item.brand or item.name}", url=item.ref_link
-                    )
-                ]
-            )
-        elif hasattr(item, "link") and item.link:
-            buttons.append(
-                [InlineKeyboardButton(text=f"��� Купить {item.brand or item.name}", url=item.link)]
-            )
-
-        text_lines.append("")  # Пустая строка
-
-    text_lines.append(f"**Итого: {total_price:.0f} ₽**")
-
-    # Кнопки навигации
-    buttons.append(
+    keyboard_rows.append(
         [
-            InlineKeyboardButton(text="⬅️ Назад в корзину", callback_data="show_cart"),
-            InlineKeyboardButton(text="��� Главное меню", callback_data="back:main"),
+            InlineKeyboardButton(text=BTN_BACK_RECO, callback_data="cart:back_reco"),
+            InlineKeyboardButton(text=BTN_CHECKOUT, callback_data="cart:checkout"),
         ]
     )
+    keyboard_rows.append([InlineKeyboardButton(text=BTN_CLEAR, callback_data="cart:clear")])
 
-    kb = InlineKeyboardMarkup(inline_keyboard=buttons)
-    await safe_edit_text(cb, "\n".join(text_lines), kb)
+    markup = InlineKeyboardMarkup(inline_keyboard=keyboard_rows)
+    text = sanitize_message("\n".join(lines).strip())
+    return CartView(text=text, markup=markup, total_qty=total_qty, total_price=total_price, currency=currency, currency_warning=currency_warning)
 
-    # Логирование
-    metrics.track_event(
-        "cart_checkout_opened", user_id, {"items_count": len(cart), "total_price": total_price}
+
+async def _render_empty_cart(user_id: int) -> CartView:
+    picks = await _load_recommendations(user_id, limit=3)
+    lines = [CART_EMPTY, ""]
+    buttons: List[List[InlineKeyboardButton]] = []
+
+    if picks:
+        lines.append("Предложения для вас:")
+        for product in picks:
+            title = " ".join(filter(None, [product.get("brand"), product.get("name")])).strip() or str(product.get("id"))
+            price_text = _format_price(product.get("price"), product.get("currency"))
+            lines.append(f"• {title} — {price_text}")
+            buttons.append([
+                InlineKeyboardButton(
+                    text=f"{BTN_ADD} {title[:24]}",
+                    callback_data=f"cart:add:{_encode_key(str(product.get('id')), None)}",
+                )
+            ])
+        lines.append("")
+
+    buttons.append([InlineKeyboardButton(text=BTN_BACK_RECO, callback_data="cart:back_reco")])
+    markup = InlineKeyboardMarkup(inline_keyboard=buttons)
+    text = sanitize_message("\n".join(lines).strip())
+    return CartView(text=text, markup=markup, total_qty=0, total_price=0.0, currency="RUB", currency_warning=False)
+
+
+async def show_cart(message: Message, state: Optional[FSMContext] = None) -> None:
+    user_id = int(message.from_user.id) if message.from_user else 0
+    if user_id == 0:
+        await message.answer("Не удалось определить пользователя")
+        return
+    view = await _compose_cart_view(user_id)
+    await message.answer(view.text, reply_markup=view.markup)
+    await message.answer(MSG_CART_UPDATED, reply_markup=main_menu(cart_count=view.total_qty))
+
+
+@router.callback_query(F.data == "cart:open")
+async def handle_cart_open(cb: CallbackQuery) -> None:
+    user_id = cb.from_user.id
+    view = await _compose_cart_view(user_id)
+    await _edit_or_send(cb, view)
+    await _answer(cb, MSG_CART_UPDATED)
+
+
+@router.callback_query(F.data.startswith("cart:add:"))
+async def handle_cart_add(cb: CallbackQuery) -> None:
+    user_id = cb.from_user.id
+    payload = cb.data.split(":", 2)[2]
+    product_id, variant_id = _decode_key(payload)
+
+    product, alternatives = await _resolve_product(user_id, product_id)
+    if not product:
+        await _send_alternatives(cb, alternatives)
+        return
+
+    if variant_id and not _variant_exists(product, variant_id):
+        await _answer(cb, MSG_BAD_VARIANT, alert=True)
+        await _send_alternatives(cb, alternatives)
+        return
+
+    if not product.get("price") or not product.get("currency") or product.get("in_stock") is False:
+        await _answer(cb, MSG_UNAVAILABLE, alert=True)
+        await _send_alternatives(cb, alternatives)
+        return
+
+    cart_item = _build_cart_item(product, variant_id)
+    stored = store.add_item(
+        user_id=user_id,
+        product_id=cart_item.product_id,
+        variant_id=cart_item.variant_id,
+        quantity=cart_item.qty,
+        brand=cart_item.brand,
+        name=cart_item.name,
+        price=cart_item.price,
+        currency=cart_item.currency,
+        price_currency=cart_item.price_currency,
+        ref_link=cart_item.ref_link,
+        category=cart_item.category,
+        variant_name=cart_item.variant_name,
+        in_stock=cart_item.in_stock,
+        image_url=cart_item.image_url,
+        source=cart_item.source,
+        meta=cart_item.meta,
     )
 
-    await cb.answer()
+    price_cents = int(round((cart_item.price or 0) * 100))
+    _track_metrics(
+        "cart_add_success",
+        user_id,
+        {"product_id": cart_item.product_id, "variant_id": cart_item.variant_id, "price": cart_item.price},
+    )
+    _emit_analytics_added(user_id, cart_item.product_id, cart_item.variant_id, cart_item.source, price_cents)
+
+    view = await _compose_cart_view(user_id)
+    await _edit_or_send(cb, view)
+    display_name = " ".join(filter(None, [stored.brand, stored.name])) or stored.product_id
+    await _answer(cb, f"{MSG_ADDED}: {display_name}")
 
 
 @router.callback_query(F.data.startswith("cart:inc:"))
-async def cart_increment(cb: CallbackQuery):
-    """Увеличить количество товара в корзине"""
-    try:
-        user_id = cb.from_user.id
-        product_id = cb.data.split(":")[2]
-
-        print(f"📈 Incrementing {product_id} for user {user_id}")
-
-        # Получаем корзину
-        cart = store.get_cart(user_id)
-
-        # Находим товар и увеличиваем количество
-        for item in cart:
-            if item.product_id == product_id:
-                item.quantity += 1
-                store._save_cart(user_id, cart)
-                print(f"✅ Incremented {product_id} to {item.quantity}")
-
-                # Аналитика
-                analytics = _get_analytics_tracker()
-                if analytics:
-                    analytics.track_event(
-                        "cart_quantity_changed",
-                        user_id,
-                        {
-                            "product_id": product_id,
-                            "action": "increment",
-                            "new_quantity": item.quantity,
-                        },
-                    )
-                break
-
-        # Перерисовываем корзину
-        await show_cart_callback(cb)
-
-    except Exception as e:
-        print(f"❌ Error incrementing cart item: {e}")
-        await cb.answer("⚠️ Ошибка при увеличении количества")
+async def handle_cart_inc(cb: CallbackQuery) -> None:
+    user_id = cb.from_user.id
+    key = cb.data.split(":", 2)[2]
+    if not _debounce(user_id, f"inc:{key}"):
+        await _answer(cb, MSG_CART_UPDATED)
+        return
+    product_id, variant_id = _decode_key(key)
+    success, new_qty = store.inc_quantity(user_id, product_id, variant_id, max_qty=99)
+    if not success:
+        await _answer(cb, MSG_UNAVAILABLE, alert=True)
+        return
+    view = await _compose_cart_view(user_id)
+    await _edit_or_send(cb, view)
+    cart_qty_changed(user_id, key, new_qty)
+    await _answer(cb, MSG_CART_UPDATED)
 
 
 @router.callback_query(F.data.startswith("cart:dec:"))
-async def cart_decrement(cb: CallbackQuery):
-    """Уменьшить количество товара в корзине"""
-    try:
-        user_id = cb.from_user.id
-        product_id = cb.data.split(":")[2]
-
-        print(f"📉 Decrementing {product_id} for user {user_id}")
-
-        # Получаем корзину
-        cart = store.get_cart(user_id)
-
-        # Находим товар и уменьшаем количество
-        for i, item in enumerate(cart):
-            if item.product_id == product_id:
-                if item.quantity > 1:
-                    item.quantity -= 1
-                    print(f"✅ Decremented {product_id} to {item.quantity}")
-                else:
-                    # Удаляем товар если количество = 1
-                    cart.pop(i)
-                    print(f"🗑️ Removed {product_id} from cart")
-
-                store._save_cart(user_id, cart)
-
-                # Аналитика
-                analytics = _get_analytics_tracker()
-                if analytics:
-                    analytics.track_event(
-                        "cart_quantity_changed",
-                        user_id,
-                        {
-                            "product_id": product_id,
-                            "action": "decrement" if item.quantity > 0 else "remove",
-                            "new_quantity": item.quantity if item.quantity > 0 else 0,
-                        },
-                    )
-                break
-
-        # Перерисовываем корзину
-        await show_cart_callback(cb)
-
-    except Exception as e:
-        print(f"❌ Error decrementing cart item: {e}")
-        await cb.answer("⚠️ Ошибка при уменьшении количества")
+async def handle_cart_dec(cb: CallbackQuery) -> None:
+    user_id = cb.from_user.id
+    key = cb.data.split(":", 2)[2]
+    if not _debounce(user_id, f"dec:{key}"):
+        await _answer(cb, MSG_CART_UPDATED)
+        return
+    product_id, variant_id = _decode_key(key)
+    success, new_qty, removed = store.dec_quantity(user_id, product_id, variant_id)
+    if not success:
+        await _answer(cb, MSG_UNAVAILABLE, alert=True)
+        return
+    view = await _compose_cart_view(user_id)
+    await _edit_or_send(cb, view)
+    if removed:
+        undo_key = _remember_removed(user_id, removed)
+        await _send_undo_prompt(cb, removed, undo_key)
+        cart_item_removed(user_id, key)
+    else:
+        cart_qty_changed(user_id, key, new_qty)
+    await _answer(cb, MSG_CART_UPDATED)
 
 
 @router.callback_query(F.data.startswith("cart:del:"))
-async def cart_delete(cb: CallbackQuery):
-    """Удалить товар из корзины"""
+async def handle_cart_delete(cb: CallbackQuery) -> None:
+    user_id = cb.from_user.id
+    key = cb.data.split(":", 2)[2]
+    product_id, variant_id = _decode_key(key)
+    removed = store.remove_item(user_id, product_id, variant_id)
+    if not removed:
+        await _answer(cb, MSG_UNAVAILABLE, alert=True)
+        return
+    view = await _compose_cart_view(user_id)
+    await _edit_or_send(cb, view)
+    undo_key = _remember_removed(user_id, removed)
+    await _send_undo_prompt(cb, removed, undo_key)
+    cart_item_removed(user_id, key)
+    await _answer(cb, MSG_CART_UPDATED)
+
+
+@router.callback_query(F.data.startswith("cart:undo:"))
+async def handle_cart_undo(cb: CallbackQuery) -> None:
+    undo_key = cb.data.split(":", 2)[2]
+    record = _undo_buffer.pop(undo_key, None)
+    if not record:
+        await _answer(cb, MSG_UNDO_EXPIRED, alert=True)
+        return
+    user_id, item = record
+    restored = store.add_item(
+        user_id=user_id,
+        product_id=item.product_id,
+        variant_id=item.variant_id,
+        quantity=item.qty,
+        brand=item.brand,
+        name=item.name,
+        price=item.price,
+        currency=item.currency,
+        price_currency=item.price_currency,
+        ref_link=item.ref_link,
+        category=item.category,
+        variant_name=item.variant_name,
+        in_stock=item.in_stock,
+        image_url=item.image_url,
+        source=item.source,
+        meta=item.meta,
+    )
+    view = await _compose_cart_view(user_id)
+    await _edit_or_send(cb, view)
+    display_name = " ".join(filter(None, [restored.brand, restored.name])) or restored.product_id
+    await _answer(cb, f"{MSG_UNDO_SUCCESS}: {display_name}")
+
+
+@router.callback_query(F.data == "cart:clear")
+async def handle_cart_clear(cb: CallbackQuery) -> None:
+    user_id = cb.from_user.id
+    store.clear_cart(user_id)
+    view = await _compose_cart_view(user_id)
+    await _edit_or_send(cb, view)
+    cart_cleared(user_id)
+    await _answer(cb, MSG_CART_UPDATED)
+
+
+@router.callback_query(F.data == "cart:checkout")
+async def handle_cart_checkout(cb: CallbackQuery) -> None:
+    user_id = cb.from_user.id
+    text, markup, links_count = await _build_checkout_view(user_id)
+    await _safe_edit(cb, text, markup)
+    total_qty, total_price, currency = store.get_cart_total(user_id)
+    checkout_started(user_id, total_qty, total_price)
+    checkout_links_generated(user_id, links_count)
+    await _answer(cb, MSG_CART_UPDATED)
+
+
+@router.callback_query(F.data == "cart:back_reco")
+async def handle_cart_back_reco(cb: CallbackQuery) -> None:
     try:
-        user_id = cb.from_user.id
-        product_id = cb.data.split(":")[2]
+        from bot.handlers.recommendations import show_main_recommendations
 
-        print(f"🗑️ Deleting {product_id} from cart for user {user_id}")
-
-        # Удаляем товар из корзины
-        cart = store.get_cart(user_id)
-
-        # Находим и удаляем товар
-        for i, item in enumerate(cart):
-            if item.product_id == product_id:
-                removed_item = cart.pop(i)
-                store._save_cart(user_id, cart)
-                print(f"✅ Removed {product_id} from cart")
-
-                # Логирование удаления товара
-                print(
-                    f"🗑️ product_removed: user={user_id}, product={product_id}, qty={removed_item.quantity}"
-                )
-
-                # Аналитика
-                analytics = _get_analytics_tracker()
-                if analytics:
-                    analytics.track_event(
-                        "cart_item_removed",
-                        user_id,
-                        {
-                            "product_id": product_id,
-                            "brand": removed_item.brand,
-                            "name": removed_item.name,
-                        },
-                    )
-
-                await cb.answer("🗑️ Товар удалён")
-                await show_cart_callback(cb)
-                return
-
-        # Если товар не найден
-        await cb.answer("❌ Товар не найден")
-
-    except Exception as e:
-        print(f"❌ Error deleting cart item: {e}")
-        await cb.answer("⚠️ Ошибка при удалении товара")
+        await show_main_recommendations(cb)
+    except Exception as exc:
+        logger.warning("Failed to show recommendations: %s", exc)
+        await _answer(cb, MSG_UNAVAILABLE, alert=True)
 
 
-@router.callback_query(F.data == "cart:clr")
-async def cart_clear(cb: CallbackQuery):
-    """Очистить всю корзину"""
+@router.callback_query(F.data.startswith("cart:qty:"))
+async def handle_cart_qty_info(cb: CallbackQuery) -> None:
+    user_id = cb.from_user.id
+    key = cb.data.split(":", 2)[2]
+    product_id, variant_id = _decode_key(key)
+    for item in store.get_cart(user_id):
+        if item.product_id == product_id and item.variant_id == variant_id:
+            await _answer(cb, f"{MSG_CART_UPDATED} ({item.qty})")
+            return
+    await _answer(cb, MSG_UNAVAILABLE, alert=True)
+
+
+async def _edit_or_send(cb: CallbackQuery, view: CartView) -> None:
+    if not await _safe_edit(cb, view.text, view.markup):
+        await cb.message.answer(view.text, reply_markup=view.markup)
+
+
+async def _safe_edit(cb: CallbackQuery, text: str, markup: InlineKeyboardMarkup) -> bool:
+    message = cb.message
+    if not message:
+        return False
     try:
-        user_id = cb.from_user.id
-        print(f"🧹 Clearing cart for user {user_id}")
+        if message.text == text and message.reply_markup == markup:
+            return True
+        await message.edit_text(text, reply_markup=markup)
+        return True
+    except TelegramBadRequest as exc:
+        if "message is not modified" in str(exc):
+            return True
+        logger.debug("Edit failed: %s", exc)
+    except Exception as exc:  # pragma: no cover
+        logger.debug("Edit failed: %s", exc)
+    return False
 
-        # Очищаем корзину
-        cart_before = store.get_cart(user_id)
-        store.clear_cart(user_id)
 
-        print("✅ Cart cleared")
-        print(f"🗑️ cart_cleared: user={user_id}, items_removed={len(cart_before)}")
+async def _answer(cb: CallbackQuery, text: str, *, alert: bool = False) -> None:
+    try:
+        await cb.answer(sanitize_message(text), show_alert=alert)
+    except Exception as exc:  # pragma: no cover
+        logger.debug("Callback answer failed: %s", exc)
 
-        # Аналитика
-        analytics = _get_analytics_tracker()
-        if analytics:
-            analytics.track_event("cart_cleared", user_id)
 
-        await cb.answer("🗑️ Корзина очищена!")
+async def _resolve_product(user_id: int, product_id: str) -> Tuple[Optional[Dict[str, Any]], List[Dict[str, Any]]]:
+    products = await _load_recommendations(user_id)
+    product = next((p for p in products if str(p.get("id")) == str(product_id)), None)
+    alternatives = [p for p in products if str(p.get("id")) != str(product_id)]
+    return product, alternatives[:5]
 
-        # Перерисовываем корзину (будет пустая)
-        await show_cart_callback(cb)
 
-    except Exception as e:
-        print(f"❌ Error clearing cart: {e}")
-        await cb.answer("⚠️ Ошибка при очистке корзины")
+def _variant_exists(product: Dict[str, Any], variant_id: str) -> bool:
+    for variant in product.get("variants") or []:
+        if str(variant.get("id")) == str(variant_id):
+            return True
+    return False
+
+
+def _build_cart_item(product: Dict[str, Any], variant_id: Optional[str]) -> CartItem:
+    variants = product.get("variants") or []
+    variant_name = None
+    variant_ref = None
+    in_stock = product.get("in_stock", True)
+    price = product.get("price") or product.get("price_value")
+    currency = product.get("currency") or product.get("price_currency") or "RUB"
+
+    if variant_id and variants:
+        for variant in variants:
+            if str(variant.get("id")) == str(variant_id):
+                variant_name = variant.get("name")
+                variant_ref = variant.get("ref_link") or variant.get("link")
+                if variant.get("in_stock") is not None:
+                    in_stock = variant.get("in_stock")
+                if variant.get("price"):
+                    price = variant.get("price")
+                break
+
+    ref_link = variant_ref or product.get("ref_link") or product.get("link")
+    source_label = product.get("source_label") or product.get("source") or ""
+
+    return CartItem(
+        product_id=str(product.get("id")),
+        variant_id=variant_id,
+        qty=1,
+        brand=product.get("brand"),
+        name=product.get("name"),
+        price=float(price) if price is not None else None,
+        currency=currency,
+        price_currency=currency,
+        ref_link=ref_link,
+        category=product.get("category"),
+        variant_name=variant_name,
+        in_stock=in_stock,
+        image_url=product.get("image") or product.get("image_url"),
+        source=_normalize_source(product.get("source")),
+        meta={"source_label": source_label},
+    )
+
+
+def _remember_removed(user_id: int, item: CartItem) -> str:
+    undo_key = secrets.token_urlsafe(6)
+    _undo_buffer[undo_key] = (user_id, item)
+    return undo_key
+
+
+async def _send_undo_prompt(cb: CallbackQuery, item: CartItem, undo_key: str) -> None:
+    title = " ".join(filter(None, [item.brand, item.name])) or item.product_id
+    text = f"{MSG_REMOVED}: {title}"
+    markup = InlineKeyboardMarkup(
+        inline_keyboard=[[InlineKeyboardButton(text=BTN_UNDO, callback_data=f"cart:undo:{undo_key}")]]
+    )
+    message = await cb.message.answer(sanitize_message(text), reply_markup=markup)
+
+    async def cleanup() -> None:
+        await asyncio.sleep(UNDO_TTL_SECONDS)
+        if undo_key in _undo_buffer:
+            _undo_buffer.pop(undo_key, None)
+            try:
+                await message.edit_text(MSG_UNDO_EXPIRED)
+            except TelegramBadRequest:
+                pass
+            except Exception as exc:  # pragma: no cover
+                logger.debug("Undo cleanup failed: %s", exc)
+
+    asyncio.create_task(cleanup())
+
+
+async def _send_alternatives(cb: CallbackQuery, products: List[Dict[str, Any]]) -> None:
+    if not products:
+        await _answer(cb, MSG_UNAVAILABLE, alert=True)
+        return
+    lines = [MSG_UNAVAILABLE, ""]
+    buttons: List[List[InlineKeyboardButton]] = []
+    for product in products[:3]:
+        title = " ".join(filter(None, [product.get("brand"), product.get("name")])).strip() or str(product.get("id"))
+        price_text = _format_price(product.get("price"), product.get("currency"))
+        lines.append(f"• {title} — {price_text}")
+        buttons.append([
+            InlineKeyboardButton(
+                text=f"{BTN_ADD} {title[:24]}",
+                callback_data=f"cart:add:{_encode_key(str(product.get('id')), None)}",
+            )
+        ])
+    buttons.append([InlineKeyboardButton(text=BTN_BACK_RECO, callback_data="cart:back_reco")])
+    await _safe_edit(cb, sanitize_message("\n".join(lines)), InlineKeyboardMarkup(inline_keyboard=buttons))
+
+
+def _emit_analytics_added(user_id: int, product_id: str, variant_id: Optional[str], source: Optional[str], price_cents: int) -> None:
+    try:
+        cart_item_added(user_id, product_id, variant_id or "", source or "unknown", price_cents)
+    except Exception as exc:  # pragma: no cover
+        logger.debug("Analytics cart_item_added failed: %s", exc)
+
+
+async def _build_checkout_view(user_id: int) -> Tuple[str, InlineKeyboardMarkup, int]:
+    items = store.get_cart(user_id)
+    if not items:
+        empty = await _render_empty_cart(user_id)
+        return empty.text, empty.markup, 0
+
+    lines = [CHECKOUT_TITLE, "", "Имя:", "Телефон:", "Email:", "", CHECKOUT_LINKS_READY, ""]
+    links = []
+    for item in items:
+        if not item.ref_link:
+            continue
+        url = _append_utm(item.ref_link, item.source)
+        links.append(url)
+        title = " ".join(filter(None, [item.brand, item.name])) or item.product_id
+        lines.append(f"• {title}: {url}")
+    if not links:
+        lines.append(f"• {CHECKOUT_NO_LINK}")
+
+    markup = InlineKeyboardMarkup(
+        inline_keyboard=[[InlineKeyboardButton(text=BTN_BACK_RECO, callback_data="cart:back_reco")]]
+    )
+    return sanitize_message("\n".join(lines).strip()), markup, len(links)
+
+
+def _append_utm(link: str, source: Optional[str]) -> str:
+    from urllib.parse import urlparse, parse_qsl, urlencode, urlunparse
+
+    if not link:
+        return link
+    parsed = urlparse(link)
+    query = dict(parse_qsl(parsed.query))
+    if "utm_source" not in query:
+        query["utm_source"] = source or "skincare_bot"
+    query.setdefault("utm_medium", "telegram")
+    query.setdefault("utm_campaign", "cart_checkout")
+    new_query = urlencode(query, doseq=True)
+    return urlunparse(parsed._replace(query=new_query))
+
+
+__all__ = ["router", "show_cart"]
+
