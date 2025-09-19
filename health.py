@@ -13,7 +13,55 @@ def health():
 
 def start_bot():
     global bot_process
-    # Terminate any existing bot process
+
+    # AGGRESSIVE cleanup: Find and kill ALL bot processes
+    print("🧹 Performing aggressive bot process cleanup...")
+    try:
+        import psutil
+        current_pid = os.getpid()
+
+        # Find all python processes
+        killed_count = 0
+        for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
+            try:
+                if proc.info['name'] == 'python' or proc.info['name'] == 'python3':
+                    cmdline = proc.info['cmdline'] or []
+                    pid = proc.info['pid']
+
+                    # Skip current Flask process
+                    if pid == current_pid:
+                        continue
+
+                    # Check if it's our bot process
+                    if any('bot.main' in arg or 'start.py' in arg for arg in cmdline):
+                        print(f"🛑 Found existing bot process (PID: {pid}), terminating...")
+                        try:
+                            proc.terminate()
+                            # Wait up to 5 seconds for graceful shutdown
+                            proc.wait(timeout=5)
+                            print(f"✅ Bot process {pid} terminated gracefully")
+                        except psutil.TimeoutExpired:
+                            proc.kill()
+                            print(f"⚠️ Bot process {pid} force killed")
+                        killed_count += 1
+
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                continue
+
+        if killed_count > 0:
+            print(f"🧹 Cleaned up {killed_count} existing bot processes")
+            # Give Telegram some time to detect the termination
+            import time
+            time.sleep(3)
+        else:
+            print("✅ No existing bot processes found")
+
+    except ImportError:
+        print("⚠️ psutil not available, using basic cleanup...")
+    except Exception as e:
+        print(f"⚠️ Error during aggressive cleanup: {e}")
+
+    # Terminate any existing bot process (fallback)
     if bot_process and bot_process.poll() is None:
         print(f"🛑 Terminating existing bot process (PID: {bot_process.pid})...")
         bot_process.terminate()

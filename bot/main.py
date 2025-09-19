@@ -359,6 +359,54 @@ async def main() -> None:
         # Проверяем lock-файл для предотвращения конфликта polling
         lock_file = "/tmp/skin-advisor.lock"
 
+        # AGGRESSIVE cleanup: Kill any existing bot processes before checking lock file
+        print("🧹 Aggressive process cleanup before lock check...")
+        try:
+            import psutil
+            current_pid = os.getpid()
+            bot_processes_killed = 0
+
+            for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
+                try:
+                    if proc.info['name'] in ['python', 'python3']:
+                        cmdline = proc.info['cmdline'] or []
+                        pid = proc.info['pid']
+
+                        # Skip current process
+                        if pid == current_pid:
+                            continue
+
+                        # Check if it's our bot
+                        if any('bot.main' in arg or 'start.py' in arg for arg in cmdline):
+                            print(f"🛑 Found conflicting bot process (PID: {pid}), terminating...")
+                            try:
+                                proc.terminate()
+                                proc.wait(timeout=3)
+                                print(f"✅ Conflicting process {pid} terminated")
+                                bot_processes_killed += 1
+                            except psutil.TimeoutExpired:
+                                proc.kill()
+                                print(f"⚠️ Conflicting process {pid} force killed")
+                                bot_processes_killed += 1
+                            except Exception as e:
+                                print(f"⚠️ Could not kill process {pid}: {e}")
+
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    continue
+
+            if bot_processes_killed > 0:
+                print(f"🧹 Cleaned up {bot_processes_killed} conflicting processes")
+                # Give Telegram time to detect the terminations
+                import time
+                time.sleep(5)
+            else:
+                print("✅ No conflicting processes found")
+
+        except ImportError:
+            print("⚠️ psutil not available for process cleanup")
+        except Exception as e:
+            print(f"⚠️ Error during process cleanup: {e}")
+
         # Force cleanup old lock file (for containerized environments like Render)
         if os.path.exists(lock_file):
             try:
@@ -435,30 +483,49 @@ async def main() -> None:
     signal.signal(signal.SIGINT, signal_handler)
 
     try:
-        # AGGRESSIVE webhook cleanup for Render/container environments
-        print("🧹 Starting aggressive webhook cleanup...")
+        # ULTRA AGGRESSIVE webhook cleanup for Render/container environments
+        print("🧹 Starting ULTRA aggressive webhook cleanup...")
         try:
             # Multiple attempts to clear webhook (sometimes Telegram needs retries)
-            for attempt in range(3):
+            webhook_cleared = False
+            for attempt in range(5):  # Increased to 5 attempts
                 try:
                     await bot.delete_webhook(drop_pending_updates=True)
-                    print(f"🧹 Webhook cleared (attempt {attempt + 1}/3)")
+                    print(f"🧹 Webhook cleared (attempt {attempt + 1}/5)")
+                    webhook_cleared = True
                     break
                 except Exception as e:
                     print(f"⚠️ Webhook cleanup attempt {attempt + 1} failed: {e}")
-                    if attempt < 2:  # Wait before retry
-                        await asyncio.sleep(1)
+                    if attempt < 4:  # Wait before retry
+                        await asyncio.sleep(2)  # Increased wait time
+
+            if not webhook_cleared:
+                print("🚨 CRITICAL: Could not clear webhook after 5 attempts!")
+                # Continue anyway, but this might cause issues
 
             # Wait longer for Telegram to process webhook deletion
             print("⏳ Waiting for Telegram to process webhook deletion...")
-            await asyncio.sleep(5)
+            await asyncio.sleep(10)  # Increased from 5 to 10 seconds
 
-            # Additional cleanup - delete any pending updates
-            try:
-                await bot.get_updates(offset=-1, limit=1)
-                print("🧹 Cleared pending updates")
-            except Exception as e:
-                print(f"⚠️ Could not clear pending updates: {e}")
+            # Additional cleanup - delete any pending updates with multiple attempts
+            updates_cleared = False
+            for attempt in range(3):
+                try:
+                    # Try different approaches to clear updates
+                    updates = await bot.get_updates(offset=-1, limit=1, timeout=5)
+                    if updates:
+                        # If we got updates, try to acknowledge them
+                        last_update_id = updates[-1].update_id
+                        await bot.get_updates(offset=last_update_id + 1, limit=1, timeout=1)
+                        print(f"🧹 Cleared pending updates (found {len(updates)} updates)")
+                    else:
+                        print("🧹 No pending updates found")
+                    updates_cleared = True
+                    break
+                except Exception as e:
+                    print(f"⚠️ Updates cleanup attempt {attempt + 1} failed: {e}")
+                    if attempt < 2:
+                        await asyncio.sleep(2)
 
         except Exception as e:
             print(f"⚠️ Could not clear webhook: {e}")
