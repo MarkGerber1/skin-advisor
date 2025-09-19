@@ -11,9 +11,6 @@ from services.cart_store import CartItem, get_cart_store
 from bot.utils.security import sanitize_message
 from i18n.ru import (
     CART_EMPTY,
-    CART_FOOTER_CLEAR,
-    CART_FOOTER_CONTINUE,
-    CART_FOOTER_CHECKOUT,
     CART_ITEM_LINE,
     CART_SUBTOTAL_LABEL,
     CART_TITLE,
@@ -23,7 +20,6 @@ from i18n.ru import (
     MSG_CART_UPDATED,
     MSG_INVALID_VARIANT,
     MSG_UNKNOWN_PRODUCT,
-    MSG_VARIANT_REQUIRED,
     MSG_CART_READY_FOR_CHECKOUT,
     BTN_CART_DECREASE,
     BTN_CART_DELETE,
@@ -31,6 +27,7 @@ from i18n.ru import (
     BTN_CART_CLEAR,
     BTN_CART_CONTINUE,
     BTN_CART_CHECKOUT,
+    CART_FOOTER_CLEAR,
 )
 
 try:
@@ -152,19 +149,19 @@ def _compose_cart_view(user_id: int) -> Tuple[str, InlineKeyboardMarkup]:
         [InlineKeyboardButton(text=BTN_CART_CHECKOUT, callback_data="cart:checkout")]
     )
 
-    text = sanitize_message("\n".join(lines))
+    text = sanitize_message("
+".join(lines))
     markup = InlineKeyboardMarkup(inline_keyboard=keyboard_rows)
     return text, markup
 
 
 def _resolve_product(product_id: str) -> Optional[Dict]:
-    # Try selector cache first
     try:
         products = _selector.select_products(product_id=product_id)
         if products:
             return products[0]
     except TypeError:
-        pass  # selector API may not support this signature
+        pass
     except Exception as exc:  # pragma: no cover - diagnostics only
         print(f"selector lookup failed for {product_id}: {exc}")
 
@@ -202,18 +199,23 @@ def _cart_answer(cb: CallbackQuery, text: str) -> None:
         pass
 
 
-async def _show_cart(cb_or_msg: CallbackQuery | Message) -> None:
-    user_id = cb_or_msg.from_user.id if isinstance(cb_or_msg, CallbackQuery) else cb_or_msg.from_user.id
-    text, markup = _compose_cart_view(user_id)
-    if isinstance(cb_or_msg, CallbackQuery):
-        try:
-            await cb_or_msg.message.edit_text(text, reply_markup=markup)
-        except TelegramBadRequest:
-            await cb_or_msg.message.answer(text, reply_markup=markup)
-        _log_event(cart_opened, user_id)
-        await cb_or_msg.answer()
+async def _show_cart(target: CallbackQuery | Message) -> None:
+    if isinstance(target, CallbackQuery):
+        user_id = target.from_user.id
     else:
-        await cb_or_msg.answer(text, reply_markup=markup)
+        user_id = target.from_user.id
+
+    text, markup = _compose_cart_view(user_id)
+
+    if isinstance(target, CallbackQuery):
+        try:
+            await target.message.edit_text(text, reply_markup=markup)
+        except TelegramBadRequest:
+            await target.message.answer(text, reply_markup=markup)
+        _log_event(cart_opened, user_id)
+        await target.answer()
+    else:
+        await target.answer(text, reply_markup=markup)
         _log_event(cart_opened, user_id)
 
 
