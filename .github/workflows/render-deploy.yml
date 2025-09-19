@@ -13,30 +13,28 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Deploy to Render via Webhook
+    - name: Deploy to Render
       run: |
-        echo "🚀 Triggering Render deployment via webhook..."
-        echo "Webhook URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
+        echo "🚀 Triggering Render deployment via API..."
+        echo "Service ID: ${{ secrets.RENDER_SERVICE_ID }}"
 
-        # Trigger deploy using Render webhook
-        if [ -n "${{ secrets.RENDER_DEPLOY_HOOK_URL }}" ]; then
-          echo "Making webhook call to Render..."
-          response=$(curl -s -o response.json -w "%{http_code}" \
-            -X POST \
-            -H "Content-Type: application/json" \
-            "${{ secrets.RENDER_DEPLOY_HOOK_URL }}" 2>&1)
+        # Trigger deploy using Render API
+        echo "Making API call to Render..."
+        response=$(curl -s -o response.json -w "%{http_code}" \
+          -X POST \
+          -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
+          -H "Content-Type: application/json" \
+          https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys)
 
-          echo "Webhook response code: $response"
-          echo "Response body:"
-          cat response.json || echo "No response body"
+        echo "API response code: $response"
+        echo "Response body:"
+        cat response.json || echo "No response body"
 
-          if [ "$response" -eq 200 ] || [ "$response" -eq 201 ]; then
-            echo "✅ Deploy triggered successfully via webhook!"
-          else
-            echo "❌ Failed to trigger deploy via webhook (HTTP $response)"
-            echo "Falling back to manual notification..."
-          fi
+        if [ "$response" -eq 202 ] || [ "$response" -eq 201 ]; then
+          echo "✅ Deploy triggered successfully!"
+          echo "🚀 Check deployment status at: https://dashboard.render.com/web/srv-d35jctffte5s73fg985g"
         else
-          echo "⚠️  RENDER_DEPLOY_HOOK_URL not set, skipping automatic deploy"
-          echo "Please deploy manually via Render dashboard"
+          echo "❌ Failed to trigger deploy (HTTP $response)"
+          echo "💡 Please check Render dashboard for manual deployment"
+          exit 1
         fi
