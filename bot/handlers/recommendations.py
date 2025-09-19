@@ -248,6 +248,7 @@ async def show_recommendations_after_test(bot: Bot, user_id: int, test_type: str
             logger.warning("SelectorV2 not available, using empty recommendations")
             recommendations = []
 
+        try:
             if recommendations:
                 keyboard = InlineKeyboardBuilder()
 
