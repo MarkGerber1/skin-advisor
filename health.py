@@ -13,6 +13,17 @@ def health():
 
 def start_bot():
     global bot_process
+    # Terminate any existing bot process
+    if bot_process and bot_process.poll() is None:
+        print(f"🛑 Terminating existing bot process (PID: {bot_process.pid})...")
+        bot_process.terminate()
+        try:
+            bot_process.wait(timeout=5)
+            print("✅ Old bot process terminated")
+        except subprocess.TimeoutExpired:
+            bot_process.kill()
+            print("⚠️ Old bot process force killed")
+
     if bot_process is None or bot_process.poll() is not None:
         print("🚀 Starting bot process...")
         print(f"🐍 Python executable: {sys.executable}")
