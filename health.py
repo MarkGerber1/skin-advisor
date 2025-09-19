@@ -61,41 +61,21 @@ def start_bot():
     except Exception as e:
         print(f"⚠️ psutil cleanup failed: {e}")
 
-    # Method 2: pgrep/killall (system commands)
+    # Method 2: Simple system commands (container-safe)
     try:
-        print("🔍 Checking for python processes with system commands...")
+        print("🔍 Checking for python processes with simple system commands...")
+        import subprocess
 
-        # Try pgrep first
+        # Try pkill first (more reliable in containers)
         try:
-            import subprocess
-            result = subprocess.run(['pgrep', '-f', 'bot.main'], capture_output=True, text=True, timeout=5)
+            result = subprocess.run(['pkill', '-f', 'python.*bot.main'], capture_output=True, text=True, timeout=3)
             if result.returncode == 0:
-                pids = result.stdout.strip().split('\n')
-                pids = [pid for pid in pids if pid.strip() and pid != str(current_pid)]
-                if pids:
-                    print(f"🛑 Found bot processes via pgrep: {pids}")
-                    for pid in pids:
-                        try:
-                            subprocess.run(['kill', '-TERM', pid], timeout=3)
-                            print(f"✅ Sent TERM to process {pid}")
-                            total_killed += 1
-                        except subprocess.TimeoutExpired:
-                            subprocess.run(['kill', '-KILL', pid])
-                            print(f"⚠️ Force killed process {pid}")
-                        except Exception as e:
-                            print(f"⚠️ Could not kill process {pid}: {e}")
-        except (subprocess.TimeoutExpired, FileNotFoundError):
-            print("⚠️ pgrep not available or failed")
-
-        # Try killall as fallback
-        try:
-            result = subprocess.run(['killall', '-TERM', 'python'], capture_output=True, text=True, timeout=3)
-            if result.returncode == 0:
-                print("✅ Sent TERM to all python processes")
+                print("✅ Sent TERM to bot processes via pkill")
+                total_killed += 1
             else:
-                print(f"⚠️ killall failed: {result.stderr}")
-        except (subprocess.TimeoutExpired, FileNotFoundError):
-            print("⚠️ killall not available")
+                print(f"⚠️ pkill failed: {result.stderr}")
+        except (subprocess.TimeoutExpired, FileNotFoundError, subprocess.SubprocessError):
+            print("⚠️ pkill not available")
 
     except Exception as e:
         print(f"⚠️ System command cleanup failed: {e}")
