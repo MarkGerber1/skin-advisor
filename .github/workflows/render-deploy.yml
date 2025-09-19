@@ -20,14 +20,21 @@ jobs:
 
     - name: Deploy to Render
       run: |
-        echo "🚀 Triggering Render deployment..."
-        echo "Note: Auto-deploy should be enabled in Render dashboard"
-        echo "If not working, check webhook in GitHub Settings > Webhooks"
-        echo "Or manually deploy from Render dashboard"
+        echo "🚀 Triggering Render deployment via API..."
+        echo "Service ID: ${{ secrets.RENDER_SERVICE_ID }}"
 
-        # Optional: Add curl to trigger Render webhook if configured
-        # curl -X POST -H "Content-Type: application/json" \
-        #   -d '{"ref": "'"$GITHUB_SHA"'"}' \
-        #   YOUR_RENDER_WEBHOOK_URL
+        # Trigger deploy using Render API
+        response=$(curl -s -o response.json -w "%{http_code}" \
+          -X POST \
+          -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
+          -H "Content-Type: application/json" \
+          https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys)
 
-        echo "✅ Deployment triggered (via Render auto-deploy webhook)"
+        if [ "$response" -eq 201 ]; then
+          echo "✅ Deploy triggered successfully!"
+          cat response.json
+        else
+          echo "❌ Failed to trigger deploy (HTTP $response)"
+          cat response.json
+          exit 1
+        fi
