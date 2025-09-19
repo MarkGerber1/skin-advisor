@@ -149,8 +149,7 @@ def _compose_cart_view(user_id: int) -> Tuple[str, InlineKeyboardMarkup]:
         [InlineKeyboardButton(text=BTN_CART_CHECKOUT, callback_data="cart:checkout")]
     )
 
-    text = sanitize_message("
-".join(lines))
+    text = sanitize_message("\n".join(lines))
     markup = InlineKeyboardMarkup(inline_keyboard=keyboard_rows)
     return text, markup
 

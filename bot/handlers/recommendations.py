@@ -11,7 +11,7 @@ from aiogram import Bot, F, Router
 from aiogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from bot.ui.render import safe_send_message
+from bot.utils.security import safe_send_message
 from config.env import get_settings
 from i18n.ru import (
     BTN_ADD,
@@ -41,16 +41,17 @@ async def handle_recommendations(cb: CallbackQuery, bot: Bot) -> None:
     try:
         data = cb.data
         if data.startswith("rec:add:"):
-            # Legacy callbacks: guide user to updated buttons
             await cb.answer(MSG_CART_UPDATED, show_alert=False)
             return
 
         if data.startswith("rec:open:"):
             product_id = data.split(":")[2]
             await _show_product_details(cb, product_id)
-        elif data.startswith("rec:more:")):
-            _, _, category, page = (data.split(":") + ["all", "1"])[:4]
-            await show_recommendations_page(cb, category or "all", int(page or 1))
+        elif data.startswith("rec:more:"):
+            parts = (data.split(":") + ["all", "1"])
+            category = parts[2] or "all"
+            page = int(parts[3]) if len(parts) > 3 and parts[3] else 1
+            await show_recommendations_page(cb, category, page)
         elif data == "rec:back":
             await show_main_recommendations(cb)
         await cb.answer()
@@ -91,7 +92,7 @@ def _filter_products(category: str, page: int, per_page: int = 3) -> tuple[List[
     if selector_available and _selector:
         try:
             all_products = _selector.select_products(user_id=None, category="all", limit=50)
-        except Exception as exc:  # pragma: no cover - diagnostics only
+        except Exception as exc:  # pragma: no cover
             logger.warning("Selector fetch failed: %s", exc)
             all_products = _fallback_products()
     else:
@@ -144,8 +145,7 @@ async def show_recommendations_page(cb: CallbackQuery, category: str = "all", pa
     keyboard.row(InlineKeyboardButton(text=BTN_BACK_RECO, callback_data="rec:back"))
     keyboard.row(InlineKeyboardButton(text=BTN_CART_CONTINUE, callback_data="cart:open"))
 
-    await cb.message.edit_text("
-".join(text_lines), reply_markup=keyboard.as_markup())
+    await cb.message.edit_text("\n".join(text_lines), reply_markup=keyboard.as_markup())
 
 
 async def show_main_recommendations(cb: CallbackQuery) -> None:
