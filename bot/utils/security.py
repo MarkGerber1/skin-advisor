@@ -258,3 +258,83 @@ async def safe_pin_message(bot, chat_id: int, message_id: int, user_id: int = No
     except Exception as e:
         logger.error(f"Failed to pin message {message_id} in chat {chat_id}: {e}")
         return False
+
+
+
+async def safe_unpin_message(
+    bot: Bot,
+    chat_id: int,
+    message_id: int,
+    user_id: Optional[int] = None,
+    **kwargs
+) -> bool:
+    """
+    Safely unpin a message with security checks.
+
+    Args:
+        bot: Bot instance
+        chat_id: Target chat ID
+        message_id: Message ID to unpin
+        user_id: User ID attempting to unpin (for whitelist check)
+        **kwargs: Additional arguments for unpin_chat_message
+
+    Returns:
+        True if unpinned, False if blocked
+    """
+    settings = get_settings()
+
+    # Check if pinning is allowed globally (unpin is reverse of pin)
+    if not settings.security.allow_pin:
+        logger.info(f"[UNPIN-INTENT] BLOCKED: Unpinning disabled globally (chat {chat_id}, user {user_id})")
+        return False
+
+    # Check if user is in whitelist
+    if user_id and user_id not in settings.security.pin_whitelist:
+        logger.warning(f"[UNPIN-INTENT] BLOCKED: User {user_id} not in pin whitelist (chat {chat_id})")
+        return False
+
+    # Log successful unpin intent
+    logger.info(f"[UNPIN-INTENT] ALLOWED: Unpinning message {message_id} in chat {chat_id} by user {user_id}")
+
+    try:
+        await bot.unpin_chat_message(chat_id=chat_id, message_id=message_id, **kwargs)
+        return True
+    except Exception as e:
+        logger.error(f"Failed to unpin message {message_id} in chat {chat_id}: {e}")
+        return False
+
+
+async def safe_unpin_all_messages(
+    bot: Bot,
+    chat_id: int,
+    user_id: Optional[int] = None
+) -> bool:
+    """
+    Safely unpin all messages in a chat with security checks.
+
+    Args:
+        bot: Bot instance
+        chat_id: Target chat ID
+        user_id: User ID attempting to unpin (for whitelist check)
+
+    Returns:
+        True if unpinned, False if blocked
+    """
+    settings = get_settings()
+
+    if not settings.security.allow_pin:
+        logger.info(f"[UNPIN-ALL-INTENT] BLOCKED: Unpinning disabled globally (chat {chat_id}, user {user_id})")
+        return False
+
+    if user_id and user_id not in settings.security.pin_whitelist:
+        logger.warning(f"[UNPIN-ALL-INTENT] BLOCKED: User {user_id} not in pin whitelist (chat {chat_id})")
+        return False
+
+    logger.info(f"[UNPIN-ALL-INTENT] ALLOWED: Unpinning all in chat {chat_id} by user {user_id}")
+
+    try:
+        await bot.unpin_all_chat_messages(chat_id=chat_id)
+        return True
+    except Exception as e:
+        logger.error(f"Failed to unpin all messages in chat {chat_id}: {e}")
+        return False

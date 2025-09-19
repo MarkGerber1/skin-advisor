@@ -56,9 +56,12 @@ async def handle_pinned_message(message: Message, bot: Bot):
         if anti_spam_guard.should_unpin_message(message_text, user_id):
             try:
                 # Unpin the message
-                await bot.unpin_chat_message(
+                from bot.utils.security import safe_unpin_message
+                await safe_unpin_message(
+                    bot=bot,
                     chat_id=message.chat.id,
-                    message_id=pinned_msg.message_id
+                    message_id=pinned_msg.message_id,
+                    user_id=user_id
                 )
 
                 # Log the action

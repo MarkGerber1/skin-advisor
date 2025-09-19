@@ -33,7 +33,8 @@ async def handle_reset_pins(message: Message, bot: Bot):
             return
 
         # Unpin all messages in owner chat
-        await bot.unpin_all_chat_messages(chat_id=settings.owner_id)
+        from bot.utils.security import safe_unpin_all_messages
+        await safe_unpin_all_messages(bot, settings.owner_id, user_id)
 
         # Send confirmation
         await message.answer("✅ Все пины очищены в вашем приватном чате.")
