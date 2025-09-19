@@ -1,73 +1,86 @@
 from __future__ import annotations
 
 from aiogram.types import (
-    ReplyKeyboardMarkup,
-    KeyboardButton,
-    InlineKeyboardMarkup,
     InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    KeyboardButton,
+    ReplyKeyboardMarkup,
 )
-from typing import List
+from typing import Optional
+
+from services.cart_store import get_cart_store
+
+BTN_PALETTE = "🎨 Тон & сияние"
+BTN_SKINCARE = "💧 Портрет кожи"
+BTN_CART = "🛒 Корзина"
+BTN_ABOUT = "ℹ️ О боте"
+BTN_SETTINGS = "⚙️ Настройки"
+BTN_REPORT = "📄 Мои рекомендации"
+BTN_BACK = "⬅ Назад"
+BTN_HOME = "🏠 Главное меню"
+
+BTN_CONFIRM_YES = "✅ Да"
+BTN_CONFIRM_NO = "✖️ Нет"
+BTN_RETRY = "🔁 Повторить"
+
+_store = get_cart_store()
 
 
-# Design System Button Labels - SVG иконки + emoji fallback
-# SVG icons available in ui/icons/svg/: palette, drop, cart, info, list, settings
-BTN_PALETTE = "🎨 Тон&Сияние"          # SVG: palette.svg | Primary color theme
-BTN_SKINCARE = "💧 Портрет лица"      # SVG: drop.svg | Water/blue theme
-BTN_ABOUT = "ℹ️ О боте"               # SVG: info.svg | Info theme
-BTN_PICK = "🛒 Корзина"               # SVG: cart.svg | Shopping theme
-BTN_SETTINGS = "⚙️ Настройки"          # SVG: settings.svg | Settings theme
-BTN_REPORT = "📄 Мои рекомендации"     # SVG: list.svg | Document theme
-BTN_BACK = "⬅️ Назад"                 # Navigation theme
-BTN_HOME = "🏠 Главное меню"          # Home theme
-
-# Additional Design System Buttons
-BTN_START_TEST = "🚀 Начать тест"
-BTN_VIEW_RESULTS = "📊 Посмотреть результаты"
-BTN_ADD_TO_CART = "➕ В корзину"
-BTN_SHOW_ALL = "📋 Показать все"
-BTN_GET_REPORT = "📄 Получить отчет"
-BTN_CONTACT_SUPPORT = "💬 Связаться с поддержкой"
+def _cart_caption(count: int) -> str:
+    return BTN_CART if count <= 0 else f"{BTN_CART} ({count})"
 
 
-def main_menu() -> ReplyKeyboardMarkup:
-    """Главное меню бота"""
+def _resolve_count(cart_count: Optional[int], user_id: Optional[int]) -> int:
+    if cart_count is not None:
+        return max(cart_count, 0)
+    if not user_id:
+        return 0
+    try:
+        return _store.get_cart_count(int(user_id))
+    except Exception:  # pragma: no cover - diagnostics only
+        return 0
+
+
+def is_cart_button_text(text: Optional[str]) -> bool:
+    return bool(text and text.startswith(BTN_CART))
+
+
+def main_menu(cart_count: Optional[int] = None, *, user_id: Optional[int] = None) -> ReplyKeyboardMarkup:
+    count = _resolve_count(cart_count, user_id)
     return ReplyKeyboardMarkup(
         keyboard=[
             [KeyboardButton(text=BTN_PALETTE)],
             [KeyboardButton(text=BTN_SKINCARE)],
-            [KeyboardButton(text=BTN_PICK)],  # Корзина отдельной строкой
+            [KeyboardButton(text=_cart_caption(count))],
             [KeyboardButton(text=BTN_ABOUT), KeyboardButton(text=BTN_REPORT)],
             [KeyboardButton(text=BTN_SETTINGS)],
         ],
         resize_keyboard=True,
-        input_field_placeholder="Выберите действие…",
+        input_field_placeholder="Что хотите сделать?",
     )
 
 
-def main_menu_inline() -> InlineKeyboardMarkup:
-    """Главное меню бота (inline версия для edit_text)"""
+def main_menu_inline(cart_count: Optional[int] = None, *, user_id: Optional[int] = None) -> InlineKeyboardMarkup:
+    count = _resolve_count(cart_count, user_id)
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [InlineKeyboardButton(text=BTN_PALETTE, callback_data="start_palette")],
             [InlineKeyboardButton(text=BTN_SKINCARE, callback_data="start_skincare")],
-            [InlineKeyboardButton(text=BTN_PICK, callback_data="show_cart")],  # Корзина отдельной строкой
-            [InlineKeyboardButton(text=BTN_ABOUT, callback_data="about"), 
-             InlineKeyboardButton(text=BTN_REPORT, callback_data="show_report")],
+            [InlineKeyboardButton(text=_cart_caption(count), callback_data="cart:open")],
+            [InlineKeyboardButton(text=BTN_ABOUT, callback_data="about"), InlineKeyboardButton(text=BTN_REPORT, callback_data="show_report")],
             [InlineKeyboardButton(text=BTN_SETTINGS, callback_data="settings")],
         ]
     )
 
 
 def back_button() -> ReplyKeyboardMarkup:
-    """Кнопка возврата"""
     return ReplyKeyboardMarkup(
         keyboard=[[KeyboardButton(text=BTN_BACK)]],
         resize_keyboard=True,
     )
 
 
-def confirm_buttons(yes_text: str = "✅ Да", no_text: str = "❌ Нет") -> InlineKeyboardMarkup:
-    """Кнопки подтверждения"""
+def confirm_buttons(yes_text: str = BTN_CONFIRM_YES, no_text: str = BTN_CONFIRM_NO) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [InlineKeyboardButton(text=yes_text, callback_data="confirm:yes")],
@@ -77,59 +90,50 @@ def confirm_buttons(yes_text: str = "✅ Да", no_text: str = "❌ Нет") -> 
 
 
 def navigation_buttons(
-    prev_callback: str = None, next_callback: str = None, back_callback: str = None,
-    include_home: bool = True
+    prev_callback: Optional[str] = None,
+    next_callback: Optional[str] = None,
+    back_callback: Optional[str] = None,
+    include_home: bool = True,
 ) -> InlineKeyboardMarkup:
-    """Кнопки навигации"""
-    buttons: List[List[InlineKeyboardButton]] = []
-    row: List[InlineKeyboardButton] = []
-
-    if back_callback:
-        row.append(InlineKeyboardButton(text="⬅️ Назад", callback_data=back_callback))
-
+    rows = []
+    nav_row = []
     if prev_callback:
-        row.append(InlineKeyboardButton(text="◀️ Предыдущий", callback_data=prev_callback))
-
+        nav_row.append(InlineKeyboardButton(text="⬅ Назад", callback_data=prev_callback))
     if next_callback:
-        row.append(InlineKeyboardButton(text="Следующий ▶️", callback_data=next_callback))
-
-    if row:
-        buttons.append(row)
-    
-    # Add universal home button for emergency exit
+        nav_row.append(InlineKeyboardButton(text="Вперёд ➡", callback_data=next_callback))
+    if back_callback:
+        nav_row.insert(0, InlineKeyboardButton(text=BTN_BACK, callback_data=back_callback))
+    if nav_row:
+        rows.append(nav_row)
     if include_home:
-        buttons.append([InlineKeyboardButton(text="🏠 Главное меню", callback_data="universal:home")])
-
-    return InlineKeyboardMarkup(inline_keyboard=buttons) if buttons else None
+        rows.append([InlineKeyboardButton(text=BTN_HOME, callback_data="universal:home")])
+    return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
 def loading_message() -> str:
-    """Сообщение о загрузке"""
-    return "⏳ Обрабатываю ваш запрос..."
+    return "Подождите, готовим ответ..."
 
 
 def error_message() -> str:
-    """Сообщение об ошибке"""
-    return "❌ Произошла ошибка. Попробуйте еще раз."
+    return "Что-то пошло не так. Попробуйте ещё раз."
 
 
 def emergency_keyboard() -> InlineKeyboardMarkup:
-    """Emergency keyboard for error recovery"""
     return InlineKeyboardMarkup(
         inline_keyboard=[
-            [InlineKeyboardButton(text="🏠 Главное меню", callback_data="universal:home")],
-            [InlineKeyboardButton(text="🔄 Попробовать снова", callback_data="universal:retry")]
+            [InlineKeyboardButton(text=BTN_HOME, callback_data="universal:home")],
+            [InlineKeyboardButton(text=BTN_RETRY, callback_data="universal:retry")],
         ]
     )
 
 
 def add_home_button(keyboard: InlineKeyboardMarkup) -> InlineKeyboardMarkup:
-    """Add home button to any existing keyboard"""
     if not keyboard or not keyboard.inline_keyboard:
         return emergency_keyboard()
-    
-    # Create new keyboard with existing buttons plus home button
-    new_buttons = list(keyboard.inline_keyboard)
-    new_buttons.append([InlineKeyboardButton(text="🏠 Главное меню", callback_data="universal:home")])
-    
-    return InlineKeyboardMarkup(inline_keyboard=new_buttons)
+    new_rows = list(keyboard.inline_keyboard)
+    new_rows.append([InlineKeyboardButton(text=BTN_HOME, callback_data="universal:home")])
+    return InlineKeyboardMarkup(inline_keyboard=new_rows)
+
+
+# Backwards compatibility aliases
+BTN_PICK = BTN_CART

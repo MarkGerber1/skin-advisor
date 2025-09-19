@@ -15,14 +15,16 @@ class TestCartStore(unittest.TestCase):
     def setUp(self):
         """Set up test environment"""
         self.temp_dir = Path(tempfile.mkdtemp())
-        # Create a separate instance for testing
+        CartStore._instance = None
         self.store = CartStore()
         self.store.data_dir = self.temp_dir / "carts"
         self.store.data_dir.mkdir(parents=True, exist_ok=True)
+        self.store._carts.clear()
 
     def tearDown(self):
         """Clean up test environment"""
         shutil.rmtree(self.temp_dir)
+        CartStore._instance = None
 
     def test_add_item_new_product(self):
         """Test adding a new product to cart"""
@@ -126,10 +128,11 @@ class TestCartStore(unittest.TestCase):
         self.store.add_item(user_id, "product1", "variant1", 2, price=100.0)
         self.store.add_item(user_id, "product2", "variant2", 1, price=200.0)
 
-        total_quantity, total_price = self.store.get_cart_total(user_id)
+        total_qty, total_price, currency = self.store.get_cart_total(user_id)
 
-        self.assertEqual(total_quantity, 3)  # 2 + 1
+        self.assertEqual(total_qty, 3)  # 2 + 1
         self.assertEqual(total_price, 400.0)  # 2*100 + 1*200
+        self.assertEqual(currency, "RUB")
 
     def test_persistence(self):
         """Test that cart data persists across store instances"""
