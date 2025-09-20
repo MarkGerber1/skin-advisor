@@ -38,5 +38,5 @@ EXPOSE 8080
 COPY health.py .
 
 # Start the combined health check and bot server
-CMD ["python", "health.py"]
+CMD ["python", "health_test.py"]
 
