@@ -14,106 +14,36 @@ def health():
 def start_bot():
     global bot_process
 
-    # MULTI-LAYER cleanup: Try multiple methods to kill existing bot processes
-    print("ğŸ§¹ Performing MULTI-LAYER bot process cleanup...")
-    total_killed = 0
+    # SIMPLE cleanup: Just terminate existing subprocess
+    print("í·¹ Performing simple bot process cleanup...")
 
-    # Method 1: psutil (if available)
-    try:
-        import psutil
-        current_pid = os.getpid()
-        psutil_killed = 0
-
-        print("ğŸ” Checking processes with psutil...")
-        for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
-            try:
-                if proc.info['name'] in ['python', 'python3']:
-                    cmdline = proc.info['cmdline'] or []
-                    pid = proc.info['pid']
-
-                    # Skip current Flask process
-                    if pid == current_pid:
-                        continue
-
-                    # Check if it's our bot process
-                    if any('bot.main' in arg or 'start.py' in arg or 'health.py' in arg for arg in cmdline):
-                        print(f"ğŸ›‘ Found bot-related process (PID: {pid}), terminating...")
-                        try:
-                            proc.terminate()
-                            proc.wait(timeout=3)
-                            print(f"âœ… Process {pid} terminated gracefully")
-                            psutil_killed += 1
-                        except psutil.TimeoutExpired:
-                            proc.kill()
-                            print(f"âš ï¸ Process {pid} force killed")
-                            psutil_killed += 1
-                        except Exception as e:
-                            print(f"âš ï¸ Could not kill process {pid}: {e}")
-
-            except (psutil.NoSuchProcess, psutil.AccessDenied):
-                continue
-
-        print(f"ğŸ§¹ psutil cleanup: {psutil_killed} processes terminated")
-        total_killed += psutil_killed
-
-    except ImportError:
-        print("âš ï¸ psutil not available")
-    except Exception as e:
-        print(f"âš ï¸ psutil cleanup failed: {e}")
-
-    # Method 2: Simple system commands (container-safe)
-    try:
-        print("ğŸ” Checking for python processes with simple system commands...")
-        import subprocess
-
-        # Try pkill first (more reliable in containers)
-        try:
-            result = subprocess.run(['pkill', '-f', 'python.*bot.main'], capture_output=True, text=True, timeout=3)
-            if result.returncode == 0:
-                print("âœ… Sent TERM to bot processes via pkill")
-                total_killed += 1
-            else:
-                print(f"âš ï¸ pkill failed: {result.stderr}")
-        except (subprocess.TimeoutExpired, FileNotFoundError, subprocess.SubprocessError):
-            print("âš ï¸ pkill not available")
-
-    except Exception as e:
-        print(f"âš ï¸ System command cleanup failed: {e}")
-
-    # Method 3: Lock file cleanup
-    lock_file = "/tmp/skin-advisor.lock"
-    if os.path.exists(lock_file):
-        try:
-            print(f"ğŸ§¹ Removing old lock file: {lock_file}")
-            os.remove(lock_file)
-            print("âœ… Lock file removed")
-        except Exception as e:
-            print(f"âš ï¸ Could not remove lock file: {e}")
-
-    # Method 4: Terminate existing subprocess (fallback)
     if bot_process and bot_process.poll() is None:
-        print(f"ğŸ›‘ Terminating existing bot subprocess (PID: {bot_process.pid})...")
-        bot_process.terminate()
+        print(f"í»‘ Terminating existing bot subprocess (PID: {bot_process.pid})...")
         try:
-            bot_process.wait(timeout=5)
+            bot_process.terminate()
+            bot_process.wait(timeout=3)
             print("âœ… Old bot subprocess terminated")
-            total_killed += 1
         except subprocess.TimeoutExpired:
             bot_process.kill()
             print("âš ï¸ Old bot subprocess force killed")
+        except Exception as e:
+            print(f"âš ï¸ Could not terminate subprocess: {e}")
 
-    if total_killed > 0:
-        print(f"ğŸ§¹ Total cleanup: {total_killed} processes terminated")
-        # Give Telegram time to detect terminations
-        import time
-        time.sleep(5)
-    else:
-        print("âœ… No existing bot processes found")
+    # Clean up lock file if exists
+    lock_file = "/tmp/skin-advisor.lock"
+    if os.path.exists(lock_file):
+        try:
+            os.remove(lock_file)
+            print("âœ… Lock file cleaned up")
+        except Exception as e:
+            print(f"âš ï¸ Could not remove lock file: {e}")
+
+    print("âœ… Process cleanup completed")
 
     if bot_process is None or bot_process.poll() is not None:
-        print("ğŸš€ Starting bot process...")
-        print(f"ğŸ Python executable: {sys.executable}")
-        print("ğŸ“¦ Command: python -m bot.main")
+        print("íº€ Starting bot process...")
+        print(f"í° Python executable: {sys.executable}")
+        print("í³¦ Command: python -m bot.main")
         try:
             # Don't capture stdout/stderr - let bot log directly
             bot_process = subprocess.Popen([sys.executable, "-m", "bot.main"])
@@ -130,9 +60,9 @@ def start_bot():
                 try:
                     stdout, stderr = bot_process.communicate(timeout=5)
                     if stdout:
-                        print(f"ğŸš¨ Bot stdout: {stdout}")
+                        print(f"íº¨ Bot stdout: {stdout}")
                     if stderr:
-                        print(f"ğŸš¨ Bot stderr: {stderr}")
+                        print(f"íº¨ Bot stderr: {stderr}")
                 except:
                     print("âš ï¸ Could not read bot output")
 
@@ -145,7 +75,7 @@ def start_bot():
 def stop_bot():
     global bot_process
     if bot_process and bot_process.poll() is None:
-        print(f"ğŸ›‘ Stopping bot process (PID: {bot_process.pid})...")
+        print(f"í»‘ Stopping bot process (PID: {bot_process.pid})...")
         bot_process.terminate()
         try:
             bot_process.wait(timeout=10)
@@ -165,24 +95,24 @@ def stop():
     return "Bot stopped"
 
 if __name__ == "__main__":
-    print("ğŸ Starting application...")
-    print(f"ğŸ“¦ Python path: {sys.path[:3]}...")  # Show first 3 paths
-    print(f"ğŸ“ Current directory: {os.getcwd()}")
+    print("í¿ Starting application...")
+    print(f"í³¦ Python path: {sys.path[:3]}...")  # Show first 3 paths
+    print(f"í³ Current directory: {os.getcwd()}")
 
     # Start bot on startup
-    print("ğŸ¤– Attempting to start bot...")
+    print("í´– Attempting to start bot...")
     bot_started = start_bot()
 
     if bot_started is None:
         print("âŒ CRITICAL: Bot failed to start!")
-        print("ğŸ” Check BOT_TOKEN and other environment variables")
+        print("í´ Check BOT_TOKEN and other environment variables")
         # Continue with Flask anyway for health checks
     else:
         print("âœ… Bot start initiated")
 
     # Handle graceful shutdown
     def signal_handler(signum, frame):
-        print(f"ğŸ“¡ Received signal {signum}, shutting down...")
+        print(f"í³¡ Received signal {signum}, shutting down...")
         stop_bot()
         sys.exit(0)
 
@@ -191,8 +121,8 @@ if __name__ == "__main__":
 
     # Start Flask server (use PORT env var for Render)
     port = int(os.getenv("PORT", "10000"))
-    print(f"ğŸŒ Starting Flask server on port {port}")
-    print("ğŸ” Environment variables:")
+    print(f"í¼ Starting Flask server on port {port}")
+    print("í´ Environment variables:")
     for key in ['BOT_TOKEN', 'PORT', 'USE_WEBHOOK']:
         value = os.getenv(key, 'NOT_SET')
         if key == 'BOT_TOKEN' and value != 'NOT_SET':

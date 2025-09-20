@@ -359,120 +359,6 @@ async def main() -> None:
         # Проверяем lock-файл для предотвращения конфликта polling
         lock_file = "/tmp/skin-advisor.lock"
 
-        # ULTRA AGGRESSIVE cleanup: Multiple methods to kill existing bot processes
-        print("🧹 ULTRA AGGRESSIVE process cleanup before lock check...")
-        cleanup_methods_tried = 0
-        total_killed = 0
-
-        # Method 1: psutil
-        try:
-            import psutil
-            current_pid = os.getpid()
-            psutil_killed = 0
-            cleanup_methods_tried += 1
-
-            print("🔍 Method 1: Checking processes with psutil...")
-            for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
-                try:
-                    if proc.info['name'] in ['python', 'python3']:
-                        cmdline = proc.info['cmdline'] or []
-                        pid = proc.info['pid']
-
-                        # Skip current process
-                        if pid == current_pid:
-                            continue
-
-                        # Check if it's our bot or related processes
-                        if any(keyword in ' '.join(cmdline) for keyword in ['bot.main', 'start.py', 'health.py']):
-                            print(f"🛑 Found bot-related process (PID: {pid}), terminating...")
-                            try:
-                                proc.terminate()
-                                proc.wait(timeout=2)
-                                print(f"✅ Process {pid} terminated gracefully")
-                                psutil_killed += 1
-                            except psutil.TimeoutExpired:
-                                proc.kill()
-                                print(f"⚠️ Process {pid} force killed")
-                                psutil_killed += 1
-                            except Exception as e:
-                                print(f"⚠️ Could not kill process {pid}: {e}")
-
-                except (psutil.NoSuchProcess, psutil.AccessDenied):
-                    continue
-
-            print(f"🧹 psutil: {psutil_killed} processes terminated")
-            total_killed += psutil_killed
-
-        except ImportError:
-            print("⚠️ psutil not available")
-        except Exception as e:
-            print(f"⚠️ psutil cleanup failed: {e}")
-
-        # Method 2: System commands (pgrep, killall)
-        try:
-            import subprocess
-            cleanup_methods_tried += 1
-            system_killed = 0
-
-            print("🔍 Method 2: System command cleanup...")
-
-            # Try to find and kill specific bot processes
-            try:
-                result = subprocess.run(['pgrep', '-f', 'python.*bot\.main'], capture_output=True, text=True, timeout=3)
-                if result.returncode == 0:
-                    pids = [pid for pid in result.stdout.strip().split('\n') if pid.strip() and pid != str(current_pid)]
-                    for pid in pids:
-                        try:
-                            subprocess.run(['kill', '-TERM', pid], timeout=2)
-                            print(f"✅ TERM sent to process {pid}")
-                            system_killed += 1
-                        except subprocess.TimeoutExpired:
-                            subprocess.run(['kill', '-KILL', pid])
-                            print(f"⚠️ KILL sent to process {pid}")
-                        except Exception as e:
-                            print(f"⚠️ Could not kill process {pid}: {e}")
-            except (subprocess.TimeoutExpired, FileNotFoundError):
-                pass
-
-            print(f"🧹 System commands: {system_killed} processes terminated")
-            total_killed += system_killed
-
-        except Exception as e:
-            print(f"⚠️ System command cleanup failed: {e}")
-
-        # Method 3: Force webhook deletion before starting
-        print("🔍 Method 3: Emergency webhook cleanup...")
-        try:
-            # Try to delete webhook immediately, even if it fails
-            await bot.delete_webhook(drop_pending_updates=True)
-            print("🧹 Emergency webhook deleted")
-        except Exception as e:
-            print(f"⚠️ Emergency webhook cleanup failed: {e}")
-
-        if total_killed > 0:
-            print(f"🧹 Total pre-lock cleanup: {total_killed} processes terminated")
-            # Give Telegram more time to detect terminations
-            import time
-            time.sleep(8)
-        else:
-            print(f"✅ No conflicting processes found (tried {cleanup_methods_tried} methods)")
-
-        # Additional container-specific cleanup
-        if os.getenv('RENDER'):  # Check if we're in Render environment
-            print("🏗️ Container environment detected, performing additional cleanup...")
-            try:
-                # Remove any existing lock files
-                import glob
-                lock_files = glob.glob('/tmp/*lock*')
-                for lock_file in lock_files:
-                    try:
-                        os.remove(lock_file)
-                        print(f"✅ Removed lock file: {lock_file}")
-                    except:
-                        pass
-            except:
-                pass
-
         # Force cleanup old lock file (for containerized environments like Render)
         if os.path.exists(lock_file):
             try:
@@ -549,107 +435,52 @@ async def main() -> None:
     signal.signal(signal.SIGINT, signal_handler)
 
     try:
-        # ULTRA AGGRESSIVE webhook cleanup for Render/container environments
-        print("🧹 Starting ULTRA aggressive webhook cleanup...")
+        # AGGRESSIVE webhook cleanup for Render/container environments
+        print("🧹 Starting aggressive webhook cleanup...")
         try:
             # Multiple attempts to clear webhook (sometimes Telegram needs retries)
-            webhook_cleared = False
-            for attempt in range(5):  # Increased to 5 attempts
+            for attempt in range(3):
                 try:
                     await bot.delete_webhook(drop_pending_updates=True)
-                    print(f"🧹 Webhook cleared (attempt {attempt + 1}/5)")
-                    webhook_cleared = True
+                    print(f"🧹 Webhook cleared (attempt {attempt + 1}/3)")
                     break
                 except Exception as e:
                     print(f"⚠️ Webhook cleanup attempt {attempt + 1} failed: {e}")
-                    if attempt < 4:  # Wait before retry
-                        await asyncio.sleep(2)  # Increased wait time
-
-            if not webhook_cleared:
-                print("🚨 CRITICAL: Could not clear webhook after 5 attempts!")
-                # Continue anyway, but this might cause issues
+                    if attempt < 2:  # Wait before retry
+                        await asyncio.sleep(1)
 
             # Wait longer for Telegram to process webhook deletion
             print("⏳ Waiting for Telegram to process webhook deletion...")
-            await asyncio.sleep(10)  # Increased from 5 to 10 seconds
+            await asyncio.sleep(5)
 
-            # Additional cleanup - delete any pending updates with multiple attempts
-            updates_cleared = False
-            for attempt in range(3):
-                try:
-                    # Try different approaches to clear updates
-                    updates = await bot.get_updates(offset=-1, limit=1, timeout=5)
-                    if updates:
-                        # If we got updates, try to acknowledge them
-                        last_update_id = updates[-1].update_id
-                        await bot.get_updates(offset=last_update_id + 1, limit=1, timeout=1)
-                        print(f"🧹 Cleared pending updates (found {len(updates)} updates)")
-                    else:
-                        print("🧹 No pending updates found")
-                    updates_cleared = True
-                    break
-                except Exception as e:
-                    print(f"⚠️ Updates cleanup attempt {attempt + 1} failed: {e}")
-                    if attempt < 2:
-                        await asyncio.sleep(2)
+            # Additional cleanup - delete any pending updates
+            try:
+                await bot.get_updates(offset=-1, limit=1)
+                print("🧹 Cleared pending updates")
+            except Exception as e:
+                print(f"⚠️ Could not clear pending updates: {e}")
 
         except Exception as e:
             print(f"⚠️ Could not clear webhook: {e}")
 
-            # Test connection and AGGRESSIVELY check for existing polling sessions
+            # Test connection and check for existing polling sessions
             print("🔍 Checking for existing polling sessions...")
-            conflict_detected = False
-
-            # Multiple attempts to detect conflicts
-            for attempt in range(3):
-                try:
-                    print(f"🔍 Polling conflict check attempt {attempt + 1}/3...")
-                    # Try to get updates with short timeout to detect conflicts
-                    updates = await asyncio.wait_for(
-                        bot.get_updates(offset=-1, limit=1, timeout=3),
-                        timeout=4
-                    )
-
-                    print(f"✅ No active polling sessions detected (got {len(updates)} updates)")
-                    conflict_detected = False
-                    break
-
-                except asyncio.TimeoutError:
-                    print(f"⚠️ Timeout during polling check attempt {attempt + 1}")
-                    if attempt == 2:  # Last attempt
-                        print("🚨 Multiple timeouts - possible existing session conflict")
-                        conflict_detected = True
-                except Exception as e:
-                    if "Conflict" in str(e):
-                        print(f"🚨 CONFLICT DETECTED on attempt {attempt + 1}: {e}")
-                        conflict_detected = True
-
-                        # Try emergency cleanup
-                        print("🛑 Attempting emergency cleanup...")
-                        try:
-                            await bot.delete_webhook(drop_pending_updates=True)
-                            print("🧹 Emergency webhook cleanup completed")
-                            await asyncio.sleep(3)
-                        except Exception as cleanup_error:
-                            print(f"⚠️ Emergency cleanup failed: {cleanup_error}")
-
-                        if attempt < 2:  # Not the last attempt
-                            print("⏳ Waiting before retry...")
-                            await asyncio.sleep(2)
-                        else:
-                            print("💡 Another bot instance is running! Stopping startup...")
-                            return
-                    else:
-                        print(f"⚠️ Unexpected error during polling check attempt {attempt + 1}: {e}")
-                        if attempt == 2:  # Last attempt with unexpected error
-                            conflict_detected = True
-
-            if conflict_detected:
-                print("🚨 CRITICAL: Polling conflict detected after all attempts!")
-                print("💡 Please check if another bot instance is running")
-                return
-
-            print("✅ Polling session check passed")
+            try:
+                # Try to get updates with short timeout to detect conflicts
+                updates = await asyncio.wait_for(
+                    bot.get_updates(offset=-1, limit=1, timeout=5),
+                    timeout=6
+                )
+                print(f"✅ No active polling sessions detected (got {len(updates)} updates)")
+            except asyncio.TimeoutError:
+                print("⚠️ Timeout during polling check - possible existing session")
+            except Exception as e:
+                if "Conflict" in str(e):
+                    print(f"🚨 CONFLICT DETECTED: {e}")
+                    print("💡 Another bot instance is running! Stopping startup...")
+                    return
+                else:
+                    print(f"⚠️ Unexpected error during polling check: {e}")
 
             me = await bot.get_me()
             print(f"✅ Bot connection verified: @{me.username} (ID: {me.id})")
