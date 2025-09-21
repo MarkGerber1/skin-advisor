@@ -40,7 +40,16 @@ except ImportError:  # pragma: no cover - optional dependency
 async def handle_recommendations(cb: CallbackQuery, bot: Bot) -> None:
     try:
         data = cb.data
+        # Legacy rec:add: callbacks - redirect to cart:add:
         if data.startswith("rec:add:"):
+            # Convert rec:add:pid:vid to cart:add:pid:vid format
+            parts = data.split(":")
+            if len(parts) >= 3:
+                product_id = parts[2]
+                variant_id = parts[3] if len(parts) > 3 else "default"
+                # Simulate cart:add: callback
+                cb.data = f"cart:add:{product_id}:{variant_id}"
+                # This will be handled by cart_v2 router
             await cb.answer(MSG_CART_UPDATED, show_alert=False)
             return
 

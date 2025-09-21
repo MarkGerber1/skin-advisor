@@ -1,0 +1,9 @@
+2025-09-21 00:13:25 | ANALYTICS | INFO | cart_opened - user_id: 123456, payload: {}
+2025-09-21 00:13:28 | ANALYTICS | INFO | cart_item_added - user_id: 123456, payload: {"product_id": "cleanser-001", "variant_id": "default", "source": "goldapple", "price": 1590, "currency": "RUB"}
+2025-09-21 00:13:32 | ANALYTICS | INFO | cart_qty_changed - user_id: 123456, payload: {"direction": "inc", "old_qty": 1, "new_qty": 2, "product_id": "cleanser-001"}
+2025-09-21 00:13:35 | ANALYTICS | INFO | cart_item_added - user_id: 123456, payload: {"product_id": "toner-002", "variant_id": "default", "source": "goldapple", "price": 2890, "currency": "RUB"}
+2025-09-21 00:13:40 | ANALYTICS | INFO | cart_qty_changed - user_id: 123456, payload: {"direction": "dec", "old_qty": 2, "new_qty": 1, "product_id": "cleanser-001"}
+2025-09-21 00:13:45 | ANALYTICS | INFO | cart_item_removed - user_id: 123456, payload: {"product_id": "toner-002", "variant_id": "default"}
+2025-09-21 00:13:50 | ANALYTICS | INFO | cart_item_added - user_id: 123456, payload: {"product_id": "serum-003", "variant_id": "default", "source": "goldapple", "price": 1990, "currency": "RUB"}
+2025-09-21 00:13:55 | ANALYTICS | INFO | cart_qty_changed - user_id: 123456, payload: {"direction": "inc", "old_qty": 1, "new_qty": 3, "product_id": "serum-003"}
+2025-09-21 00:14:00 | ANALYTICS | INFO | checkout_started - user_id: 123456, payload: {"items_count": 2, "subtotal": 9550}

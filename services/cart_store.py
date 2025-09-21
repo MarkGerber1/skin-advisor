@@ -47,6 +47,16 @@ class CartItem:
         variant = self.variant_id or "default"
         return f"{self.product_id}:{variant}"
 
+    @property
+    def qty(self) -> int:
+        """Alias for quantity - always synchronized"""
+        return self.quantity
+
+    @qty.setter
+    def qty(self, value: int) -> None:
+        """Setter for qty - synchronizes with quantity"""
+        self.quantity = max(int(value), 0)
+
     def increase(self, step: int = 1, *, max_quantity: int = 99) -> int:
         self.quantity = min(self.quantity + step, max_quantity)
         return self.quantity
@@ -155,9 +165,15 @@ class CartStore:
         variant_id: Optional[str] = None,
         quantity: int = 1,
         **kwargs,
-    ) -> CartItem:
+    ) -> Tuple[CartItem, bool]:
+        """Add item to cart. Returns (item, currency_conflict)"""
         cart = self.get_cart(user_id)
         item = self._find_item(cart, product_id, variant_id)
+
+        # Check for currency conflict
+        new_currency = kwargs.get("currency", "RUB")
+        existing_currencies = {item.currency for item in cart if item.currency}
+        currency_conflict = bool(existing_currencies and new_currency not in existing_currencies)
 
         if item:
             item.increase(max(quantity, 0) or 1)
@@ -171,7 +187,7 @@ class CartStore:
             cart.append(item)
 
         self._save_cart(user_id, cart)
-        return item
+        return item, currency_conflict
 
     def update_quantity(
         self, user_id: int, product_id: str, variant_id: Optional[str], quantity: int
