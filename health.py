@@ -99,8 +99,16 @@ if __name__ == "__main__":
     print(f"��� Python path: {sys.path[:3]}...")  # Show first 3 paths
     print(f"��� Current directory: {os.getcwd()}")
 
-    # BOT START DISABLED FOR TESTING
-    print("⚠️  BOT START DISABLED FOR TESTING - Flask only")
+    # Start bot on startup
+    print("🤖 Attempting to start bot...")
+    bot_started = start_bot()
+
+    if bot_started is None:
+        print("❌ CRITICAL: Bot failed to start!")
+        print("🔍 Check BOT_TOKEN and other environment variables")
+        # Continue with Flask anyway for health checks
+    else:
+        print("✅ Bot start initiated")
 
     # Handle graceful shutdown
     def signal_handler(signum, frame):
