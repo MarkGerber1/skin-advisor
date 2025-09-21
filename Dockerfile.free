@@ -39,5 +39,5 @@ COPY health.py .
 COPY health_test.py .
 
 # Start the combined health check and bot server
-CMD ["python", "health_test.py"]
+CMD ["python", "health.py"]
 

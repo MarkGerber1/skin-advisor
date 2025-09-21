@@ -15,10 +15,10 @@ def start_bot():
     global bot_process
 
     # SIMPLE cleanup: Just terminate existing subprocess
-    print("Ì∑π Performing simple bot process cleanup...")
+    print("ÔøΩÔøΩÔøΩ Performing simple bot process cleanup...")
 
     if bot_process and bot_process.poll() is None:
-        print(f"Ìªë Terminating existing bot subprocess (PID: {bot_process.pid})...")
+        print(f"ÔøΩÔøΩÔøΩ Terminating existing bot subprocess (PID: {bot_process.pid})...")
         try:
             bot_process.terminate()
             bot_process.wait(timeout=3)
@@ -41,9 +41,9 @@ def start_bot():
     print("‚úÖ Process cleanup completed")
 
     if bot_process is None or bot_process.poll() is not None:
-        print("Ì∫Ä Starting bot process...")
-        print(f"Ì∞ç Python executable: {sys.executable}")
-        print("Ì≥¶ Command: python -m bot.main")
+        print("ÔøΩÔøΩÔøΩ Starting bot process...")
+        print(f"ÔøΩÔøΩÔøΩ Python executable: {sys.executable}")
+        print("ÔøΩÔøΩÔøΩ Command: python -m bot.main")
         try:
             # Don't capture stdout/stderr - let bot log directly
             bot_process = subprocess.Popen([sys.executable, "-m", "bot.main"])
@@ -60,9 +60,9 @@ def start_bot():
                 try:
                     stdout, stderr = bot_process.communicate(timeout=5)
                     if stdout:
-                        print(f"Ì∫® Bot stdout: {stdout}")
+                        print(f"ÔøΩÔøΩÔøΩ Bot stdout: {stdout}")
                     if stderr:
-                        print(f"Ì∫® Bot stderr: {stderr}")
+                        print(f"ÔøΩÔøΩÔøΩ Bot stderr: {stderr}")
                 except:
                     print("‚ö†Ô∏è Could not read bot output")
 
@@ -75,7 +75,7 @@ def start_bot():
 def stop_bot():
     global bot_process
     if bot_process and bot_process.poll() is None:
-        print(f"Ìªë Stopping bot process (PID: {bot_process.pid})...")
+        print(f"ÔøΩÔøΩÔøΩ Stopping bot process (PID: {bot_process.pid})...")
         bot_process.terminate()
         try:
             bot_process.wait(timeout=10)
@@ -95,24 +95,16 @@ def stop():
     return "Bot stopped"
 
 if __name__ == "__main__":
-    print("ÌøÅ Starting application...")
-    print(f"Ì≥¶ Python path: {sys.path[:3]}...")  # Show first 3 paths
-    print(f"Ì≥Å Current directory: {os.getcwd()}")
+    print("ÔøΩÔøΩÔøΩ Starting application...")
+    print(f"ÔøΩÔøΩÔøΩ Python path: {sys.path[:3]}...")  # Show first 3 paths
+    print(f"ÔøΩÔøΩÔøΩ Current directory: {os.getcwd()}")
 
-    # Start bot on startup
-    print("Ì¥ñ Attempting to start bot...")
-    bot_started = start_bot()
-
-    if bot_started is None:
-        print("‚ùå CRITICAL: Bot failed to start!")
-        print("Ì¥ç Check BOT_TOKEN and other environment variables")
-        # Continue with Flask anyway for health checks
-    else:
-        print("‚úÖ Bot start initiated")
+    # BOT START DISABLED FOR TESTING
+    print("‚ö†Ô∏è  BOT START DISABLED FOR TESTING - Flask only")
 
     # Handle graceful shutdown
     def signal_handler(signum, frame):
-        print(f"Ì≥° Received signal {signum}, shutting down...")
+        print(f"ÔøΩÔøΩÔøΩ Received signal {signum}, shutting down...")
         stop_bot()
         sys.exit(0)
 
@@ -120,9 +112,9 @@ if __name__ == "__main__":
     signal.signal(signal.SIGINT, signal_handler)
 
     # Start Flask server (use PORT env var for Render)
-    port = int(os.getenv("PORT", "10000"))
-    print(f"Ìºê Starting Flask server on port {port}")
-    print("Ì¥ç Environment variables:")
+    port = int(os.getenv("PORT", "8080"))
+    print(f"ÔøΩÔøΩÔøΩ Starting Flask server on port {port}")
+    print("ÔøΩÔøΩÔøΩ Environment variables:")
     for key in ['BOT_TOKEN', 'PORT', 'USE_WEBHOOK']:
         value = os.getenv(key, 'NOT_SET')
         if key == 'BOT_TOKEN' and value != 'NOT_SET':
