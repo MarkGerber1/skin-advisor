@@ -266,7 +266,7 @@ class TestCartIntegration(unittest.TestCase):
             price=1590.0,
             currency="RUB",
             source="goldapple",
-            ref_link="https://goldapple.ru/cleanser-001"
+            ref_link="https://goldapple.ru/cleanser-001",
         )
         self.assertFalse(conflict1)
         self.assertEqual(item1.qty, 1)
@@ -279,7 +279,7 @@ class TestCartIntegration(unittest.TestCase):
             price=2890.0,
             currency="RUB",
             source="goldapple",
-            ref_link="https://goldapple.ru/toner-002"
+            ref_link="https://goldapple.ru/toner-002",
         )
         self.assertFalse(conflict2)
 
@@ -295,7 +295,7 @@ class TestCartIntegration(unittest.TestCase):
             price=1990.0,
             currency="RUB",
             source="goldapple",
-            ref_link="https://goldapple.ru/serum-003"
+            ref_link="https://goldapple.ru/serum-003",
         )
         self.assertFalse(conflict3)
 
@@ -317,7 +317,7 @@ class TestCartIntegration(unittest.TestCase):
         # Check totals
         total_qty, total_price, currency = self.store.get_cart_total(user_id)
         self.assertEqual(total_qty, 4)  # 3 + 1
-        self.assertEqual(total_price, 1590*3 + 2890*1)  # 4770 + 2890 = 7660
+        self.assertEqual(total_price, 1590 * 3 + 2890 * 1)  # 4770 + 2890 = 7660
         self.assertEqual(currency, "RUB")
 
         # Step 7: Clear cart
@@ -350,8 +350,9 @@ class TestCartIntegration(unittest.TestCase):
         self.assertIn("Тестовый продукт 1", text)
         self.assertIn("Тестовый продукт 2", text)
         self.assertIn("1 000", text)  # 1000 formatted
-        self.assertIn("500", text)    # 500 formatted
-        self.assertIn("Итого: 3 шт", text)  # Should have 3 items total
+        self.assertIn("500", text)  # 500 formatted
+        self.assertIn("2 000", text)  # 1000 * 2 result
+        self.assertIn("Итого: 3 шт × 2 500", text)
 
         # Test empty cart
         self.store.clear_cart(user_id)
