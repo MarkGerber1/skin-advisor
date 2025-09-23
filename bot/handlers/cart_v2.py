@@ -12,7 +12,15 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder, InlineKeyboardButton
 
 from services.cart_store import CartStore, CartItem
 from bot.utils.security import safe_edit_message_text
-from engine.analytics import get_analytics_tracker
+from engine.analytics import (
+    get_analytics_tracker,
+    cart_item_added,
+    cart_opened,
+    cart_qty_changed,
+    cart_item_removed,
+    cart_cleared,
+    checkout_started,
+)
 from engine.catalog_store import CatalogStore
 from i18n.ru import *
 
@@ -21,7 +29,6 @@ router = Router()
 
 # Global instances
 cart_store = CartStore()
-analytics = get_analytics_tracker()
 
 # Catalog instance for product lookup
 _catalog_store = None
@@ -139,9 +146,7 @@ async def handle_cart_open(cb: CallbackQuery):
     try:
         cart_items = cart_store.get_cart(user_id)
 
-        if analytics:
-
-            analytics.cart_opened(user_id)
+        cart_opened(user_id)
 
         text = render_cart(cart_items)
 
@@ -208,7 +213,7 @@ async def handle_cart_add(cb: CallbackQuery):
             await cb.answer("⚠️ В корзине уже есть товары в другой валюте", show_alert=True)
             return
 
-        analytics.cart_item_added(
+        cart_item_added(
             user_id, product_id, variant_id or "", item.price, item.currency, item.source or ""
         )
         await cb.answer(MSG_CART_ITEM_ADDED)
@@ -243,7 +248,7 @@ async def handle_cart_inc(cb: CallbackQuery):
         old_qty = item.qty
         cart_store.update_quantity(user_id, product_id, variant_id, item.qty + 1)
 
-        analytics.cart_qty_changed(user_id, f"{product_id}:{variant_id}", old_qty, item.qty + 1)
+        cart_qty_changed(user_id, f"{product_id}:{variant_id}", old_qty, item.qty + 1)
         await cb.answer(f"➕ Количество: {item.qty + 1}")
 
         # Update cart view
@@ -285,12 +290,12 @@ async def handle_cart_dec(cb: CallbackQuery):
         if item.qty <= 1:
             # Remove item if qty == 1
             cart_store.remove_item(user_id, product_id, variant_id)
-            analytics.cart_item_removed(user_id, f"{product_id}:{variant_id}")
+            cart_item_removed(user_id, f"{product_id}:{variant_id}")
             await cb.answer("🗑 Товар удалён")
         else:
             old_qty = item.qty
             cart_store.update_quantity(user_id, product_id, variant_id, item.qty - 1)
-            analytics.cart_qty_changed(user_id, f"{product_id}:{variant_id}", old_qty, item.qty - 1)
+            cart_qty_changed(user_id, f"{product_id}:{variant_id}", old_qty, item.qty - 1)
             await cb.answer(f"➖ Количество: {item.qty - 1}")
 
         # Update cart view
@@ -321,7 +326,7 @@ async def handle_cart_rm(cb: CallbackQuery):
         user_id = cb.from_user.id
 
         if cart_store.remove_item(user_id, product_id, variant_id):
-            analytics.cart_item_removed(user_id, f"{product_id}:{variant_id}")
+            cart_item_removed(user_id, f"{product_id}:{variant_id}")
             await cb.answer("🗑 Товар удалён")
         else:
             await cb.answer("❌ Товар не найден")
@@ -347,8 +352,7 @@ async def handle_cart_clr(cb: CallbackQuery):
     try:
         user_id = cb.from_user.id
         removed_count = cart_store.clear_cart(user_id)
-        if analytics:
-            analytics.cart_cleared(user_id, removed_count)
+        cart_cleared(user_id, removed_count)
 
         await cb.answer(f"🧹 Корзина очищена ({removed_count} товаров)")
 
@@ -377,7 +381,7 @@ async def handle_cart_checkout(cb: CallbackQuery):
             await cb.answer("Корзина пуста")
             return
 
-        analytics.checkout_started(user_id)
+        checkout_started(user_id)
 
         # Generate checkout links with affiliate tags
         checkout_lines = [CHECKOUT_TITLE, "", CHECKOUT_LINKS_READY]
@@ -431,9 +435,7 @@ async def show_cart(message: Message, state=None) -> None:
     try:
         cart_items = cart_store.get_cart(user_id)
 
-        if analytics:
-
-            analytics.cart_opened(user_id)
+        cart_opened(user_id)
 
         text = render_cart(cart_items)
 
