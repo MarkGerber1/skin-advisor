@@ -106,16 +106,9 @@ if __name__ == "__main__":
     print(f"��� Python path: {sys.path[:3]}...")  # Show first 3 paths
     print(f"��� Current directory: {os.getcwd()}")
 
-    # Start bot on startup
-    print("🤖 Attempting to start bot...")
-    bot_started = start_bot()
-
-    if bot_started is None:
-        print("❌ CRITICAL: Bot failed to start!")
-        print("🔍 Check BOT_TOKEN and other environment variables")
-        # Continue with Flask anyway for health checks
-    else:
-        print("✅ Bot start initiated")
+    # Don't start bot automatically - let Render manage it
+    # Bot will be started via webhook or polling as needed
+    print("ℹ️ Bot will be started on demand, not automatically")
 
     # Handle graceful shutdown
     def signal_handler(signum, frame):
