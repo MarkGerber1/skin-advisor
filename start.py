@@ -36,6 +36,7 @@ def telegram_webhook():
     print("📨 Webhook POST received")
     return jsonify({"status": "OK", "method": "POST"})
 
+
 print("🌐 Webhook route registered")
 
 
