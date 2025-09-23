@@ -372,20 +372,40 @@ async def main() -> None:
                 except Exception as e:
                     print(f"⚠️ Could not remove {possible_lock}: {e}")
 
-        # Kill any existing python processes that might be bots
+        # Kill any existing python processes that might be bots (multiple attempts)
         import subprocess
-        try:
-            # Kill processes by name pattern
-            result = subprocess.run(['pkill', '-f', 'python.*bot.main'], timeout=5, capture_output=True)
-            if result.returncode == 0:
-                print("🛑 Killed existing bot processes")
-                # Give time for processes to die
-                import time
-                time.sleep(2)
-            else:
-                print("ℹ️ No existing bot processes found")
-        except (subprocess.TimeoutExpired, FileNotFoundError, subprocess.SubprocessError) as e:
-            print(f"⚠️ Could not check for existing processes: {e}")
+        import time
+
+        for attempt in range(3):
+            try:
+                # Kill processes by name pattern - more aggressive
+                patterns = [
+                    'python.*bot.main',
+                    'python.*main',
+                    'skin-advisor',
+                    'telegram.*bot'
+                ]
+
+                killed_any = False
+                for pattern in patterns:
+                    try:
+                        result = subprocess.run(['pkill', '-9', '-f', pattern], timeout=3, capture_output=True)
+                        if result.returncode == 0:
+                            print(f"🛑 Killed processes matching: {pattern}")
+                            killed_any = True
+                    except:
+                        pass
+
+                if killed_any:
+                    print(f"🛑 Killed existing processes (attempt {attempt + 1}/3)")
+                    time.sleep(3)  # Longer wait
+                else:
+                    print("ℹ️ No existing bot processes found")
+                    break
+
+            except (subprocess.TimeoutExpired, FileNotFoundError, subprocess.SubprocessError) as e:
+                print(f"⚠️ Could not check for existing processes (attempt {attempt + 1}): {e}")
+                time.sleep(1)
 
         # Final check - if lock file still exists, it's an error
         if os.path.exists(lock_file):
