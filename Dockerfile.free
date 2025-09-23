@@ -37,7 +37,8 @@ EXPOSE 8080
 # Copy health check script
 COPY health.py .
 COPY health_test.py .
+COPY start.py .
 
-# Start the combined health check and bot server
-CMD ["python", "health.py"]
+# Start bot via start.py
+CMD ["python", "start.py"]
 

@@ -243,5 +243,116 @@ class TestCartStore(unittest.TestCase):
         self.assertEqual(len(cart), 0)
 
 
+class TestCartIntegration(unittest.TestCase):
+    """Integration tests for cart functionality"""
+
+    def setUp(self):
+        """Set up test fixtures"""
+        CartStore._instance = None
+        self.store = CartStore()
+
+    def test_full_cart_flow(self):
+        """Test complete cart flow: add -> modify -> checkout"""
+        user_id = 99999
+
+        # Step 1: Add first product
+        item1, conflict1 = self.store.add_item(
+            user_id=user_id,
+            product_id="cleanser-001",
+            name="Очищающий гель CeraVe",
+            price=1590.0,
+            currency="RUB",
+            source="goldapple",
+            ref_link="https://goldapple.ru/cleanser-001"
+        )
+        self.assertFalse(conflict1)
+        self.assertEqual(item1.qty, 1)
+
+        # Step 2: Add second product
+        item2, conflict2 = self.store.add_item(
+            user_id=user_id,
+            product_id="toner-002",
+            name="Тоник La Roche-Posay",
+            price=2890.0,
+            currency="RUB",
+            source="goldapple",
+            ref_link="https://goldapple.ru/toner-002"
+        )
+        self.assertFalse(conflict2)
+
+        # Step 3: Increase quantity of first product
+        success = self.store.update_quantity(user_id, "cleanser-001", None, 3)
+        self.assertTrue(success)
+
+        # Step 4: Add third product
+        item3, conflict3 = self.store.add_item(
+            user_id=user_id,
+            product_id="serum-003",
+            name="Сыворотка The Ordinary",
+            price=1990.0,
+            currency="RUB",
+            source="goldapple",
+            ref_link="https://goldapple.ru/serum-003"
+        )
+        self.assertFalse(conflict3)
+
+        # Step 5: Decrease quantity of third product to 0 (should remove)
+        success = self.store.update_quantity(user_id, "serum-003", None, 0)
+        self.assertTrue(success)
+
+        # Step 6: Check final cart state
+        cart = self.store.get_cart(user_id)
+        self.assertEqual(len(cart), 2)  # Two items left
+
+        # Check quantities
+        item1_final = next(i for i in cart if i.product_id == "cleanser-001")
+        item2_final = next(i for i in cart if i.product_id == "toner-002")
+
+        self.assertEqual(item1_final.qty, 3)
+        self.assertEqual(item2_final.qty, 1)
+
+        # Check totals
+        total_qty, total_price, currency = self.store.get_cart_total(user_id)
+        self.assertEqual(total_qty, 4)  # 3 + 1
+        self.assertEqual(total_price, 1590*3 + 2890*1)  # 4770 + 2890 = 7660
+        self.assertEqual(currency, "RUB")
+
+        # Step 7: Clear cart
+        removed_count = self.store.clear_cart(user_id)
+        self.assertEqual(removed_count, 2)
+
+        # Check cart is empty
+        cart = self.store.get_cart(user_id)
+        self.assertEqual(len(cart), 0)
+
+    def test_cart_rendering(self):
+        """Test cart text rendering"""
+        from bot.handlers.cart_v2 import render_cart
+
+        user_id = 99998
+
+        # Add products
+        self.store.add_item(user_id, "test-1", name="Тестовый продукт 1", price=1000.0, quantity=2)
+        self.store.add_item(user_id, "test-2", name="Тестовый продукт 2", price=500.0, quantity=1)
+
+        cart_items = self.store.get_cart(user_id)
+        text = render_cart(cart_items)
+
+        # Check that text contains expected elements
+        self.assertIn("🛒 Ваша корзина", text)
+        self.assertIn("Тестовый продукт 1", text)
+        self.assertIn("Тестовый продукт 2", text)
+        self.assertIn("1 000", text)  # 1000 formatted
+        self.assertIn("500", text)    # 500 formatted
+        self.assertIn("2 000", text)  # 1000 * 2 result
+        self.assertIn("Итого: 3 шт × 2 500", text)
+
+        # Test empty cart
+        self.store.clear_cart(user_id)
+        cart_items = self.store.get_cart(user_id)
+        text = render_cart(cart_items)
+        self.assertIn("Пока пусто", text)
+
+
 if __name__ == "__main__":
     unittest.main()
