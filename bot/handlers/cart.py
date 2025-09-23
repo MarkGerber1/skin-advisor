@@ -380,14 +380,8 @@ async def cart_checkout(cb: CallbackQuery) -> None:
     await cb.answer()
 
 
-@router.message(F.text == "Корзина")
-async def cart_message_entry(message: Message) -> None:
-    await _show_cart(message)
-
-
-
 # DEPRECATED: This functionality moved to cart_v2
-# @router.message(F.text == BTN_CART)
+# @router.message(F.text == "Корзина")
 # async def cart_message_entry(message: Message) -> None:
 #     await _show_cart(message)
 
