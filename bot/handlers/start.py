@@ -228,7 +228,7 @@ async def my_picks(m: Message, state: FSMContext) -> None:
         report_data = load_last_report_json(uid)
         if report_data:
             # Пользователь прошел тест, показываем корзину
-            from bot.handlers.cart import show_cart
+            from bot.handlers.cart_v2 import show_cart
 
             await show_cart(m, state)
             return

@@ -383,3 +383,14 @@ async def cart_checkout(cb: CallbackQuery) -> None:
 @router.message(F.text == "Корзина")
 async def cart_message_entry(message: Message) -> None:
     await _show_cart(message)
+
+
+
+@router.message(F.text == BTN_CART)
+async def cart_message_entry(message: Message) -> None:
+    await _show_cart(message)
+
+
+async def show_cart(message: Message, state=None) -> None:
+    """Backward compatible entrypoint for other modules."""
+    await _show_cart(message)

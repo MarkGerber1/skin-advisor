@@ -7,7 +7,7 @@ Unified cart:* callbacks with proper UX and analytics
 
 import logging
 from aiogram import Router, F
-from aiogram.types import CallbackQuery, InlineKeyboardMarkup
+from aiogram.types import CallbackQuery, InlineKeyboardMarkup, Message
 from aiogram.utils.keyboard import InlineKeyboardBuilder, InlineKeyboardButton
 
 from services.cart_store import CartStore, CartItem
@@ -341,5 +341,24 @@ async def handle_cart_back_reco(cb: CallbackQuery):
         logger.error(f"Error returning to recommendations: {e}")
         await cb.answer("❌ Ошибка", show_alert=True)
 
+
+async def show_cart(message: Message, state=None) -> None:
+    """Backward compatible entrypoint for other modules - show cart via message."""
+    user_id = message.from_user.id
+
+    try:
+        cart_items = cart_store.get_cart(user_id)
+        analytics.cart_opened(user_id)
+
+        text = render_cart(cart_items)
+        keyboard = build_cart_keyboard(cart_items)
+
+        await message.answer(text, reply_markup=keyboard)
+
+    except Exception as e:
+        logger.error(f"Error showing cart: {e}")
+        await message.answer("❌ Ошибка открытия корзины")
+
+
 # Export router
-__all__ = ["router"]
+__all__ = ["router", "show_cart"]
