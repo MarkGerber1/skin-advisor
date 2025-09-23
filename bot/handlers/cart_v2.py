@@ -13,6 +13,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder, InlineKeyboardButton
 from services.cart_store import CartStore, CartItem
 from bot.utils.security import safe_edit_message_text
 from engine.analytics import get_analytics_tracker
+from engine.catalog_store import CatalogStore
 from i18n.ru import *
 
 logger = logging.getLogger(__name__)
@@ -21,6 +22,33 @@ router = Router()
 # Global instances
 cart_store = CartStore()
 analytics = get_analytics_tracker()
+
+# Catalog instance for product lookup
+_catalog_store = None
+
+def get_catalog_store():
+    """Get catalog store instance"""
+    global _catalog_store
+    if _catalog_store is None:
+        _catalog_store = CatalogStore.instance('assets/fixed_catalog.yaml')
+    return _catalog_store
+
+def find_product_by_id(product_id: str):
+    """Find product by ID in catalog"""
+    catalog = get_catalog_store().get()
+    for product in catalog:
+        if product.key == product_id:
+            return product
+    return None
+
+def find_variant_by_id(product, variant_id: str):
+    """Find variant by ID in product"""
+    if not hasattr(product, 'variants') or not product.variants:
+        return None
+    for variant in product.variants:
+        if variant.id == variant_id:
+            return variant
+    return None
 
 
 def format_price(price: float, currency: str = "RUB") -> str:
@@ -140,17 +168,37 @@ async def handle_cart_add(cb: CallbackQuery):
         variant_id = parts[3] if parts[3] != "none" else None
         user_id = cb.from_user.id
 
-        # TODO: Validate variant_id belongs to product_id
-        # For now, create mock item
+        # 🔍 Найти реальный товар в каталоге
+        product = find_product_by_id(product_id)
+        if not product:
+            await cb.answer("❌ Товар не найден", show_alert=True)
+            return
+
+        # 🔍 Проверить вариант товара (если указан)
+        if variant_id and variant_id != "default":
+            variant = find_variant_by_id(product, variant_id)
+            if not variant:
+                await cb.answer("❌ Вариант товара недоступен", show_alert=True)
+                return
+            # Используем данные варианта
+            name = f"{product.title} - {variant.name}"
+            price = variant.price or product.price or 0
+        else:
+            # Используем базовые данные товара
+            name = product.title
+            price = product.price or 0
+
+        # ✅ Добавить товар с реальными данными
         item, currency_conflict = cart_store.add_item(
             user_id=user_id,
             product_id=product_id,
             variant_id=variant_id,
-            name=f"Продукт {product_id}",
-            price=1990.0,  # 1990 RUB
+            name=name,
+            price=float(price),
             currency="RUB",
-            source="goldapple",
-            ref_link=f"https://goldapple.ru/products/{product_id}",
+            source=product.source or "goldapple",
+            ref_link=product.buy_url or f"https://goldapple.ru/products/{product_id}",
+            image_url=product.image_url,
         )
 
         if currency_conflict:

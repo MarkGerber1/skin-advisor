@@ -13,6 +13,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from bot.utils.security import safe_send_message
 from config.env import get_settings
+from engine.catalog_store import CatalogStore
 from i18n.ru import (
     BTN_ADD,
     BTN_BACK,
@@ -88,23 +89,46 @@ async def _show_product_details(cb: CallbackQuery, product_id: str) -> None:
 
 
 def _fallback_products() -> List[dict]:
-    return [
-        {"id": "cleanser-001", "name": "Очищающий гель", "price": 1590, "category": "cleanser"},
-        {"id": "toner-001", "name": "Успокаивающий тоник", "price": 1890, "category": "toner"},
-        {"id": "serum-001", "name": "Сыворотка с витамином С", "price": 2190, "category": "serum"},
-        {
-            "id": "moisturizer-001",
-            "name": "Увлажняющий крем",
-            "price": 1290,
-            "category": "moisturizer",
-        },
-        {
-            "id": "sunscreen-001",
-            "name": "Солнцезащитный крем",
-            "price": 2990,
-            "category": "sunscreen",
-        },
-    ]
+    return _get_catalog_products()
+
+
+def _get_catalog_products() -> List[dict]:
+    """Get products from real catalog as fallback"""
+    try:
+        catalog_store = CatalogStore.instance('assets/fixed_catalog.yaml')
+        catalog = catalog_store.get()
+        return [
+            {
+                "id": p.key,
+                "name": p.title,
+                "price": p.price or 0,
+                "category": p.category,
+                "brand": p.brand,
+                "image_url": p.image_url,
+                "source": p.source
+            }
+            for p in catalog[:50]  # Limit to 50 products
+        ]
+    except Exception as e:
+        logger.error(f"Failed to load catalog products: {e}")
+        # Ultimate fallback
+        return [
+            {"id": "cleanser-001", "name": "Очищающий гель", "price": 1590, "category": "cleanser"},
+            {"id": "toner-001", "name": "Успокаивающий тоник", "price": 1890, "category": "toner"},
+            {"id": "serum-001", "name": "Сыворотка с витамином С", "price": 2190, "category": "serum"},
+            {
+                "id": "moisturizer-001",
+                "name": "Увлажняющий крем",
+                "price": 1290,
+                "category": "moisturizer",
+            },
+            {
+                "id": "sunscreen-001",
+                "name": "Солнцезащитный крем",
+                "price": 2990,
+                "category": "sunscreen",
+            },
+        ]
 
 
 def _filter_products(category: str, page: int, per_page: int = 3) -> tuple[List[dict], int]:
@@ -113,9 +137,9 @@ def _filter_products(category: str, page: int, per_page: int = 3) -> tuple[List[
             all_products = _selector.select_products(user_id=None, category="all", limit=50)
         except Exception as exc:  # pragma: no cover
             logger.warning("Selector fetch failed: %s", exc)
-            all_products = _fallback_products()
+            all_products = _get_catalog_products()
     else:
-        all_products = _fallback_products()
+        all_products = _get_catalog_products()
 
     if category != "all":
         filtered = [p for p in all_products if p.get("category") == category]
@@ -204,5 +228,6 @@ async def show_recommendations_after_test(
 
     keyboard.row(InlineKeyboardButton(text=BTN_MORE, callback_data=f"rec:more:{test_type}:1"))
     keyboard.row(InlineKeyboardButton(text=BTN_CART_CONTINUE, callback_data="cart:open"))
+    keyboard.row(InlineKeyboardButton(text="🛒 Открыть корзину", callback_data="cart:open"))
 
     await safe_send_message(bot, user_id, text, reply_markup=keyboard.as_markup())
