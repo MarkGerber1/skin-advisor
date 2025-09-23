@@ -28,6 +28,7 @@ except ImportError as e:
 # Global bot and dispatcher instances for webhook handling
 bot = None
 dp = None
+_handlers_registered = False
 
 
 def get_bot_and_dispatcher():
@@ -285,7 +286,17 @@ async def main() -> None:
     else:
         print("✅ Dispatcher already exists")
 
-    # Add security middleware for chat filtering
+    # Add security middleware for chat filtering (only once)
+    global _handlers_registered
+    if not _handlers_registered:
+        _register_handlers(dp)
+        _handlers_registered = True
+
+    # Start bot in appropriate mode
+    _start_bot_mode(dp, bot)
+
+
+def _register_handlers(dp):
     @dp.message.middleware()
     async def chat_filter_middleware(handler, event, data):
         """Middleware to filter messages based on chat whitelist"""
@@ -367,6 +378,9 @@ async def main() -> None:
     dp.include_router(report_router)
     dp.include_router(universal_router)  # Universal catch-all - LOWEST PRIORITY
 
+    # Mark handlers as registered
+    _handlers_registered = True
+
     # Общий обработчик для back:main
     @dp.callback_query(F.data == "back:main")
     async def handle_back_main(cb: CallbackQuery, state: FSMContext):
@@ -387,7 +401,8 @@ async def main() -> None:
 
     # Fallback handler removed - was intercepting all callbacks before routers!
 
-    return  # DISABLED FOR DEBUGGING
+
+def _start_bot_mode(dp, bot):
     use_webhook = os.getenv("USE_WEBHOOK", "0").lower() in ("1", "true", "yes")
     webhook_url = os.getenv("WEBHOOK_URL")
     webhook_path = os.getenv("WEBHOOK_PATH", "/webhook")
