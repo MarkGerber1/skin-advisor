@@ -30,11 +30,17 @@ jobs:
         echo "Response body:"
         cat response.json || echo "No response body"
 
-        if [ "$response" -eq 202 ] || [ "$response" -eq 201 ]; then
-          echo "✅ Deploy triggered successfully!"
+        if [ "$response" -eq 202 ] || [ "$response" -eq 201 ] || [ "$response" -eq 200 ]; then
+          echo "✅ Deploy triggered successfully! (HTTP $response)"
           echo "🚀 Check deployment status at: https://dashboard.render.com/web/srv-d35jctffte5s73fg985g"
         else
           echo "❌ Failed to trigger deploy (HTTP $response)"
-          echo "💡 Please check Render dashboard for manual deployment"
+          echo "Response details:"
+          cat response.json
+          echo ""
+          echo "💡 Possible issues:"
+          echo "  • Invalid RENDER_API_KEY or RENDER_SERVICE_ID"
+          echo "  • Service may have auto-deployment enabled (no API call needed)"
+          echo "  • Check Render dashboard for deployment status"
           exit 1
         fi
