@@ -11,10 +11,12 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 # Create Flask app for health checks and webhooks
 app = Flask(__name__)
+print("🌐 Flask app created")
 
 # Global bot and dispatcher for webhook handling
 bot_instance = None
 dp_instance = None
+print("🌐 Global variables initialized")
 
 
 @app.route("/health")
@@ -22,42 +24,19 @@ def health():
     return "OK"
 
 
-@app.route("/webhook", methods=["POST"])
+@app.route("/webhook", methods=["GET", "POST"])
 def telegram_webhook():
     """Handle Telegram webhook requests"""
-    global bot_instance, dp_instance
+    print("🌐 Webhook endpoint called!")
 
-    # For debugging - temporarily accept requests even if bot not initialized
-    print(f"🌐 Webhook request received. Bot initialized: {bot_instance is not None}")
+    if request.method == "GET":
+        return jsonify({"status": "Webhook endpoint active", "method": "GET"})
 
-    if not bot_instance or not dp_instance:
-        print("⚠️ Bot not initialized yet, returning OK to acknowledge")
-        return jsonify({"status": "Bot not ready"}), 200
+    # For POST requests - just acknowledge for now
+    print("📨 Webhook POST received")
+    return jsonify({"status": "OK", "method": "POST"})
 
-    try:
-        from aiogram import types
-
-        update_data = request.get_json()
-        if not update_data:
-            return jsonify({"error": "No JSON data"}), 400
-
-        print(
-            f"📨 Processing webhook update: {update_data.get('message', {}).get('text', 'N/A')[:50]}..."
-        )
-
-        update = types.Update(**update_data)
-
-        # Process update asynchronously
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        loop.run_until_complete(dp_instance.feed_update(bot_instance, update))
-        loop.close()
-
-        print("✅ Webhook update processed successfully")
-        return jsonify({"status": "OK"})
-    except Exception as e:
-        print(f"❌ Webhook error: {e}")
-        return jsonify({"error": str(e)}), 500
+print("🌐 Webhook route registered")
 
 
 def run_flask():
