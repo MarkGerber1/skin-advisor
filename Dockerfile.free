@@ -26,8 +26,10 @@ RUN mkdir -p logs data assets
 ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
 ENV CATALOG_PATH=assets/fixed_catalog.yaml
-# Force polling mode for free tiers
-ENV USE_WEBHOOK=0
+# Use webhook mode to avoid conflicts in multi-instance environments
+ENV USE_WEBHOOK=1
+ENV WEBHOOK_URL=https://skin-advisor-bot.onrender.com/webhook
+ENV WEBHOOK_PATH=/webhook
 # Mark as Render environment for cleanup logic
 ENV RENDER=1
 
