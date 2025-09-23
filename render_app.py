@@ -24,11 +24,7 @@ print("🌐 Render Flask app initialized")
 @app.route("/health")
 def health():
     """Health check endpoint for Render"""
-    return jsonify({
-        "status": "OK",
-        "bot_started": bot_started,
-        "timestamp": "2024"
-    })
+    return jsonify({"status": "OK", "bot_started": bot_started, "timestamp": "2024"})
 
 
 @app.route("/webhook", methods=["GET", "POST"])
@@ -56,6 +52,7 @@ def run_bot_in_background():
 
             # Import and run bot
             from bot.main import main
+
             bot_started = True
             print("✅ Bot thread started successfully")
 
