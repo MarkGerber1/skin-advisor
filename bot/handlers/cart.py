@@ -390,6 +390,7 @@ async def show_cart(message: Message, state=None) -> None:
     """Backward compatible entrypoint - redirects to cart_v2."""
     try:
         from bot.handlers.cart_v2 import show_cart as show_cart_v2
+
         await show_cart_v2(message, state)
     except ImportError:
         # Fallback to old implementation if cart_v2 not available
