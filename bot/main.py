@@ -25,6 +25,17 @@ except ImportError as e:
     print(f"ERROR Failed to import CatalogStore: {e}")
     raise
 
+# Global bot and dispatcher instances for webhook handling
+bot = None
+dp = None
+
+def get_bot_and_dispatcher():
+    """Get bot and dispatcher instances for webhook handling"""
+    global bot, dp
+    if bot is None or dp is None:
+        raise RuntimeError("Bot and dispatcher not initialized. Call main() first.")
+    return bot, dp
+
 # Routers
 try:
     from bot.handlers.start import router as start_router
@@ -238,10 +249,12 @@ async def main() -> None:
 
     print(f"Starting bot with token: {token[:10]}...")
     print("🤖 Creating Bot instance...")
+    global bot
     bot = Bot(token)
     print("✅ Bot instance created")
 
     print("📡 Creating Dispatcher...")
+    global dp
     dp = Dispatcher()
     print("✅ Dispatcher created")
 
