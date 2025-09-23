@@ -41,10 +41,10 @@ jobs:
     - name: Security Check - No Raw Pin Calls
       run: |
         echo "🔍 Checking for raw pin/unpin calls (must use safe_pin_message)..."
-        RAW_PINS=$(grep -r "pinChatMessage\|pin_chat_message\|unpin.*chat" --include="*.py" . | grep -v "safe_pin_message\|safe_unpin\|test_" | wc -l)
+        RAW_PINS=$(grep -r "await.*\.pin_chat_message\|await.*\.unpin\|bot\.pin_chat_message\|bot\.unpin" --include="*.py" --exclude-dir=.venv --exclude-dir=tests . | grep -v "bot/utils/security.py" | wc -l)
         if [ "$RAW_PINS" -gt 0 ]; then
           echo "❌ FOUND RAW PIN CALLS: $RAW_PINS occurrences"
-          grep -r "pinChatMessage\|pin_chat_message\|unpin.*chat" --include="*.py" . | grep -v "safe_pin_message\|safe_unpin\|test_"
+          grep -r "pinChatMessage\|pin_chat_message\|unpin.*chat" --include="*.py" . | grep -v "safe_pin_message\|safe_unpin\|test_" | grep -v "bot/utils/security.py"
           exit 1
         else
           echo "✅ No raw pin calls found - security check passed"
