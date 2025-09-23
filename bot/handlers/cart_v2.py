@@ -1,5 +1,5 @@
 """
-�� Cart v2 Handler
+🛒 Cart v2 Handler
 
 Complete cart flow: recommendations → cart → checkout
 Unified cart:* callbacks with proper UX and analytics
@@ -7,7 +7,7 @@ Unified cart:* callbacks with proper UX and analytics
 
 import logging
 from aiogram import Router, F
-from aiogram.types import CallbackQuery
+from aiogram.types import CallbackQuery, InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder, InlineKeyboardButton
 
 from services.cart_store import CartStore, CartItem
@@ -72,19 +72,19 @@ def build_cart_keyboard(cart_items: list[CartItem]) -> InlineKeyboardMarkup:
             InlineKeyboardButton(text="➖", callback_data=f"cart:dec:{item.product_id}:{item.variant_id or 'none'}"),
             InlineKeyboardButton(text=f" {item.qty} ", callback_data="noop"),
             InlineKeyboardButton(text="➕", callback_data=f"cart:inc:{item.product_id}:{item.variant_id or 'none'}"),
-            InlineKeyboardButton(text="���", callback_data=f"cart:rm:{item.product_id}:{item.variant_id or 'none'}")
+            InlineKeyboardButton(text="🗑", callback_data=f"cart:rm:{item.product_id}:{item.variant_id or 'none'}")
         )
 
     # Cart actions
     if cart_items:
         keyboard.row(
-            InlineKeyboardButton(text="��� Очистить", callback_data="cart:clr"),
-            InlineKeyboardButton(text="��� Продолжить подбор", callback_data="cart:back_reco"),
-            InlineKeyboardButton(text="��� Оформление", callback_data="cart:checkout")
+            InlineKeyboardButton(text="🧹 Очистить", callback_data="cart:clr"),
+            InlineKeyboardButton(text="🔎 Продолжить подбор", callback_data="cart:back_reco"),
+            InlineKeyboardButton(text="🧾 Оформление", callback_data="cart:checkout")
         )
     else:
         keyboard.row(
-            InlineKeyboardButton(text="��� Продолжить подбор", callback_data="cart:back_reco")
+            InlineKeyboardButton(text="🔎 Продолжить подбор", callback_data="cart:back_reco")
         )
 
     return keyboard.as_markup()
@@ -209,7 +209,7 @@ async def handle_cart_dec(cb: CallbackQuery):
             # Remove item if qty == 1
             cart_store.remove_item(user_id, product_id, variant_id)
             analytics.cart_item_removed(user_id, f"{product_id}:{variant_id}")
-            await cb.answer("��� Товар удалён")
+            await cb.answer("🗑 Товар удалён")
         else:
             old_qty = item.qty
             cart_store.update_quantity(user_id, product_id, variant_id, item.qty - 1)
@@ -244,7 +244,7 @@ async def handle_cart_rm(cb: CallbackQuery):
 
         if cart_store.remove_item(user_id, product_id, variant_id):
             analytics.cart_item_removed(user_id, f"{product_id}:{variant_id}")
-            await cb.answer("��� Товар удалён")
+            await cb.answer("🗑 Товар удалён")
         else:
             await cb.answer("❌ Товар не найден")
             return
@@ -270,7 +270,7 @@ async def handle_cart_clr(cb: CallbackQuery):
         removed_count = cart_store.clear_cart(user_id)
         analytics.cart_cleared(user_id)
 
-        await cb.answer(f"��� Корзина очищена ({removed_count} товаров)")
+        await cb.answer(f"🧹 Корзина очищена ({removed_count} товаров)")
 
         # Update cart view
         cart_items = cart_store.get_cart(user_id)
@@ -312,7 +312,7 @@ async def handle_cart_checkout(cb: CallbackQuery):
 
         text = "\n".join(checkout_lines)
         keyboard = InlineKeyboardBuilder()
-        keyboard.row(InlineKeyboardButton(text="��� Назад в корзину", callback_data="cart:open"))
+        keyboard.row(InlineKeyboardButton(text="⬅️ Назад в корзину", callback_data="cart:open"))
 
         await safe_edit_message_text(
             cb.message.chat.id, cb.message.message_id, text, reply_markup=keyboard.as_markup()
@@ -328,9 +328,9 @@ async def handle_cart_back_reco(cb: CallbackQuery):
     try:
         # TODO: Implement proper return to recommendations
         # For now, just show a placeholder
-        text = "��� Возврат к рекомендациям\n\nВыберите действие:"
+        text = "🔎 Возврат к рекомендациям\n\nВыберите действие:"
         keyboard = InlineKeyboardBuilder()
-        keyboard.row(InlineKeyboardButton(text="��� Главное меню", callback_data="back:main"))
+        keyboard.row(InlineKeyboardButton(text="🏠 Главное меню", callback_data="back:main"))
 
         await safe_edit_message_text(
             cb.message.chat.id, cb.message.message_id, text, reply_markup=keyboard.as_markup()

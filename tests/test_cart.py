@@ -252,7 +252,7 @@ class TestCartIntegration(unittest.TestCase):
         self.store = CartStore()
         # Clear all data for clean test state
         self.store._carts.clear()
-        self.store._save_all_carts()
+        # No need to save empty carts, they'll be saved when items are added
 
     def test_full_cart_flow(self):
         """Test complete cart flow: add -> modify -> checkout"""
