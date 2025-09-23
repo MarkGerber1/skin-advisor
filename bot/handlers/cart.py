@@ -385,7 +385,6 @@ async def cart_message_entry(message: Message) -> None:
     await _show_cart(message)
 
 
-
 @router.message(F.text == BTN_CART)
 async def cart_message_entry(message: Message) -> None:
     await _show_cart(message)
