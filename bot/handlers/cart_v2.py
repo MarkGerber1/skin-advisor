@@ -26,12 +26,14 @@ analytics = get_analytics_tracker()
 # Catalog instance for product lookup
 _catalog_store = None
 
+
 def get_catalog_store():
     """Get catalog store instance"""
     global _catalog_store
     if _catalog_store is None:
-        _catalog_store = CatalogStore.instance('assets/fixed_catalog.yaml')
+        _catalog_store = CatalogStore.instance("assets/fixed_catalog.yaml")
     return _catalog_store
+
 
 def find_product_by_id(product_id: str):
     """Find product by ID in catalog"""
@@ -41,9 +43,10 @@ def find_product_by_id(product_id: str):
             return product
     return None
 
+
 def find_variant_by_id(product, variant_id: str):
     """Find variant by ID in product"""
-    if not hasattr(product, 'variants') or not product.variants:
+    if not hasattr(product, "variants") or not product.variants:
         return None
     for variant in product.variants:
         if variant.id == variant_id:

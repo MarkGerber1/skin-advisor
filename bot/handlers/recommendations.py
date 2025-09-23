@@ -95,7 +95,7 @@ def _fallback_products() -> List[dict]:
 def _get_catalog_products() -> List[dict]:
     """Get products from real catalog as fallback"""
     try:
-        catalog_store = CatalogStore.instance('assets/fixed_catalog.yaml')
+        catalog_store = CatalogStore.instance("assets/fixed_catalog.yaml")
         catalog = catalog_store.get()
         return [
             {
@@ -105,7 +105,7 @@ def _get_catalog_products() -> List[dict]:
                 "category": p.category,
                 "brand": p.brand,
                 "image_url": p.image_url,
-                "source": p.source
+                "source": p.source,
             }
             for p in catalog[:50]  # Limit to 50 products
         ]
@@ -115,7 +115,12 @@ def _get_catalog_products() -> List[dict]:
         return [
             {"id": "cleanser-001", "name": "Очищающий гель", "price": 1590, "category": "cleanser"},
             {"id": "toner-001", "name": "Успокаивающий тоник", "price": 1890, "category": "toner"},
-            {"id": "serum-001", "name": "Сыворотка с витамином С", "price": 2190, "category": "serum"},
+            {
+                "id": "serum-001",
+                "name": "Сыворотка с витамином С",
+                "price": 2190,
+                "category": "serum",
+            },
             {
                 "id": "moisturizer-001",
                 "name": "Увлажняющий крем",
