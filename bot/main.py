@@ -38,9 +38,11 @@ def get_bot_and_dispatcher():
         print("🔄 Initializing bot and dispatcher...")
         try:
             import os
+
             token = os.getenv("BOT_TOKEN")
             if not token:
                 from config.env import get_settings
+
                 settings = get_settings()
                 token = settings.bot_token
 
@@ -48,6 +50,7 @@ def get_bot_and_dispatcher():
                 raise RuntimeError("BOT_TOKEN not found")
 
             from aiogram import Bot, Dispatcher
+
             bot = Bot(token)
             dp = Dispatcher()
             print("✅ Bot and dispatcher initialized for webhook handling")
