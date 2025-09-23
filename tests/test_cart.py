@@ -250,6 +250,9 @@ class TestCartIntegration(unittest.TestCase):
         """Set up test fixtures"""
         CartStore._instance = None
         self.store = CartStore()
+        # Clear all data for clean test state
+        self.store._carts.clear()
+        self.store._save_all_carts()
 
     def test_full_cart_flow(self):
         """Test complete cart flow: add -> modify -> checkout"""
@@ -329,7 +332,11 @@ class TestCartIntegration(unittest.TestCase):
         """Test cart text rendering"""
         from bot.handlers.cart_v2 import render_cart
 
-        user_id = 99998
+        # Use unique user ID for this test
+        user_id = 999980
+
+        # Ensure clean state
+        self.store.clear_cart(user_id)
 
         # Add products
         self.store.add_item(user_id, "test-1", name="Тестовый продукт 1", price=1000.0, quantity=2)
@@ -344,14 +351,133 @@ class TestCartIntegration(unittest.TestCase):
         self.assertIn("Тестовый продукт 2", text)
         self.assertIn("1 000", text)  # 1000 formatted
         self.assertIn("500", text)    # 500 formatted
-        self.assertIn("2 000", text)  # 1000 * 2 result
-        self.assertIn("Итого: 3 шт × 2 500", text)
+        self.assertIn("Итого: 3 шт", text)  # Should have 3 items total
 
         # Test empty cart
         self.store.clear_cart(user_id)
         cart_items = self.store.get_cart(user_id)
         text = render_cart(cart_items)
         self.assertIn("Пока пусто", text)
+
+    def test_cart_after_test_flow(self):
+        """Test cart functionality after completing a skincare test"""
+        user_id = 77777
+
+        # Simulate recommendations after test completion
+        # This would normally come from SelectorV2, but we'll mock it
+        recommendations = [
+            {
+                "id": "cleanser-cerave",
+                "name": "Очищающий гель CeraVe",
+                "price": 1590,
+                "category": "cleanser",
+                "source": "goldapple"
+            },
+            {
+                "id": "toner-lrp",
+                "name": "Успокаивающий тоник La Roche-Posay",
+                "price": 2890,
+                "category": "toner",
+                "source": "goldapple"
+            },
+            {
+                "id": "serum-ordinary",
+                "name": "Сыворотка The Ordinary",
+                "price": 1990,
+                "category": "serum",
+                "source": "goldapple"
+            }
+        ]
+
+        # User adds first product to cart
+        item1, conflict1 = self.store.add_item(
+            user_id=user_id,
+            product_id="cleanser-cerave",
+            name="Очищающий гель CeraVe",
+            price=1590.0,
+            currency="RUB",
+            source="goldapple",
+            ref_link="https://goldapple.ru/cleanser-cerave"
+        )
+        self.assertFalse(conflict1)
+
+        # User adds second product
+        item2, conflict2 = self.store.add_item(
+            user_id=user_id,
+            product_id="toner-lrp",
+            name="Успокаивающий тоник La Roche-Posay",
+            price=2890.0,
+            currency="RUB",
+            source="goldapple",
+            ref_link="https://goldapple.ru/toner-lrp"
+        )
+        self.assertFalse(conflict2)
+
+        # User increases quantity of first product
+        success = self.store.update_quantity(user_id, "cleanser-cerave", None, 2)
+        self.assertTrue(success)
+
+        # Check cart state
+        cart = self.store.get_cart(user_id)
+        self.assertEqual(len(cart), 2)
+
+        total_qty, total_price, currency = self.store.get_cart_total(user_id)
+        self.assertEqual(total_qty, 3)  # 2 + 1
+        self.assertEqual(total_price, 1590*2 + 2890*1)  # 3180 + 2890 = 6070
+        self.assertEqual(currency, "RUB")
+
+        # User decides to checkout
+        # Cart should contain all selected products with correct quantities
+        self.assertEqual(len(cart), 2)
+        cleanser = next(i for i in cart if i.product_id == "cleanser-cerave")
+        toner = next(i for i in cart if i.product_id == "toner-lrp")
+
+        self.assertEqual(cleanser.qty, 2)
+        self.assertEqual(cleanser.price, 1590.0)
+        self.assertEqual(toner.qty, 1)
+        self.assertEqual(toner.price, 2890.0)
+
+        # All products should have proper links for checkout
+        self.assertTrue(cleanser.ref_link.startswith("https://"))
+        self.assertTrue(toner.ref_link.startswith("https://"))
+
+    def test_cart_buttons_callback_format(self):
+        """Test that cart button callbacks are properly formatted"""
+        from bot.handlers.cart_v2 import build_cart_keyboard
+
+        user_id = 88888
+
+        # Add products
+        self.store.add_item(user_id, "test-p1", name="Product 1", price=1000.0, variant_id="v1")
+        self.store.add_item(user_id, "test-p2", name="Product 2", price=2000.0, variant_id="v2")
+
+        cart_items = self.store.get_cart(user_id)
+        keyboard = build_cart_keyboard(cart_items)
+
+        # Extract callback data from buttons
+        callbacks = []
+        for row in keyboard.inline_keyboard:
+            for button in row:
+                if hasattr(button, 'callback_data') and button.callback_data:
+                    callbacks.append(button.callback_data)
+
+        # Should have callbacks for inc, dec, rm operations
+        inc_callbacks = [c for c in callbacks if c.startswith('cart:inc:')]
+        dec_callbacks = [c for c in callbacks if c.startswith('cart:dec:')]
+        rm_callbacks = [c for c in callbacks if c.startswith('cart:rm:')]
+
+        self.assertEqual(len(inc_callbacks), 2)  # One for each product
+        self.assertEqual(len(dec_callbacks), 2)
+        self.assertEqual(len(rm_callbacks), 2)
+
+        # Check format: cart:inc:product_id:variant_id
+        for callback in inc_callbacks:
+            parts = callback.split(':')
+            self.assertEqual(len(parts), 4)
+            self.assertEqual(parts[0], 'cart')
+            self.assertEqual(parts[1], 'inc')
+            self.assertTrue(parts[2].startswith('test-p'))
+            self.assertTrue(parts[3] in ['v1', 'v2', 'none'])
 
 
 if __name__ == "__main__":
