@@ -32,6 +32,7 @@ def telegram_webhook():
 
     try:
         from aiogram import types
+
         update_data = request.get_json()
         if not update_data:
             return jsonify({"error": "No JSON data"}), 400
