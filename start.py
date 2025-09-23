@@ -41,7 +41,9 @@ def telegram_webhook():
         if not update_data:
             return jsonify({"error": "No JSON data"}), 400
 
-        print(f"📨 Processing webhook update: {update_data.get('message', {}).get('text', 'N/A')[:50]}...")
+        print(
+            f"📨 Processing webhook update: {update_data.get('message', {}).get('text', 'N/A')[:50]}..."
+        )
 
         update = types.Update(**update_data)
 
