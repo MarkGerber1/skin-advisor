@@ -13,7 +13,6 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder, InlineKeyboardButton
 from services.cart_store import CartStore, CartItem
 from bot.utils.security import safe_edit_message_text
 from engine.analytics import (
-    get_analytics_tracker,
     cart_item_added,
     cart_opened,
     cart_qty_changed,
