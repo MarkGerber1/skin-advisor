@@ -248,11 +248,17 @@ class TestCartIntegration(unittest.TestCase):
 
     def setUp(self):
         """Set up test fixtures"""
+        # Force new instance for clean test state
         CartStore._instance = None
         self.store = CartStore()
-        # Clear all data for clean test state
+
+        # Clear all data and files for clean test state
         self.store._carts.clear()
-        # No need to save empty carts, they'll be saved when items are added
+        import os
+        import shutil
+        if os.path.exists("data"):
+            shutil.rmtree("data")
+        os.makedirs("data/carts", exist_ok=True)
 
     def test_full_cart_flow(self):
         """Test complete cart flow: add -> modify -> checkout"""
