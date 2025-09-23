@@ -226,6 +226,7 @@ except ImportError:
         store = None
         try:
             from engine.cart_store import CartStore
+
             store = CartStore()
         except ImportError:
             cart_service_available = False
@@ -844,6 +845,7 @@ async def add_product_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
         try:
             # Получаем cart store
             from engine.cart_store import CartStore
+
             cart_store = CartStore()
 
             # Находим продукт для генерации партнерской ссылки
@@ -868,6 +870,7 @@ async def add_product_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
 
             # Создаем cart item
             from engine.cart_store import CartItem
+
             cart_item = CartItem(
                 product_id=product_id,
                 variant_id=variant_id,
@@ -883,6 +886,7 @@ async def add_product_to_cart(cb: CallbackQuery, state: FSMContext) -> None:
             # Аналитика
             try:
                 from engine.analytics import cart_item_added
+
                 cart_item_added(
                     user_id=user_id,
                     product_id=product_id,

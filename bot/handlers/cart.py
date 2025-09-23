@@ -47,8 +47,10 @@ try:
             print(f"analytics error: {exc}")
 
 except ImportError:  # pragma: no cover - analytics optional
+
     def _log_event(*args, **kwargs):  # type: ignore
         return None
+
 
 from engine.selector import SelectorV2
 from engine.catalog_store import CatalogStore
@@ -62,6 +64,7 @@ _catalog_store: Optional[CatalogStore] = None
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _catalog() -> Optional[CatalogStore]:
     global _catalog_store
@@ -103,7 +106,9 @@ def _compose_cart_view(user_id: int) -> Tuple[str, InlineKeyboardMarkup]:
     if not items:
         empty_text = sanitize_message(CART_EMPTY)
         keyboard = InlineKeyboardMarkup(
-            inline_keyboard=[[InlineKeyboardButton(text=BTN_CART_CONTINUE, callback_data="cart:back")]]
+            inline_keyboard=[
+                [InlineKeyboardButton(text=BTN_CART_CONTINUE, callback_data="cart:back")]
+            ]
         )
         return empty_text, keyboard
 
@@ -114,14 +119,16 @@ def _compose_cart_view(user_id: int) -> Tuple[str, InlineKeyboardMarkup]:
         unit_price = _money(item.price, item.currency)
         subtotal = _money(item.subtotal(), item.currency)
         variant_hint = f" ({item.variant_name})" if item.variant_name else ""
-        lines.append(CART_ITEM_LINE.format(
-            index=index,
-            name=item.name or item.product_id,
-            variant=variant_hint,
-            price=unit_price,
-            qty=item.quantity,
-            total=subtotal,
-        ))
+        lines.append(
+            CART_ITEM_LINE.format(
+                index=index,
+                name=item.name or item.product_id,
+                variant=variant_hint,
+                price=unit_price,
+                qty=item.quantity,
+                total=subtotal,
+            )
+        )
 
         key = _encode(item.product_id, item.variant_id)
         keyboard_rows.append(
@@ -134,17 +141,15 @@ def _compose_cart_view(user_id: int) -> Tuple[str, InlineKeyboardMarkup]:
         )
 
     lines.append("")
-    lines.append(CART_SUBTOTAL_LABEL.format(
-        qty=total_qty,
-        total=_money(total_price, currency),
-    ))
+    lines.append(
+        CART_SUBTOTAL_LABEL.format(
+            qty=total_qty,
+            total=_money(total_price, currency),
+        )
+    )
 
-    keyboard_rows.append(
-        [InlineKeyboardButton(text=BTN_CART_CLEAR, callback_data="cart:clr")]
-    )
-    keyboard_rows.append(
-        [InlineKeyboardButton(text=BTN_CART_CONTINUE, callback_data="cart:back")]
-    )
+    keyboard_rows.append([InlineKeyboardButton(text=BTN_CART_CLEAR, callback_data="cart:clr")])
+    keyboard_rows.append([InlineKeyboardButton(text=BTN_CART_CONTINUE, callback_data="cart:back")])
     keyboard_rows.append(
         [InlineKeyboardButton(text=BTN_CART_CHECKOUT, callback_data="cart:checkout")]
     )
@@ -221,6 +226,7 @@ async def _show_cart(target: CallbackQuery | Message) -> None:
 # ---------------------------------------------------------------------------
 # Handlers
 # ---------------------------------------------------------------------------
+
 
 @router.callback_query(F.data == "cart:open")
 async def cart_open(cb: CallbackQuery) -> None:

@@ -14,31 +14,30 @@ import sys
 import os
 
 # Set test environment before importing
-os.environ['BOT_TOKEN'] = 'test_token_12345'
-os.environ['ALLOW_PIN'] = 'false'
-os.environ['PIN_WHITELIST'] = ''
-os.environ['CHAT_WHITELIST'] = ''
-os.environ['SANITIZE_MESSAGES'] = 'true'
+os.environ["BOT_TOKEN"] = "test_token_12345"
+os.environ["ALLOW_PIN"] = "false"
+os.environ["PIN_WHITELIST"] = ""
+os.environ["CHAT_WHITELIST"] = ""
+os.environ["SANITIZE_MESSAGES"] = "true"
 
-sys.path.append('.')
+sys.path.append(".")
 
 from config.env import SecurityConfig, get_settings
 from bot.utils.security import (
     MessageSanitizer,
     sanitize_message,
     AntiSpamGuard,
-    ChatWhitelistFilter
+    ChatWhitelistFilter,
 )
+
 
 # Create test instances without requiring full config
 def create_test_security_config():
     """Create test security config for testing"""
     return SecurityConfig(
-        allow_pin=False,
-        pin_whitelist=[],
-        chat_whitelist=[],
-        sanitize_messages=True
+        allow_pin=False, pin_whitelist=[], chat_whitelist=[], sanitize_messages=True
     )
+
 
 def test_message_sanitization():
     """Test message sanitization"""
@@ -70,20 +69,23 @@ def test_message_sanitization():
     print(f"  📊 Sanitization: {passed}/{len(test_cases)} passed\n")
     return passed == len(test_cases)
 
+
 def test_spam_detection():
     """Test spam detection"""
     print("🚨 Testing Spam Detection...")
 
     # Create guard with test config
     from bot.utils.security import AntiSpamGuard
+
     test_config = create_test_security_config()
 
     class TestAntiSpamGuard(AntiSpamGuard):
         def __init__(self):
-            self.settings = type('TestSettings', (), {'security': test_config})()
+            self.settings = type("TestSettings", (), {"security": test_config})()
             # Add logger for testing
             import logging
-            self.logger = logging.getLogger('test_guard')
+
+            self.logger = logging.getLogger("test_guard")
 
     guard = TestAntiSpamGuard()
 
@@ -106,10 +108,13 @@ def test_spam_detection():
             print(f"  {status} '{text[:30]}...'")
             passed += 1
         else:
-            print(f"  ❌ MISMATCH '{text[:30]}...' (expected: {'spam' if should_be_spam else 'clean'})")
+            print(
+                f"  ❌ MISMATCH '{text[:30]}...' (expected: {'spam' if should_be_spam else 'clean'})"
+            )
 
     print(f"  📊 Spam detection: {passed}/{len(spam_cases)} passed\n")
     return passed == len(spam_cases)
+
 
 def test_chat_filtering():
     """Test chat whitelist filtering"""
@@ -117,11 +122,12 @@ def test_chat_filtering():
 
     # Test with default config (empty whitelist = allow all)
     from bot.utils.security import ChatWhitelistFilter
+
     test_config = create_test_security_config()
 
     class TestChatFilter(ChatWhitelistFilter):
         def __init__(self):
-            self.settings = type('TestSettings', (), {'security': test_config})()
+            self.settings = type("TestSettings", (), {"security": test_config})()
 
     filter_instance = TestChatFilter()
 
@@ -138,10 +144,13 @@ def test_chat_filtering():
             print(f"  {status} Chat {chat_id}")
             passed += 1
         else:
-            print(f"  ❌ MISMATCH Chat {chat_id} (expected: {'allowed' if should_be_allowed else 'blocked'})")
+            print(
+                f"  ❌ MISMATCH Chat {chat_id} (expected: {'allowed' if should_be_allowed else 'blocked'})"
+            )
 
     print(f"  📊 Chat filtering: {passed}/{len(test_chats)} passed\n")
     return passed == len(test_chats)
+
 
 def test_security_config():
     """Test security configuration"""
@@ -153,14 +162,16 @@ def test_security_config():
 
         # Check configuration structure
         assert isinstance(security, SecurityConfig), "Security config not properly loaded"
-        assert hasattr(security, 'allow_pin'), "Missing allow_pin setting"
-        assert hasattr(security, 'pin_whitelist'), "Missing pin_whitelist setting"
-        assert hasattr(security, 'chat_whitelist'), "Missing chat_whitelist setting"
-        assert hasattr(security, 'sanitize_messages'), "Missing sanitize_messages setting"
-        assert hasattr(security, 'spam_keywords'), "Missing spam_keywords setting"
+        assert hasattr(security, "allow_pin"), "Missing allow_pin setting"
+        assert hasattr(security, "pin_whitelist"), "Missing pin_whitelist setting"
+        assert hasattr(security, "chat_whitelist"), "Missing chat_whitelist setting"
+        assert hasattr(security, "sanitize_messages"), "Missing sanitize_messages setting"
+        assert hasattr(security, "spam_keywords"), "Missing spam_keywords setting"
 
         # Check default values
-        assert security.allow_pin == False, f"allow_pin should be False by default, got {security.allow_pin}"
+        assert (
+            security.allow_pin == False
+        ), f"allow_pin should be False by default, got {security.allow_pin}"
         assert isinstance(security.spam_keywords, list), "spam_keywords should be a list"
         assert len(security.spam_keywords) > 0, "spam_keywords should not be empty"
 
@@ -176,20 +187,23 @@ def test_security_config():
         print(f"  ❌ Security config test failed: {e}")
         return False
 
+
 def test_pin_control():
     """Test pin control logic"""
     print("📌 Testing Pin Control...")
 
     # Create guard with test config
     from bot.utils.security import AntiSpamGuard
+
     test_config = create_test_security_config()
 
     class TestAntiSpamGuard(AntiSpamGuard):
         def __init__(self):
-            self.settings = type('TestSettings', (), {'security': test_config})()
+            self.settings = type("TestSettings", (), {"security": test_config})()
             # Add logger for testing
             import logging
-            self.logger = logging.getLogger('test_guard')
+
+            self.logger = logging.getLogger("test_guard")
 
     guard = TestAntiSpamGuard()
 
@@ -208,10 +222,13 @@ def test_pin_control():
             print(f"  {status} '{message_text[:30]}...' (user: {user_id})")
             passed += 1
         else:
-            print(f"  ❌ MISMATCH '{message_text[:30]}...' (expected: {'unpin' if should_unpin else 'allow'})")
+            print(
+                f"  ❌ MISMATCH '{message_text[:30]}...' (expected: {'unpin' if should_unpin else 'allow'})"
+            )
 
     print(f"  📊 Pin control: {passed}/{len(test_cases)} passed\n")
     return passed == len(test_cases)
+
 
 def main():
     """Run all security tests"""
@@ -248,6 +265,7 @@ def main():
     else:
         print("⚠️ SOME TESTS FAILED - REVIEW SECURITY IMPLEMENTATION")
         return False
+
 
 if __name__ == "__main__":
     success = main()

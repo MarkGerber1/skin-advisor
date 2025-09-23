@@ -40,6 +40,3 @@ class TestSanitizeMessage:
         input_text = "Text [artifact] and <angle> content"
         expected = "Text  and  content"
         assert sanitize_message(input_text) == expected
-
-
-

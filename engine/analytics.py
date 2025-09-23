@@ -556,56 +556,70 @@ def track_skincare_error(
     tracker = get_analytics_tracker()
     tracker.emit("error_shown", user_id, {"code": error_code, "place": place}, session_id)
 
+
 # Cart v2 Analytics Events
 def cart_opened(user_id: int, session_id: Optional[str] = None) -> None:
     """User opened cart"""
     tracker = get_analytics_tracker()
     tracker.emit("cart_opened", user_id, {}, session_id)
 
-def cart_item_added(user_id: int, product_id: str, variant_id: str, source: str, price: float, session_id: Optional[str] = None) -> None:
+
+def cart_item_added(
+    user_id: int,
+    product_id: str,
+    variant_id: str,
+    source: str,
+    price: float,
+    session_id: Optional[str] = None,
+) -> None:
     """User added item to cart"""
     tracker = get_analytics_tracker()
-    tracker.emit("cart_item_added", user_id, {
-        "product_id": product_id,
-        "variant_id": variant_id,
-        "source": source,
-        "price": price
-    }, session_id)
+    tracker.emit(
+        "cart_item_added",
+        user_id,
+        {"product_id": product_id, "variant_id": variant_id, "source": source, "price": price},
+        session_id,
+    )
 
-def cart_qty_changed(user_id: int, item_key: str, new_qty: int, session_id: Optional[str] = None) -> None:
+
+def cart_qty_changed(
+    user_id: int, item_key: str, new_qty: int, session_id: Optional[str] = None
+) -> None:
     """User changed item quantity in cart"""
     tracker = get_analytics_tracker()
-    tracker.emit("cart_qty_changed", user_id, {
-        "item_key": item_key,
-        "new_qty": new_qty
-    }, session_id)
+    tracker.emit(
+        "cart_qty_changed", user_id, {"item_key": item_key, "new_qty": new_qty}, session_id
+    )
+
 
 def cart_item_removed(user_id: int, item_key: str, session_id: Optional[str] = None) -> None:
     """User removed item from cart"""
     tracker = get_analytics_tracker()
-    tracker.emit("cart_item_removed", user_id, {
-        "item_key": item_key
-    }, session_id)
+    tracker.emit("cart_item_removed", user_id, {"item_key": item_key}, session_id)
+
 
 def cart_cleared(user_id: int, session_id: Optional[str] = None) -> None:
     """User cleared entire cart"""
     tracker = get_analytics_tracker()
     tracker.emit("cart_cleared", user_id, {}, session_id)
 
-def checkout_started(user_id: int, items_count: int, subtotal: float, session_id: Optional[str] = None) -> None:
+
+def checkout_started(
+    user_id: int, items_count: int, subtotal: float, session_id: Optional[str] = None
+) -> None:
     """User started checkout process"""
     tracker = get_analytics_tracker()
-    tracker.emit("checkout_started", user_id, {
-        "items_count": items_count,
-        "subtotal": subtotal
-    }, session_id)
+    tracker.emit(
+        "checkout_started", user_id, {"items_count": items_count, "subtotal": subtotal}, session_id
+    )
 
-def checkout_links_generated(user_id: int, links_count: int, session_id: Optional[str] = None) -> None:
+
+def checkout_links_generated(
+    user_id: int, links_count: int, session_id: Optional[str] = None
+) -> None:
     """Checkout links were generated for user"""
     tracker = get_analytics_tracker()
-    tracker.emit("checkout_links_generated", user_id, {
-        "links_count": links_count
-    }, session_id)
+    tracker.emit("checkout_links_generated", user_id, {"links_count": links_count}, session_id)
 
 
 if __name__ == "__main__":

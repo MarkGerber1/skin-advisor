@@ -20,12 +20,7 @@ def test_cart_item():
     assert item2.get_composite_key() == "prod1:"
 
     # Test initialization
-    item = CartItem(
-        product_id="test_prod",
-        name="Test Product",
-        price=1990,
-        currency="RUB"
-    )
+    item = CartItem(product_id="test_prod", name="Test Product", price=1990, currency="RUB")
     assert item.product_id == "test_prod"
     assert item.price == 1990
     assert item.currency == "RUB"
@@ -46,25 +41,13 @@ def test_cart_operations():
     assert len(cart.items) == 0
 
     # Test single item
-    item = CartItem(
-        product_id="prod1",
-        name="Test Product",
-        price=1990,
-        currency="RUB",
-        qty=2
-    )
+    item = CartItem(product_id="prod1", name="Test Product", price=1990, currency="RUB", qty=2)
     cart.add_item(item)
     assert len(cart.items) == 1
     assert cart.subtotal == 3980  # 1990 * 2
 
     # Test idempotent add
-    item2 = CartItem(
-        product_id="prod1",
-        variant_id="",
-        name="Test Product",
-        price=1990,
-        qty=3
-    )
+    item2 = CartItem(product_id="prod1", variant_id="", name="Test Product", price=1990, qty=3)
     cart.add_item(item2)
     assert len(cart.items) == 1  # Still 1 item
     assert cart.items["prod1:"].qty == 5  # 2 + 3
@@ -87,21 +70,9 @@ def test_mixed_currencies():
 
     cart = Cart(user_id=123)
 
-    item_rub = CartItem(
-        product_id="prod1",
-        name="RUB Product",
-        price=1990,
-        currency="RUB",
-        qty=1
-    )
+    item_rub = CartItem(product_id="prod1", name="RUB Product", price=1990, currency="RUB", qty=1)
 
-    item_usd = CartItem(
-        product_id="prod2",
-        name="USD Product",
-        price=2500,
-        currency="USD",
-        qty=1
-    )
+    item_usd = CartItem(product_id="prod2", name="USD Product", price=2500, currency="USD", qty=1)
 
     cart.add_item(item_rub)
     cart.add_item(item_usd)
@@ -124,5 +95,3 @@ if __name__ == "__main__":
 
     print("=" * 40)
     print("🎉 ALL TESTS PASSED!")
-
-

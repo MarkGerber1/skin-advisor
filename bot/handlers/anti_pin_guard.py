@@ -16,6 +16,7 @@ from config.env import get_settings
 logger = logging.getLogger(__name__)
 router = Router()
 
+
 @router.message(F.pinned_message)
 async def handle_pinned_message(message: Message, bot: Bot):
     """
@@ -50,18 +51,19 @@ async def handle_pinned_message(message: Message, bot: Bot):
             return
 
         # Get user who pinned (if available from the pin event)
-        user_id = getattr(message.from_user, 'id', None) if message.from_user else None
+        user_id = getattr(message.from_user, "id", None) if message.from_user else None
 
         # Check if message should be unpinned
         if anti_spam_guard.should_unpin_message(message_text, user_id):
             try:
                 # Unpin the message
                 from bot.utils.security import safe_unpin_message
+
                 await safe_unpin_message(
                     bot=bot,
                     chat_id=message.chat.id,
                     message_id=pinned_msg.message_id,
-                    user_id=user_id
+                    user_id=user_id,
                 )
 
                 # Log the action
@@ -82,7 +84,7 @@ async def handle_pinned_message(message: Message, bot: Bot):
                                 f"Content: `{message_text[:200]}...`\n\n"
                                 f"_Message automatically unpinned_"
                             ),
-                            parse_mode="Markdown"
+                            parse_mode="Markdown",
                         )
                     except Exception as e:
                         logger.error(f"Failed to notify owner: {e}")
@@ -101,6 +103,7 @@ async def handle_pinned_message(message: Message, bot: Bot):
 
     except Exception as e:
         logger.error(f"Error in anti-pin guard handler: {e}")
+
 
 # Export router
 __all__ = ["router"]

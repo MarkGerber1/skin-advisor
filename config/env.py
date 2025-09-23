@@ -95,9 +95,22 @@ class SecurityConfig(BaseModel):
 
     # Anti-spam keywords for auto-unpin
     spam_keywords: List[str] = [
-        "airdrop", "token", "crypto", "FOXY", "USDT", "BTC",
-        "x100", "giveaway", "free money", "invest", "trading",
-        "wallet", "blockchain", "defi", "nft", "mining"
+        "airdrop",
+        "token",
+        "crypto",
+        "FOXY",
+        "USDT",
+        "BTC",
+        "x100",
+        "giveaway",
+        "free money",
+        "invest",
+        "trading",
+        "wallet",
+        "blockchain",
+        "defi",
+        "nft",
+        "mining",
     ]
 
     # Message sanitization
@@ -250,14 +263,18 @@ class Settings(BaseSettings):
         pin_whitelist = []
         if self.pin_whitelist:
             try:
-                pin_whitelist = [int(uid.strip()) for uid in self.pin_whitelist.split(",") if uid.strip()]
+                pin_whitelist = [
+                    int(uid.strip()) for uid in self.pin_whitelist.split(",") if uid.strip()
+                ]
             except ValueError:
                 pin_whitelist = []
 
         chat_whitelist = []
         if self.chat_whitelist:
             try:
-                chat_whitelist = [int(cid.strip()) for cid in self.chat_whitelist.split(",") if cid.strip()]
+                chat_whitelist = [
+                    int(cid.strip()) for cid in self.chat_whitelist.split(",") if cid.strip()
+                ]
             except ValueError:
                 chat_whitelist = []
 
@@ -273,7 +290,7 @@ class Settings(BaseSettings):
             pin_whitelist=pin_whitelist,
             chat_whitelist=chat_whitelist,
             sanitize_messages=self.sanitize_messages,
-            unpin_on_start=self.unpin_on_start
+            unpin_on_start=self.unpin_on_start,
         )
 
 

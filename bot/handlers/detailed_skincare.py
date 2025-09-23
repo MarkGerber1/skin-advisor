@@ -767,6 +767,7 @@ async def q8_desired_effect(cb: CallbackQuery, state: FSMContext) -> None:
         # 🎯 CART V2 INTEGRATION: Show recommendations after skincare test
         try:
             from bot.handlers.recommendations import show_recommendations_after_test
+
             await show_recommendations_after_test(cb.bot, cb.from_user.id, "skincare")
         except Exception as e:
             print(f"⚠️ Failed to show skincare recommendations: {e}")

@@ -469,8 +469,7 @@ async def main() -> None:
             try:
                 # Try to get updates with short timeout to detect conflicts
                 updates = await asyncio.wait_for(
-                    bot.get_updates(offset=-1, limit=1, timeout=5),
-                    timeout=6
+                    bot.get_updates(offset=-1, limit=1, timeout=5), timeout=6
                 )
                 print(f"✅ No active polling sessions detected (got {len(updates)} updates)")
             except asyncio.TimeoutError:
@@ -489,12 +488,16 @@ async def main() -> None:
             # Security: Auto-unpin messages on startup if configured
             try:
                 from config.env import get_settings
+
                 settings = get_settings()
 
                 if settings.security.unpin_on_start and settings.owner_id:
                     from bot.utils.security import safe_unpin_all_messages
+
                     await safe_unpin_all_messages(bot, settings.owner_id, settings.owner_id)
-                    print(f"[ANTI-PIN] Unpinned all messages in owner chat {settings.owner_id} on startup")
+                    print(
+                        f"[ANTI-PIN] Unpinned all messages in owner chat {settings.owner_id} on startup"
+                    )
             except Exception as e:
                 print(f"⚠️ Could not unpin messages on startup: {e}")
 

@@ -15,6 +15,7 @@ from config.env import get_settings
 logger = logging.getLogger(__name__)
 router = Router()
 
+
 @router.message(Command("reset_pins"))
 async def handle_reset_pins(message: Message, bot: Bot):
     """
@@ -34,17 +35,21 @@ async def handle_reset_pins(message: Message, bot: Bot):
 
         # Unpin all messages in owner chat
         from bot.utils.security import safe_unpin_all_messages
+
         await safe_unpin_all_messages(bot, settings.owner_id, user_id)
 
         # Send confirmation
         await message.answer("✅ Все пины очищены в вашем приватном чате.")
 
         # Log action
-        logger.info(f"[ADMIN] User {user_id} executed /reset_pins - unpinned all in chat {settings.owner_id}")
+        logger.info(
+            f"[ADMIN] User {user_id} executed /reset_pins - unpinned all in chat {settings.owner_id}"
+        )
 
     except Exception as e:
         logger.error(f"Error in /reset_pins command: {e}")
         await message.answer("❌ Произошла ошибка при очистке пинов.")
+
 
 # Export router
 __all__ = ["router"]

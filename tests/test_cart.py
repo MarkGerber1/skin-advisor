@@ -161,7 +161,7 @@ class TestCartStore(unittest.TestCase):
             product_id="rub_product",
             name="RUB Product",
             price=100.0,
-            currency="RUB"
+            currency="RUB",
         )
         self.assertFalse(conflict1)
 
@@ -171,7 +171,7 @@ class TestCartStore(unittest.TestCase):
             product_id="rub_product2",
             name="RUB Product 2",
             price=200.0,
-            currency="RUB"
+            currency="RUB",
         )
         self.assertFalse(conflict2)
 
@@ -181,7 +181,7 @@ class TestCartStore(unittest.TestCase):
             product_id="usd_product",
             name="USD Product",
             price=50.0,
-            currency="USD"
+            currency="USD",
         )
         self.assertTrue(conflict3)
 
@@ -196,7 +196,7 @@ class TestCartStore(unittest.TestCase):
             variant_id="variant1",
             quantity=2,
             name="Same Product",
-            price=100.0
+            price=100.0,
         )
         self.assertEqual(item1.qty, 2)
 
@@ -207,7 +207,7 @@ class TestCartStore(unittest.TestCase):
             variant_id="variant1",
             quantity=3,
             name="Same Product",
-            price=100.0
+            price=100.0,
         )
         self.assertEqual(item2.qty, 5)  # 2 + 3
 

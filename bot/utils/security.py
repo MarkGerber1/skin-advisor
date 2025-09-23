@@ -15,17 +15,18 @@ from config.env import get_settings
 
 logger = logging.getLogger(__name__)
 
+
 class MessageSanitizer:
     """Sanitizes outgoing messages to prevent markdown artifacts and spam"""
 
     # Patterns to clean up
     MARKDOWN_ARTIFACTS = [
-        r'\*{3,}',  # Multiple asterisks
-        r'#{3,}',  # Multiple hashes
-        r'-{3,}',  # Multiple dashes
-        r'`{3,}',  # Multiple backticks
-        r'\n{3,}',  # Multiple newlines
-        r' {2,}',  # Multiple spaces
+        r"\*{3,}",  # Multiple asterisks
+        r"#{3,}",  # Multiple hashes
+        r"-{3,}",  # Multiple dashes
+        r"`{3,}",  # Multiple backticks
+        r"\n{3,}",  # Multiple newlines
+        r" {2,}",  # Multiple spaces
     ]
 
     @staticmethod
@@ -47,10 +48,11 @@ class MessageSanitizer:
             text = re.sub(pattern, lambda m: m.group()[0] * 2, text)
 
         # Normalize spaces and newlines
-        text = re.sub(r'\n\s*\n\s*\n+', '\n\n', text)  # Max 2 consecutive newlines
-        text = re.sub(r' +', ' ', text)  # Max 1 space
+        text = re.sub(r"\n\s*\n\s*\n+", "\n\n", text)  # Max 2 consecutive newlines
+        text = re.sub(r" +", " ", text)  # Max 1 space
 
         return text.strip()
+
 
 class AntiSpamGuard:
     """Anti-spam protection for pinned messages"""
@@ -75,7 +77,9 @@ class AntiSpamGuard:
         text_lower = text.lower()
         for keyword in self.settings.security.spam_keywords:
             if keyword.lower() in text_lower:
-                self.logger.warning(f"🚨 SPAM DETECTED: keyword '{keyword}' found in: {text[:100]}...")
+                self.logger.warning(
+                    f"🚨 SPAM DETECTED: keyword '{keyword}' found in: {text[:100]}..."
+                )
                 return True
 
         return False
@@ -107,6 +111,7 @@ class AntiSpamGuard:
             return True
 
         return False
+
 
 class ChatWhitelistFilter:
     """Filters incoming messages based on chat whitelist"""
@@ -149,22 +154,27 @@ class ChatWhitelistFilter:
         # For group chats, additional logic might be needed
         return True  # For now, allow all users (filtering happens at chat level)
 
+
 # Global instances
 sanitizer = MessageSanitizer()
 anti_spam_guard = AntiSpamGuard()
 chat_filter = ChatWhitelistFilter()
 
+
 def sanitize_message(text: str) -> str:
     """Convenience function for message sanitization"""
     return sanitizer.sanitize(text)
+
 
 def check_spam_content(text: str) -> bool:
     """Convenience function for spam checking"""
     return anti_spam_guard.is_spam_content(text)
 
+
 def is_chat_allowed(chat_id: int) -> bool:
     """Convenience function for chat filtering"""
     return chat_filter.is_chat_allowed(chat_id)
+
 
 # Safe message sending utilities
 async def safe_send_message(bot, chat_id: int, text: str, **kwargs):
@@ -195,6 +205,7 @@ async def safe_send_message(bot, chat_id: int, text: str, **kwargs):
         logger.error(f"Failed to send message to chat {chat_id}: {e}")
         return None
 
+
 async def safe_edit_message_text(bot, chat_id: int, message_id: int, text: str, **kwargs):
     """
     Safely edit message text with sanitization.
@@ -215,14 +226,12 @@ async def safe_edit_message_text(bot, chat_id: int, message_id: int, text: str, 
     # Edit message
     try:
         return await bot.edit_message_text(
-            chat_id=chat_id,
-            message_id=message_id,
-            text=sanitized_text,
-            **kwargs
+            chat_id=chat_id, message_id=message_id, text=sanitized_text, **kwargs
         )
     except Exception as e:
         logger.error(f"Failed to edit message {message_id} in chat {chat_id}: {e}")
         return None
+
 
 async def safe_pin_message(bot, chat_id: int, message_id: int, user_id: int = None, **kwargs):
     """
@@ -242,16 +251,22 @@ async def safe_pin_message(bot, chat_id: int, message_id: int, user_id: int = No
 
     # Check if pinning is allowed globally
     if not settings.security.allow_pin:
-        logger.info(f"[PIN-INTENT] BLOCKED: Pinning disabled globally (chat {chat_id}, user {user_id})")
+        logger.info(
+            f"[PIN-INTENT] BLOCKED: Pinning disabled globally (chat {chat_id}, user {user_id})"
+        )
         return False
 
     # Check if user is in whitelist
     if user_id and user_id not in settings.security.pin_whitelist:
-        logger.warning(f"[PIN-INTENT] BLOCKED: User {user_id} not in pin whitelist (chat {chat_id})")
+        logger.warning(
+            f"[PIN-INTENT] BLOCKED: User {user_id} not in pin whitelist (chat {chat_id})"
+        )
         return False
 
     # Log successful pin intent
-    logger.info(f"[PIN-INTENT] ALLOWED: Pinning message {message_id} in chat {chat_id} by user {user_id}")
+    logger.info(
+        f"[PIN-INTENT] ALLOWED: Pinning message {message_id} in chat {chat_id} by user {user_id}"
+    )
 
     try:
         await bot.pin_chat_message(chat_id=chat_id, message_id=message_id, **kwargs)
@@ -261,13 +276,8 @@ async def safe_pin_message(bot, chat_id: int, message_id: int, user_id: int = No
         return False
 
 
-
 async def safe_unpin_message(
-    bot: Bot,
-    chat_id: int,
-    message_id: int,
-    user_id: Optional[int] = None,
-    **kwargs
+    bot: Bot, chat_id: int, message_id: int, user_id: Optional[int] = None, **kwargs
 ) -> bool:
     """
     Safely unpin a message with security checks.
@@ -286,16 +296,22 @@ async def safe_unpin_message(
 
     # Check if pinning is allowed globally (unpin is reverse of pin)
     if not settings.security.allow_pin:
-        logger.info(f"[UNPIN-INTENT] BLOCKED: Unpinning disabled globally (chat {chat_id}, user {user_id})")
+        logger.info(
+            f"[UNPIN-INTENT] BLOCKED: Unpinning disabled globally (chat {chat_id}, user {user_id})"
+        )
         return False
 
     # Check if user is in whitelist
     if user_id and user_id not in settings.security.pin_whitelist:
-        logger.warning(f"[UNPIN-INTENT] BLOCKED: User {user_id} not in pin whitelist (chat {chat_id})")
+        logger.warning(
+            f"[UNPIN-INTENT] BLOCKED: User {user_id} not in pin whitelist (chat {chat_id})"
+        )
         return False
 
     # Log successful unpin intent
-    logger.info(f"[UNPIN-INTENT] ALLOWED: Unpinning message {message_id} in chat {chat_id} by user {user_id}")
+    logger.info(
+        f"[UNPIN-INTENT] ALLOWED: Unpinning message {message_id} in chat {chat_id} by user {user_id}"
+    )
 
     try:
         await bot.unpin_chat_message(chat_id=chat_id, message_id=message_id, **kwargs)
@@ -305,11 +321,7 @@ async def safe_unpin_message(
         return False
 
 
-async def safe_unpin_all_messages(
-    bot: Bot,
-    chat_id: int,
-    user_id: Optional[int] = None
-) -> bool:
+async def safe_unpin_all_messages(bot: Bot, chat_id: int, user_id: Optional[int] = None) -> bool:
     """
     Safely unpin all messages in a chat with security checks.
 
@@ -324,11 +336,15 @@ async def safe_unpin_all_messages(
     settings = get_settings()
 
     if not settings.security.allow_pin:
-        logger.info(f"[UNPIN-ALL-INTENT] BLOCKED: Unpinning disabled globally (chat {chat_id}, user {user_id})")
+        logger.info(
+            f"[UNPIN-ALL-INTENT] BLOCKED: Unpinning disabled globally (chat {chat_id}, user {user_id})"
+        )
         return False
 
     if user_id and user_id not in settings.security.pin_whitelist:
-        logger.warning(f"[UNPIN-ALL-INTENT] BLOCKED: User {user_id} not in pin whitelist (chat {chat_id})")
+        logger.warning(
+            f"[UNPIN-ALL-INTENT] BLOCKED: User {user_id} not in pin whitelist (chat {chat_id})"
+        )
         return False
 
     logger.info(f"[UNPIN-ALL-INTENT] ALLOWED: Unpinning all in chat {chat_id} by user {user_id}")

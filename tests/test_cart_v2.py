@@ -27,10 +27,7 @@ class TestCartItem:
     def test_initialization(self):
         """Test CartItem initialization with defaults"""
         item = CartItem(
-            product_id="test_prod",
-            name="Test Product",
-            price=1990,  # 19.90 RUB
-            currency="RUB"
+            product_id="test_prod", name="Test Product", price=1990, currency="RUB"  # 19.90 RUB
         )
 
         assert item.product_id == "test_prod"
@@ -60,13 +57,7 @@ class TestCart:
     def test_single_item_cart(self):
         """Test cart with one item"""
         cart = Cart(user_id=123)
-        item = CartItem(
-            product_id="prod1",
-            name="Test Product",
-            price=1990,
-            currency="RUB",
-            qty=2
-        )
+        item = CartItem(product_id="prod1", name="Test Product", price=1990, currency="RUB", qty=2)
 
         cart.add_item(item)
         assert len(cart.items) == 1
@@ -79,11 +70,7 @@ class TestCart:
         cart = Cart(user_id=123)
 
         item_rub = CartItem(
-            product_id="prod1",
-            name="RUB Product",
-            price=1990,
-            currency="RUB",
-            qty=1
+            product_id="prod1", name="RUB Product", price=1990, currency="RUB", qty=1
         )
 
         item_usd = CartItem(
@@ -91,7 +78,7 @@ class TestCart:
             name="USD Product",
             price=2500,  # 25.00 USD in cents
             currency="USD",
-            qty=1
+            qty=1,
         )
 
         cart.add_item(item_rub)
@@ -107,19 +94,11 @@ class TestCart:
         cart = Cart(user_id=123)
 
         item1 = CartItem(
-            product_id="prod1",
-            variant_id="size-m",
-            name="Test Product",
-            price=1990,
-            qty=2
+            product_id="prod1", variant_id="size-m", name="Test Product", price=1990, qty=2
         )
 
         item2 = CartItem(
-            product_id="prod1",
-            variant_id="size-m",
-            name="Test Product",
-            price=1990,
-            qty=3
+            product_id="prod1", variant_id="size-m", name="Test Product", price=1990, qty=3
         )
 
         cart.add_item(item1)
@@ -166,6 +145,7 @@ class TestCartStore:
     def teardown_method(self):
         """Cleanup temporary files"""
         import shutil
+
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def test_add_idempotent_merge(self):
@@ -181,7 +161,7 @@ class TestCartStore:
             currency="RUB",
             source="goldapple",
             link="https://example.com",
-            qty=2
+            qty=2,
         )
 
         async def test():
@@ -196,6 +176,7 @@ class TestCartStore:
             assert cart2.items["test_prod:variant_1"].qty == 4  # 2 + 2
 
         import asyncio
+
         asyncio.run(test())
 
     def test_set_qty_operations(self):
@@ -216,6 +197,7 @@ class TestCartStore:
             assert "prod1:" not in cart.items
 
         import asyncio
+
         asyncio.run(test())
 
     def test_remove_item(self):
@@ -239,6 +221,7 @@ class TestCartStore:
             assert "prod2:" in cart.items
 
         import asyncio
+
         asyncio.run(test())
 
     def test_clear_cart(self):
@@ -259,6 +242,7 @@ class TestCartStore:
             assert len(cart.items) == 0
 
         import asyncio
+
         asyncio.run(test())
 
     def test_persistence(self):
@@ -279,6 +263,7 @@ class TestCartStore:
             assert cart.items["persistent:"].price == 1500
 
         import asyncio
+
         asyncio.run(test())
 
 

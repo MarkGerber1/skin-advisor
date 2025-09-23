@@ -11,6 +11,7 @@ from typing import Dict, List, Optional
 @dataclass
 class CartItem:
     """Cart item with full product information"""
+
     product_id: str
     variant_id: Optional[str] = None
     name: str = ""
@@ -40,8 +41,11 @@ class CartItem:
 @dataclass
 class Cart:
     """Shopping cart with full calculation logic"""
+
     user_id: int
-    items: Dict[str, CartItem] = field(default_factory=dict)  # key = f"{product_id}:{variant_id or ''}"
+    items: Dict[str, CartItem] = field(
+        default_factory=dict
+    )  # key = f"{product_id}:{variant_id or ''}"
     subtotal: int = 0  # в копейках
     currency: str = "RUB"  # единая валюта корзины
     updated_at: datetime = field(default_factory=datetime.now)
@@ -155,7 +159,7 @@ class CartStore:
                 f,
                 ensure_ascii=False,
                 indent=2,
-                default=str  # Handle datetime serialization
+                default=str,  # Handle datetime serialization
             )
 
     # New interface methods

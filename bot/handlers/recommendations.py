@@ -57,7 +57,7 @@ async def handle_recommendations(cb: CallbackQuery, bot: Bot) -> None:
             product_id = data.split(":")[2]
             await _show_product_details(cb, product_id)
         elif data.startswith("rec:more:"):
-            parts = (data.split(":") + ["all", "1"])
+            parts = data.split(":") + ["all", "1"]
             category = parts[2] or "all"
             page = int(parts[3]) if len(parts) > 3 and parts[3] else 1
             await show_recommendations_page(cb, category, page)
@@ -92,8 +92,18 @@ def _fallback_products() -> List[dict]:
         {"id": "cleanser-001", "name": "Очищающий гель", "price": 1590, "category": "cleanser"},
         {"id": "toner-001", "name": "Успокаивающий тоник", "price": 1890, "category": "toner"},
         {"id": "serum-001", "name": "Сыворотка с витамином С", "price": 2190, "category": "serum"},
-        {"id": "moisturizer-001", "name": "Увлажняющий крем", "price": 1290, "category": "moisturizer"},
-        {"id": "sunscreen-001", "name": "Солнцезащитный крем", "price": 2990, "category": "sunscreen"},
+        {
+            "id": "moisturizer-001",
+            "name": "Увлажняющий крем",
+            "price": 1290,
+            "category": "moisturizer",
+        },
+        {
+            "id": "sunscreen-001",
+            "name": "Солнцезащитный крем",
+            "price": 2990,
+            "category": "sunscreen",
+        },
     ]
 
 
@@ -118,7 +128,9 @@ def _filter_products(category: str, page: int, per_page: int = 3) -> tuple[List[
     return filtered[start:end], total_pages
 
 
-async def show_recommendations_page(cb: CallbackQuery, category: str = "all", page: int = 1) -> None:
+async def show_recommendations_page(
+    cb: CallbackQuery, category: str = "all", page: int = 1
+) -> None:
     page_items, total_pages = _filter_products(category, page)
 
     text_lines = [
@@ -168,16 +180,20 @@ async def show_main_recommendations(cb: CallbackQuery) -> None:
         ("Солнцезащита", "sunscreen"),
     ]
     for title, slug in categories:
-        keyboard.row(
-            InlineKeyboardButton(text=title, callback_data=f"rec:more:{slug}:1")
-        )
+        keyboard.row(InlineKeyboardButton(text=title, callback_data=f"rec:more:{slug}:1"))
     keyboard.row(InlineKeyboardButton(text=BTN_CART_CONTINUE, callback_data="cart:open"))
     await cb.message.edit_text(text, reply_markup=keyboard.as_markup())
 
 
-async def show_recommendations_after_test(bot: Bot, user_id: int, test_type: str = "skincare") -> None:
+async def show_recommendations_after_test(
+    bot: Bot, user_id: int, test_type: str = "skincare"
+) -> None:
     settings = get_settings()
-    text = "Результаты подбора готовы. Вот несколько идей:" if settings else "Вот что мы нашли для вас:"
+    text = (
+        "Результаты подбора готовы. Вот несколько идей:"
+        if settings
+        else "Вот что мы нашли для вас:"
+    )
     keyboard = InlineKeyboardBuilder()
 
     products, _ = _filter_products("all", 1)

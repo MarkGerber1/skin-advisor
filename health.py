@@ -7,9 +7,11 @@ import os
 app = Flask(__name__)
 bot_process = None
 
+
 @app.route("/health")
 def health():
     return "OK"
+
 
 def start_bot():
     global bot_process
@@ -51,6 +53,7 @@ def start_bot():
 
             # Check if process is still running after 3 seconds
             import time
+
             time.sleep(3)
             if bot_process.poll() is None:
                 print("✅ Bot process is running after 3 seconds - logs should appear above")
@@ -72,6 +75,7 @@ def start_bot():
 
     return bot_process
 
+
 def stop_bot():
     global bot_process
     if bot_process and bot_process.poll() is None:
@@ -84,15 +88,18 @@ def stop_bot():
             bot_process.kill()
             print("⚠️ Bot force killed")
 
+
 @app.route("/start")
 def start():
     start_bot()
     return "Bot started"
 
+
 @app.route("/stop")
 def stop():
     stop_bot()
     return "Bot stopped"
+
 
 if __name__ == "__main__":
     print("��� Starting application...")
@@ -123,10 +130,10 @@ if __name__ == "__main__":
     port = int(os.getenv("PORT", "8080"))
     print(f"��� Starting Flask server on port {port}")
     print("��� Environment variables:")
-    for key in ['BOT_TOKEN', 'PORT', 'USE_WEBHOOK']:
-        value = os.getenv(key, 'NOT_SET')
-        if key == 'BOT_TOKEN' and value != 'NOT_SET':
-            value = value[:10] + '...'  # Hide token
+    for key in ["BOT_TOKEN", "PORT", "USE_WEBHOOK"]:
+        value = os.getenv(key, "NOT_SET")
+        if key == "BOT_TOKEN" and value != "NOT_SET":
+            value = value[:10] + "..."  # Hide token
         print(f"  {key}: {value}")
 
     try:

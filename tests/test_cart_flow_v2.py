@@ -10,12 +10,7 @@ import pytest
 from unittest.mock import AsyncMock, MagicMock
 
 from engine.cart_store import CartStore, CartItem
-from bot.handlers.cart_v2 import (
-    build_cart_keyboard,
-    render_cart,
-    format_price,
-    format_cart_item
-)
+from bot.handlers.cart_v2 import build_cart_keyboard, render_cart, format_price, format_cart_item
 from bot.handlers.recommendations import show_recommendations_after_test
 from i18n.ru import *
 
@@ -26,12 +21,14 @@ class TestCartV2Integration:
     def setup_method(self):
         """Setup test environment"""
         import tempfile
+
         self.temp_dir = tempfile.mkdtemp()
         self.cart_store = CartStore(self.temp_dir)
 
     def teardown_method(self):
         """Cleanup"""
         import shutil
+
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     @pytest.mark.asyncio
@@ -47,7 +44,7 @@ class TestCartV2Integration:
             currency="RUB",
             source="goldapple",
             link="https://goldapple.ru/cleanser-001",
-            qty=1
+            qty=1,
         )
 
         cart = await self.cart_store.add(user_id, item1)
@@ -63,7 +60,7 @@ class TestCartV2Integration:
             currency="RUB",
             source="goldapple",
             link="https://goldapple.ru/toner-001",
-            qty=1
+            qty=1,
         )
 
         cart = await self.cart_store.add(user_id, item2)
@@ -103,7 +100,7 @@ class TestCartV2Integration:
             name="RUB Product",
             price=100000,  # 1000.00 RUB
             currency="RUB",
-            qty=1
+            qty=1,
         )
 
         # Add USD item
@@ -112,7 +109,7 @@ class TestCartV2Integration:
             name="USD Product",
             price=25000,  # 250.00 USD
             currency="USD",
-            qty=1
+            qty=1,
         )
 
         await self.cart_store.add(user_id, rub_item)
@@ -133,11 +130,7 @@ class TestCartV2Integration:
 
         # Cart with items
         item = CartItem(
-            product_id="test_prod",
-            name="Test Product",
-            price=1990,
-            currency="RUB",
-            qty=2
+            product_id="test_prod", name="Test Product", price=1990, currency="RUB", qty=2
         )
         cart.add_item(item)
 
@@ -155,13 +148,7 @@ class TestCartV2Integration:
 
     def test_cart_item_formatting(self):
         """Test cart item text formatting"""
-        item = CartItem(
-            product_id="test",
-            name="Test Product",
-            price=1990,
-            currency="RUB",
-            qty=2
-        )
+        item = CartItem(product_id="test", name="Test Product", price=1990, currency="RUB", qty=2)
 
         formatted = format_cart_item(item)
         assert "Test Product" in formatted
