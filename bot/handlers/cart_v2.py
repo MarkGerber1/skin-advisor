@@ -107,9 +107,15 @@ async def handle_cart_open(cb: CallbackQuery):
 
     try:
         cart_items = cart_store.get_cart(user_id)
-        analytics.cart_opened(user_id)
+
+        if analytics:
+
+            analytics.cart_opened(user_id)
+
+
 
         text = render_cart(cart_items)
+
         keyboard = build_cart_keyboard(cart_items)
 
         await safe_edit_message_text(
@@ -150,7 +156,7 @@ async def handle_cart_add(cb: CallbackQuery):
         )
 
         if currency_conflict:
-            await cb.answer("⚠️ Валютный конфликт - товары с разной валютой", show_alert=True)
+            await cb.answer("⚠️ В корзине уже есть товары в другой валюте", show_alert=True)
             return
 
         analytics.cart_item_added(
@@ -292,7 +298,8 @@ async def handle_cart_clr(cb: CallbackQuery):
     try:
         user_id = cb.from_user.id
         removed_count = cart_store.clear_cart(user_id)
-        analytics.cart_cleared(user_id)
+        if analytics:
+            analytics.cart_cleared(user_id, removed_count)
 
         await cb.answer(f"🧹 Корзина очищена ({removed_count} товаров)")
 
@@ -374,9 +381,15 @@ async def show_cart(message: Message, state=None) -> None:
 
     try:
         cart_items = cart_store.get_cart(user_id)
-        analytics.cart_opened(user_id)
+
+        if analytics:
+
+            analytics.cart_opened(user_id)
+
+
 
         text = render_cart(cart_items)
+
         keyboard = build_cart_keyboard(cart_items)
 
         await message.answer(text, reply_markup=keyboard)
