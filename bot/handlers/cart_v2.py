@@ -112,8 +112,6 @@ async def handle_cart_open(cb: CallbackQuery):
 
             analytics.cart_opened(user_id)
 
-
-
         text = render_cart(cart_items)
 
         keyboard = build_cart_keyboard(cart_items)
@@ -385,8 +383,6 @@ async def show_cart(message: Message, state=None) -> None:
         if analytics:
 
             analytics.cart_opened(user_id)
-
-
 
         text = render_cart(cart_items)
 
