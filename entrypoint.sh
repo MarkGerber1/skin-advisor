@@ -12,7 +12,19 @@ echo "📂 Files in /usr/src/app:"
 ls -la /usr/src/app/
 
 echo "🔍 Looking for entry points..."
-if [ -f "/usr/src/app/start.py" ]; then
+
+# Check if we're running on Render
+if [ -n "$RENDER" ] || [ -n "$RENDER_SERVICE_ID" ]; then
+    echo "🎨 Detected Render environment"
+    if [ -f "/usr/src/app/render_app.py" ]; then
+        echo "✅ Found render_app.py - starting Render web server..."
+        cd /usr/src/app
+        exec python render_app.py
+    else
+        echo "❌ ERROR: render_app.py not found for Render deployment!"
+        exit 1
+    fi
+elif [ -f "/usr/src/app/start.py" ]; then
     echo "✅ Found /usr/src/app/start.py - starting bot..."
     cd /usr/src/app
     exec python start.py

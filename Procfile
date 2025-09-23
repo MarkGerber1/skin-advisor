@@ -1,2 +1,2 @@
-worker: python start.py
+web: python render_app.py
 

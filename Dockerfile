@@ -22,14 +22,15 @@ COPY services/ ./services/
 COPY i18n/ ./i18n/
 COPY report/ ./report/
 COPY start.py ./start.py
+COPY render_app.py ./render_app.py
 COPY *.toml ./
 COPY *.json ./
 
 # Verify critical files were copied
 RUN echo "=== Build verification ===" && \
     ls -la /usr/src/app/ && \
-    echo "=== Checking start.py ===" && \
-    test -f /usr/src/app/start.py && echo "✓ start.py EXISTS" || echo "✗ start.py NOT FOUND" && \
+    echo "=== Checking render_app.py ===" && \
+    test -f /usr/src/app/render_app.py && echo "✓ render_app.py EXISTS" || echo "✗ render_app.py NOT FOUND" && \
     echo "=== Checking bot/main.py ===" && \
     test -f /usr/src/app/bot/main.py && echo "✓ bot/main.py EXISTS" || echo "✗ bot/main.py NOT FOUND" && \
     echo "=== Checking assets/ ===" && \
@@ -60,6 +61,7 @@ CMD ["python", "start.py"]
 # Debug: Test imports before starting
 RUN python -c "import sys; print('Python version:', sys.version)" && \
     python -c "from bot.main import main; print('✅ Main function imported successfully')" && \
+    python -c "import render_app; print('✅ Render app imported successfully')" && \
     echo "✅ All imports work correctly" && \
     echo "🚀 Docker build completed successfully"
 
