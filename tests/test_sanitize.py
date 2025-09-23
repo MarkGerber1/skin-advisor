@@ -41,3 +41,5 @@ class TestSanitizeMessage:
         expected = "Text  and  content"
         assert sanitize_message(input_text) == expected
 
+
+
