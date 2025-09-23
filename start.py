@@ -4,18 +4,50 @@
 import sys
 import os
 import asyncio
-from flask import Flask
+from flask import Flask, request, jsonify
 
 # Add current directory to Python path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-# Create Flask app for health checks
+# Create Flask app for health checks and webhooks
 app = Flask(__name__)
+
+# Global bot and dispatcher for webhook handling
+bot_instance = None
+dp_instance = None
 
 
 @app.route("/health")
 def health():
     return "OK"
+
+
+@app.route("/webhook", methods=["POST"])
+def telegram_webhook():
+    """Handle Telegram webhook requests"""
+    global bot_instance, dp_instance
+
+    if not bot_instance or not dp_instance:
+        return jsonify({"error": "Bot not initialized"}), 500
+
+    try:
+        from aiogram import types
+        update_data = request.get_json()
+        if not update_data:
+            return jsonify({"error": "No JSON data"}), 400
+
+        update = types.Update(**update_data)
+
+        # Process update asynchronously
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(dp_instance.feed_update(bot_instance, update))
+        loop.close()
+
+        return jsonify({"status": "OK"})
+    except Exception as e:
+        print(f"❌ Webhook error: {e}")
+        return jsonify({"error": str(e)}), 500
 
 
 def run_flask():
@@ -28,7 +60,11 @@ def run_flask():
 def run_bot():
     """Run the bot"""
     print("🤖 Starting bot...")
-    from bot.main import main
+    from bot.main import main, get_bot_and_dispatcher
+
+    # Get bot and dispatcher instances for webhook handling
+    global bot_instance, dp_instance
+    bot_instance, dp_instance = get_bot_and_dispatcher()
 
     asyncio.run(main())
 

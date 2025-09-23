@@ -245,6 +245,11 @@ async def main() -> None:
     dp = Dispatcher()
     print("✅ Dispatcher created")
 
+
+def get_bot_and_dispatcher():
+    """Get bot and dispatcher instances for webhook handling"""
+    return bot, dp
+
     # Add security middleware for chat filtering
     @dp.message.middleware()
     async def chat_filter_middleware(handler, event, data):
@@ -538,34 +543,11 @@ async def main() -> None:
                 allowed_updates=["message", "callback_query", "inline_query"],
             )
             print(f"✅ Webhook set to: {webhook_full_url}")
+            print("🌐 Webhook mode active - Flask will handle HTTP requests")
 
-            # Start webhook server (simple aiohttp)
-            from aiohttp import web
-            from aiohttp.web import Request
-
-            app = web.Application()
-
-            async def telegram_webhook(request: Request):
-                """Handle Telegram webhook"""
-                try:
-                    update_data = await request.json()
-                    update = types.Update(**update_data)
-                    await dp.feed_update(bot, update)
-                    return web.Response(text="OK")
-                except Exception as e:
-                    print(f"❌ Webhook error: {e}")
-                    return web.Response(text="ERROR", status=500)
-
-            app.router.add_post(webhook_path, telegram_webhook)
-
-            # Start server
-            runner = web.AppRunner(app)
-            await runner.setup()
-            site = web.TCPSite(runner, "0.0.0.0", int(os.getenv("PORT", 8080)))
-            await site.start()
-            print("🌐 Webhook server started")
-
-            # Wait for shutdown
+            # In webhook mode, we don't start our own server
+            # Flask handles the /webhook endpoint and feeds updates to the dispatcher
+            # Just wait for shutdown signal
             await shutdown_event.wait()
 
         else:
