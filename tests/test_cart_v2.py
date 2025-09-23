@@ -174,7 +174,6 @@ class TestCartStore:
             assert len(cart2.items) == 1
             assert cart2.items["test_prod:variant_1"].qty == 4  # 2 + 2
 
-
         asyncio.run(test())
 
     def test_set_qty_operations(self):
@@ -193,7 +192,6 @@ class TestCartStore:
             # Set to 0 (should remove)
             cart = await store.set_qty(123, "prod1:", 0)
             assert "prod1:" not in cart.items
-
 
         asyncio.run(test())
 
@@ -217,7 +215,6 @@ class TestCartStore:
             assert len(cart.items) == 1
             assert "prod2:" in cart.items
 
-
         asyncio.run(test())
 
     def test_clear_cart(self):
@@ -237,7 +234,6 @@ class TestCartStore:
             cart = await store.get(123)
             assert len(cart.items) == 0
 
-
         asyncio.run(test())
 
     def test_persistence(self):
@@ -256,7 +252,6 @@ class TestCartStore:
             assert len(cart.items) == 1
             assert cart.items["persistent:"].name == "Persistent Item"
             assert cart.items["persistent:"].price == 1500
-
 
         asyncio.run(test())
 

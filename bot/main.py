@@ -374,13 +374,17 @@ async def main() -> None:
 
         # Kill any existing python processes that might be bots
         import subprocess
+
         try:
             # Kill processes by name pattern
-            result = subprocess.run(['pkill', '-f', 'python.*bot.main'], timeout=5, capture_output=True)
+            result = subprocess.run(
+                ["pkill", "-f", "python.*bot.main"], timeout=5, capture_output=True
+            )
             if result.returncode == 0:
                 print("🛑 Killed existing bot processes")
                 # Give time for processes to die
                 import time
+
                 time.sleep(2)
             else:
                 print("ℹ️ No existing bot processes found")
