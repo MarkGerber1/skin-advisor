@@ -256,6 +256,7 @@ class TestCartIntegration(unittest.TestCase):
         self.store._carts.clear()
         import os
         import shutil
+
         if os.path.exists("data"):
             shutil.rmtree("data")
         os.makedirs("data/carts", exist_ok=True)
