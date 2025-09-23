@@ -21,7 +21,7 @@ print("🌐 Global variables initialized")
 
 @app.route("/health")
 def health():
-    return "OK"
+    return "OK_UPDATED"
 
 
 @app.route("/webhook", methods=["GET", "POST"])
