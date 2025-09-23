@@ -29,7 +29,7 @@ class TestCartStore(unittest.TestCase):
     def test_add_item_new_product(self):
         """Test adding a new product to cart"""
         user_id = 12345
-        item = self.store.add_item(
+        item, currency_conflict = self.store.add_item(
             user_id=user_id,
             product_id="test_product",
             variant_id="variant1",
@@ -150,6 +150,97 @@ class TestCartStore(unittest.TestCase):
         self.assertEqual(len(cart), 1)
         self.assertEqual(cart[0].quantity, 5)
         self.assertEqual(cart[0].price, 100.0)
+
+    def test_currency_conflict_detection(self):
+        """Test currency conflict detection"""
+        user_id = 12345
+
+        # Add first item with RUB
+        item1, conflict1 = self.store.add_item(
+            user_id=user_id,
+            product_id="rub_product",
+            name="RUB Product",
+            price=100.0,
+            currency="RUB"
+        )
+        self.assertFalse(conflict1)
+
+        # Add second item with RUB (no conflict)
+        item2, conflict2 = self.store.add_item(
+            user_id=user_id,
+            product_id="rub_product2",
+            name="RUB Product 2",
+            price=200.0,
+            currency="RUB"
+        )
+        self.assertFalse(conflict2)
+
+        # Add item with different currency (should conflict)
+        item3, conflict3 = self.store.add_item(
+            user_id=user_id,
+            product_id="usd_product",
+            name="USD Product",
+            price=50.0,
+            currency="USD"
+        )
+        self.assertTrue(conflict3)
+
+    def test_add_same_product_twice(self):
+        """Test adding the same product twice increases quantity"""
+        user_id = 12345
+
+        # Add first time
+        item1, conflict1 = self.store.add_item(
+            user_id=user_id,
+            product_id="same_product",
+            variant_id="variant1",
+            quantity=2,
+            name="Same Product",
+            price=100.0
+        )
+        self.assertEqual(item1.qty, 2)
+
+        # Add same product again
+        item2, conflict2 = self.store.add_item(
+            user_id=user_id,
+            product_id="same_product",
+            variant_id="variant1",
+            quantity=3,
+            name="Same Product",
+            price=100.0
+        )
+        self.assertEqual(item2.qty, 5)  # 2 + 3
+
+        # Check cart has only one item
+        cart = self.store.get_cart(user_id)
+        self.assertEqual(len(cart), 1)
+
+    def test_cart_totals_calculation(self):
+        """Test cart totals calculation"""
+        user_id = 12345
+
+        # Add items
+        self.store.add_item(user_id, "p1", name="Product 1", price=100.0, quantity=2)
+        self.store.add_item(user_id, "p2", name="Product 2", price=50.0, quantity=1)
+
+        total_qty, total_price, currency = self.store.get_cart_total(user_id)
+        self.assertEqual(total_qty, 3)  # 2 + 1
+        self.assertEqual(total_price, 250.0)  # 100*2 + 50*1
+        self.assertEqual(currency, "RUB")
+
+    def test_dec_to_zero_removes_item(self):
+        """Test that decreasing quantity to 0 removes item"""
+        user_id = 12345
+
+        # Add item
+        self.store.add_item(user_id, "test_product", quantity=1, name="Test", price=100.0)
+
+        # Decrease to 0 should remove
+        success = self.store.update_quantity(user_id, "test_product", None, 0)
+        self.assertTrue(success)
+
+        cart = self.store.get_cart(user_id)
+        self.assertEqual(len(cart), 0)
 
 
 if __name__ == "__main__":

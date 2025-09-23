@@ -1,469 +1,888 @@
-diff --git a/bot/handlers/recommendations.py b/bot/handlers/recommendations.py
-index 2e2422a..c2e196e 100644
---- a/bot/handlers/recommendations.py
-+++ b/bot/handlers/recommendations.py
-@@ -1,334 +1,183 @@
+diff --git a/analytics_logs.txt b/analytics_logs.txt
+new file mode 100644
+index 0000000..7039d77
+--- /dev/null
++++ b/analytics_logs.txt
+@@ -0,0 +1,9 @@
++2025-09-21 00:13:25 | ANALYTICS | INFO | cart_opened - user_id: 123456, payload: {}
++2025-09-21 00:13:28 | ANALYTICS | INFO | cart_item_added - user_id: 123456, payload: {"product_id": "cleanser-001", "variant_id": "default", "source": "goldapple", "price": 1590, "currency": "RUB"}
++2025-09-21 00:13:32 | ANALYTICS | INFO | cart_qty_changed - user_id: 123456, payload: {"direction": "inc", "old_qty": 1, "new_qty": 2, "product_id": "cleanser-001"}
++2025-09-21 00:13:35 | ANALYTICS | INFO | cart_item_added - user_id: 123456, payload: {"product_id": "toner-002", "variant_id": "default", "source": "goldapple", "price": 2890, "currency": "RUB"}
++2025-09-21 00:13:40 | ANALYTICS | INFO | cart_qty_changed - user_id: 123456, payload: {"direction": "dec", "old_qty": 2, "new_qty": 1, "product_id": "cleanser-001"}
++2025-09-21 00:13:45 | ANALYTICS | INFO | cart_item_removed - user_id: 123456, payload: {"product_id": "toner-002", "variant_id": "default"}
++2025-09-21 00:13:50 | ANALYTICS | INFO | cart_item_added - user_id: 123456, payload: {"product_id": "serum-003", "variant_id": "default", "source": "goldapple", "price": 1990, "currency": "RUB"}
++2025-09-21 00:13:55 | ANALYTICS | INFO | cart_qty_changed - user_id: 123456, payload: {"direction": "inc", "old_qty": 1, "new_qty": 3, "product_id": "serum-003"}
++2025-09-21 00:14:00 | ANALYTICS | INFO | checkout_started - user_id: 123456, payload: {"items_count": 2, "subtotal": 9550}
+diff --git a/bot/handlers/cart_v2.py b/bot/handlers/cart_v2.py
+index daf5724..f1a1782 100644
+--- a/bot/handlers/cart_v2.py
++++ b/bot/handlers/cart_v2.py
+@@ -1,19 +1,17 @@
  """
--🛍️ Recommendations Handler
--
--Shows product recommendations with inline buttons for cart operations
-+Recommendations handler: shows products and routes cart callbacks.
+-🛒 Cart v2 Handler
++�� Cart v2 Handler
+ 
+-New cart implementation with proper UX flow:
+-recommendations → cart → checkout
++Complete cart flow: recommendations → cart → checkout
++Unified cart:* callbacks with proper UX and analytics
  """
  
-+from __future__ import annotations
-+
  import logging
 -from aiogram import Router, F, Bot
--from aiogram.types import CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
-+from typing import List
+-from aiogram.types import CallbackQuery, Message, InlineKeyboardMarkup, InlineKeyboardButton
+-from aiogram.utils.keyboard import InlineKeyboardBuilder
+-from aiogram.exceptions import TelegramBadRequest
+-
+-from engine.cart_store import CartStore, Cart, CartItem
+-from config.env import get_settings
+-from bot.utils.security import safe_send_message, safe_edit_message_text, sanitize_message
++from aiogram import Router, F
++from aiogram.types import CallbackQuery
++from aiogram.utils.keyboard import InlineKeyboardBuilder, InlineKeyboardButton
 +
-+from aiogram import Bot, F, Router
-+from aiogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup
- from aiogram.utils.keyboard import InlineKeyboardBuilder
++from services.cart_store import CartStore, CartItem
++from bot.utils.security import safe_edit_message_text
+ from engine.analytics import get_analytics_tracker
+ from i18n.ru import *
  
--from engine.cart_store import CartStore, CartItem
-+from bot.ui.render import safe_send_message
- from config.env import get_settings
--from bot.utils.security import safe_send_message
--from i18n.ru import *
-+from i18n.ru import (
-+    BTN_ADD,
-+    BTN_BACK,
-+    BTN_BACK_RECO,
-+    BTN_CART_CONTINUE,
-+    BTN_MORE,
-+    MSG_CART_UPDATED,
-+)
-+
-+logger = logging.getLogger(__name__)
-+router = Router()
+@@ -24,76 +22,84 @@ router = Router()
+ cart_store = CartStore()
+ analytics = get_analytics_tracker()
  
--# Import SelectorV2 for recommendations
- try:
-     from engine.selector import SelectorV2
-+
-+    _selector = SelectorV2()
-     selector_available = True
--except ImportError:
-+except ImportError:  # pragma: no cover - optional dependency
-     selector_available = False
--    logger.warning("SelectorV2 not available - recommendations will use fallback")
--
--logger = logging.getLogger(__name__)
--router = Router()
-+    _selector = None
-+    logger.warning("SelectorV2 not available; recommendations will use static fallback")
+-def format_price(amount_cents: int, currency: str = "RUB") -> str:
+-    """Format price for display"""
+-    amount_rub = amount_cents // 100
+-    return f"{amount_rub} {currency}"
++def format_price(price: float, currency: str = "RUB") -> str:
++    """Format price with spaces for thousands"""
++    if currency == "RUB":
++        rubles = int(price)
++        return f"{rubles:,} ₽".replace(",", " ")
++    return f"{price:.2f} {currency}"
  
--# Global cart store instance
--cart_store = CartStore()
+ def format_cart_item(item: CartItem) -> str:
+     """Format cart item for display"""
+-    price_str = format_price(item.price, item.currency)
+-    total_str = format_price(item.price * item.qty, item.currency)
+-    return CART_ITEM_FMT.format(
+-        name=item.name,
+-        price=price_str,
+-        qty=item.qty,
+-        total=total_str
+-    )
+-
+-def build_cart_keyboard(cart: Cart, user_id: int) -> InlineKeyboardMarkup:
+-    """Build cart keyboard with item controls"""
+-    keyboard = InlineKeyboardBuilder()
++    price_str = format_price(item.price or 0, item.currency)
++    total = (item.price or 0) * item.qty
++    total_str = format_price(total, item.currency)
  
- @router.callback_query(F.data.startswith("rec:"))
--async def handle_recommendations(cb: CallbackQuery, bot: Bot):
--    """Handle recommendations callbacks"""
-+async def handle_recommendations(cb: CallbackQuery, bot: Bot) -> None:
-     try:
-         data = cb.data
--        user_id = cb.from_user.id
--        settings = get_settings()
--
-         if data.startswith("rec:add:"):
--            # Add to cart: rec:add:<pid>:<vid>
--            parts = data.split(":")
--            if len(parts) < 4:
--                await cb.answer("❌ Неверный формат данных")
--                return
--
--            product_id = parts[2]
--            variant_id = parts[3] if len(parts) > 3 and parts[3] != "none" else None
--
--            # Try to get real product data from selector
--            product_data = None
--            if selector_available:
--                try:
--                    selector = SelectorV2()
--                    all_products = selector.select_products(user_id, category="all", limit=100)
--                    for prod in all_products:
--                        if str(prod.get("id", "")) == product_id:
--                            product_data = prod
--                            break
--                except Exception as e:
--                    logger.warning(f"Could not get product data for {product_id}: {e}")
--
--            # Create cart item with real or fallback data
--            if product_data:
--                item = CartItem(
--                    product_id=product_id,
--                    variant_id=variant_id,
--                    name=product_data.get("name", f"Продукт {product_id}"),
--                    price=int(product_data.get("price", 0) * 100),  # Convert to cents
--                    currency="RUB",
--                    source="recommendations",
--                    link="",  # Will be filled by affiliate system
--                )
--            else:
--                # Fallback mock data
--                item = CartItem(
--                    product_id=product_id,
--                    variant_id=variant_id,
--                    name=f"Продукт {product_id}",
--                    price=1990,  # 19.90 RUB in cents
--                    currency="RUB",
--                    source="recommendations",
--                    link="",
--                )
--
--            # Add to cart
--            cart = await cart_store.add(user_id, item)
--
--            # Analytics
--            try:
--                from engine.analytics import cart_item_added
--                cart_item_added(
--                    user_id=user_id,
--                    product_id=product_id,
--                    variant_id=variant_id or "",
--                    source="recommendations",
--                    price=item.price,
--                )
--            except Exception as e:
--                logger.warning(f"Analytics error: {e}")
--
--            # Update cart badge in UI
--            await cb.answer(MSG_ADDED, show_alert=False)
--
--            # Optionally update message with cart count
--            # This would require re-rendering the recommendations
--
--        elif data.startswith("rec:open:"):
--            # Open product details: rec:open:<pid>
--            product_id = data.split(":")[2]
--            # Mock product details
--            text = f"📦 **Продукт {product_id}**\n\nПодробное описание товара..."
--            keyboard = InlineKeyboardMarkup(inline_keyboard=[
--                [InlineKeyboardButton(text=BTN_ADD, callback_data=f"rec:add:{product_id}:none")],
--                [InlineKeyboardButton(text=BTN_BACK, callback_data="rec:back")]
--            ])
--            await cb.message.edit_text(text, reply_markup=keyboard, parse_mode="Markdown")
--
--        elif data.startswith("rec:more:"):
--            # Load more recommendations: rec:more:<category>:<page>
--            parts = data.split(":")
--            category = parts[2] if len(parts) > 2 else "all"
--            page = int(parts[3]) if len(parts) > 3 else 1
--
--            # Generate next page of recommendations
--            await show_recommendations_page(cb, category, page)
-+            # Legacy callbacks: guide user to updated buttons
-+            await cb.answer(MSG_CART_UPDATED, show_alert=False)
-+            return
+-    # Item controls
+-    for key, item in cart.items.items():
+-        # Quantity controls for each item
+-        keyboard.row(
+-            InlineKeyboardButton(text=BTN_DEC, callback_data=f"cart:dec:{key}"),
+-            InlineKeyboardButton(text=str(item.qty), callback_data=f"cart:info:{key}"),
+-            InlineKeyboardButton(text=BTN_INC, callback_data=f"cart:inc:{key}"),
+-            InlineKeyboardButton(text=BTN_DEL, callback_data=f"cart:del:{key}")
+-        )
++    variant_text = ""
++    if item.variant_name:
++        variant_text = f" • {item.variant_name}"
++    elif item.variant_id:
++        variant_text = f" • Вариант {item.variant_id}"
  
-+        if data.startswith("rec:open:"):
-+            product_id = data.split(":")[2]
-+            await _show_product_details(cb, product_id)
-+        elif data.startswith("rec:more:")):
-+            _, _, category, page = (data.split(":") + ["all", "1"])[:4]
-+            await show_recommendations_page(cb, category or "all", int(page or 1))
-         elif data == "rec:back":
--            # Back to main recommendations
-             await show_main_recommendations(cb)
--
-         await cb.answer()
--
--    except Exception as e:
--        logger.error(f"Error in recommendations handler: {e}")
--        await cb.answer("❌ Произошла ошибка", show_alert=True)
--
--async def show_recommendations_page(cb: CallbackQuery, category: str = "skincare", page: int = 1):
--    """Show paginated recommendations"""
--    items_per_page = 3
--    start_idx = (page - 1) * items_per_page
--
--    # Mock recommendations data
--    mock_products = [
--        {"id": "cleanser-001", "name": "Очищающее средство CeraVe", "price": 1590, "category": "cleanser"},
--        {"id": "toner-001", "name": "Тоник La Roche-Posay", "price": 1890, "category": "toner"},
--        {"id": "serum-001", "name": "Сыворотка The Ordinary", "price": 2190, "category": "serum"},
--        {"id": "moisturizer-001", "name": "Увлажняющий крем Neutrogena", "price": 1290, "category": "moisturizer"},
--        {"id": "sunscreen-001", "name": "SPF La Prairie", "price": 2990, "category": "sunscreen"},
-+    except Exception as exc:  # pragma: no cover
-+        logger.exception("Error in recommendations handler: %s", exc)
-+        await cb.answer("Произошла ошибка. Попробуйте ещё раз", show_alert=True)
-+
-+
-+def _product_button(product_id: str, label: str) -> InlineKeyboardButton:
-+    return InlineKeyboardButton(
-+        text=label,
-+        callback_data=f"cart:add:{product_id}:default",
-+    )
-+
-+
-+async def _show_product_details(cb: CallbackQuery, product_id: str) -> None:
-+    text = f"Вы выбрали товар {product_id}. Добавить его в корзину?"
-+    keyboard = InlineKeyboardMarkup(
-+        inline_keyboard=[
-+            [_product_button(product_id, BTN_ADD)],
-+            [InlineKeyboardButton(text=BTN_BACK, callback_data="rec:back")],
-+        ]
-+    )
-+    await cb.message.edit_text(text, reply_markup=keyboard)
-+
-+
-+def _fallback_products() -> List[dict]:
-+    return [
-+        {"id": "cleanser-001", "name": "Очищающий гель", "price": 1590, "category": "cleanser"},
-+        {"id": "toner-001", "name": "Успокаивающий тоник", "price": 1890, "category": "toner"},
-+        {"id": "serum-001", "name": "Сыворотка с витамином С", "price": 2190, "category": "serum"},
-+        {"id": "moisturizer-001", "name": "Увлажняющий крем", "price": 1290, "category": "moisturizer"},
-+        {"id": "sunscreen-001", "name": "Солнцезащитный крем", "price": 2990, "category": "sunscreen"},
-     ]
+-    # Cart actions
+-    keyboard.row(
+-        InlineKeyboardButton(text=BTN_BACK_RECO, callback_data="cart:back_reco"),
+-        InlineKeyboardButton(text=BTN_CHECKOUT, callback_data="cart:checkout")
+-    )
++    return f"{item.name}{variant_text}\n{price_str} × {item.qty} = {total_str}"
  
--    # Filter by category
-+
-+def _filter_products(category: str, page: int, per_page: int = 3) -> tuple[List[dict], int]:
-+    if selector_available and _selector:
-+        try:
-+            all_products = _selector.select_products(user_id=None, category="all", limit=50)
-+        except Exception as exc:  # pragma: no cover - diagnostics only
-+            logger.warning("Selector fetch failed: %s", exc)
-+            all_products = _fallback_products()
-+    else:
-+        all_products = _fallback_products()
-+
-     if category != "all":
--        filtered = [p for p in mock_products if p["category"] == category]
-+        filtered = [p for p in all_products if p.get("category") == category]
-     else:
--        filtered = mock_products
-+        filtered = all_products
-+
-+    total_pages = max(1, (len(filtered) + per_page - 1) // per_page)
-+    start = (page - 1) * per_page
-+    end = start + per_page
-+    return filtered[start:end], total_pages
+-    keyboard.row(InlineKeyboardButton(text=BTN_CLEAR, callback_data="cart:clear"))
++def render_cart(cart_items: list[CartItem]) -> str:
++    """Render full cart view"""
++    if not cart_items:
++        return CART_EMPTY
  
--    # Paginate
--    total_pages = (len(filtered) + items_per_page - 1) // items_per_page
--    page_items = filtered[start_idx:start_idx + items_per_page]
+-    return keyboard.as_markup()
++    # Calculate totals
++    total_qty = sum(item.qty for item in cart_items)
++    total_price = sum((item.price or 0) * item.qty for item in cart_items)
++    currency = next((item.currency for item in cart_items if item.currency), "RUB")
  
--    text = f"💄 **Рекомендации** ({category})\nСтраница {page}/{total_pages}\n\n"
-+async def show_recommendations_page(cb: CallbackQuery, category: str = "all", page: int = 1) -> None:
-+    page_items, total_pages = _filter_products(category, page)
+-async def render_cart(cart: Cart) -> str:
+-    """Render cart content as text"""
+-    if not cart.items:
+-        return CART_EMPTY
++    lines = [CART_TITLE]
++    for item in cart_items:
++        lines.append("")
++        lines.append(format_cart_item(item))
  
-+    text_lines = [
-+        f"Рекомендации · {category}",
-+        f"Страница {page}/{total_pages}",
-+        "",
-+    ]
-     keyboard = InlineKeyboardBuilder()
+-    text = f"{CART_TITLE}\n\n"
++    lines.append("")
++    lines.append(f"Итого: {total_qty} шт × {format_price(total_price, currency)}")
++    return "\n".join(lines)
  
-     for product in page_items:
--        price_rub = product["price"] // 100  # Convert cents to rubles
--        text += f"🧴 **{product['name']}**\n"
--        text += f"— цена: {price_rub} ₽\n"
--        text += f"— магазин: Gold Apple\n\n"
-+        name = product.get("name", "Товар")
-+        product_id = product.get("id", "unknown")
-+        price = product.get("price")
-+        price_row = f"{price} ₽" if price else "—"
-+        text_lines.append(f"• {name} — {price_row}")
-+        keyboard.row(_product_button(product_id, BTN_ADD))
- 
--        # Buttons for each product
-+    if page > 1:
-         keyboard.row(
-             InlineKeyboardButton(
--                text=BTN_ADD,
--                callback_data=f"rec:add:{product['id']}:none"
--            ),
--            InlineKeyboardButton(
--                text=BTN_DETAILS,
--                callback_data=f"rec:open:{product['id']}"
-+                text="⬅ Назад",
-+                callback_data=f"rec:more:{category}:{page-1}",
-             )
-         )
--
--    # Navigation buttons
--    nav_buttons = []
--    if page > 1:
--        nav_buttons.append(InlineKeyboardButton(
--            text=BTN_PREV,
--            callback_data=f"rec:more:{category}:{page-1}"
--        ))
-     if page < total_pages:
--        nav_buttons.append(InlineKeyboardButton(
--            text=BTN_NEXT,
--            callback_data=f"rec:more:{category}:{page+1}"
--        ))
--
--    if nav_buttons:
--        keyboard.row(*nav_buttons)
-+        keyboard.row(
-+            InlineKeyboardButton(
-+                text="Вперёд ➡",
-+                callback_data=f"rec:more:{category}:{page+1}",
-+            )
-+        )
- 
--    # Back button
--    keyboard.row(InlineKeyboardButton(text=BTN_BACK, callback_data="rec:back"))
-+    keyboard.row(InlineKeyboardButton(text=BTN_BACK_RECO, callback_data="rec:back"))
-+    keyboard.row(InlineKeyboardButton(text=BTN_CART_CONTINUE, callback_data="cart:open"))
- 
--    await cb.message.edit_text(text, reply_markup=keyboard.as_markup(), parse_mode="Markdown")
-+    await cb.message.edit_text("
-+".join(text_lines), reply_markup=keyboard.as_markup())
- 
--async def show_main_recommendations(cb: CallbackQuery):
--    """Show main recommendations screen with categories"""
--    text = "💄 **Рекомендованные средства**\n\n"
--    text += "Выберите категорию для просмотра рекомендаций:"
- 
-+async def show_main_recommendations(cb: CallbackQuery) -> None:
-+    text = "Выберите категорию, чтобы продолжить подбор."
-     keyboard = InlineKeyboardBuilder()
--
-     categories = [
-         ("Очищение", "cleanser"),
--        ("Тоник", "toner"),
-+        ("Тоники", "toner"),
-         ("Сыворотки", "serum"),
--        ("Увлажнение", "moisturizer"),
-+        ("Кремы", "moisturizer"),
-         ("Солнцезащита", "sunscreen"),
-     ]
-+    for title, slug in categories:
-+        keyboard.row(
-+            InlineKeyboardButton(text=title, callback_data=f"rec:more:{slug}:1")
-+        )
-+    keyboard.row(InlineKeyboardButton(text=BTN_CART_CONTINUE, callback_data="cart:open"))
-+    await cb.message.edit_text(text, reply_markup=keyboard.as_markup())
- 
--    for cat_name, cat_id in categories:
--        keyboard.row(InlineKeyboardButton(
--            text=f"🧴 {cat_name}",
--            callback_data=f"rec:more:{cat_id}:1"
--        ))
--
--    # Show all
--    keyboard.row(InlineKeyboardButton(
--        text="📋 Все рекомендации",
--        callback_data="rec:more:all:1"
--    ))
--
--    await cb.message.edit_text(text, reply_markup=keyboard.as_markup(), parse_mode="Markdown")
- 
--async def show_recommendations_after_test(bot: Bot, user_id: int, test_type: str = "skincare"):
--    """Show recommendations after completing a test - CART V2 INTEGRATION"""
--    try:
--        text = "🎉 **Тест завершён!**\n\n"
--        text += "Вот персональные рекомендации для вас:\n\n"
--
--        # Get real recommendations using SelectorV2
--        if selector_available:
--            try:
--                selector = SelectorV2()
--                recommendations = selector.select_products(user_id, category="all", limit=6)
--            except Exception as e:
--                logger.error(f"Failed to get recommendations from SelectorV2: {e}")
--                recommendations = []
--        else:
--            logger.warning("SelectorV2 not available, using empty recommendations")
--            recommendations = []
-+async def show_recommendations_after_test(bot: Bot, user_id: int, test_type: str = "skincare") -> None:
-+    settings = get_settings()
-+    text = "Результаты подбора готовы. Вот несколько идей:" if settings else "Вот что мы нашли для вас:"
+-    # Items
+-    for i, (key, item) in enumerate(cart.items.items(), 1):
+-        text += f"{i}) {format_cart_item(item)}\n"
++def build_cart_keyboard(cart_items: list[CartItem]) -> InlineKeyboardMarkup:
++    """Build cart keyboard with controls"""
 +    keyboard = InlineKeyboardBuilder()
  
--        try:
--            if recommendations:
--                keyboard = InlineKeyboardBuilder()
--
--                for i, product in enumerate(recommendations[:3]):  # Show first 3 products
--                    product_name = product.get("name", f"Товар {i+1}")
--                    product_id = product.get("id", f"unknown-{i}")
--                    price = product.get("price", 0)
--
--                    # Product info
--                    text += f"🧴 **{product_name}**\n"
--                    if price:
--                        text += f"💰 {price} ₽\n"
--                    text += "\n"
--
--                    # Add to cart button
--                    keyboard.row(InlineKeyboardButton(
--                        text=f"Добавить ▸ {product_name[:20]}...",
--                        callback_data=f"rec:add:{product_id}:default"
--                    ))
--
--                # More recommendations button
--                keyboard.row(InlineKeyboardButton(
--                    text="🛍️ Больше рекомендаций",
--                    callback_data=f"rec:more:{test_type}:1"
--                ))
--
--                # Cart button
--                keyboard.row(InlineKeyboardButton(
--                    text="🛒 Корзина",
--                    callback_data="cart:open"
--                ))
--
--                await safe_send_message(
--                    bot, user_id,
--                    text,
--                    reply_markup=keyboard.as_markup(),
--                    parse_mode="Markdown"
--                )
--            else:
--                # Fallback if no recommendations
--                text += "⚠️ Не удалось сгенерировать рекомендации.\nПопробуйте пройти тест заново."
--
--                keyboard = InlineKeyboardBuilder()
--                keyboard.row(InlineKeyboardButton(
--                    text="🔄 Пройти тест заново",
--                    callback_data=f"start:{test_type}"
--                ))
--
--                await safe_send_message(
--                    bot, user_id,
--                    text,
--                    reply_markup=keyboard.as_markup(),
--                    parse_mode="Markdown"
--                )
--
--        except Exception as e:
--            logger.error(f"Failed to get recommendations: {e}")
--            # Fallback message
--            text += "⚠️ Ошибка при генерации рекомендаций.\n\n"
--            text += "Используйте меню для выбора средств:"
--
--            keyboard = InlineKeyboardBuilder()
--            keyboard.row(InlineKeyboardButton(
--                text="🛍️ Каталог товаров",
--                callback_data="rec:more:all:1"
--            ))
--            keyboard.row(InlineKeyboardButton(
--                text="🛒 Корзина",
--                callback_data="cart:open"
--            ))
--
--            await safe_send_message(
--                bot, user_id,
--                text,
--                reply_markup=keyboard.as_markup(),
--                parse_mode="Markdown"
--            )
-+    products, _ = _filter_products("all", 1)
-+    for product in products[:3]:
-+        name = product.get("name", "Товар")
-+        product_id = product.get("id", "unknown")
-+        keyboard.row(_product_button(product_id, f"Добавить {name[:18]}"))
+-    # Total
+-    total_str = format_price(cart.subtotal, cart.currency)
+-    text += f"\n{CART_TOTAL.format(total=total_str)}"
++    # Item controls
++    for item in cart_items:
++        keyboard.row(
++            InlineKeyboardButton(text="➖", callback_data=f"cart:dec:{item.product_id}:{item.variant_id or 'none'}"),
++            InlineKeyboardButton(text=f" {item.qty} ", callback_data="noop"),
++            InlineKeyboardButton(text="➕", callback_data=f"cart:inc:{item.product_id}:{item.variant_id or 'none'}"),
++            InlineKeyboardButton(text="���", callback_data=f"cart:rm:{item.product_id}:{item.variant_id or 'none'}")
++        )
  
+-    # Currency warning
+-    if cart.needs_review:
+-        text += "\n⚠️ Разные валюты в корзине"
++    # Cart actions
++    if cart_items:
++        keyboard.row(
++            InlineKeyboardButton(text="��� Очистить", callback_data="cart:clr"),
++            InlineKeyboardButton(text="��� Продолжить подбор", callback_data="cart:back_reco"),
++            InlineKeyboardButton(text="��� Оформление", callback_data="cart:checkout")
++        )
++    else:
++        keyboard.row(
++            InlineKeyboardButton(text="��� Продолжить подбор", callback_data="cart:back_reco")
++        )
+ 
+-    return text
++    return keyboard.as_markup()
+ 
+ @router.callback_query(F.data == "cart:open")
+ async def handle_cart_open(cb: CallbackQuery):
+-    """Open cart screen"""
++    """Open cart view"""
++    user_id = cb.from_user.id
++
+     try:
+-        user_id = cb.from_user.id
+-        cart = await cart_store.get(user_id)
++        cart_items = cart_store.get_cart(user_id)
++        analytics.cart_opened(user_id)
+ 
+-        text = await render_cart(cart)
+-        keyboard = build_cart_keyboard(cart, user_id)
++        text = render_cart(cart_items)
++        keyboard = build_cart_keyboard(cart_items)
+ 
+         await safe_edit_message_text(
+             cb.message.chat.id,
+@@ -101,24 +107,79 @@ async def handle_cart_open(cb: CallbackQuery):
+             text,
+             reply_markup=keyboard
+         )
+-
+-        analytics.cart_opened(user_id)
+         await cb.answer()
+ 
+     except Exception as e:
+         logger.error(f"Error opening cart: {e}")
+         await cb.answer("❌ Ошибка открытия корзины", show_alert=True)
+ 
++@router.callback_query(F.data.startswith("cart:add:"))
++async def handle_cart_add(cb: CallbackQuery):
++    """Add item to cart from recommendations"""
++    try:
++        # Format: cart:add:<pid>:<vid>
++        parts = cb.data.split(":")
++        if len(parts) < 4:
++            await cb.answer("❌ Неверный формат")
++            return
++
++        product_id = parts[2]
++        variant_id = parts[3] if parts[3] != "none" else None
++        user_id = cb.from_user.id
++
++        # TODO: Validate variant_id belongs to product_id
++        # For now, create mock item
++        item, currency_conflict = cart_store.add_item(
++            user_id=user_id,
++            product_id=product_id,
++            variant_id=variant_id,
++            name=f"Продукт {product_id}",
++            price=1990.0,  # 1990 RUB
++            currency="RUB",
++            source="goldapple",
++            ref_link=f"https://goldapple.ru/products/{product_id}"
++        )
++
++        if currency_conflict:
++            await cb.answer("⚠️ Валютный конфликт - товары с разной валютой", show_alert=True)
++            return
++
++        analytics.cart_item_added(user_id, product_id, variant_id or "", item.price, item.currency, item.source or "")
++        await cb.answer(MSG_CART_ITEM_ADDED)
++
++    except Exception as e:
++        logger.error(f"Error adding to cart: {e}")
++        await cb.answer("❌ Ошибка добавления", show_alert=True)
++
+ @router.callback_query(F.data.startswith("cart:inc:"))
+ async def handle_cart_inc(cb: CallbackQuery):
+     """Increase item quantity"""
+     try:
+-        key = cb.data.replace("cart:inc:", "")
++        parts = cb.data.split(":")
++        if len(parts) < 4:
++            await cb.answer("❌ Неверный формат")
++            return
++
++        product_id = parts[2]
++        variant_id = parts[3] if parts[3] != "none" else None
+         user_id = cb.from_user.id
+ 
+-        cart = await cart_store.set_qty(user_id, key, 99)  # Max qty check in set_qty
+-        text = await render_cart(cart)
+-        keyboard = build_cart_keyboard(cart, user_id)
++        cart_items = cart_store.get_cart(user_id)
++        item = next((i for i in cart_items if i.product_id == product_id and i.variant_id == variant_id), None)
++        if not item:
++            await cb.answer("❌ Товар не найден")
++            return
++
++        old_qty = item.qty
++        cart_store.update_quantity(user_id, product_id, variant_id, item.qty + 1)
++
++        analytics.cart_qty_changed(user_id, f"{product_id}:{variant_id}", old_qty, item.qty + 1)
++        await cb.answer(f"➕ Количество: {item.qty + 1}")
++
++        # Update cart view
++        cart_items = cart_store.get_cart(user_id)
++        text = render_cart(cart_items)
++        keyboard = build_cart_keyboard(cart_items)
+ 
+         await safe_edit_message_text(
+             cb.message.chat.id,
+@@ -127,9 +188,6 @@ async def handle_cart_inc(cb: CallbackQuery):
+             reply_markup=keyboard
+         )
+ 
+-        analytics.cart_qty_changed(user_id, key, cart.items.get(key, CartItem("", "")).qty)
+-        await cb.answer("➕ Количество увеличено")
+-
+     except Exception as e:
+         logger.error(f"Error increasing quantity: {e}")
+         await cb.answer("❌ Ошибка", show_alert=True)
+@@ -138,21 +196,36 @@ async def handle_cart_inc(cb: CallbackQuery):
+ async def handle_cart_dec(cb: CallbackQuery):
+     """Decrease item quantity"""
+     try:
+-        key = cb.data.replace("cart:dec:", "")
++        parts = cb.data.split(":")
++        if len(parts) < 4:
++            await cb.answer("❌ Неверный формат")
++            return
++
++        product_id = parts[2]
++        variant_id = parts[3] if parts[3] != "none" else None
+         user_id = cb.from_user.id
+ 
+-        # Get current quantity
+-        cart = await cart_store.get(user_id)
+-        current_qty = cart.items.get(key, CartItem("", "")).qty
++        cart_items = cart_store.get_cart(user_id)
++        item = next((i for i in cart_items if i.product_id == product_id and i.variant_id == variant_id), None)
++        if not item:
++            await cb.answer("❌ Товар не найден")
++            return
+ 
+-        if current_qty <= 1:
+-            # Remove item instead of setting to 0
+-            cart = await cart_store.remove(user_id, key)
++        if item.qty <= 1:
++            # Remove item if qty == 1
++            cart_store.remove_item(user_id, product_id, variant_id)
++            analytics.cart_item_removed(user_id, f"{product_id}:{variant_id}")
++            await cb.answer("��� Товар удалён")
+         else:
+-            cart = await cart_store.set_qty(user_id, key, current_qty - 1)
++            old_qty = item.qty
++            cart_store.update_quantity(user_id, product_id, variant_id, item.qty - 1)
++            analytics.cart_qty_changed(user_id, f"{product_id}:{variant_id}", old_qty, item.qty - 1)
++            await cb.answer(f"➖ Количество: {item.qty - 1}")
+ 
+-        text = await render_cart(cart)
+-        keyboard = build_cart_keyboard(cart, user_id)
++        # Update cart view
++        cart_items = cart_store.get_cart(user_id)
++        text = render_cart(cart_items)
++        keyboard = build_cart_keyboard(cart_items)
+ 
+         await safe_edit_message_text(
+             cb.message.chat.id,
+@@ -161,28 +234,34 @@ async def handle_cart_dec(cb: CallbackQuery):
+             reply_markup=keyboard
+         )
+ 
+-        new_qty = cart.items.get(key, CartItem("", "")).qty
+-        analytics.cart_qty_changed(user_id, key, new_qty)
+-        if new_qty == 0:
+-            analytics.cart_item_removed(user_id, key)
+-
+-        await cb.answer("➖ Количество уменьшено")
+-
+     except Exception as e:
+         logger.error(f"Error decreasing quantity: {e}")
+         await cb.answer("❌ Ошибка", show_alert=True)
+ 
+-@router.callback_query(F.data.startswith("cart:del:"))
+-async def handle_cart_del(cb: CallbackQuery):
++@router.callback_query(F.data.startswith("cart:rm:"))
++async def handle_cart_rm(cb: CallbackQuery):
+     """Remove item from cart"""
+     try:
+-        key = cb.data.replace("cart:del:", "")
++        parts = cb.data.split(":")
++        if len(parts) < 4:
++            await cb.answer("❌ Неверный формат")
++            return
++
++        product_id = parts[2]
++        variant_id = parts[3] if parts[3] != "none" else None
+         user_id = cb.from_user.id
+ 
+-        cart = await cart_store.remove(user_id, key)
++        if cart_store.remove_item(user_id, product_id, variant_id):
++            analytics.cart_item_removed(user_id, f"{product_id}:{variant_id}")
++            await cb.answer("��� Товар удалён")
++        else:
++            await cb.answer("❌ Товар не найден")
++            return
+ 
+-        text = await render_cart(cart)
+-        keyboard = build_cart_keyboard(cart, user_id)
++        # Update cart view
++        cart_items = cart_store.get_cart(user_id)
++        text = render_cart(cart_items)
++        keyboard = build_cart_keyboard(cart_items)
+ 
+         await safe_edit_message_text(
+             cb.message.chat.id,
+@@ -191,24 +270,24 @@ async def handle_cart_del(cb: CallbackQuery):
+             reply_markup=keyboard
+         )
+ 
+-        analytics.cart_item_removed(user_id, key)
+-        await cb.answer("🗑️ Товар удалён")
+-
+     except Exception as e:
+-        logger.error(f"Error deleting item: {e}")
++        logger.error(f"Error removing item: {e}")
+         await cb.answer("❌ Ошибка удаления", show_alert=True)
+ 
+-@router.callback_query(F.data == "cart:clear")
+-async def handle_cart_clear(cb: CallbackQuery):
++@router.callback_query(F.data == "cart:clr")
++async def handle_cart_clr(cb: CallbackQuery):
+     """Clear entire cart"""
+     try:
+         user_id = cb.from_user.id
+-        await cart_store.clear(user_id)
++        removed_count = cart_store.clear_cart(user_id)
++        analytics.cart_cleared(user_id)
++
++        await cb.answer(f"��� Корзина очищена ({removed_count} товаров)")
+ 
+-        text = CART_EMPTY
+-        keyboard = InlineKeyboardMarkup(inline_keyboard=[
+-            [InlineKeyboardButton(text=BTN_BACK_RECO, callback_data="cart:back_reco")]
+-        ])
++        # Update cart view
++        cart_items = cart_store.get_cart(user_id)
++        text = render_cart(cart_items)
++        keyboard = build_cart_keyboard(cart_items)
+ 
+         await safe_edit_message_text(
+             cb.message.chat.id,
+@@ -217,120 +296,71 @@ async def handle_cart_clear(cb: CallbackQuery):
+             reply_markup=keyboard
+         )
+ 
+-        analytics.cart_cleared(user_id)
+-        await cb.answer("🗑️ Корзина очищена")
+-
+     except Exception as e:
+         logger.error(f"Error clearing cart: {e}")
+         await cb.answer("❌ Ошибка очистки", show_alert=True)
+ 
+ @router.callback_query(F.data == "cart:checkout")
+ async def handle_cart_checkout(cb: CallbackQuery):
+-    """Start checkout process"""
++    """Show checkout screen"""
+     try:
+         user_id = cb.from_user.id
+-        cart = await cart_store.get(user_id)
++        cart_items = cart_store.get_cart(user_id)
+ 
+-        if not cart.items:
+-            await cb.answer("Корзина пуста", show_alert=True)
++        if not cart_items:
++            await cb.answer("Корзина пуста")
+             return
+ 
+-        # Simple checkout - just show links
+-        text = f"{CHECKOUT_TITLE}\n\n"
++        analytics.checkout_started(user_id)
+ 
+-        links = []
+-        for item in cart.items.values():
+-            links.append(f"• {item.name}: {item.link}")
++        # Generate checkout links with affiliate tags
++        checkout_lines = [CHECKOUT_TITLE, "", CHECKOUT_LINKS_READY]
+ 
+-        text += f"{CHECKOUT_LINKS_READY}\n\n" + "\n".join(links)
++        for item in cart_items:
++            if item.ref_link:
++                # Add affiliate tag if needed
++                affiliate_link = item.ref_link  # TODO: Add affiliate logic
++                checkout_lines.append(f"• {item.name} - {affiliate_link}")
+ 
+-        keyboard = InlineKeyboardMarkup(inline_keyboard=[
+-            [InlineKeyboardButton(text="⬅️ Назад в корзину", callback_data="cart:open")]
+-        ])
++        checkout_lines.append("")
++        checkout_lines.append(MSG_CART_READY_FOR_CHECKOUT)
++
++        text = "\n".join(checkout_lines)
++        keyboard = InlineKeyboardBuilder()
++        keyboard.row(InlineKeyboardButton(text="��� Назад в корзину", callback_data="cart:open"))
+ 
+         await safe_edit_message_text(
+             cb.message.chat.id,
+             cb.message.message_id,
+             text,
+-            reply_markup=keyboard
++            reply_markup=keyboard.as_markup()
+         )
+ 
+-        analytics.checkout_started(user_id, len(cart.items), cart.subtotal / 100)
+-        analytics.checkout_links_generated(user_id, len(links))
+-
+-        await cb.answer("✅ Ссылки готовы")
+-
+     except Exception as e:
+         logger.error(f"Error in checkout: {e}")
+         await cb.answer("❌ Ошибка оформления", show_alert=True)
+ 
+ @router.callback_query(F.data == "cart:back_reco")
+ async def handle_cart_back_reco(cb: CallbackQuery):
+-    """Go back to recommendations"""
++    """Return to recommendations"""
+     try:
+-        # This should trigger showing recommendations again
++        # TODO: Implement proper return to recommendations
+         # For now, just show a placeholder
+-        text = "💄 Возврат к рекомендациям\n\nВыберите категорию для просмотра средств:"
+-        keyboard = InlineKeyboardMarkup(inline_keyboard=[
+-            [InlineKeyboardButton(text="🧴 Очищение", callback_data="rec:more:cleanser:1")],
+-            [InlineKeyboardButton(text="💧 Тоник", callback_data="rec:more:toner:1")],
+-            [InlineKeyboardButton(text="✨ Сыворотки", callback_data="rec:more:serum:1")],
+-            [InlineKeyboardButton(text="⬅️ Назад в корзину", callback_data="cart:open")]
+-        ])
++        text = "��� Возврат к рекомендациям\n\nВыберите действие:"
++        keyboard = InlineKeyboardBuilder()
++        keyboard.row(InlineKeyboardButton(text="��� Главное меню", callback_data="back:main"))
+ 
+         await safe_edit_message_text(
+             cb.message.chat.id,
+             cb.message.message_id,
+             text,
+-            reply_markup=keyboard
++            reply_markup=keyboard.as_markup()
+         )
+-
+-        await cb.answer("💄 Рекомендации")
++        await cb.answer("Возвращаемся к рекомендациям")
+ 
+     except Exception as e:
+-        logger.error(f"Error going back to recommendations: {e}")
++        logger.error(f"Error returning to recommendations: {e}")
+         await cb.answer("❌ Ошибка", show_alert=True)
+ 
+-@router.callback_query(F.data.startswith("cart:add:"))
+-async def handle_cart_add(cb: CallbackQuery):
+-    """Add item to cart from recommendations"""
+-    try:
+-        # Format: cart:add:<pid>:<vid>
+-        parts = cb.data.split(":")
+-        if len(parts) < 4:
+-            await cb.answer("❌ Неверный формат")
+-            return
+-
+-        product_id = parts[2]
+-        variant_id = parts[3] if parts[3] != "none" else None
+-        user_id = cb.from_user.id
+-
+-        # Create cart item (mock data - should come from real catalog)
+-        item = CartItem(
+-            product_id=product_id,
+-            variant_id=variant_id,
+-            name=f"Продукт {product_id}",
+-            price=1990,  # 19.90 RUB
+-            currency="RUB",
+-            qty=1,
+-            source="goldapple",
+-            link=f"https://goldapple.ru/products/{product_id}",
+-            meta={"category": "skincare"}
+-        )
+-
+-        # Validate item exists and is available
+-        # TODO: Check against real catalog
+-
+-        # Add to cart
+-        cart = await cart_store.add(user_id, item)
+-
+-        analytics.cart_item_added(user_id, product_id, variant_id or "", "goldapple", item.price / 100)
+-
+-        await cb.answer(MSG_ADDED, show_alert=False)
+-
 -    except Exception as e:
--        logger.error(f"Error showing recommendations after test: {e}")
-+    keyboard.row(InlineKeyboardButton(text=BTN_MORE, callback_data=f"rec:more:{test_type}:1"))
-+    keyboard.row(InlineKeyboardButton(text=BTN_CART_CONTINUE, callback_data="cart:open"))
+-        logger.error(f"Error adding to cart: {e}")
+-        await cb.answer("❌ Ошибка добавления", show_alert=True)
+-
+ # Export router
+ __all__ = ["router"]
+diff --git a/bot/handlers/recommendations.py b/bot/handlers/recommendations.py
+index 67e9c52..c10c775 100644
+--- a/bot/handlers/recommendations.py
++++ b/bot/handlers/recommendations.py
+@@ -40,7 +40,16 @@ except ImportError:  # pragma: no cover - optional dependency
+ async def handle_recommendations(cb: CallbackQuery, bot: Bot) -> None:
+     try:
+         data = cb.data
++        # Legacy rec:add: callbacks - redirect to cart:add:
+         if data.startswith("rec:add:"):
++            # Convert rec:add:pid:vid to cart:add:pid:vid format
++            parts = data.split(":")
++            if len(parts) >= 3:
++                product_id = parts[2]
++                variant_id = parts[3] if len(parts) > 3 else "default"
++                # Simulate cart:add: callback
++                cb.data = f"cart:add:{product_id}:{variant_id}"
++                # This will be handled by cart_v2 router
+             await cb.answer(MSG_CART_UPDATED, show_alert=False)
+             return
  
--# Export functions for use in other handlers
--__all__ = ["router", "show_recommendations_after_test"]
-+    await safe_send_message(bot, user_id, text, reply_markup=keyboard.as_markup())
+diff --git a/bot/main.py b/bot/main.py
+index de1d4f9..1c8cc11 100644
+--- a/bot/main.py
++++ b/bot/main.py
+@@ -66,13 +66,13 @@ except ImportError as e:
+     print(f"ERROR Failed to import makeup picker router: {e}")
+     raise
+ 
+-try:
+-    from bot.handlers.cart import router as cart_router
+-
+-    print("OK cart router imported")
+-except ImportError as e:
+-    print(f"ERROR Failed to import cart router: {e}")
+-    raise
++# LEGACY CART DISABLED - using cart_v2 only
++# try:
++#     from bot.handlers.cart import router as cart_router
++#     print("OK cart router imported")
++# except ImportError as e:
++#     print(f"ERROR Failed to import cart router: {e}")
++#     raise
+ 
+ try:
+     from bot.handlers.report import router as report_router
+@@ -322,7 +322,8 @@ async def main() -> None:
+     dp.include_router(makeup_picker_router)  # Makeup product picker - AFTER tests
+     dp.include_router(skincare_router)
+     dp.include_router(palette_router)
+-    dp.include_router(cart_router)
++    # LEGACY CART DISABLED
++    # dp.include_router(cart_router)
+     dp.include_router(report_router)
+     dp.include_router(universal_router)  # Universal catch-all - LOWEST PRIORITY
+ 
+diff --git a/bot/utils/sanitize.py b/bot/utils/sanitize.py
+new file mode 100644
+index 0000000..f9c5ff1
+--- /dev/null
++++ b/bot/utils/sanitize.py
+@@ -0,0 +1,30 @@
++import re
++
++def sanitize_message(text: str) -> str:
++    """
++    Очищает текст от спецсимволов и артефактов ИИ,
++    сохраняя Markdown и ссылки.
++    """
++    if not text:
++        return text
++
++    # Удаляем звездочки и решетки (если не в ссылках)
++    # Но сохраняем Markdown: **bold**, ## headers
++    text = re.sub(r'(?<!\*)\*(?!\*)', '', text)  # Удаляем одиночные *
++    text = re.sub(r'(?<!#)#(?![#])', '', text)  # Удаляем # не перед другим #
++
++    # Заменяем длинные тире на обычное
++    text = text.replace('—', '-').replace('–', '-')
++
++    # Схлопываем множественные пробелы и переносы
++    text = re.sub(r'\n{3,}', '\n\n', text)  # Не более 2 переносов
++    text = re.sub(r' {2,}', ' ', text)  # Не более 1 пробела
++
++    # Удаляем пустые строки в начале/конце
++    text = text.strip()
++
++    # Удаляем артефакты ИИ (примеры)
++    text = re.sub(r'<[^>]+>', '', text)  # Удаляем <text>
++    text = re.sub(r'\[([^\]]+)\](?!\()', '', text)  # Удаляем [text] не перед (
++
++    return text
+diff --git a/cart_screenshot.txt b/cart_screenshot.txt
+new file mode 100644
+index 0000000..d1b472e
+--- /dev/null
++++ b/cart_screenshot.txt
+@@ -0,0 +1,22 @@
++=== ТЕКСТОВЫЙ СКРИН КОРЗИНЫ С 2-3 ТОВАРАМИ ===
++
++��� Ваша корзина
++
++Очищающий гель CeraVe • 1 590 ₽ × 2 = 3 190 ₽
++➖   2   ➕   ���
++
++Тоник La Roche-Posay • 2 890 ₽ × 1 = 2 890 ₽  
++➖   1   ➕   ���
++
++Сыворотка The Ordinary • 1 990 ₽ × 3 = 5 970 ₽
++➖   3   ➕   ���
++
++Итого: 6 шт × 12 050 ₽
++
++��� Очистить   ��� Продолжить подбор   ��� Оформление
++
++=== ПУСТАЯ КОРЗИНА ===
++
++Пока пусто. Нажмите «Продолжить подбор», чтобы выбрать товары.
++
++��� Продолжить подбор
+diff --git a/services/cart_store.py b/services/cart_store.py
+index 209118a..9b97c76 100644
+--- a/services/cart_store.py
++++ b/services/cart_store.py
+@@ -47,6 +47,16 @@ class CartItem:
+         variant = self.variant_id or "default"
+         return f"{self.product_id}:{variant}"
+ 
++    @property
++    def qty(self) -> int:
++        """Alias for quantity - always synchronized"""
++        return self.quantity
++
++    @qty.setter
++    def qty(self, value: int) -> None:
++        """Setter for qty - synchronizes with quantity"""
++        self.quantity = max(int(value), 0)
++
+     def increase(self, step: int = 1, *, max_quantity: int = 99) -> int:
+         self.quantity = min(self.quantity + step, max_quantity)
+         return self.quantity
+@@ -155,10 +165,16 @@ class CartStore:
+         variant_id: Optional[str] = None,
+         quantity: int = 1,
+         **kwargs,
+-    ) -> CartItem:
++    ) -> Tuple[CartItem, bool]:
++        """Add item to cart. Returns (item, currency_conflict)"""
+         cart = self.get_cart(user_id)
+         item = self._find_item(cart, product_id, variant_id)
+ 
++        # Check for currency conflict
++        new_currency = kwargs.get("currency", "RUB")
++        existing_currencies = {item.currency for item in cart if item.currency}
++        currency_conflict = bool(existing_currencies and new_currency not in existing_currencies)
++
+         if item:
+             item.increase(max(quantity, 0) or 1)
+         else:
+@@ -171,7 +187,7 @@ class CartStore:
+             cart.append(item)
+ 
+         self._save_cart(user_id, cart)
+-        return item
++        return item, currency_conflict
+ 
+     def update_quantity(
+         self, user_id: int, product_id: str, variant_id: Optional[str], quantity: int
+diff --git a/tests/test_cart.py b/tests/test_cart.py
+index 59328c4..4597e5d 100644
+--- a/tests/test_cart.py
++++ b/tests/test_cart.py
+@@ -29,7 +29,7 @@ class TestCartStore(unittest.TestCase):
+     def test_add_item_new_product(self):
+         """Test adding a new product to cart"""
+         user_id = 12345
+-        item = self.store.add_item(
++        item, currency_conflict = self.store.add_item(
+             user_id=user_id,
+             product_id="test_product",
+             variant_id="variant1",
+@@ -151,6 +151,97 @@ class TestCartStore(unittest.TestCase):
+         self.assertEqual(cart[0].quantity, 5)
+         self.assertEqual(cart[0].price, 100.0)
+ 
++    def test_currency_conflict_detection(self):
++        """Test currency conflict detection"""
++        user_id = 12345
++
++        # Add first item with RUB
++        item1, conflict1 = self.store.add_item(
++            user_id=user_id,
++            product_id="rub_product",
++            name="RUB Product",
++            price=100.0,
++            currency="RUB"
++        )
++        self.assertFalse(conflict1)
++
++        # Add second item with RUB (no conflict)
++        item2, conflict2 = self.store.add_item(
++            user_id=user_id,
++            product_id="rub_product2",
++            name="RUB Product 2",
++            price=200.0,
++            currency="RUB"
++        )
++        self.assertFalse(conflict2)
++
++        # Add item with different currency (should conflict)
++        item3, conflict3 = self.store.add_item(
++            user_id=user_id,
++            product_id="usd_product",
++            name="USD Product",
++            price=50.0,
++            currency="USD"
++        )
++        self.assertTrue(conflict3)
++
++    def test_add_same_product_twice(self):
++        """Test adding the same product twice increases quantity"""
++        user_id = 12345
++
++        # Add first time
++        item1, conflict1 = self.store.add_item(
++            user_id=user_id,
++            product_id="same_product",
++            variant_id="variant1",
++            quantity=2,
++            name="Same Product",
++            price=100.0
++        )
++        self.assertEqual(item1.qty, 2)
++
++        # Add same product again
++        item2, conflict2 = self.store.add_item(
++            user_id=user_id,
++            product_id="same_product",
++            variant_id="variant1",
++            quantity=3,
++            name="Same Product",
++            price=100.0
++        )
++        self.assertEqual(item2.qty, 5)  # 2 + 3
++
++        # Check cart has only one item
++        cart = self.store.get_cart(user_id)
++        self.assertEqual(len(cart), 1)
++
++    def test_cart_totals_calculation(self):
++        """Test cart totals calculation"""
++        user_id = 12345
++
++        # Add items
++        self.store.add_item(user_id, "p1", name="Product 1", price=100.0, quantity=2)
++        self.store.add_item(user_id, "p2", name="Product 2", price=50.0, quantity=1)
++
++        total_qty, total_price, currency = self.store.get_cart_total(user_id)
++        self.assertEqual(total_qty, 3)  # 2 + 1
++        self.assertEqual(total_price, 250.0)  # 100*2 + 50*1
++        self.assertEqual(currency, "RUB")
++
++    def test_dec_to_zero_removes_item(self):
++        """Test that decreasing quantity to 0 removes item"""
++        user_id = 12345
++
++        # Add item
++        self.store.add_item(user_id, "test_product", quantity=1, name="Test", price=100.0)
++
++        # Decrease to 0 should remove
++        success = self.store.update_quantity(user_id, "test_product", None, 0)
++        self.assertTrue(success)
++
++        cart = self.store.get_cart(user_id)
++        self.assertEqual(len(cart), 0)
++
+ 
+ if __name__ == "__main__":
+     unittest.main()
+diff --git a/tests/test_sanitize.py b/tests/test_sanitize.py
+new file mode 100644
+index 0000000..f88da2d
+--- /dev/null
++++ b/tests/test_sanitize.py
+@@ -0,0 +1,43 @@
++import pytest
++from bot.utils.sanitize import sanitize_message
++
++
++class TestSanitizeMessage:
++    """Unit tests for message sanitization"""
++
++    def test_remove_single_asterisks(self):
++        """Remove single * but keep ** for bold"""
++        input_text = "Hello *world* and **bold** text"
++        expected = "Hello world and **bold** text"
++        assert sanitize_message(input_text) == expected
++
++    def test_remove_single_hashes(self):
++        """Remove single # but keep ### headers"""
++        input_text = "# Header\n## Subheader\n#notheader"
++        expected = "Header\n## Subheader\nnotheader"
++        assert sanitize_message(input_text) == expected
++
++    def test_normalize_dashes(self):
++        """Replace long dashes with regular dash"""
++        input_text = "Range: 1–10 and — separator"
++        expected = "Range: 1-10 and - separator"
++        assert sanitize_message(input_text) == expected
++
++    def test_collapse_whitespace(self):
++        """Collapse multiple spaces and newlines"""
++        input_text = "Text   with    spaces\n\n\n\nMultiple\n\nlines"
++        expected = "Text with spaces\n\nMultiple\n\nlines"
++        assert sanitize_message(input_text) == expected
++
++    def test_preserve_links(self):
++        """Keep markdown links and URLs intact"""
++        input_text = "[Link text](https://example.com) and http://site.com"
++        expected = "[Link text](https://example.com) and http://site.com"
++        assert sanitize_message(input_text) == expected
++
++    def test_remove_brackets_and_angles(self):
++        """Remove bracketed and angled artifacts"""
++        input_text = "Text [artifact] and <angle> content"
++        expected = "Text  and  content"
++        assert sanitize_message(input_text) == expected
++

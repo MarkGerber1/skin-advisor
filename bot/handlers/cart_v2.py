@@ -1,19 +1,17 @@
 """
-🛒 Cart v2 Handler
+�� Cart v2 Handler
 
-New cart implementation with proper UX flow:
-recommendations → cart → checkout
+Complete cart flow: recommendations → cart → checkout
+Unified cart:* callbacks with proper UX and analytics
 """
 
 import logging
-from aiogram import Router, F, Bot
-from aiogram.types import CallbackQuery, Message, InlineKeyboardMarkup, InlineKeyboardButton
-from aiogram.utils.keyboard import InlineKeyboardBuilder
-from aiogram.exceptions import TelegramBadRequest
+from aiogram import Router, F
+from aiogram.types import CallbackQuery
+from aiogram.utils.keyboard import InlineKeyboardBuilder, InlineKeyboardButton
 
-from engine.cart_store import CartStore, Cart, CartItem
-from config.env import get_settings
-from bot.utils.security import safe_send_message, safe_edit_message_text, sanitize_message
+from services.cart_store import CartStore, CartItem
+from bot.utils.security import safe_edit_message_text
 from engine.analytics import get_analytics_tracker
 from i18n.ru import *
 
@@ -24,76 +22,84 @@ router = Router()
 cart_store = CartStore()
 analytics = get_analytics_tracker()
 
-def format_price(amount_cents: int, currency: str = "RUB") -> str:
-    """Format price for display"""
-    amount_rub = amount_cents // 100
-    return f"{amount_rub} {currency}"
+def format_price(price: float, currency: str = "RUB") -> str:
+    """Format price with spaces for thousands"""
+    if currency == "RUB":
+        rubles = int(price)
+        return f"{rubles:,} ₽".replace(",", " ")
+    return f"{price:.2f} {currency}"
 
 def format_cart_item(item: CartItem) -> str:
     """Format cart item for display"""
-    price_str = format_price(item.price, item.currency)
-    total_str = format_price(item.price * item.qty, item.currency)
-    return CART_ITEM_FMT.format(
-        name=item.name,
-        price=price_str,
-        qty=item.qty,
-        total=total_str
-    )
+    price_str = format_price(item.price or 0, item.currency)
+    total = (item.price or 0) * item.qty
+    total_str = format_price(total, item.currency)
 
-def build_cart_keyboard(cart: Cart, user_id: int) -> InlineKeyboardMarkup:
-    """Build cart keyboard with item controls"""
+    variant_text = ""
+    if item.variant_name:
+        variant_text = f" • {item.variant_name}"
+    elif item.variant_id:
+        variant_text = f" • Вариант {item.variant_id}"
+
+    return f"{item.name}{variant_text}\n{price_str} × {item.qty} = {total_str}"
+
+def render_cart(cart_items: list[CartItem]) -> str:
+    """Render full cart view"""
+    if not cart_items:
+        return CART_EMPTY
+
+    # Calculate totals
+    total_qty = sum(item.qty for item in cart_items)
+    total_price = sum((item.price or 0) * item.qty for item in cart_items)
+    currency = next((item.currency for item in cart_items if item.currency), "RUB")
+
+    lines = [CART_TITLE]
+    for item in cart_items:
+        lines.append("")
+        lines.append(format_cart_item(item))
+
+    lines.append("")
+    lines.append(f"Итого: {total_qty} шт × {format_price(total_price, currency)}")
+    return "\n".join(lines)
+
+def build_cart_keyboard(cart_items: list[CartItem]) -> InlineKeyboardMarkup:
+    """Build cart keyboard with controls"""
     keyboard = InlineKeyboardBuilder()
 
     # Item controls
-    for key, item in cart.items.items():
-        # Quantity controls for each item
+    for item in cart_items:
         keyboard.row(
-            InlineKeyboardButton(text=BTN_DEC, callback_data=f"cart:dec:{key}"),
-            InlineKeyboardButton(text=str(item.qty), callback_data=f"cart:info:{key}"),
-            InlineKeyboardButton(text=BTN_INC, callback_data=f"cart:inc:{key}"),
-            InlineKeyboardButton(text=BTN_DEL, callback_data=f"cart:del:{key}")
+            InlineKeyboardButton(text="➖", callback_data=f"cart:dec:{item.product_id}:{item.variant_id or 'none'}"),
+            InlineKeyboardButton(text=f" {item.qty} ", callback_data="noop"),
+            InlineKeyboardButton(text="➕", callback_data=f"cart:inc:{item.product_id}:{item.variant_id or 'none'}"),
+            InlineKeyboardButton(text="���", callback_data=f"cart:rm:{item.product_id}:{item.variant_id or 'none'}")
         )
 
     # Cart actions
-    keyboard.row(
-        InlineKeyboardButton(text=BTN_BACK_RECO, callback_data="cart:back_reco"),
-        InlineKeyboardButton(text=BTN_CHECKOUT, callback_data="cart:checkout")
-    )
-
-    keyboard.row(InlineKeyboardButton(text=BTN_CLEAR, callback_data="cart:clear"))
+    if cart_items:
+        keyboard.row(
+            InlineKeyboardButton(text="��� Очистить", callback_data="cart:clr"),
+            InlineKeyboardButton(text="��� Продолжить подбор", callback_data="cart:back_reco"),
+            InlineKeyboardButton(text="��� Оформление", callback_data="cart:checkout")
+        )
+    else:
+        keyboard.row(
+            InlineKeyboardButton(text="��� Продолжить подбор", callback_data="cart:back_reco")
+        )
 
     return keyboard.as_markup()
 
-async def render_cart(cart: Cart) -> str:
-    """Render cart content as text"""
-    if not cart.items:
-        return CART_EMPTY
-
-    text = f"{CART_TITLE}\n\n"
-
-    # Items
-    for i, (key, item) in enumerate(cart.items.items(), 1):
-        text += f"{i}) {format_cart_item(item)}\n"
-
-    # Total
-    total_str = format_price(cart.subtotal, cart.currency)
-    text += f"\n{CART_TOTAL.format(total=total_str)}"
-
-    # Currency warning
-    if cart.needs_review:
-        text += "\n⚠️ Разные валюты в корзине"
-
-    return text
-
 @router.callback_query(F.data == "cart:open")
 async def handle_cart_open(cb: CallbackQuery):
-    """Open cart screen"""
-    try:
-        user_id = cb.from_user.id
-        cart = await cart_store.get(user_id)
+    """Open cart view"""
+    user_id = cb.from_user.id
 
-        text = await render_cart(cart)
-        keyboard = build_cart_keyboard(cart, user_id)
+    try:
+        cart_items = cart_store.get_cart(user_id)
+        analytics.cart_opened(user_id)
+
+        text = render_cart(cart_items)
+        keyboard = build_cart_keyboard(cart_items)
 
         await safe_edit_message_text(
             cb.message.chat.id,
@@ -101,195 +107,11 @@ async def handle_cart_open(cb: CallbackQuery):
             text,
             reply_markup=keyboard
         )
-
-        analytics.cart_opened(user_id)
         await cb.answer()
 
     except Exception as e:
         logger.error(f"Error opening cart: {e}")
         await cb.answer("❌ Ошибка открытия корзины", show_alert=True)
-
-@router.callback_query(F.data.startswith("cart:inc:"))
-async def handle_cart_inc(cb: CallbackQuery):
-    """Increase item quantity"""
-    try:
-        key = cb.data.replace("cart:inc:", "")
-        user_id = cb.from_user.id
-
-        cart = await cart_store.set_qty(user_id, key, 99)  # Max qty check in set_qty
-        text = await render_cart(cart)
-        keyboard = build_cart_keyboard(cart, user_id)
-
-        await safe_edit_message_text(
-            cb.message.chat.id,
-            cb.message.message_id,
-            text,
-            reply_markup=keyboard
-        )
-
-        analytics.cart_qty_changed(user_id, key, cart.items.get(key, CartItem("", "")).qty)
-        await cb.answer("➕ Количество увеличено")
-
-    except Exception as e:
-        logger.error(f"Error increasing quantity: {e}")
-        await cb.answer("❌ Ошибка", show_alert=True)
-
-@router.callback_query(F.data.startswith("cart:dec:"))
-async def handle_cart_dec(cb: CallbackQuery):
-    """Decrease item quantity"""
-    try:
-        key = cb.data.replace("cart:dec:", "")
-        user_id = cb.from_user.id
-
-        # Get current quantity
-        cart = await cart_store.get(user_id)
-        current_qty = cart.items.get(key, CartItem("", "")).qty
-
-        if current_qty <= 1:
-            # Remove item instead of setting to 0
-            cart = await cart_store.remove(user_id, key)
-        else:
-            cart = await cart_store.set_qty(user_id, key, current_qty - 1)
-
-        text = await render_cart(cart)
-        keyboard = build_cart_keyboard(cart, user_id)
-
-        await safe_edit_message_text(
-            cb.message.chat.id,
-            cb.message.message_id,
-            text,
-            reply_markup=keyboard
-        )
-
-        new_qty = cart.items.get(key, CartItem("", "")).qty
-        analytics.cart_qty_changed(user_id, key, new_qty)
-        if new_qty == 0:
-            analytics.cart_item_removed(user_id, key)
-
-        await cb.answer("➖ Количество уменьшено")
-
-    except Exception as e:
-        logger.error(f"Error decreasing quantity: {e}")
-        await cb.answer("❌ Ошибка", show_alert=True)
-
-@router.callback_query(F.data.startswith("cart:del:"))
-async def handle_cart_del(cb: CallbackQuery):
-    """Remove item from cart"""
-    try:
-        key = cb.data.replace("cart:del:", "")
-        user_id = cb.from_user.id
-
-        cart = await cart_store.remove(user_id, key)
-
-        text = await render_cart(cart)
-        keyboard = build_cart_keyboard(cart, user_id)
-
-        await safe_edit_message_text(
-            cb.message.chat.id,
-            cb.message.message_id,
-            text,
-            reply_markup=keyboard
-        )
-
-        analytics.cart_item_removed(user_id, key)
-        await cb.answer("🗑️ Товар удалён")
-
-    except Exception as e:
-        logger.error(f"Error deleting item: {e}")
-        await cb.answer("❌ Ошибка удаления", show_alert=True)
-
-@router.callback_query(F.data == "cart:clear")
-async def handle_cart_clear(cb: CallbackQuery):
-    """Clear entire cart"""
-    try:
-        user_id = cb.from_user.id
-        await cart_store.clear(user_id)
-
-        text = CART_EMPTY
-        keyboard = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text=BTN_BACK_RECO, callback_data="cart:back_reco")]
-        ])
-
-        await safe_edit_message_text(
-            cb.message.chat.id,
-            cb.message.message_id,
-            text,
-            reply_markup=keyboard
-        )
-
-        analytics.cart_cleared(user_id)
-        await cb.answer("🗑️ Корзина очищена")
-
-    except Exception as e:
-        logger.error(f"Error clearing cart: {e}")
-        await cb.answer("❌ Ошибка очистки", show_alert=True)
-
-@router.callback_query(F.data == "cart:checkout")
-async def handle_cart_checkout(cb: CallbackQuery):
-    """Start checkout process"""
-    try:
-        user_id = cb.from_user.id
-        cart = await cart_store.get(user_id)
-
-        if not cart.items:
-            await cb.answer("Корзина пуста", show_alert=True)
-            return
-
-        # Simple checkout - just show links
-        text = f"{CHECKOUT_TITLE}\n\n"
-
-        links = []
-        for item in cart.items.values():
-            links.append(f"• {item.name}: {item.link}")
-
-        text += f"{CHECKOUT_LINKS_READY}\n\n" + "\n".join(links)
-
-        keyboard = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="⬅️ Назад в корзину", callback_data="cart:open")]
-        ])
-
-        await safe_edit_message_text(
-            cb.message.chat.id,
-            cb.message.message_id,
-            text,
-            reply_markup=keyboard
-        )
-
-        analytics.checkout_started(user_id, len(cart.items), cart.subtotal / 100)
-        analytics.checkout_links_generated(user_id, len(links))
-
-        await cb.answer("✅ Ссылки готовы")
-
-    except Exception as e:
-        logger.error(f"Error in checkout: {e}")
-        await cb.answer("❌ Ошибка оформления", show_alert=True)
-
-@router.callback_query(F.data == "cart:back_reco")
-async def handle_cart_back_reco(cb: CallbackQuery):
-    """Go back to recommendations"""
-    try:
-        # This should trigger showing recommendations again
-        # For now, just show a placeholder
-        text = "💄 Возврат к рекомендациям\n\nВыберите категорию для просмотра средств:"
-        keyboard = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="🧴 Очищение", callback_data="rec:more:cleanser:1")],
-            [InlineKeyboardButton(text="💧 Тоник", callback_data="rec:more:toner:1")],
-            [InlineKeyboardButton(text="✨ Сыворотки", callback_data="rec:more:serum:1")],
-            [InlineKeyboardButton(text="⬅️ Назад в корзину", callback_data="cart:open")]
-        ])
-
-        await safe_edit_message_text(
-            cb.message.chat.id,
-            cb.message.message_id,
-            text,
-            reply_markup=keyboard
-        )
-
-        await cb.answer("💄 Рекомендации")
-
-    except Exception as e:
-        logger.error(f"Error going back to recommendations: {e}")
-        await cb.answer("❌ Ошибка", show_alert=True)
 
 @router.callback_query(F.data.startswith("cart:add:"))
 async def handle_cart_add(cb: CallbackQuery):
@@ -305,32 +127,240 @@ async def handle_cart_add(cb: CallbackQuery):
         variant_id = parts[3] if parts[3] != "none" else None
         user_id = cb.from_user.id
 
-        # Create cart item (mock data - should come from real catalog)
-        item = CartItem(
+        # TODO: Validate variant_id belongs to product_id
+        # For now, create mock item
+        item, currency_conflict = cart_store.add_item(
+            user_id=user_id,
             product_id=product_id,
             variant_id=variant_id,
             name=f"Продукт {product_id}",
-            price=1990,  # 19.90 RUB
+            price=1990.0,  # 1990 RUB
             currency="RUB",
-            qty=1,
             source="goldapple",
-            link=f"https://goldapple.ru/products/{product_id}",
-            meta={"category": "skincare"}
+            ref_link=f"https://goldapple.ru/products/{product_id}"
         )
 
-        # Validate item exists and is available
-        # TODO: Check against real catalog
+        if currency_conflict:
+            await cb.answer("⚠️ Валютный конфликт - товары с разной валютой", show_alert=True)
+            return
 
-        # Add to cart
-        cart = await cart_store.add(user_id, item)
-
-        analytics.cart_item_added(user_id, product_id, variant_id or "", "goldapple", item.price / 100)
-
-        await cb.answer(MSG_ADDED, show_alert=False)
+        analytics.cart_item_added(user_id, product_id, variant_id or "", item.price, item.currency, item.source or "")
+        await cb.answer(MSG_CART_ITEM_ADDED)
 
     except Exception as e:
         logger.error(f"Error adding to cart: {e}")
         await cb.answer("❌ Ошибка добавления", show_alert=True)
+
+@router.callback_query(F.data.startswith("cart:inc:"))
+async def handle_cart_inc(cb: CallbackQuery):
+    """Increase item quantity"""
+    try:
+        parts = cb.data.split(":")
+        if len(parts) < 4:
+            await cb.answer("❌ Неверный формат")
+            return
+
+        product_id = parts[2]
+        variant_id = parts[3] if parts[3] != "none" else None
+        user_id = cb.from_user.id
+
+        cart_items = cart_store.get_cart(user_id)
+        item = next((i for i in cart_items if i.product_id == product_id and i.variant_id == variant_id), None)
+        if not item:
+            await cb.answer("❌ Товар не найден")
+            return
+
+        old_qty = item.qty
+        cart_store.update_quantity(user_id, product_id, variant_id, item.qty + 1)
+
+        analytics.cart_qty_changed(user_id, f"{product_id}:{variant_id}", old_qty, item.qty + 1)
+        await cb.answer(f"➕ Количество: {item.qty + 1}")
+
+        # Update cart view
+        cart_items = cart_store.get_cart(user_id)
+        text = render_cart(cart_items)
+        keyboard = build_cart_keyboard(cart_items)
+
+        await safe_edit_message_text(
+            cb.message.chat.id,
+            cb.message.message_id,
+            text,
+            reply_markup=keyboard
+        )
+
+    except Exception as e:
+        logger.error(f"Error increasing quantity: {e}")
+        await cb.answer("❌ Ошибка", show_alert=True)
+
+@router.callback_query(F.data.startswith("cart:dec:"))
+async def handle_cart_dec(cb: CallbackQuery):
+    """Decrease item quantity"""
+    try:
+        parts = cb.data.split(":")
+        if len(parts) < 4:
+            await cb.answer("❌ Неверный формат")
+            return
+
+        product_id = parts[2]
+        variant_id = parts[3] if parts[3] != "none" else None
+        user_id = cb.from_user.id
+
+        cart_items = cart_store.get_cart(user_id)
+        item = next((i for i in cart_items if i.product_id == product_id and i.variant_id == variant_id), None)
+        if not item:
+            await cb.answer("❌ Товар не найден")
+            return
+
+        if item.qty <= 1:
+            # Remove item if qty == 1
+            cart_store.remove_item(user_id, product_id, variant_id)
+            analytics.cart_item_removed(user_id, f"{product_id}:{variant_id}")
+            await cb.answer("��� Товар удалён")
+        else:
+            old_qty = item.qty
+            cart_store.update_quantity(user_id, product_id, variant_id, item.qty - 1)
+            analytics.cart_qty_changed(user_id, f"{product_id}:{variant_id}", old_qty, item.qty - 1)
+            await cb.answer(f"➖ Количество: {item.qty - 1}")
+
+        # Update cart view
+        cart_items = cart_store.get_cart(user_id)
+        text = render_cart(cart_items)
+        keyboard = build_cart_keyboard(cart_items)
+
+        await safe_edit_message_text(
+            cb.message.chat.id,
+            cb.message.message_id,
+            text,
+            reply_markup=keyboard
+        )
+
+    except Exception as e:
+        logger.error(f"Error decreasing quantity: {e}")
+        await cb.answer("❌ Ошибка", show_alert=True)
+
+@router.callback_query(F.data.startswith("cart:rm:"))
+async def handle_cart_rm(cb: CallbackQuery):
+    """Remove item from cart"""
+    try:
+        parts = cb.data.split(":")
+        if len(parts) < 4:
+            await cb.answer("❌ Неверный формат")
+            return
+
+        product_id = parts[2]
+        variant_id = parts[3] if parts[3] != "none" else None
+        user_id = cb.from_user.id
+
+        if cart_store.remove_item(user_id, product_id, variant_id):
+            analytics.cart_item_removed(user_id, f"{product_id}:{variant_id}")
+            await cb.answer("��� Товар удалён")
+        else:
+            await cb.answer("❌ Товар не найден")
+            return
+
+        # Update cart view
+        cart_items = cart_store.get_cart(user_id)
+        text = render_cart(cart_items)
+        keyboard = build_cart_keyboard(cart_items)
+
+        await safe_edit_message_text(
+            cb.message.chat.id,
+            cb.message.message_id,
+            text,
+            reply_markup=keyboard
+        )
+
+    except Exception as e:
+        logger.error(f"Error removing item: {e}")
+        await cb.answer("❌ Ошибка удаления", show_alert=True)
+
+@router.callback_query(F.data == "cart:clr")
+async def handle_cart_clr(cb: CallbackQuery):
+    """Clear entire cart"""
+    try:
+        user_id = cb.from_user.id
+        removed_count = cart_store.clear_cart(user_id)
+        analytics.cart_cleared(user_id)
+
+        await cb.answer(f"��� Корзина очищена ({removed_count} товаров)")
+
+        # Update cart view
+        cart_items = cart_store.get_cart(user_id)
+        text = render_cart(cart_items)
+        keyboard = build_cart_keyboard(cart_items)
+
+        await safe_edit_message_text(
+            cb.message.chat.id,
+            cb.message.message_id,
+            text,
+            reply_markup=keyboard
+        )
+
+    except Exception as e:
+        logger.error(f"Error clearing cart: {e}")
+        await cb.answer("❌ Ошибка очистки", show_alert=True)
+
+@router.callback_query(F.data == "cart:checkout")
+async def handle_cart_checkout(cb: CallbackQuery):
+    """Show checkout screen"""
+    try:
+        user_id = cb.from_user.id
+        cart_items = cart_store.get_cart(user_id)
+
+        if not cart_items:
+            await cb.answer("Корзина пуста")
+            return
+
+        analytics.checkout_started(user_id)
+
+        # Generate checkout links with affiliate tags
+        checkout_lines = [CHECKOUT_TITLE, "", CHECKOUT_LINKS_READY]
+
+        for item in cart_items:
+            if item.ref_link:
+                # Add affiliate tag if needed
+                affiliate_link = item.ref_link  # TODO: Add affiliate logic
+                checkout_lines.append(f"• {item.name} - {affiliate_link}")
+
+        checkout_lines.append("")
+        checkout_lines.append(MSG_CART_READY_FOR_CHECKOUT)
+
+        text = "\n".join(checkout_lines)
+        keyboard = InlineKeyboardBuilder()
+        keyboard.row(InlineKeyboardButton(text="��� Назад в корзину", callback_data="cart:open"))
+
+        await safe_edit_message_text(
+            cb.message.chat.id,
+            cb.message.message_id,
+            text,
+            reply_markup=keyboard.as_markup()
+        )
+
+    except Exception as e:
+        logger.error(f"Error in checkout: {e}")
+        await cb.answer("❌ Ошибка оформления", show_alert=True)
+
+@router.callback_query(F.data == "cart:back_reco")
+async def handle_cart_back_reco(cb: CallbackQuery):
+    """Return to recommendations"""
+    try:
+        # TODO: Implement proper return to recommendations
+        # For now, just show a placeholder
+        text = "��� Возврат к рекомендациям\n\nВыберите действие:"
+        keyboard = InlineKeyboardBuilder()
+        keyboard.row(InlineKeyboardButton(text="��� Главное меню", callback_data="back:main"))
+
+        await safe_edit_message_text(
+            cb.message.chat.id,
+            cb.message.message_id,
+            text,
+            reply_markup=keyboard.as_markup()
+        )
+        await cb.answer("Возвращаемся к рекомендациям")
+
+    except Exception as e:
+        logger.error(f"Error returning to recommendations: {e}")
+        await cb.answer("❌ Ошибка", show_alert=True)
 
 # Export router
 __all__ = ["router"]
