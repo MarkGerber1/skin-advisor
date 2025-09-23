@@ -89,7 +89,7 @@ async def change_item_variant(cb: CallbackQuery, state: FSMContext) -> None:
         await cb.answer(f"✅ Вариант изменен на: {variant_name}")
 
         # Обновляем отображение корзины
-        from bot.handlers.cart import show_cart
+        from bot.handlers.cart_v2 import show_cart
 
         await show_cart(cb.message, state)
 
@@ -153,7 +153,7 @@ async def set_item_quantity(cb: CallbackQuery, state: FSMContext) -> None:
             await cb.answer("✅ Товар удален из корзины")
 
         # Обновляем отображение корзины
-        from bot.handlers.cart import show_cart
+        from bot.handlers.cart_v2 import show_cart
 
         await show_cart(cb.message, state)
 
@@ -209,7 +209,7 @@ async def remove_exact_item(cb: CallbackQuery, state: FSMContext) -> None:
             await cb.answer("⚠️ Товар не найден в корзине")
 
         # Обновляем отображение корзины
-        from bot.handlers.cart import show_cart
+        from bot.handlers.cart_v2 import show_cart
 
         await show_cart(cb.message, state)
 
@@ -281,6 +281,6 @@ async def clear_cart_cancelled(cb: CallbackQuery, state: FSMContext) -> None:
     await cb.answer("Очистка отменена")
 
     # Возвращаемся к корзине
-    from bot.handlers.cart import show_cart
+    from bot.handlers.cart_v2 import show_cart
 
     await show_cart(cb.message, state)

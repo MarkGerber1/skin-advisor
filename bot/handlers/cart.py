@@ -386,11 +386,17 @@ async def cart_message_entry(message: Message) -> None:
 
 
 
-@router.message(F.text == BTN_CART)
-async def cart_message_entry(message: Message) -> None:
-    await _show_cart(message)
+# DEPRECATED: This functionality moved to cart_v2
+# @router.message(F.text == BTN_CART)
+# async def cart_message_entry(message: Message) -> None:
+#     await _show_cart(message)
 
 
 async def show_cart(message: Message, state=None) -> None:
-    """Backward compatible entrypoint for other modules."""
-    await _show_cart(message)
+    """Backward compatible entrypoint - redirects to cart_v2."""
+    try:
+        from bot.handlers.cart_v2 import show_cart as show_cart_v2
+        await show_cart_v2(message, state)
+    except ImportError:
+        # Fallback to old implementation if cart_v2 not available
+        await _show_cart(message)
