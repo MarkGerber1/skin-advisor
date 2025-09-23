@@ -29,12 +29,14 @@ except ImportError as e:
 bot = None
 dp = None
 
+
 def get_bot_and_dispatcher():
     """Get bot and dispatcher instances for webhook handling"""
     global bot, dp
     if bot is None or dp is None:
         raise RuntimeError("Bot and dispatcher not initialized. Call main() first.")
     return bot, dp
+
 
 # Routers
 try:
