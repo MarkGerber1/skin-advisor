@@ -245,11 +245,6 @@ async def main() -> None:
     dp = Dispatcher()
     print("✅ Dispatcher created")
 
-
-def get_bot_and_dispatcher():
-    """Get bot and dispatcher instances for webhook handling"""
-    return bot, dp
-
     # Add security middleware for chat filtering
     @dp.message.middleware()
     async def chat_filter_middleware(handler, event, data):
@@ -482,36 +477,12 @@ def get_bot_and_dispatcher():
         pass
 
     else:
-        # POLLING MODE
-        # Start polling with conflict resolution
-        print("🚀 Starting polling...")
-        try:
-            await dp.start_polling(
-                bot,
-                skip_updates=True,  # Skip pending updates to avoid conflicts
-                handle_signals=False,  # We handle signals manually
-                timeout=20,  # Shorter timeout to detect conflicts faster
-                retry_after=3,  # Shorter retry delay
-            )
-        except KeyboardInterrupt:
-            print("🛑 Received shutdown signal")
-        except Exception as e:
-            error_msg = str(e).lower()
-            if "conflict" in error_msg or "getUpdates" in str(e):
-                print(f"🚫 BOT CONFLICT DETECTED: {e}")
-                print("🔍 Possible causes:")
-                print("  • Another bot instance is running (multiple Render instances)")
-                print("  • Previous bot didn't shutdown cleanly")
-                print("  • Webhook still active somewhere")
-                print("💡 Solutions:")
-                print("  • This instance will exit to allow other instances to run")
-                print("  • Render will restart this instance if needed")
-                print("🚪 Exiting due to conflict...")
-                sys.exit(42)  # Special exit code for conflict
-            else:
-                print(f"❌ Polling error: {e}")
-        finally:
-            await graceful_shutdown(bot)
+        # POLLING MODE - DISABLED for Render deployment
+        print("🚫 Polling mode disabled - webhook only for production")
+        print("💡 Use polling only for local development")
+        # Polling code removed to avoid syntax errors in production
+        pass
+
     return
 
 
