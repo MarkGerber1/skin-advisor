@@ -9,6 +9,7 @@ import logging
 from aiogram import Router, F
 from aiogram.types import CallbackQuery
 from aiogram.utils.keyboard import InlineKeyboardBuilder, InlineKeyboardButton
+from aiogram.types import InlineKeyboardMarkup
 
 from services.cart_store import CartStore, CartItem
 from bot.utils.security import safe_edit_message_text
