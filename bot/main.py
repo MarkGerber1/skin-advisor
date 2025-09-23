@@ -296,7 +296,7 @@ async def main() -> None:
         _handlers_registered = True
 
     # Start bot in appropriate mode
-    _start_bot_mode(dp, bot)
+    await _start_bot_mode(dp, bot)
 
 
 def _register_handlers(dp):
@@ -405,7 +405,7 @@ def _register_handlers(dp):
     # Fallback handler removed - was intercepting all callbacks before routers!
 
 
-def _start_bot_mode(dp, bot):
+async def _start_bot_mode(dp, bot):
     use_webhook = os.getenv("USE_WEBHOOK", "0").lower() in ("1", "true", "yes")
     webhook_url = os.getenv("WEBHOOK_URL")
     webhook_path = os.getenv("WEBHOOK_PATH", "/webhook")
@@ -534,11 +534,41 @@ def _start_bot_mode(dp, bot):
         pass
 
     else:
-        # POLLING MODE - DISABLED for Render deployment
-        print("🚫 Polling mode disabled - webhook only for production")
-        print("💡 Use polling only for local development")
-        # Polling code removed to avoid syntax errors in production
-        pass
+        # POLLING MODE - for local development
+        print("📡 Starting polling for local development...")
+        import asyncio
+
+        async def start_polling():
+            try:
+                await dp.start_polling(
+                    bot,
+                    skip_updates=True,  # Skip pending updates to avoid conflicts
+                    handle_signals=False,  # We handle signals manually
+                    timeout=20,  # Shorter timeout to detect conflicts faster
+                    retry_after=3,  # Shorter retry delay
+                )
+            except KeyboardInterrupt:
+                print("🛑 Received shutdown signal")
+            except Exception as e:
+                error_msg = str(e).lower()
+                if "conflict" in error_msg or "getUpdates" in str(e):
+                    print(f"🚫 BOT CONFLICT DETECTED: {e}")
+                    print("🔍 Possible causes:")
+                    print("  • Another bot instance is running")
+                    print("  • Previous bot didn't shutdown cleanly")
+                    print("  • Webhook still active somewhere")
+                    print("💡 Solutions:")
+                    print("  • Kill other bot instances")
+                    print("  • Clear webhooks")
+                    print("🚪 Exiting due to conflict...")
+                    return
+                else:
+                    print(f"❌ Polling error: {e}")
+            finally:
+                await graceful_shutdown(bot)
+
+        # Run polling directly (blocks until completion)
+        await start_polling()
 
     return
 
