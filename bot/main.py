@@ -379,17 +379,14 @@ async def main() -> None:
         for attempt in range(3):
             try:
                 # Kill processes by name pattern - more aggressive
-                patterns = [
-                    'python.*bot.main',
-                    'python.*main',
-                    'skin-advisor',
-                    'telegram.*bot'
-                ]
+                patterns = ["python.*bot.main", "python.*main", "skin-advisor", "telegram.*bot"]
 
                 killed_any = False
                 for pattern in patterns:
                     try:
-                        result = subprocess.run(['pkill', '-9', '-f', pattern], timeout=3, capture_output=True)
+                        result = subprocess.run(
+                            ["pkill", "-9", "-f", pattern], timeout=3, capture_output=True
+                        )
                         if result.returncode == 0:
                             print(f"🛑 Killed processes matching: {pattern}")
                             killed_any = True
