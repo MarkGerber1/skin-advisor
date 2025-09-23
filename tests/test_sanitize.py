@@ -1,4 +1,3 @@
-import pytest
 from bot.utils.sanitize import sanitize_message
 
 

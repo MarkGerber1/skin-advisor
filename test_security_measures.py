@@ -25,7 +25,6 @@ sys.path.append(".")
 from config.env import SecurityConfig, get_settings
 from bot.utils.security import (
     MessageSanitizer,
-    sanitize_message,
     AntiSpamGuard,
     ChatWhitelistFilter,
 )
@@ -75,7 +74,6 @@ def test_spam_detection():
     print("🚨 Testing Spam Detection...")
 
     # Create guard with test config
-    from bot.utils.security import AntiSpamGuard
 
     test_config = create_test_security_config()
 
@@ -121,7 +119,6 @@ def test_chat_filtering():
     print("🚪 Testing Chat Filtering...")
 
     # Test with default config (empty whitelist = allow all)
-    from bot.utils.security import ChatWhitelistFilter
 
     test_config = create_test_security_config()
 
@@ -193,7 +190,6 @@ def test_pin_control():
     print("📌 Testing Pin Control...")
 
     # Create guard with test config
-    from bot.utils.security import AntiSpamGuard
 
     test_config = create_test_security_config()
 

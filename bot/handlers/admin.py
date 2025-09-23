@@ -6,7 +6,7 @@ Administrative commands for bot owner:
 """
 
 import logging
-from aiogram import Router, F, Bot
+from aiogram import Router, Bot
 from aiogram.types import Message
 from aiogram.filters import Command
 

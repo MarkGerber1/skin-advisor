@@ -9,7 +9,7 @@ Contains security-related utilities for bot protection:
 
 import re
 import logging
-from typing import Optional, List
+from typing import Optional
 from aiogram import Bot
 from config.env import get_settings
 

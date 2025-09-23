@@ -6,7 +6,6 @@ Tests for CartStore, Cart, and CartItem models
 """
 
 import tempfile
-import os
 import asyncio
 from engine.cart_store import CartStore, Cart, CartItem
 
@@ -175,7 +174,6 @@ class TestCartStore:
             assert len(cart2.items) == 1
             assert cart2.items["test_prod:variant_1"].qty == 4  # 2 + 2
 
-        import asyncio
 
         asyncio.run(test())
 
@@ -196,7 +194,6 @@ class TestCartStore:
             cart = await store.set_qty(123, "prod1:", 0)
             assert "prod1:" not in cart.items
 
-        import asyncio
 
         asyncio.run(test())
 
@@ -220,7 +217,6 @@ class TestCartStore:
             assert len(cart.items) == 1
             assert "prod2:" in cart.items
 
-        import asyncio
 
         asyncio.run(test())
 
@@ -241,7 +237,6 @@ class TestCartStore:
             cart = await store.get(123)
             assert len(cart.items) == 0
 
-        import asyncio
 
         asyncio.run(test())
 
@@ -262,7 +257,6 @@ class TestCartStore:
             assert cart.items["persistent:"].name == "Persistent Item"
             assert cart.items["persistent:"].price == 1500
 
-        import asyncio
 
         asyncio.run(test())
 

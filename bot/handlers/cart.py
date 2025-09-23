@@ -7,7 +7,7 @@ from aiogram import Router, F
 from aiogram.exceptions import TelegramBadRequest
 from aiogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, Message
 
-from services.cart_store import CartItem, get_cart_store
+from services.cart_store import get_cart_store
 from bot.utils.security import sanitize_message
 from i18n.ru import (
     CART_EMPTY,
@@ -27,7 +27,6 @@ from i18n.ru import (
     BTN_CART_CLEAR,
     BTN_CART_CONTINUE,
     BTN_CART_CHECKOUT,
-    CART_FOOTER_CLEAR,
 )
 
 try:

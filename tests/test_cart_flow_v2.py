@@ -7,7 +7,7 @@ recommendations → add to cart → cart management → checkout
 """
 
 import pytest
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock
 
 from engine.cart_store import CartStore, CartItem
 from bot.handlers.cart_v2 import build_cart_keyboard, render_cart, format_price, format_cart_item
@@ -157,7 +157,6 @@ class TestCartV2Integration:
     @pytest.mark.asyncio
     async def test_recommendations_flow(self):
         """Test recommendations display after test"""
-        from unittest.mock import AsyncMock
 
         # Mock bot and message
         mock_bot = AsyncMock()
