@@ -352,7 +352,7 @@ def get_bot_and_dispatcher():
 
     # Fallback handler removed - was intercepting all callbacks before routers!
 
-    # Определяем режим работы: webhook или polling
+    return  # DISABLED FOR DEBUGGING
     use_webhook = os.getenv("USE_WEBHOOK", "0").lower() in ("1", "true", "yes")
     webhook_url = os.getenv("WEBHOOK_URL")
     webhook_path = os.getenv("WEBHOOK_PATH", "/webhook")
@@ -462,98 +462,30 @@ def get_bot_and_dispatcher():
     signal.signal(signal.SIGTERM, signal_handler)
     signal.signal(signal.SIGINT, signal_handler)
 
-    try:
-        # AGGRESSIVE webhook cleanup for Render/container environments
-        print("🧹 Starting aggressive webhook cleanup...")
+
+    if use_webhook and webhook_url:
+        # WEBHOOK MODE
+        print("🌐 Setting up webhook...")
+        # Temporarily disabled webhook setup for debugging
+        # webhook_full_url = f"{webhook_url.rstrip('/')}{webhook_path}"
+        # await bot.set_webhook(
+        #     url=webhook_full_url,
+        #     drop_pending_updates=True,
+        #     allowed_updates=["message", "callback_query", "inline_query"],
+        # )
+        print("✅ Webhook mode active - Flask will handle HTTP requests")
+
+        # In webhook mode, we don't start our own server
+        # Flask handles the /webhook endpoint and feeds updates to the dispatcher
+        # Just wait for shutdown signal
+        # await shutdown_event.wait()
+        pass
+
+    else:
+        # POLLING MODE
+        # Start polling with conflict resolution
+        print("🚀 Starting polling...")
         try:
-            # Multiple attempts to clear webhook (sometimes Telegram needs retries)
-            for attempt in range(3):
-                try:
-                    await bot.delete_webhook(drop_pending_updates=True)
-                    print(f"🧹 Webhook cleared (attempt {attempt + 1}/3)")
-                    break
-                except Exception as e:
-                    print(f"⚠️ Webhook cleanup attempt {attempt + 1} failed: {e}")
-                    if attempt < 2:  # Wait before retry
-                        await asyncio.sleep(1)
-
-            # Wait longer for Telegram to process webhook deletion
-            print("⏳ Waiting for Telegram to process webhook deletion...")
-            await asyncio.sleep(5)
-
-            # Additional cleanup - delete any pending updates
-            try:
-                await bot.get_updates(offset=-1, limit=1)
-                print("🧹 Cleared pending updates")
-            except Exception as e:
-                print(f"⚠️ Could not clear pending updates: {e}")
-
-        except Exception as e:
-            print(f"⚠️ Could not clear webhook: {e}")
-
-            # Test connection and check for existing polling sessions
-            print("🔍 Checking for existing polling sessions...")
-            try:
-                # Try to get updates with short timeout to detect conflicts
-                updates = await asyncio.wait_for(
-                    bot.get_updates(offset=-1, limit=1, timeout=5), timeout=6
-                )
-                print(f"✅ No active polling sessions detected (got {len(updates)} updates)")
-            except asyncio.TimeoutError:
-                print("⚠️ Timeout during polling check - possible existing session")
-            except Exception as e:
-                if "Conflict" in str(e):
-                    print(f"🚨 CONFLICT DETECTED: {e}")
-                    print("💡 Another bot instance is running! Stopping startup...")
-                    return
-                else:
-                    print(f"⚠️ Unexpected error during polling check: {e}")
-
-            me = await bot.get_me()
-            print(f"✅ Bot connection verified: @{me.username} (ID: {me.id})")
-
-            # Security: Auto-unpin messages on startup if configured
-            try:
-                from config.env import get_settings
-
-                settings = get_settings()
-
-                if settings.security.unpin_on_start and settings.owner_id:
-                    from bot.utils.security import safe_unpin_all_messages
-
-                    await safe_unpin_all_messages(bot, settings.owner_id, settings.owner_id)
-                    print(
-                        f"[ANTI-PIN] Unpinned all messages in owner chat {settings.owner_id} on startup"
-                    )
-            except Exception as e:
-                print(f"⚠️ Could not unpin messages on startup: {e}")
-
-        except Exception as e:
-            print(f"⚠️ Could not clear webhook: {e}")
-
-        if use_webhook and webhook_url:
-            # WEBHOOK MODE
-            print("🌐 Setting up webhook...")
-            webhook_full_url = f"{webhook_url.rstrip('/')}{webhook_path}"
-
-            # Set webhook
-            await bot.set_webhook(
-                url=webhook_full_url,
-                drop_pending_updates=True,
-                allowed_updates=["message", "callback_query", "inline_query"],
-            )
-            print(f"✅ Webhook set to: {webhook_full_url}")
-            print("🌐 Webhook mode active - Flask will handle HTTP requests")
-
-            # In webhook mode, we don't start our own server
-            # Flask handles the /webhook endpoint and feeds updates to the dispatcher
-            # Just wait for shutdown signal
-            await shutdown_event.wait()
-
-        else:
-            # POLLING MODE
-            # Start polling with conflict resolution
-            print("🚀 Starting polling...")
             await dp.start_polling(
                 bot,
                 skip_updates=True,  # Skip pending updates to avoid conflicts
@@ -561,25 +493,26 @@ def get_bot_and_dispatcher():
                 timeout=20,  # Shorter timeout to detect conflicts faster
                 retry_after=3,  # Shorter retry delay
             )
-    except KeyboardInterrupt:
-        print("🛑 Received shutdown signal")
-    except Exception as e:
-        error_msg = str(e).lower()
-        if "conflict" in error_msg or "getUpdates" in str(e):
-            print(f"🚫 BOT CONFLICT DETECTED: {e}")
-            print("🔍 Possible causes:")
-            print("  • Another bot instance is running (multiple Render instances)")
-            print("  • Previous bot didn't shutdown cleanly")
-            print("  • Webhook still active somewhere")
-            print("💡 Solutions:")
-            print("  • This instance will exit to allow other instances to run")
-            print("  • Render will restart this instance if needed")
-            print("🚪 Exiting due to conflict...")
-            sys.exit(42)  # Special exit code for conflict
-        else:
-            print(f"❌ Polling error: {e}")
-    finally:
-        await graceful_shutdown(bot)
+        except KeyboardInterrupt:
+            print("🛑 Received shutdown signal")
+        except Exception as e:
+            error_msg = str(e).lower()
+            if "conflict" in error_msg or "getUpdates" in str(e):
+                print(f"🚫 BOT CONFLICT DETECTED: {e}")
+                print("🔍 Possible causes:")
+                print("  • Another bot instance is running (multiple Render instances)")
+                print("  • Previous bot didn't shutdown cleanly")
+                print("  • Webhook still active somewhere")
+                print("💡 Solutions:")
+                print("  • This instance will exit to allow other instances to run")
+                print("  • Render will restart this instance if needed")
+                print("🚪 Exiting due to conflict...")
+                sys.exit(42)  # Special exit code for conflict
+            else:
+                print(f"❌ Polling error: {e}")
+        finally:
+            await graceful_shutdown(bot)
+    return
 
 
 if __name__ == "__main__":
