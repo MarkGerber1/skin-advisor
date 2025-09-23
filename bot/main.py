@@ -568,13 +568,14 @@ def get_bot_and_dispatcher():
         if "conflict" in error_msg or "getUpdates" in str(e):
             print(f"🚫 BOT CONFLICT DETECTED: {e}")
             print("🔍 Possible causes:")
-            print("  • Another bot instance is running (Railway + Local)")
+            print("  • Another bot instance is running (multiple Render instances)")
             print("  • Previous bot didn't shutdown cleanly")
             print("  • Webhook still active somewhere")
             print("💡 Solutions:")
-            print("  • Stop other bot instances")
-            print("  • Wait 2-3 minutes for Telegram timeout")
-            print("  • Check Railway logs for duplicate deployments")
+            print("  • This instance will exit to allow other instances to run")
+            print("  • Render will restart this instance if needed")
+            print("🚪 Exiting due to conflict...")
+            sys.exit(42)  # Special exit code for conflict
         else:
             print(f"❌ Polling error: {e}")
     finally:
