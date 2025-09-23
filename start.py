@@ -4,9 +4,6 @@
 import sys
 import os
 import asyncio
-import subprocess
-import signal
-import time
 from flask import Flask
 
 # Add current directory to Python path
@@ -41,6 +38,7 @@ if __name__ == "__main__":
 
     # Start Flask in background thread
     import threading
+
     flask_thread = threading.Thread(target=run_flask, daemon=True)
     flask_thread.start()
 

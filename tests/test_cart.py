@@ -372,22 +372,22 @@ class TestCartIntegration(unittest.TestCase):
                 "name": "Очищающий гель CeraVe",
                 "price": 1590,
                 "category": "cleanser",
-                "source": "goldapple"
+                "source": "goldapple",
             },
             {
                 "id": "toner-lrp",
                 "name": "Успокаивающий тоник La Roche-Posay",
                 "price": 2890,
                 "category": "toner",
-                "source": "goldapple"
+                "source": "goldapple",
             },
             {
                 "id": "serum-ordinary",
                 "name": "Сыворотка The Ordinary",
                 "price": 1990,
                 "category": "serum",
-                "source": "goldapple"
-            }
+                "source": "goldapple",
+            },
         ]
 
         # User adds first product to cart
@@ -398,7 +398,7 @@ class TestCartIntegration(unittest.TestCase):
             price=1590.0,
             currency="RUB",
             source="goldapple",
-            ref_link="https://goldapple.ru/cleanser-cerave"
+            ref_link="https://goldapple.ru/cleanser-cerave",
         )
         self.assertFalse(conflict1)
 
@@ -410,7 +410,7 @@ class TestCartIntegration(unittest.TestCase):
             price=2890.0,
             currency="RUB",
             source="goldapple",
-            ref_link="https://goldapple.ru/toner-lrp"
+            ref_link="https://goldapple.ru/toner-lrp",
         )
         self.assertFalse(conflict2)
 
@@ -424,7 +424,7 @@ class TestCartIntegration(unittest.TestCase):
 
         total_qty, total_price, currency = self.store.get_cart_total(user_id)
         self.assertEqual(total_qty, 3)  # 2 + 1
-        self.assertEqual(total_price, 1590*2 + 2890*1)  # 3180 + 2890 = 6070
+        self.assertEqual(total_price, 1590 * 2 + 2890 * 1)  # 3180 + 2890 = 6070
         self.assertEqual(currency, "RUB")
 
         # User decides to checkout
@@ -459,13 +459,13 @@ class TestCartIntegration(unittest.TestCase):
         callbacks = []
         for row in keyboard.inline_keyboard:
             for button in row:
-                if hasattr(button, 'callback_data') and button.callback_data:
+                if hasattr(button, "callback_data") and button.callback_data:
                     callbacks.append(button.callback_data)
 
         # Should have callbacks for inc, dec, rm operations
-        inc_callbacks = [c for c in callbacks if c.startswith('cart:inc:')]
-        dec_callbacks = [c for c in callbacks if c.startswith('cart:dec:')]
-        rm_callbacks = [c for c in callbacks if c.startswith('cart:rm:')]
+        inc_callbacks = [c for c in callbacks if c.startswith("cart:inc:")]
+        dec_callbacks = [c for c in callbacks if c.startswith("cart:dec:")]
+        rm_callbacks = [c for c in callbacks if c.startswith("cart:rm:")]
 
         self.assertEqual(len(inc_callbacks), 2)  # One for each product
         self.assertEqual(len(dec_callbacks), 2)
@@ -473,12 +473,12 @@ class TestCartIntegration(unittest.TestCase):
 
         # Check format: cart:inc:product_id:variant_id
         for callback in inc_callbacks:
-            parts = callback.split(':')
+            parts = callback.split(":")
             self.assertEqual(len(parts), 4)
-            self.assertEqual(parts[0], 'cart')
-            self.assertEqual(parts[1], 'inc')
-            self.assertTrue(parts[2].startswith('test-p'))
-            self.assertTrue(parts[3] in ['v1', 'v2', 'none'])
+            self.assertEqual(parts[0], "cart")
+            self.assertEqual(parts[1], "inc")
+            self.assertTrue(parts[2].startswith("test-p"))
+            self.assertTrue(parts[3] in ["v1", "v2", "none"])
 
 
 if __name__ == "__main__":
