@@ -34,7 +34,26 @@ def get_bot_and_dispatcher():
     """Get bot and dispatcher instances for webhook handling"""
     global bot, dp
     if bot is None or dp is None:
-        raise RuntimeError("Bot and dispatcher not initialized. Call main() first.")
+        # Initialize bot and dispatcher if not done yet
+        print("🔄 Initializing bot and dispatcher...")
+        try:
+            import os
+            token = os.getenv("BOT_TOKEN")
+            if not token:
+                from config.env import get_settings
+                settings = get_settings()
+                token = settings.bot_token
+
+            if not token:
+                raise RuntimeError("BOT_TOKEN not found")
+
+            from aiogram import Bot, Dispatcher
+            bot = Bot(token)
+            dp = Dispatcher()
+            print("✅ Bot and dispatcher initialized for webhook handling")
+        except Exception as e:
+            raise RuntimeError(f"Failed to initialize bot and dispatcher: {e}")
+
     return bot, dp
 
 
@@ -252,13 +271,19 @@ async def main() -> None:
     print(f"Starting bot with token: {token[:10]}...")
     print("🤖 Creating Bot instance...")
     global bot
-    bot = Bot(token)
-    print("✅ Bot instance created")
+    if bot is None:
+        bot = Bot(token)
+        print("✅ Bot instance created")
+    else:
+        print("✅ Bot instance already exists")
 
     print("📡 Creating Dispatcher...")
     global dp
-    dp = Dispatcher()
-    print("✅ Dispatcher created")
+    if dp is None:
+        dp = Dispatcher()
+        print("✅ Dispatcher created")
+    else:
+        print("✅ Dispatcher already exists")
 
     # Add security middleware for chat filtering
     @dp.message.middleware()
