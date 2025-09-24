@@ -10,6 +10,7 @@ import threading
 from dataclasses import dataclass, asdict, field
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
+import time
 
 
 @dataclass
@@ -93,6 +94,10 @@ class CartStore:
         self.data_dir.mkdir(parents=True, exist_ok=True)
         self._carts: Dict[int, List[CartItem]] = {}
         self._load_all_carts()
+
+        # Undo storage: last removed item per user with timestamp
+        self._last_removed: Dict[int, Tuple[CartItem, float]] = {}
+        self._undo_ttl_seconds: int = 15
 
     # ---------------------------------------------------------------------
     # Persistence helpers
@@ -199,6 +204,8 @@ class CartStore:
 
         if quantity <= 0:
             cart.remove(item)
+            # track last removed on quantity -> 0
+            self._last_removed[user_id] = (item, time.time())
         else:
             item.quantity = quantity
         self._save_cart(user_id, cart)
@@ -209,6 +216,9 @@ class CartStore:
         item = self._find_item(cart, product_id, variant_id)
         if not item:
             return False
+
+        # store last removed before deletion
+        self._last_removed[user_id] = (item, time.time())
 
         cart.remove(item)
         self._save_cart(user_id, cart)
@@ -235,6 +245,7 @@ class CartStore:
         new_qty = item.decrease(step)
         if new_qty <= 0:
             cart.remove(item)
+            self._last_removed[user_id] = (item, time.time())
         self._save_cart(user_id, cart)
         return True, max(new_qty, 0)
 
@@ -267,6 +278,32 @@ class CartStore:
             "currency": currency,
             "items": [asdict(item) for item in cart],
         }
+
+    # ---------------------------------------------------------------------
+    # Undo API
+    # ---------------------------------------------------------------------
+
+    def restore_last_removed(self, user_id: int) -> Optional[CartItem]:
+        """Restore last removed item if TTL not expired."""
+        payload = self._last_removed.get(user_id)
+        if not payload:
+            return None
+        item, ts = payload
+        if time.time() - ts > self._undo_ttl_seconds:
+            # TTL expired
+            self._last_removed.pop(user_id, None)
+            return None
+        cart = self.get_cart(user_id)
+        # merge back (idempotent): if exists, increase qty
+        existing = self._find_item(cart, item.product_id, item.variant_id)
+        if existing:
+            existing.quantity += max(item.quantity, 1)
+        else:
+            cart.append(item)
+        self._save_cart(user_id, cart)
+        # clear stored last removed
+        self._last_removed.pop(user_id, None)
+        return item
 
 
 _cart_store_instance: Optional[CartStore] = None
