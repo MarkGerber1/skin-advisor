@@ -9,6 +9,7 @@ import sys
 import asyncio
 import threading
 import signal
+import os
 from flask import Flask, jsonify
 
 # Add current directory to Python path
@@ -31,12 +32,29 @@ async def _run_bot_polling():
 
 def _start_bot_background():
     """Start the bot polling in a background thread with its own event loop."""
+    # Singleton lock to avoid double polling instances (Render multi-start protection)
+    lock_path = "/tmp/bot_polling.lock"
+    try:
+        if os.path.exists(lock_path):
+            print("⚠️ Polling lock exists - skipping bot start to avoid conflicts")
+            return
+        with open(lock_path, "w", encoding="utf-8") as f:
+            f.write("locked")
+    except Exception as e:
+        print(f"⚠️ Could not create polling lock: {e}")
 
     def _runner():
         try:
             asyncio.run(_run_bot_polling())
         except Exception as e:
             print(f"❌ Background bot runner error: {e}")
+        finally:
+            try:
+                if os.path.exists(lock_path):
+                    os.remove(lock_path)
+                    print("🧹 Polling lock removed")
+            except Exception as ce:
+                print(f"⚠️ Could not remove polling lock: {ce}")
 
     t = threading.Thread(target=_runner, name="BotPollingThread", daemon=True)
     t.start()

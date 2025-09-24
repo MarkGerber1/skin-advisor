@@ -517,6 +517,14 @@ async def q8_lip_color(cb: CallbackQuery, state: FSMContext) -> None:
         )
         print(f"🛍️ Selector result keys: {list(result.keys()) if result else 'No result'}")
 
+        # Normalize keys to english expected by UI/cart where needed
+        # Map russian keys to engine expected ones for downstream renderers
+        if result and isinstance(result, dict):
+            if "уход за кожей" in result and "skincare" not in result:
+                result["skincare"] = result.get("уход за кожей")
+            if "макияж" in result and "makeup" not in result:
+                result["makeup"] = result.get("макияж")
+
         # Сформировать отчёт (Telegram) и показать вкладки
         from bot.utils.security import safe_edit_message_text
         from bot.ui.report_builder import (

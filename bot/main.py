@@ -286,6 +286,22 @@ async def main() -> None:
     except Exception as e:
         print(f"⚠️ delete_webhook failed: {e}")
 
+    # Double-start guard: avoid concurrent polling
+    try:
+        guard_env = os.getenv("DISABLE_POLLING_GUARD", "0").lower()
+        if guard_env not in ("1", "true", "yes"):
+            import socket
+
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            try:
+                sock.bind(("127.0.0.1", 9345))
+                print("🔒 Polling guard acquired on 127.0.0.1:9345")
+            except OSError:
+                print("⚠️ Another polling instance seems active - skipping start")
+                return
+    except Exception as ge:
+        print(f"⚠️ Polling guard failed: {ge}")
+
     # Start polling for production
     print("📡 Starting polling (Render)")
     await dp.start_polling(
