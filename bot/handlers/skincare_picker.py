@@ -1101,7 +1101,7 @@ async def skincare_show_all(cb: CallbackQuery) -> None:
         )
 
         kb = InlineKeyboardMarkup(inline_keyboard=buttons)
-        await cb.message.edit_text("\n".join(text_lines), reply_markup=kb, parse_mode="Markdown")
+        await cb.message.edit_text("\n".join(text_lines), reply_markup=kb)
 
         # Аналитика
         if ANALYTICS_AVAILABLE:

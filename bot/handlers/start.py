@@ -159,7 +159,8 @@ async def start_palette(m: Message, state: FSMContext) -> None:
                 [InlineKeyboardButton(text="🏠 Домой", callback_data="recovery:home")],
             ]
         )
-        await m.answer(conflict_msg, reply_markup=kb, parse_mode="Markdown")
+        from bot.utils.security import sanitize_message
+        await m.answer(sanitize_message(conflict_msg), reply_markup=kb)
         return
 
     # Check for session recovery - НЕ ДОЛЖНО срабатывать после принудительной очистки
@@ -179,7 +180,8 @@ async def start_palette(m: Message, state: FSMContext) -> None:
                 [InlineKeyboardButton(text="🏠 Домой", callback_data="recovery:home")],
             ]
         )
-        await m.answer(recovery_msg, reply_markup=kb, parse_mode="Markdown")
+        from bot.utils.security import sanitize_message
+        await m.answer(sanitize_message(recovery_msg), reply_markup=kb)
         return
 
     await state.clear()  # Clear any existing state
@@ -217,7 +219,6 @@ async def about(m: Message, state: FSMContext) -> None:
         "🌐 **Сайт:** stasya-makeuphair.ru\n"
         "═══════════════════════",
         reply_markup=main_menu(),
-        parse_mode="Markdown",
     )
 
 
@@ -350,7 +351,8 @@ async def privacy_policy(m: Message, state: FSMContext) -> None:
         ]
     )
 
-    await m.answer(privacy_text, reply_markup=privacy_kb, parse_mode="Markdown")
+    from bot.utils.security import sanitize_message
+    await m.answer(sanitize_message(privacy_text), reply_markup=privacy_kb)
 
 
 # ========================================
@@ -375,7 +377,6 @@ async def handle_settings(cb: CallbackQuery, state: FSMContext) -> None:
                 "• Вопросы по товарам: используйте ссылки в рекомендациях\n"
                 "• Технические вопросы: перезапустите бота командой /start\n\n"
                 "Бот работает автоматически 24/7",
-                parse_mode="Markdown",
             )
         await cb.answer("📞 Информация о поддержке отправлена")
 
@@ -406,7 +407,6 @@ async def handle_settings(cb: CallbackQuery, state: FSMContext) -> None:
                 "📱 **Telegram:** @GerberMark\n"
                 "🌐 **Сайт:** stasya-makeuphair.ru\n"
                 "═══════════════════════",
-                parse_mode="Markdown",
             )
         await cb.answer("ℹ️ Информация о боте отправлена")
 
@@ -574,7 +574,6 @@ async def handle_recovery(cb: CallbackQuery, state: FSMContext) -> None:
                 "Привет! ✨ Я подберу персональный уход и идеальные оттенки макияжа по вашему профилю.\n\n"
                 "**👇 ИСПОЛЬЗУЙТЕ КНОПКИ НИЖЕ:**",
                 reply_markup=main_menu(),
-                parse_mode="Markdown",
             )
 
         await cb.answer("🏠 Возврат в главное меню")
@@ -604,7 +603,6 @@ async def help_command(m: Message, state: FSMContext) -> None:
         "• `/privacy` — политика конфиденциальности\n\n"
         "💡 **Совет:** Начните с тестов для получения персональных рекомендаций!",
         reply_markup=main_menu(),
-        parse_mode="Markdown",
     )
 
 
