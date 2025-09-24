@@ -124,6 +124,8 @@ def render_report_pdf(
     blocks: ReportBlocks,
     profile: Optional[Dict[str, Any]] = None,
     report_type: str = "report",
+    source_result: Optional[Dict[str, Any]] = None,
+    analysis: Optional[Dict[str, str]] = None,
 ) -> Dict[str, Any]:
     """Преобразует блоки в snapshot для pdf_v2.
     Возвращает словарь, пригодный для generate_structured_pdf_report.
@@ -145,6 +147,11 @@ def render_report_pdf(
         ]:
             if profile.get(key) is not None:
                 prof[key] = profile.get(key)
+    if analysis:
+        if analysis.get("tldr"):
+            prof["tldr"] = _plain(analysis["tldr"])
+        if analysis.get("full"):
+            prof["analysis"] = _plain(analysis["full"])
 
     # Рутины из рекомендаций (утро/вечер)
     routines: Dict[str, List[str]] = {}
@@ -156,23 +163,66 @@ def render_report_pdf(
         if blocks.recommendations.get("tones"):
             routines["tones"] = [str(x) for x in blocks.recommendations["tones"]]
 
+    # Подготовка skincare/makeup из исходного результата (если есть)
+    def _map_products_dict(data: Dict[str, Any]) -> Dict[str, List[Dict[str, Any]]]:
+        mapped: Dict[str, List[Dict[str, Any]]] = {}
+        for cat, items in (data or {}).items():
+            if not isinstance(items, list):
+                continue
+            mapped[cat] = []
+            for p in items[:3]:
+                mapped[cat].append(
+                    {
+                        "name": _plain(p.get("name") or p.get("title") or "Товар"),
+                        "brand": _plain(p.get("brand") or ""),
+                        "price": p.get("price"),
+                        "currency": p.get("price_currency") or p.get("currency") or "RUB",
+                        "id": p.get("id") or p.get("key"),
+                        "variant_id": p.get("variant_id"),
+                        "explain": _plain(p.get("explain") or p.get("reason") or ""),
+                    }
+                )
+        return mapped
+
+    skincare_map: Dict[str, List[Dict[str, Any]]] = {}
+    makeup_map: Dict[str, List[Dict[str, Any]]] = {}
+    if source_result:
+        try:
+            if isinstance(source_result.get("skincare"), dict):
+                skincare_map = _map_products_dict(source_result.get("skincare", {}))
+            if isinstance(source_result.get("makeup"), dict):
+                makeup_map = _map_products_dict(source_result.get("makeup", {}))
+        except Exception:
+            skincare_map = {}
+            makeup_map = {}
+
+    # Список покупок: берём из блоков, иначе формируем из исходного результата
+    buy_items: List[Dict[str, Any]] = [
+        {
+            "name": _plain(p.get("name") or p.get("title") or "Товар"),
+            "brand": _plain(p.get("brand") or ""),
+            "price": p.get("price"),
+            "currency": p.get("currency") or "RUB",
+            "id": p.get("id") or p.get("key"),
+            "variant_id": p.get("variant_id"),
+        }
+        for p in blocks.to_buy[:15]
+    ]
+    if not buy_items and source_result:
+        # Собираем первые 12 товаров из skincare/makeup
+        pool: List[Dict[str, Any]] = []
+        for d in [skincare_map, makeup_map]:
+            for arr in d.values():
+                pool.extend(arr)
+        buy_items = pool[:12]
+
     snapshot: Dict[str, Any] = {
         "type": report_type,
         "profile": prof,
         "result": {
-            "skincare": {},
-            "makeup": {},
-            "buy": [
-                {
-                    "name": _plain(p.get("name") or p.get("title") or "Товар"),
-                    "brand": _plain(p.get("brand") or ""),
-                    "price": p.get("price"),
-                    "currency": p.get("currency") or "RUB",
-                    "id": p.get("id") or p.get("key"),
-                    "variant_id": p.get("variant_id"),
-                }
-                for p in blocks.to_buy[:15]
-            ],
+            "skincare": skincare_map,
+            "makeup": makeup_map,
+            "buy": buy_items,
             "tips": [str(t) for t in blocks.tips[:10]],
             "routines": routines,
         },

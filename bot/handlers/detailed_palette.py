@@ -601,7 +601,11 @@ async def q8_lip_color(cb: CallbackQuery, state: FSMContext) -> None:
             async def _gen_pdf_async():
                 try:
                     snap = render_report_pdf(
-                        blocks, profile=profile_dict, report_type="detailed_palette"
+                        blocks,
+                        profile=profile_dict,
+                        report_type="detailed_palette",
+                        source_result=result,
+                        analysis={"tldr": tldr_report, "full": full_report},
                     )
                     path = generate_structured_pdf_report(uid, snap)
                     print(f"✅ PDF v2 generated for palette: {path}")
