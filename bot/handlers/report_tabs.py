@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict, Any
 
 from aiogram import Router, F
 from aiogram.types import CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
@@ -177,7 +177,5 @@ async def handle_report_tabs(cb: CallbackQuery) -> None:
             return
 
         await cb.answer()
-    except Exception as e:
+    except Exception:
         await cb.answer("Ошибка отчёта", show_alert=True)
-
-
