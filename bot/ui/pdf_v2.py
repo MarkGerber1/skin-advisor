@@ -367,12 +367,12 @@ class StructuredPDFGenerator:
             self._add_summary_section(pdf, profile, report_type)
 
             # 2. МАКИЯЖ (15 категорий)
-            if "makeup" in result:
+            if "makeup" in result and result.get("makeup"):
                 self._add_section_header(pdf, "2. РЕКОМЕНДАЦИИ ПО МАКИЯЖУ")
                 self._add_makeup_section(pdf, result["makeup"])
 
             # 3. УХОД (7 шагов)
-            if "skincare" in result:
+            if "skincare" in result and result.get("skincare"):
                 self._add_section_header(pdf, "3. ПРОГРАММА УХОДА ЗА КОЖЕЙ")
                 self._add_skincare_section(pdf, result["skincare"])
 
@@ -384,13 +384,35 @@ class StructuredPDFGenerator:
             self._add_age_and_lifestyle_section(pdf, profile)
 
             # 6. ПОШАГОВЫЕ ИНСТРУКЦИИ (AM/PM)
-            self._add_step_by_step_section(pdf, profile)
+            # Если из snapshot пришли рутины — используем их
+            routines = result.get("routines") if isinstance(result, dict) else None
+            if routines:
+                self._add_section_header(pdf, "5. ПОШАГОВЫЕ ИНСТРУКЦИИ")
+                if routines.get("morning"):
+                    self._add_text_block(pdf, "Утро:")
+                    for step in routines["morning"]:
+                        self._add_text_block(pdf, f"• {self._clean_text(step)}", indent=4)
+                if routines.get("evening"):
+                    self._add_text_block(pdf, "Вечер:")
+                    for step in routines["evening"]:
+                        self._add_text_block(pdf, f"• {self._clean_text(step)}", indent=4)
+                if routines.get("tones"):
+                    self._add_text_block(pdf, "Палитра:")
+                    for tip in routines["tones"]:
+                        self._add_text_block(pdf, f"• {self._clean_text(tip)}", indent=4)
+            else:
+                self._add_step_by_step_section(pdf, profile)
 
             # 7. ТИПИЧНЫЕ ОШИБКИ И КАК ИХ ИСПРАВИТЬ
             self._add_common_mistakes_section(pdf, profile)
 
-            # 8. БЫСТРЫЕ РУТИНЫ (5 МИНУТ)
+            # 8. БЫСТРЫЕ РУТИНЫ (5 МИНУТ) + Советы
             self._add_short_routines_section(pdf)
+            tips = result.get("tips") if isinstance(result, dict) else None
+            if tips:
+                self._add_section_header(pdf, "9. ПОЛЕЗНЫЕ СОВЕТЫ")
+                for t in tips:
+                    self._add_text_block(pdf, f"• {self._clean_text(str(t))}")
 
             # Сохранение
             pdf.output(str(pdf_path))

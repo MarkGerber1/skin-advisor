@@ -596,7 +596,7 @@ async def q8_lip_color(cb: CallbackQuery, state: FSMContext) -> None:
 
         # Генерация PDF v2 на основе блоков
         try:
-            snap = render_report_pdf(blocks)
+            snap = render_report_pdf(blocks, profile=profile_dict, report_type="detailed_palette")
             pdf_path_v2 = generate_structured_pdf_report(uid, snap)
             print(f"✅ PDF v2 generated for palette: {pdf_path_v2}")
         except Exception as pdf_err:

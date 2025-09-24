@@ -120,21 +120,52 @@ def render_report_telegram(blocks: ReportBlocks) -> Tuple[str, List[List[Tuple[s
     return ("\n".join(lines), keyboard)
 
 
-def render_report_pdf(blocks: ReportBlocks) -> Dict[str, Any]:
+def render_report_pdf(
+    blocks: ReportBlocks,
+    profile: Optional[Dict[str, Any]] = None,
+    report_type: str = "report",
+) -> Dict[str, Any]:
     """Преобразует блоки в snapshot для pdf_v2.
     Возвращает словарь, пригодный для generate_structured_pdf_report.
     """
+
+    # Профиль: добавляем summary и известные поля, если переданы
+    prof: Dict[str, Any] = {
+        "summary": blocks.description,
+    }
+    if profile:
+        for key in [
+            "season",
+            "undertone",
+            "contrast",
+            "skin_type",
+            "age",
+            "user_age",
+            "concerns",
+        ]:
+            if profile.get(key) is not None:
+                prof[key] = profile.get(key)
+
+    # Рутины из рекомендаций (утро/вечер)
+    routines: Dict[str, List[str]] = {}
+    if isinstance(blocks.recommendations, dict):
+        if blocks.recommendations.get("morning"):
+            routines["morning"] = [str(x) for x in blocks.recommendations["morning"]]
+        if blocks.recommendations.get("evening"):
+            routines["evening"] = [str(x) for x in blocks.recommendations["evening"]]
+        if blocks.recommendations.get("tones"):
+            routines["tones"] = [str(x) for x in blocks.recommendations["tones"]]
+
     snapshot: Dict[str, Any] = {
-        "type": "report",
-        "profile": {
-            "summary": blocks.description,
-        },
+        "type": report_type,
+        "profile": prof,
         "result": {
             "skincare": {},
             "makeup": {},
             "buy": [
                 {
                     "name": _plain(p.get("name") or p.get("title") or "Товар"),
+                    "brand": _plain(p.get("brand") or ""),
                     "price": p.get("price"),
                     "currency": p.get("currency") or "RUB",
                     "id": p.get("id") or p.get("key"),
@@ -142,7 +173,8 @@ def render_report_pdf(blocks: ReportBlocks) -> Dict[str, Any]:
                 }
                 for p in blocks.to_buy[:15]
             ],
-            "tips": [t for t in blocks.tips[:5]],
+            "tips": [str(t) for t in blocks.tips[:10]],
+            "routines": routines,
         },
     }
     return snapshot
