@@ -12,8 +12,10 @@ Report Builder - формирует блоки отчёта и рендеры д
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Any, Dict, List, Tuple
+from dataclasses import dataclass, asdict
+from typing import Any, Dict, List, Tuple, Optional
+import json
+from pathlib import Path
 
 from bot.utils.security import sanitize_message
 
@@ -144,3 +146,42 @@ def render_report_pdf(blocks: ReportBlocks) -> Dict[str, Any]:
         },
     }
     return snapshot
+
+
+# Persistence helpers
+def _reports_dir(uid: int) -> Path:
+    return Path("data") / "reports" / str(uid)
+
+
+def save_report_blocks(uid: int, report_type: str, blocks: ReportBlocks) -> str:
+    d: Dict[str, Any] = {
+        "type": report_type,
+        "blocks": {
+            "title": blocks.title,
+            "description": blocks.description,
+            "recommendations": blocks.recommendations,
+            "to_buy": blocks.to_buy,
+            "tips": blocks.tips,
+        },
+    }
+    dir_path = _reports_dir(uid)
+    dir_path.mkdir(parents=True, exist_ok=True)
+    file_path = dir_path / "last_blocks.json"
+    file_path.write_text(json.dumps(d, ensure_ascii=False, indent=2), encoding="utf-8")
+    return str(file_path)
+
+
+def load_report_blocks(uid: int) -> Optional[Tuple[str, ReportBlocks]]:
+    file_path = _reports_dir(uid) / "last_blocks.json"
+    if not file_path.exists():
+        return None
+    data = json.loads(file_path.read_text(encoding="utf-8"))
+    b = data.get("blocks", {})
+    blocks = ReportBlocks(
+        title=b.get("title", "Отчёт"),
+        description=b.get("description", ""),
+        recommendations=b.get("recommendations", {}),
+        to_buy=b.get("to_buy", []),
+        tips=b.get("tips", []),
+    )
+    return data.get("type", "report"), blocks

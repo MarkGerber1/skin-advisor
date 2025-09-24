@@ -678,11 +678,19 @@ async def q8_desired_effect(cb: CallbackQuery, state: FSMContext) -> None:
             pick_subtitle = "Выберите категорию, затем добавьте средства в корзину"
 
         from bot.utils.security import safe_edit_message_text
-        from bot.ui.report_builder import build_skincare_report, render_report_telegram
+        from bot.ui.report_builder import (
+            build_skincare_report,
+            render_report_telegram,
+            save_report_blocks,
+        )
 
         # Собираем минимальный набор для отчёта
         picks = {"products": []}
         blocks = build_skincare_report(profile.__dict__, picks)
+        try:
+            save_report_blocks(uid, "detailed_skincare", blocks)
+        except Exception as _save_err:
+            print(f"⚠️ Failed to save report blocks: {_save_err}")
         text, keyboard_spec = render_report_telegram(blocks)
 
         # Превращаем keyboard_spec в InlineKeyboardMarkup

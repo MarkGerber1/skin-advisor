@@ -26,12 +26,46 @@ async def send_latest_report(cb: CallbackQuery) -> None:
         if not uid:
             await cb.answer()
             return
-        path = os.path.join("data", "reports", str(uid), "last.pdf")
+        # Пытаемся отправить v2 PDF, затем simple/minimal, затем текстовую версию отчёта
+        base_dir = os.path.join("data", "reports", str(uid))
+        candidates = [
+            os.path.join(base_dir, "last_v2.pdf"),
+            os.path.join(base_dir, "last_v2_simple.pdf"),
+            os.path.join(base_dir, "last_v2_minimal.pdf"),
+            os.path.join(base_dir, "last.pdf"),
+        ]
+
+        path = next((p for p in candidates if os.path.exists(p)), None)
+        if not path:
+            # Фолбэк: отправим текстовую версию из сохранённых блоков
+            try:
+                from bot.ui.report_builder import load_report_blocks, render_report_telegram
+
+                loaded = load_report_blocks(uid)
+                if not loaded:
+                    await cb.answer("Отчёт ещё не сформирован", show_alert=True)
+                    return
+                _, blocks = loaded
+                text, kb_spec = render_report_telegram(blocks)
+                from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+                kb = InlineKeyboardMarkup(
+                    inline_keyboard=[
+                        [InlineKeyboardButton(text=lbl, callback_data=cbdata) for (lbl, cbdata) in row]
+                        for row in kb_spec
+                    ]
+                )
+                await cb.message.answer(text, reply_markup=kb)
+                await cb.answer("📄 Текстовая версия отчёта отправлена")
+                return
+            except Exception as fb_err:
+                print(f"❌ Fallback report text error: {fb_err}")
+                await cb.answer("Отчёт ещё не сформирован", show_alert=True)
+                return
         if not os.path.exists(path):
             await cb.answer("Отчёт ещё не сформирован", show_alert=True)
             return
 
-        # Simplified document sending
+        # Отправка документа
         if cb.message:
             try:
                 # Use message.answer_document instead of bot.send_document

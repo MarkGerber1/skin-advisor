@@ -513,7 +513,11 @@ async def q8_lip_color(cb: CallbackQuery, state: FSMContext) -> None:
 
         # Сформировать отчёт (Telegram) и показать вкладки
         from bot.utils.security import safe_edit_message_text
-        from bot.ui.report_builder import build_palette_report, render_report_telegram
+        from bot.ui.report_builder import (
+            build_palette_report,
+            render_report_telegram,
+            save_report_blocks,
+        )
 
         profile_dict = {
             "season": str(profile.season) if hasattr(profile, "season") else None,
@@ -521,6 +525,10 @@ async def q8_lip_color(cb: CallbackQuery, state: FSMContext) -> None:
         }
         picks = {"products": []}
         blocks = build_palette_report(profile_dict, picks)
+        try:
+            save_report_blocks(uid, "detailed_palette", blocks)
+        except Exception as _save_err:
+            print(f"⚠️ Failed to save report blocks: {_save_err}")
         text, keyboard_spec = render_report_telegram(blocks)
 
         kb = InlineKeyboardMarkup(
