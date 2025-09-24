@@ -45,7 +45,7 @@ class MessageTemplates:
 
 def _add_to_cart_button(item: Dict) -> InlineKeyboardButton | None:
     """Создает кнопку добавления в корзину с дизайном из системы"""
-    pid = item.get("id")
+    pid = item.get("id") or item.get("key")
     if not pid:
         return None
 

@@ -169,7 +169,7 @@ async def show_recommendations_page(
 
     for product in page_items:
         name = product.get("name", "Товар")
-        product_id = product.get("id", "unknown")
+        product_id = product.get("id") or product.get("key") or "unknown"
         price = product.get("price")
         price_row = f"{price} ₽" if price else "—"
         text_lines.append(f"• {name} — {price_row}")

@@ -44,11 +44,34 @@ def get_catalog_store():
 
 
 def find_product_by_id(product_id: str):
-    """Find product by ID in catalog"""
+    """Find product by ID in catalog (tolerant to aliases)."""
+    if not product_id:
+        return None
+    pid = str(product_id).strip()
     catalog = get_catalog_store().get()
+    # Exact by key
     for product in catalog:
-        if product.key == product_id:
-            return product
+        try:
+            if getattr(product, "key", None) == pid:
+                return product
+        except Exception:
+            pass
+    # By id alias
+    for product in catalog:
+        try:
+            if getattr(product, "id", None) == pid:
+                return product
+        except Exception:
+            pass
+    # Fuzzy: compare lower-cased title if pid looks like title
+    for product in catalog:
+        try:
+            title = (getattr(product, "title", "") or "").strip()
+            if title and title.lower() == pid.lower():
+                return product
+        except Exception:
+            pass
+    logger.warning(f"🧐 Catalog lookup failed for product_id='{pid}'")
     return None
 
 
