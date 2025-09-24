@@ -376,18 +376,24 @@ class StructuredPDFGenerator:
                 self._add_section_header(pdf, "3. ПРОГРАММА УХОДА ЗА КОЖЕЙ")
                 self._add_skincare_section(pdf, result["skincare"])
 
-            # 4. СВОДНАЯ ТАБЛИЦА
+            # 4. ЧТО КУПИТЬ (из snapshot result.buy)
+            buy_list = result.get("buy") if isinstance(result, dict) else None
+            if buy_list:
+                self._add_section_header(pdf, "4. ЧТО КУПИТЬ")
+                self._add_buy_section(pdf, buy_list)
+
+            # 5. СВОДНАЯ ТАБЛИЦА
             products_summary = self._calculate_products_summary(result)
             self._add_summary_table(pdf, profile, products_summary)
 
-            # 5. ВОЗРАСТ И ОСОБЕННОСТИ
+            # 6. ВОЗРАСТ И ОСОБЕННОСТИ
             self._add_age_and_lifestyle_section(pdf, profile)
 
-            # 6. ПОШАГОВЫЕ ИНСТРУКЦИИ (AM/PM)
+            # 7. ПОШАГОВЫЕ ИНСТРУКЦИИ (AM/PM)
             # Если из snapshot пришли рутины — используем их
             routines = result.get("routines") if isinstance(result, dict) else None
             if routines:
-                self._add_section_header(pdf, "5. ПОШАГОВЫЕ ИНСТРУКЦИИ")
+                self._add_section_header(pdf, "7. ПОШАГОВЫЕ ИНСТРУКЦИИ")
                 if routines.get("morning"):
                     self._add_text_block(pdf, "Утро:")
                     for step in routines["morning"]:
@@ -403,16 +409,37 @@ class StructuredPDFGenerator:
             else:
                 self._add_step_by_step_section(pdf, profile)
 
-            # 7. ТИПИЧНЫЕ ОШИБКИ И КАК ИХ ИСПРАВИТЬ
+            # 8. ТИПИЧНЫЕ ОШИБКИ И КАК ИХ ИСПРАВИТЬ
             self._add_common_mistakes_section(pdf, profile)
 
-            # 8. БЫСТРЫЕ РУТИНЫ (5 МИНУТ) + Советы
+            # 9. БЫСТРЫЕ РУТИНЫ (5 МИНУТ) + Советы
             self._add_short_routines_section(pdf)
             tips = result.get("tips") if isinstance(result, dict) else None
             if tips:
-                self._add_section_header(pdf, "9. ПОЛЕЗНЫЕ СОВЕТЫ")
+                self._add_section_header(pdf, "10. ПОЛЕЗНЫЕ СОВЕТЫ")
                 for t in tips:
                     self._add_text_block(pdf, f"• {self._clean_text(str(t))}")
+
+    def _add_buy_section(self, pdf: FPDF, items: List[Dict[str, Any]]):
+        """Добавляет раздел 'Что купить' из snapshot.result.buy"""
+        for item in items[:15]:
+            if pdf.get_y() > 240:
+                pdf.add_page()
+            name = self._clean_text(str(item.get("name", "Товар")))
+            brand = self._clean_text(str(item.get("brand", "")))
+            price = item.get("price")
+            currency = item.get("currency") or "RUB"
+
+            title = f"{brand} - {name}" if brand else name
+            pdf.set_font_size(self.font_size_text)
+            pdf.set_text_color(*self.color_accent)
+            pdf.cell(0, 6, title, ln=True)
+
+            pdf.set_font_size(self.font_size_small)
+            pdf.set_text_color(*self.color_text)
+            if price:
+                pdf.cell(0, 4, f"Цена: {price} {currency}", ln=True)
+            pdf.ln(2)
 
             # Сохранение
             pdf.output(str(pdf_path))
