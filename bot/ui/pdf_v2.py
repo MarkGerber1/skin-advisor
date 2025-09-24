@@ -679,7 +679,9 @@ if __name__ == "__main__":
         },
     }
 
-    def _add_visual_card_section(self, pdf: FPDF, uid: int, report_type: str, profile: Dict[str, Any] | None = None):
+    def _add_visual_card_section(
+        self, pdf: FPDF, uid: int, report_type: str, profile: Dict[str, Any] | None = None
+    ):
         """Добавляет секцию с визуальной карточкой в PDF"""
         try:
             print(f"🎨 Adding visual card to PDF for user {uid}, type {report_type}")

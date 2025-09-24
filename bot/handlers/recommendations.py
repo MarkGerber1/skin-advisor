@@ -254,7 +254,11 @@ async def show_recommendations_after_test(
         else:
             products = _get_catalog_products()[:3]
 
-        text = "Результаты подбора готовы. Вот несколько идей:" if settings else "Вот что мы нашли для вас:"
+        text = (
+            "Результаты подбора готовы. Вот несколько идей:"
+            if settings
+            else "Вот что мы нашли для вас:"
+        )
         keyboard = InlineKeyboardBuilder()
 
         for product in products:
@@ -262,7 +266,7 @@ async def show_recommendations_after_test(
             product_id = product.get("id", "unknown")
             keyboard.row(_product_button(product_id, f"Добавить {name[:18]}"))
 
-        keyboard.row(InlineKeyboardButton(text=BTN_MORE, callback_data=f"rec:more:all:1"))
+        keyboard.row(InlineKeyboardButton(text=BTN_MORE, callback_data="rec:more:all:1"))
         keyboard.row(InlineKeyboardButton(text=BTN_CART_CONTINUE, callback_data="cart:open"))
         keyboard.row(InlineKeyboardButton(text="🛒 Открыть корзину", callback_data="cart:open"))
 
@@ -270,4 +274,6 @@ async def show_recommendations_after_test(
 
     except Exception as e:
         logger.exception("Failed to show recommendations after test: %s", e)
-        await safe_send_message(bot, user_id, "⚠️ Не удалось загрузить рекомендации. Попробуйте позже.")
+        await safe_send_message(
+            bot, user_id, "⚠️ Не удалось загрузить рекомендации. Попробуйте позже."
+        )
