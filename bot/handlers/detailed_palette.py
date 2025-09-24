@@ -546,8 +546,10 @@ async def q8_lip_color(cb: CallbackQuery, state: FSMContext) -> None:
         from bot.ui.report_builder import (
             build_palette_report,
             render_report_telegram,
+            render_report_pdf,
             save_report_blocks,
         )
+        from bot.ui.pdf_v2 import generate_structured_pdf_report
 
         profile_dict = {
             "season": str(profile.season) if hasattr(profile, "season") else None,
@@ -591,6 +593,14 @@ async def q8_lip_color(cb: CallbackQuery, state: FSMContext) -> None:
         except Exception as _save_err:
             print(f"⚠️ Failed to save report blocks: {_save_err}")
         text, keyboard_spec = render_report_telegram(blocks)
+
+        # Генерация PDF v2 на основе блоков
+        try:
+            snap = render_report_pdf(blocks)
+            pdf_path_v2 = generate_structured_pdf_report(uid, snap)
+            print(f"✅ PDF v2 generated for palette: {pdf_path_v2}")
+        except Exception as pdf_err:
+            print(f"⚠️ PDF v2 generation failed (palette): {pdf_err}")
 
         kb = InlineKeyboardMarkup(
             inline_keyboard=[
@@ -670,10 +680,10 @@ async def q8_lip_color(cb: CallbackQuery, state: FSMContext) -> None:
                 "winter": "Зима ❄️",
             }
             (
-                f"🎨 **Ваш цветотип определён!**\n\n"
-                f"**Тип:** {season_names.get(season, season)}\n"
-                f"**Подтон:** {undertone}\n\n"
-                f"🔍 **Рекомендуемые категории макияжа:**\n"
+                f"🎨 Ваш цветотип определён!\n\n"
+                f"Тип: {season_names.get(season, season)}\n"
+                f"Подтон: {undertone}\n\n"
+                f"🔍 Рекомендуемые категории макияжа:\n"
                 f"• Основа и тональные средства\n"
                 f"• Тени для век\n"
                 f"• Помада\n"
@@ -744,13 +754,16 @@ async def q8_lip_color(cb: CallbackQuery, state: FSMContext) -> None:
         # using top-level imported InlineKeyboardMarkup/InlineKeyboardButton
         # using top-level imported InlineKeyboardMarkup/InlineKeyboardButton
 
-        await cb.message.edit_text(
-            f"🎉 **РЕЗУЛЬТАТ ТЕСТА**\n\n"
-            f"**Ваш цветотип:** {season_names[season]}\n\n"
-            f"📊 **Краткий анализ:**\n{tldr_report}\n\n"
-            f"Что вы хотите увидеть?",
-            reply_markup=create_post_test_navigation("palette", "description"),
-        )
+            from bot.utils.security import sanitize_message
+            await cb.message.edit_text(
+                sanitize_message(
+                    f"🎉 РЕЗУЛЬТАТ ТЕСТА\n\n"
+                    f"Ваш цветотип: {season_names[season]}\n\n"
+                    f"📊 Краткий анализ:\n{tldr_report}\n\n"
+                    f"Что вы хотите увидеть?"
+                ),
+                reply_markup=create_post_test_navigation("palette", "description"),
+            )
         print(f"✅ Result buttons displayed for state: {await state.get_state()}")
 
         # Генерируем визуальную карточку
@@ -770,13 +783,15 @@ async def q8_lip_color(cb: CallbackQuery, state: FSMContext) -> None:
                 print(f"📤 Sending visual card: {card_path}")
 
                 if os.path.exists(card_path):
+                    from bot.utils.security import sanitize_message
                     await cb.message.answer(
-                        f"🎨 **Ваша персональная цветовая карта**\n\n"
-                        f"**Цветотип:** {season_names[season]}\n"
-                        f"**Подтон кожи:** {undertone}\n\n"
-                        f"✅ Карточка сгенерирована: {os.path.basename(card_path)}\n\n"
-                        f"Рекомендации по макияжу адаптированы под ваши особенности!",
-                        parse_mode="Markdown",
+                        sanitize_message(
+                            f"🎨 Ваша персональная цветовая карта\n\n"
+                            f"Цветотип: {season_names[season]}\n"
+                            f"Подтон кожи: {undertone}\n\n"
+                            f"✅ Карточка сгенерирована: {os.path.basename(card_path)}\n\n"
+                            f"Рекомендации по макияжу адаптированы под ваши особенности!"
+                        )
                     )
                     print("✅ Visual card sent successfully")
                 else:
@@ -842,8 +857,9 @@ async def show_description(cb: CallbackQuery, state: FSMContext) -> None:
             "winter": "❄️ **ХОЛОДНАЯ ЗИМА**\n\nВы представитель холодного цветотипа с высоким контрастом. Ваша внешность поражает яркостью и четкостью линий.\n\n**Ваши особенности:**\n• Лицо с розовым или оливковым подтоном\n• Темные или очень светлые волосы\n• Яркие, контрастные глаза\n• Высокий контраст внешности\n\n**Украшения:** Серебро, платина и белое золото",
         }
 
+        from bot.utils.security import sanitize_message
         await cb.message.edit_text(
-            descriptions[season],
+            sanitize_message(descriptions[season]),
             reply_markup=InlineKeyboardMarkup(
                 inline_keyboard=[
                     [
@@ -901,7 +917,8 @@ async def show_products(cb: CallbackQuery, state: FSMContext) -> None:
             )
             kb = InlineKeyboardMarkup(inline_keyboard=buttons)
 
-            await cb.message.edit_text(f"🛍️ **ЧТО КУПИТЬ**\n\n{text}", reply_markup=kb)
+            from bot.utils.security import sanitize_message
+            await cb.message.edit_text(sanitize_message(f"🛍️ ЧТО КУПИТЬ\n\n{text}"), reply_markup=kb)
             print("✅ Products displayed successfully")
         else:
             # Fallback если нет продуктов
@@ -914,10 +931,13 @@ async def show_products(cb: CallbackQuery, state: FSMContext) -> None:
                 "winter": "❄️ Холодной Зимы",
             }
 
+            from bot.utils.security import sanitize_message
             await cb.message.edit_text(
-                f"💄 **ПРОДУКТЫ ДЛЯ {season_names[season].upper()}**\n\n"
-                f"К сожалению, в данный момент подходящие продукты недоступны в каталоге.\n\n"
-                f"Попробуйте позже или обратитесь к консультанту.",
+                sanitize_message(
+                    f"💄 ПРОДУКТЫ ДЛЯ {season_names[season].upper()}\n\n"
+                    f"К сожалению, в данный момент подходящие продукты недоступны в каталоге.\n\n"
+                    f"Попробуйте позже или обратитесь к консультанту."
+                ),
                 reply_markup=InlineKeyboardMarkup(
                     inline_keyboard=[
                         [
@@ -959,11 +979,14 @@ async def back_to_results(cb: CallbackQuery, state: FSMContext) -> None:
 
         print(f"🎭 About to show result buttons with state: {await state.get_state()}")
 
+        from bot.utils.security import sanitize_message
         await cb.message.edit_text(
-            f"🎉 **РЕЗУЛЬТАТ ТЕСТА**\n\n"
-            f"**Ваш цветотип:** {season_names[season]}\n\n"
-            f"📊 **Краткий анализ:**\n{tldr_report}\n\n"
-            f"Что вы хотите увидеть?",
+            sanitize_message(
+                f"🎉 РЕЗУЛЬТАТ ТЕСТА\n\n"
+                f"Ваш цветотип: {season_names[season]}\n\n"
+                f"📊 Краткий анализ:\n{tldr_report}\n\n"
+                f"Что вы хотите увидеть?"
+            ),
             reply_markup=create_post_test_navigation("palette", "description"),
         )
         print(f"✅ Result buttons displayed for state: {await state.get_state()}")

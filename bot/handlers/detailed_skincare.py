@@ -699,8 +699,10 @@ async def q8_desired_effect(cb: CallbackQuery, state: FSMContext) -> None:
         from bot.ui.report_builder import (
             build_skincare_report,
             render_report_telegram,
+            render_report_pdf,
             save_report_blocks,
         )
+        from bot.ui.pdf_v2 import generate_structured_pdf_report
 
         # Собираем минимальный набор для отчёта
         picks = {"products": []}
@@ -710,6 +712,14 @@ async def q8_desired_effect(cb: CallbackQuery, state: FSMContext) -> None:
         except Exception as _save_err:
             print(f"⚠️ Failed to save report blocks: {_save_err}")
         text, keyboard_spec = render_report_telegram(blocks)
+
+        # Генерация PDF v2 на основе блоков
+        try:
+            snap = render_report_pdf(blocks)
+            pdf_path_v2 = generate_structured_pdf_report(uid, snap)
+            print(f"✅ PDF v2 generated for skincare: {pdf_path_v2}")
+        except Exception as pdf_err:
+            print(f"⚠️ PDF v2 generation failed (skincare): {pdf_err}")
 
         # Превращаем keyboard_spec в InlineKeyboardMarkup
         kb = InlineKeyboardMarkup(
@@ -817,7 +827,7 @@ async def show_skin_description(cb: CallbackQuery, state: FSMContext) -> None:
         }
 
         await cb.message.edit_text(
-            descriptions[skin_type],
+            sanitize_message(descriptions[skin_type]),
             reply_markup=InlineKeyboardMarkup(
                 inline_keyboard=[
                     [
@@ -884,10 +894,10 @@ async def show_skincare_products(cb: CallbackQuery, state: FSMContext) -> None:
 
                 concerns_text = ", ".join(concerns) if concerns else "общий уход"
                 fallback_text = (
-                    f"🧴 **Ваш тип кожи определён!**\n\n"
-                    f"**Тип кожи:** {skin_type_names.get(skin_type, skin_type)}\n"
-                    f"**Проблемы:** {concerns_text}\n\n"
-                    f"🔍 **Рекомендуемые категории ухода:**\n"
+                    f"🧴 Ваш тип кожи определён!\n\n"
+                    f"Тип кожи: {skin_type_names.get(skin_type, skin_type)}\n"
+                    f"Проблемы: {concerns_text}\n\n"
+                    f"🔍 Рекомендуемые категории ухода:\n"
                     f"• Очищающие средства\n"
                     f"• Тоники\n"
                     f"• Сыворотки\n"
@@ -936,7 +946,8 @@ async def show_skincare_products(cb: CallbackQuery, state: FSMContext) -> None:
             )
             kb = InlineKeyboardMarkup(inline_keyboard=buttons)
 
-            await cb.message.edit_text(f"🛍️ **ЧТО КУПИТЬ**\n\n{text}", reply_markup=kb)
+            from bot.utils.security import sanitize_message
+            await cb.message.edit_text(sanitize_message(f"🛍️ ЧТО КУПИТЬ\n\n{text}"), reply_markup=kb)
         else:
             # Fallback если нет продуктов
             skin_analysis = data.get("skin_analysis", {})
@@ -949,10 +960,13 @@ async def show_skincare_products(cb: CallbackQuery, state: FSMContext) -> None:
                 "normal": "✨ нормального типа",
             }
 
+            from bot.utils.security import sanitize_message
             await cb.message.edit_text(
-                f"🧴 **ПРОДУКТЫ ДЛЯ {skin_type_names[skin_type].upper()}**\n\n"
-                f"К сожалению, в данный момент подходящие продукты недоступны в каталоге.\n\n"
-                f"Попробуйте позже или обратитесь к консультанту.",
+                sanitize_message(
+                    f"🧴 ПРОДУКТЫ ДЛЯ {skin_type_names[skin_type].upper()}\n\n"
+                    f"К сожалению, в данный момент подходящие продукты недоступны в каталоге.\n\n"
+                    f"Попробуйте позже или обратитесь к консультанту."
+                ),
                 reply_markup=InlineKeyboardMarkup(
                     inline_keyboard=[
                         [
@@ -1108,7 +1122,7 @@ async def back_to_skincare_results(cb: CallbackQuery, state: FSMContext) -> None
                 "hydration_needed": "нужно увлажнение",
             }
             concerns_list = [concerns_readable.get(c, c) for c in concerns[:3]]
-            concerns_text = f"\n**Основные проблемы:** {', '.join(concerns_list)}"
+            concerns_text = f"\nОсновные проблемы: {', '.join(concerns_list)}"
 
         sensitivity_text = ""
         if sensitivity != "normal":
@@ -1116,15 +1130,18 @@ async def back_to_skincare_results(cb: CallbackQuery, state: FSMContext) -> None
                 "sensitive": "чувствительная",
                 "very_sensitive": "очень чувствительная",
             }
-            sensitivity_text = f"\n**Чувствительность:** {sensitivity_names[sensitivity]}"
+            sensitivity_text = f"\nЧувствительность: {sensitivity_names[sensitivity]}"
 
         # Показываем краткий анализ если он есть
-        analysis_text = f"\n\n📊 **Краткий анализ:**\n{tldr_report}" if tldr_report else ""
+        analysis_text = f"\n\n📊 Краткий анализ:\n{tldr_report}" if tldr_report else ""
 
+        from bot.utils.security import sanitize_message
         await cb.message.edit_text(
-            f"🎉 **РЕЗУЛЬТАТ ДИАГНОСТИКИ**\n\n"
-            f"**Ваш тип лица:** {skin_type_names[skin_type]}{concerns_text}{sensitivity_text}{analysis_text}\n\n"
-            f"Что вы хотите увидеть?",
+            sanitize_message(
+                f"🎉 РЕЗУЛЬТАТ ДИАГНОСТИКИ\n\n"
+                f"Ваш тип лица: {skin_type_names[skin_type]}{concerns_text}{sensitivity_text}{analysis_text}\n\n"
+                f"Что вы хотите увидеть?"
+            ),
             reply_markup=InlineKeyboardMarkup(
                 inline_keyboard=[
                     [
