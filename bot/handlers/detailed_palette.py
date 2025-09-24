@@ -511,7 +511,32 @@ async def q8_lip_color(cb: CallbackQuery, state: FSMContext) -> None:
         )
         print(f"🛍️ Selector result keys: {list(result.keys()) if result else 'No result'}")
 
-        # Детальный анализ результата макияжа
+        # Сформировать отчёт (Telegram) и показать вкладки
+        from bot.utils.security import safe_edit_message_text
+        from bot.ui.report_builder import build_palette_report, render_report_telegram
+
+        profile_dict = {
+            "season": str(profile.season) if hasattr(profile, "season") else None,
+            "undertone": str(profile.undertone) if hasattr(profile, "undertone") else None,
+        }
+        picks = {"products": []}
+        blocks = build_palette_report(profile_dict, picks)
+        text, keyboard_spec = render_report_telegram(blocks)
+
+        kb = InlineKeyboardMarkup(
+            inline_keyboard=[
+                [InlineKeyboardButton(text=lbl, callback_data=cbdata) for (lbl, cbdata) in row]
+                for row in keyboard_spec
+            ]
+        )
+
+        await safe_edit_message_text(
+            cb.message.bot,
+            cb.message.chat.id,
+            cb.message.message_id,
+            text,
+            reply_markup=kb,
+        )
         if result and result.get("makeup"):
             makeup = result["makeup"]
             print(f"💄 Makeup categories in result: {list(makeup.keys())}")

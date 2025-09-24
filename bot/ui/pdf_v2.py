@@ -360,8 +360,7 @@ class StructuredPDFGenerator:
             title = title_map.get(report_type, "ПЕРСОНАЛЬНЫЙ ОТЧЕТ")
             self._add_header(pdf, title)
 
-            # ДОБАВЛЕНИЕ ВИЗУАЛЬНОЙ КАРТОЧКИ ВРЕМЕННО ОТКЛЮЧЕНО ДО СТАБИЛИЗАЦИИ
-            # self._add_visual_card_section(pdf, uid, report_type)
+            # Визуальная карточка отключена (guard)
 
             # 1. РЕЗЮМЕ
             self._add_section_header(pdf, "1. РЕЗЮМЕ АНАЛИЗА")

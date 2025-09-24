@@ -19,37 +19,54 @@ logger = logging.getLogger(__name__)
 class MessageSanitizer:
     """Sanitizes outgoing messages to prevent markdown artifacts and spam"""
 
-    # Patterns to clean up
-    MARKDOWN_ARTIFACTS = [
-        r"\*{3,}",  # Multiple asterisks
-        r"#{3,}",  # Multiple hashes
-        r"-{3,}",  # Multiple dashes
-        r"`{3,}",  # Multiple backticks
-        r"\n{3,}",  # Multiple newlines
-        r" {2,}",  # Multiple spaces
-    ]
+    # Strict plain-text mode via env
+    def __init__(self, strict_plain_text: bool | None = None):
+        from config.env import get_settings
 
-    @staticmethod
-    def sanitize(text: str) -> str:
-        """
-        Clean up message text by removing markdown artifacts and normalizing formatting
+        try:
+            settings = get_settings()
+            env_flag = getattr(settings, "strict_plain_text", None)
+        except Exception:
+            env_flag = None
 
-        Args:
-            text: Raw message text
+        if strict_plain_text is None:
+            strict_plain_text = str(os.getenv("STRICT_PLAIN_TEXT", "0")).lower() in (
+                "1",
+                "true",
+                "yes",
+            ) or bool(env_flag)
 
-        Returns:
-            Sanitized message text
-        """
+        self.strict_plain_text = strict_plain_text
+
+        # Regexes
+        self.re_markdown = re.compile(r"[*_~`#>]")
+        self.re_long_dash = re.compile(r"[—–]")  # long/en dashes
+        self.re_invisible = re.compile(r"[\u200b\u00ad\ufeff]")
+        self.re_multinewlines = re.compile(r"\n{3,}")
+        self.re_multispaces = re.compile(r" {2,}")
+        self.re_hanging_link = re.compile(r"\[[^\]]+\]\(\s*\)")
+
+    def sanitize(self, text: str) -> str:
+        """Clean text to safe plain-text by default (optionally strict)."""
         if not text:
             return text
 
-        # Remove markdown artifacts
-        for pattern in MessageSanitizer.MARKDOWN_ARTIFACTS:
-            text = re.sub(pattern, lambda m: m.group()[0] * 2, text)
+        # 1) Strip invisible chars
+        text = self.re_invisible.sub("", text)
 
-        # Normalize spaces and newlines
-        text = re.sub(r"\n\s*\n\s*\n+", "\n\n", text)  # Max 2 consecutive newlines
-        text = re.sub(r" +", " ", text)  # Max 1 space
+        # 2) Replace long dashes with hyphen
+        text = self.re_long_dash.sub("-", text)
+
+        # 3) Remove hanging markdown links: [text]()
+        text = self.re_hanging_link.sub("", text)
+
+        # 4) If strict, remove all markdown control chars
+        if self.strict_plain_text:
+            text = self.re_markdown.sub("", text)
+
+        # 5) Normalize whitespace
+        text = self.re_multinewlines.sub("\n\n", text)
+        text = self.re_multispaces.sub(" ", text)
 
         return text.strip()
 

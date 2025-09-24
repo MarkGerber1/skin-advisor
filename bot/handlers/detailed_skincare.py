@@ -677,37 +677,28 @@ async def q8_desired_effect(cb: CallbackQuery, state: FSMContext) -> None:
             pick_header = "Подборка ухода по результатам"
             pick_subtitle = "Выберите категорию, затем добавьте средства в корзину"
 
-        await cb.message.edit_text(
-            f"🎉 **РЕЗУЛЬТАТ ДИАГНОСТИКИ**\n\n"
-            f"**Ваш тип лица:** {skin_type_names[skin_type]}{concerns_text}{sensitivity_text}\n\n"
-            f"📊 **Краткий анализ:**\n{tldr_report}\n\n"
-            f"---\n\n"
-            f"🛍️ **{pick_header}**\n"
-            f"_{pick_subtitle}_\n\n"
-            f"Что вы хотите увидеть?",
-            reply_markup=InlineKeyboardMarkup(
-                inline_keyboard=[
-                    [
-                        InlineKeyboardButton(
-                            text="🧴 Подобрать уход", callback_data="skincare_picker:start"
-                        )
-                    ],
-                    [
-                        InlineKeyboardButton(
-                            text="ℹ️ Полное описание типа лица",
-                            callback_data="skincare_result:description",
-                        )
-                    ],
-                    [
-                        InlineKeyboardButton(
-                            text="🛍️ Что купить", callback_data="skincare_result:products"
-                        )
-                    ],
-                    [InlineKeyboardButton(text="📄 Получить отчёт", callback_data="report:latest")],
-                    [InlineKeyboardButton(text="🏠 Главное меню", callback_data="universal:home")],
-                ]
-            ),
-            parse_mode="Markdown",
+        from bot.utils.security import safe_edit_message_text
+        from bot.ui.report_builder import build_skincare_report, render_report_telegram
+
+        # Собираем минимальный набор для отчёта
+        picks = {"products": []}
+        blocks = build_skincare_report(profile.__dict__, picks)
+        text, keyboard_spec = render_report_telegram(blocks)
+
+        # Превращаем keyboard_spec в InlineKeyboardMarkup
+        kb = InlineKeyboardMarkup(
+            inline_keyboard=[
+                [InlineKeyboardButton(text=lbl, callback_data=cbdata) for (lbl, cbdata) in row]
+                for row in keyboard_spec
+            ]
+        )
+
+        await safe_edit_message_text(
+            cb.message.bot,
+            cb.message.chat.id,
+            cb.message.message_id,
+            text,
+            reply_markup=kb,
         )
         # Генерируем визуальную карточку
         try:

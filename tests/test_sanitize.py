@@ -1,3 +1,30 @@
+import os
+import pytest
+
+from bot.utils.security import MessageSanitizer
+
+
+@pytest.fixture(params=["0", "1"])
+def sanitizer(request):
+    os.environ["STRICT_PLAIN_TEXT"] = request.param
+    return MessageSanitizer()
+
+
+@pytest.mark.parametrize(
+    "src, exp_contains",
+    [
+        ("Hello **World**", "Hello World"),
+        ("Альфа — бета – гамма", "Альфа - бета - гамма"),
+        ("Ссылка [тут]() текст", "Ссылка  текст"),
+        ("Невидимые\u200bсимволы", "Невидимыесимволы"),
+        ("Много\n\n\nстрок", "Много\n\nстрок"),
+        ("Пробелы    тут", "Пробелы тут"),
+    ],
+)
+def test_sanitize_cases(sanitizer, src, exp_contains):
+    out = sanitizer.sanitize(src)
+    assert exp_contains in out
+
 from bot.utils.sanitize import sanitize_message
 
 
