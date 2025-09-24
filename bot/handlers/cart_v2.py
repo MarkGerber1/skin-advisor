@@ -103,7 +103,9 @@ def render_cart(cart_items: list[CartItem]) -> str:
     return "\n".join(lines)
 
 
-def build_cart_keyboard(cart_items: list[CartItem], include_undo: bool = False) -> InlineKeyboardMarkup:
+def build_cart_keyboard(
+    cart_items: list[CartItem], include_undo: bool = False
+) -> InlineKeyboardMarkup:
     """Build cart keyboard with controls"""
     keyboard = InlineKeyboardBuilder()
 
@@ -232,7 +234,8 @@ async def handle_cart_add(cb: CallbackQuery):
             price=float(price),
             currency="RUB",
             source=getattr(product, "source", None) or "goldapple",
-            ref_link=getattr(product, "buy_url", None) or f"https://goldapple.ru/products/{product_id}",
+            ref_link=getattr(product, "buy_url", None)
+            or f"https://goldapple.ru/products/{product_id}",
             image_url=getattr(product, "image_url", None),
         )
 
@@ -326,7 +329,11 @@ async def handle_cart_dec(cb: CallbackQuery):
             keyboard = build_cart_keyboard(cart_items, include_undo=True)
 
             await safe_edit_message_text(
-                cb.message.bot, cb.message.chat.id, cb.message.message_id, text, reply_markup=keyboard
+                cb.message.bot,
+                cb.message.chat.id,
+                cb.message.message_id,
+                text,
+                reply_markup=keyboard,
             )
             return
         else:
@@ -462,7 +469,11 @@ async def handle_cart_checkout(cb: CallbackQuery):
         keyboard.row(InlineKeyboardButton(text="⬅️ Назад в корзину", callback_data="cart:open"))
 
         await safe_edit_message_text(
-            cb.message.bot, cb.message.chat.id, cb.message.message_id, text, reply_markup=keyboard.as_markup()
+            cb.message.bot,
+            cb.message.chat.id,
+            cb.message.message_id,
+            text,
+            reply_markup=keyboard.as_markup(),
         )
 
     except Exception as e:
@@ -481,7 +492,11 @@ async def handle_cart_back_reco(cb: CallbackQuery):
         keyboard.row(InlineKeyboardButton(text="🏠 Главное меню", callback_data="back:main"))
 
         await safe_edit_message_text(
-            cb.message.bot, cb.message.chat.id, cb.message.message_id, text, reply_markup=keyboard.as_markup()
+            cb.message.bot,
+            cb.message.chat.id,
+            cb.message.message_id,
+            text,
+            reply_markup=keyboard.as_markup(),
         )
         await cb.answer("Возвращаемся к рекомендациям")
 
