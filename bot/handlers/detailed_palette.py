@@ -445,14 +445,18 @@ async def q8_lip_color(cb: CallbackQuery, state: FSMContext) -> None:
         from engine.catalog_store import CatalogStore
         from engine.answer_expander import AnswerExpanderV2
         from engine.models import ReportData
+
         # Legacy PDF helpers (guarded)
         try:
             from bot.ui.pdf import save_last_json, save_text_pdf
         except Exception:
+
             def save_last_json(*args, **kwargs):
                 return None
+
             def save_text_pdf(*args, **kwargs):
                 return None
+
         from bot.ui.render import render_makeup_report
         import os
 
