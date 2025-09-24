@@ -537,7 +537,38 @@ async def q8_lip_color(cb: CallbackQuery, state: FSMContext) -> None:
             "season": str(profile.season) if hasattr(profile, "season") else None,
             "undertone": str(profile.undertone) if hasattr(profile, "undertone") else None,
         }
-        picks = {"products": []}
+        # Сформировать список товаров для вкладки «Что купить» (до 15 шт.)
+        picks_products = []
+        try:
+            makeup_data = result.get("makeup", {}) if isinstance(result, dict) else {}
+            seen: set[str] = set()
+            for products in makeup_data.values():
+                if not isinstance(products, list):
+                    continue
+                for p in products:
+                    pid = p.get("id") or p.get("key")
+                    if not pid or pid in seen:
+                        continue
+                    seen.add(pid)
+                    picks_products.append(
+                        {
+                            "id": pid,
+                            "name": p.get("name") or p.get("title"),
+                            "brand": p.get("brand"),
+                            "price": p.get("price"),
+                            "currency": p.get("currency") or "RUB",
+                            "variant_id": p.get("variant_id"),
+                        }
+                    )
+                    if len(picks_products) >= 15:
+                        break
+                if len(picks_products) >= 15:
+                    break
+        except Exception as build_err:
+            print(f"⚠️ Failed to build picks products: {build_err}")
+            picks_products = []
+
+        picks = {"products": picks_products}
         blocks = build_palette_report(profile_dict, picks)
         try:
             save_report_blocks(uid, "detailed_palette", blocks)
@@ -634,9 +665,8 @@ async def q8_lip_color(cb: CallbackQuery, state: FSMContext) -> None:
                 f"Нажмите на категории ниже для подбора средств:"
             )
 
-            from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-
-            InlineKeyboardMarkup(
+            # use top-level imported InlineKeyboardMarkup/InlineKeyboardButton
+            kb = InlineKeyboardMarkup(
                 inline_keyboard=[
                     [
                         InlineKeyboardButton(
