@@ -755,6 +755,7 @@ async def q8_lip_color(cb: CallbackQuery, state: FSMContext) -> None:
         # using top-level imported InlineKeyboardMarkup/InlineKeyboardButton
 
         from bot.utils.security import sanitize_message
+
         await cb.message.edit_text(
             sanitize_message(
                 f"🎉 РЕЗУЛЬТАТ ТЕСТА\n\n"
@@ -784,6 +785,7 @@ async def q8_lip_color(cb: CallbackQuery, state: FSMContext) -> None:
 
                 if os.path.exists(card_path):
                     from bot.utils.security import sanitize_message
+
                     await cb.message.answer(
                         sanitize_message(
                             f"🎨 Ваша персональная цветовая карта\n\n"
@@ -858,6 +860,7 @@ async def show_description(cb: CallbackQuery, state: FSMContext) -> None:
         }
 
         from bot.utils.security import sanitize_message
+
         await cb.message.edit_text(
             sanitize_message(descriptions[season]),
             reply_markup=InlineKeyboardMarkup(
@@ -918,6 +921,7 @@ async def show_products(cb: CallbackQuery, state: FSMContext) -> None:
             kb = InlineKeyboardMarkup(inline_keyboard=buttons)
 
             from bot.utils.security import sanitize_message
+
             await cb.message.edit_text(sanitize_message(f"🛍️ ЧТО КУПИТЬ\n\n{text}"), reply_markup=kb)
             print("✅ Products displayed successfully")
         else:
@@ -932,6 +936,7 @@ async def show_products(cb: CallbackQuery, state: FSMContext) -> None:
             }
 
             from bot.utils.security import sanitize_message
+
             await cb.message.edit_text(
                 sanitize_message(
                     f"💄 ПРОДУКТЫ ДЛЯ {season_names[season].upper()}\n\n"
@@ -980,6 +985,7 @@ async def back_to_results(cb: CallbackQuery, state: FSMContext) -> None:
         print(f"🎭 About to show result buttons with state: {await state.get_state()}")
 
         from bot.utils.security import sanitize_message
+
         await cb.message.edit_text(
             sanitize_message(
                 f"🎉 РЕЗУЛЬТАТ ТЕСТА\n\n"

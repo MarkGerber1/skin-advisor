@@ -947,6 +947,7 @@ async def show_skincare_products(cb: CallbackQuery, state: FSMContext) -> None:
             kb = InlineKeyboardMarkup(inline_keyboard=buttons)
 
             from bot.utils.security import sanitize_message
+
             await cb.message.edit_text(sanitize_message(f"🛍️ ЧТО КУПИТЬ\n\n{text}"), reply_markup=kb)
         else:
             # Fallback если нет продуктов
@@ -961,6 +962,7 @@ async def show_skincare_products(cb: CallbackQuery, state: FSMContext) -> None:
             }
 
             from bot.utils.security import sanitize_message
+
             await cb.message.edit_text(
                 sanitize_message(
                     f"🧴 ПРОДУКТЫ ДЛЯ {skin_type_names[skin_type].upper()}\n\n"
@@ -1136,6 +1138,7 @@ async def back_to_skincare_results(cb: CallbackQuery, state: FSMContext) -> None
         analysis_text = f"\n\n📊 Краткий анализ:\n{tldr_report}" if tldr_report else ""
 
         from bot.utils.security import sanitize_message
+
         await cb.message.edit_text(
             sanitize_message(
                 f"🎉 РЕЗУЛЬТАТ ДИАГНОСТИКИ\n\n"
