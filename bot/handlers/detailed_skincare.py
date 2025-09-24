@@ -323,8 +323,9 @@ async def q2_sun_reaction(cb: CallbackQuery, state: FSMContext) -> None:
         await state.update_data(sun=answer)
         await state.set_state(DetailedSkincareFlow.Q3_IMPERFECTIONS)
 
+        from bot.utils.security import sanitize_message
         await cb.message.edit_text(
-            "**Вопрос 3 из 10**\n" "🎯 Какие несовершенства беспокоят чаще всего?",
+            sanitize_message("Вопрос 3 из 10\n🎯 Какие несовершенства беспокоят чаще всего?"),
             reply_markup=_kb_imperfections(),
         )
         await cb.answer()
@@ -340,8 +341,10 @@ async def q3_imperfections(cb: CallbackQuery, state: FSMContext) -> None:
         await state.update_data(imperfections=answer)
         await state.set_state(DetailedSkincareFlow.Q4_EYE_AREA)
 
+        from bot.utils.security import sanitize_message
         await cb.message.edit_text(
-            "**Вопрос 4 из 10**\n" "👁️ Как выглядит зона вокруг глаз?", reply_markup=_kb_eye_area()
+            sanitize_message("Вопрос 4 из 10\n👁️ Как выглядит зона вокруг глаз?"),
+            reply_markup=_kb_eye_area(),
         )
         await cb.answer()
     except Exception as e:

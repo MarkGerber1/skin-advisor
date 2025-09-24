@@ -258,16 +258,18 @@ async def start_detailed_palette_flow(message: Message, state: FSMContext) -> No
         subtitle = "8 вопросов · 1–2 минуты · подберём оттенки и список покупок"
         hair_hint = "Если волосы окрашены — ориентируйтесь на корни"
 
+    from bot.utils.security import sanitize_message
     await message.answer(
-        "🎨 **ТОН&СИЯНИЕ**\n\n"
-        f"_{subtitle}_\n\n"
-        "Ответьте честно на вопросы, чтобы определить ваш цветотип "
-        "и получить персональные рекомендации по декоративной косметике.\n\n"
-        "**Вопрос 1 из 8**\n"
-        "🌈 Какой у вас естественный цвет волос (без окрашивания)?\n\n"
-        f"💡 *{hair_hint}*",
+        sanitize_message(
+            "🎨 ТОН И СИЯНИЕ\n\n"
+            f"{subtitle}\n\n"
+            "Ответьте честно на вопросы, чтобы определить ваш цветотип "
+            "и получить персональные рекомендации по декоративной косметике.\n\n"
+            "Вопрос 1 из 8\n"
+            "🌈 Какой у вас естественный цвет волос (без окрашивания)?\n\n"
+            f"💡 {hair_hint}"
+        ),
         reply_markup=_kb_hair_color(),
-        parse_mode="Markdown",
     )
 
 
@@ -283,8 +285,10 @@ async def q1_hair_color(cb: CallbackQuery, state: FSMContext) -> None:
         await state.update_data(hair=answer)
         await state.set_state(DetailedPaletteFlow.Q2_EYE_COLOR)
 
+        from bot.utils.security import sanitize_message
         await cb.message.edit_text(
-            "**Вопрос 2 из 8**\n" "👁️ Какой оттенок у ваших глаз?", reply_markup=_kb_eye_color()
+            sanitize_message("Вопрос 2 из 8\n👁️ Какой оттенок у ваших глаз?"),
+            reply_markup=_kb_eye_color(),
         )
         await cb.answer()
     except Exception as e:
@@ -299,10 +303,13 @@ async def q2_eye_color(cb: CallbackQuery, state: FSMContext) -> None:
         await state.update_data(eyes=answer)
         await state.set_state(DetailedPaletteFlow.Q3_SKIN_UNDERTONE)
 
+        from bot.utils.security import sanitize_message
         await cb.message.edit_text(
-            "**Вопрос 3 из 8**\n"
-            "🔍 Какой у вас подтон кожи?\n\n"
-            "*Посмотрите на вены на запястье в дневном свете:*",
+            sanitize_message(
+                "Вопрос 3 из 8\n"
+                "🔍 Какой у вас подтон кожи?\n\n"
+                "Посмотрите на вены на запястье в дневном свете:"
+            ),
             reply_markup=_kb_skin_undertone(),
         )
         await cb.answer()
@@ -318,8 +325,9 @@ async def q3_skin_undertone(cb: CallbackQuery, state: FSMContext) -> None:
         await state.update_data(undertone=answer)
         await state.set_state(DetailedPaletteFlow.Q4_CONTRAST)
 
+        from bot.utils.security import sanitize_message
         await cb.message.edit_text(
-            "**Вопрос 4 из 8**\n" "⚖️ Какой контраст между цветом волос, глаз и кожи?",
+            sanitize_message("Вопрос 4 из 8\n⚖️ Какой контраст между цветом волос, глаз и кожи?"),
             reply_markup=_kb_contrast(),
         )
         await cb.answer()
@@ -335,8 +343,9 @@ async def q4_contrast(cb: CallbackQuery, state: FSMContext) -> None:
         await state.update_data(contrast=answer)
         await state.set_state(DetailedPaletteFlow.Q5_SUN_REACTION)
 
+        from bot.utils.security import sanitize_message
         await cb.message.edit_text(
-            "**Вопрос 5 из 8**\n" "☀️ Как выглядит ваше лицо после пребывания на солнце?",
+            sanitize_message("Вопрос 5 из 8\n☀️ Как выглядит ваше лицо после пребывания на солнце?"),
             reply_markup=_kb_sun_reaction(),
         )
         await cb.answer()
