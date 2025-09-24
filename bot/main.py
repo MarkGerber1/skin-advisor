@@ -81,6 +81,14 @@ except ImportError as e:
     raise
 
 try:
+    from bot.handlers.report_tabs import router as report_tabs_router
+
+    print("OK report tabs router imported")
+except ImportError as e:
+    print(f"ERROR Failed to import report tabs router: {e}")
+    raise
+
+try:
     from bot.handlers.universal import router as universal_router
 
     print("OK universal router imported")
@@ -157,6 +165,7 @@ def _ensure_routers_registered() -> None:
     dp.include_router(skincare_router)
     dp.include_router(palette_router)
     dp.include_router(report_router)
+    dp.include_router(report_tabs_router)
     dp.include_router(universal_router)
     _handlers_registered = True
 

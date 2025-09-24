@@ -8,6 +8,7 @@ Contains security-related utilities for bot protection:
 """
 
 import re
+import os
 import logging
 from typing import Optional
 from aiogram import Bot
