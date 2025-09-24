@@ -420,6 +420,15 @@ class StructuredPDFGenerator:
                 for t in tips:
                     self._add_text_block(pdf, f"• {self._clean_text(str(t))}")
 
+            # Сохранение
+            pdf.output(str(pdf_path))
+            print(f"✅ Generated structured PDF v2 for user {uid}: {pdf_path}")
+
+            return str(pdf_path)
+        except Exception as e:
+            print(f"❌ Error generating structured PDF for user {uid}: {e}")
+            return ""
+
     def _add_summary_section(self, pdf: FPDF, profile: Dict[str, Any], report_type: str):
         """Добавляет секцию резюме"""
         summary_parts = []
