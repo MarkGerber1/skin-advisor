@@ -259,6 +259,7 @@ async def start_detailed_palette_flow(message: Message, state: FSMContext) -> No
         hair_hint = "Если волосы окрашены — ориентируйтесь на корни"
 
     from bot.utils.security import sanitize_message
+
     await message.answer(
         sanitize_message(
             "🎨 ТОН И СИЯНИЕ\n\n"
@@ -286,6 +287,7 @@ async def q1_hair_color(cb: CallbackQuery, state: FSMContext) -> None:
         await state.set_state(DetailedPaletteFlow.Q2_EYE_COLOR)
 
         from bot.utils.security import sanitize_message
+
         await cb.message.edit_text(
             sanitize_message("Вопрос 2 из 8\n👁️ Какой оттенок у ваших глаз?"),
             reply_markup=_kb_eye_color(),
@@ -304,6 +306,7 @@ async def q2_eye_color(cb: CallbackQuery, state: FSMContext) -> None:
         await state.set_state(DetailedPaletteFlow.Q3_SKIN_UNDERTONE)
 
         from bot.utils.security import sanitize_message
+
         await cb.message.edit_text(
             sanitize_message(
                 "Вопрос 3 из 8\n"
@@ -326,6 +329,7 @@ async def q3_skin_undertone(cb: CallbackQuery, state: FSMContext) -> None:
         await state.set_state(DetailedPaletteFlow.Q4_CONTRAST)
 
         from bot.utils.security import sanitize_message
+
         await cb.message.edit_text(
             sanitize_message("Вопрос 4 из 8\n⚖️ Какой контраст между цветом волос, глаз и кожи?"),
             reply_markup=_kb_contrast(),
@@ -344,6 +348,7 @@ async def q4_contrast(cb: CallbackQuery, state: FSMContext) -> None:
         await state.set_state(DetailedPaletteFlow.Q5_SUN_REACTION)
 
         from bot.utils.security import sanitize_message
+
         await cb.message.edit_text(
             sanitize_message("Вопрос 5 из 8\n☀️ Как выглядит ваше лицо после пребывания на солнце?"),
             reply_markup=_kb_sun_reaction(),

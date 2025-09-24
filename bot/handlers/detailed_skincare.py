@@ -324,6 +324,7 @@ async def q2_sun_reaction(cb: CallbackQuery, state: FSMContext) -> None:
         await state.set_state(DetailedSkincareFlow.Q3_IMPERFECTIONS)
 
         from bot.utils.security import sanitize_message
+
         await cb.message.edit_text(
             sanitize_message("Вопрос 3 из 10\n🎯 Какие несовершенства беспокоят чаще всего?"),
             reply_markup=_kb_imperfections(),
@@ -342,6 +343,7 @@ async def q3_imperfections(cb: CallbackQuery, state: FSMContext) -> None:
         await state.set_state(DetailedSkincareFlow.Q4_EYE_AREA)
 
         from bot.utils.security import sanitize_message
+
         await cb.message.edit_text(
             sanitize_message("Вопрос 4 из 10\n👁️ Как выглядит зона вокруг глаз?"),
             reply_markup=_kb_eye_area(),
