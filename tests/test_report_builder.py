@@ -22,5 +22,3 @@ def test_build_and_render_skincare():
     assert any("Рекомендации" in line for line in text.splitlines())
     snap = render_report_pdf(blocks)
     assert "profile" in snap
-
-

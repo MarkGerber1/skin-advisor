@@ -37,9 +37,7 @@ def build_palette_report(profile: Dict[str, Any], picks: Dict[str, Any]) -> Repo
         f"Ваш сезон: {profile.get('season', 'не определён')}. Подтон: {profile.get('undertone', '—')}"
     )
     recos = {
-        "tones": [
-            _plain(r) for r in picks.get("tones", ["Подберите натуральный оттенок тона"])
-        ]
+        "tones": [_plain(r) for r in picks.get("tones", ["Подберите натуральный оттенок тона"])]
     }
     products = picks.get("products", [])[:15]
     tips = [
@@ -146,5 +144,3 @@ def render_report_pdf(blocks: ReportBlocks) -> Dict[str, Any]:
         },
     }
     return snapshot
-
-

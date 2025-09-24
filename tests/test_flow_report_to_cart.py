@@ -1,4 +1,3 @@
-import pytest
 
 
 def test_stub_flow_e2e_smoke():
@@ -13,5 +12,3 @@ def test_stub_flow_e2e_smoke():
         importlib.import_module(mod)
 
     assert True
-
-

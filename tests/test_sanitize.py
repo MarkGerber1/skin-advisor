@@ -25,6 +25,7 @@ def test_sanitize_cases(sanitizer, src, exp_contains):
     out = sanitizer.sanitize(src)
     assert exp_contains in out
 
+
 from bot.utils.sanitize import sanitize_message
 
 
