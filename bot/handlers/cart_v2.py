@@ -100,11 +100,11 @@ def render_cart(cart_items: list[CartItem]) -> str:
         lines.append(format_cart_item(item))
 
     lines.append("")
-    lines.append(f"Итого: {total_qty} шт × {format_price(total_price, currency)}")
+    lines.append(f"Итого: {total_qty} шт · {format_price(total_price, currency)}")
     return "\n".join(lines)
 
 
-def build_cart_keyboard(cart_items: list[CartItem]) -> InlineKeyboardMarkup:
+def build_cart_keyboard(cart_items: list[CartItem], include_undo: bool = False) -> InlineKeyboardMarkup:
     """Build cart keyboard with controls"""
     keyboard = InlineKeyboardBuilder()
 
@@ -119,9 +119,14 @@ def build_cart_keyboard(cart_items: list[CartItem]) -> InlineKeyboardMarkup:
                 text="➕", callback_data=f"cart:inc:{item.product_id}:{item.variant_id or 'none'}"
             ),
             InlineKeyboardButton(
-                text="🗑", callback_data=f"cart:rm:{item.product_id}:{item.variant_id or 'none'}"
+                text="🗑 Удалить",
+                callback_data=f"cart:rm:{item.product_id}:{item.variant_id or 'none'}",
             ),
         )
+
+    # Undo row (soft restore)
+    if include_undo:
+        keyboard.row(InlineKeyboardButton(text="↩ Вернуть", callback_data="cart:undo"))
 
     # Cart actions
     if cart_items:
@@ -227,9 +232,9 @@ async def handle_cart_add(cb: CallbackQuery):
             name=name,
             price=float(price),
             currency="RUB",
-            source=product.source or "goldapple",
-            ref_link=product.buy_url or f"https://goldapple.ru/products/{product_id}",
-            image_url=product.image_url,
+            source=getattr(product, "source", None) or "goldapple",
+            ref_link=getattr(product, "buy_url", None) or f"https://goldapple.ru/products/{product_id}",
+            image_url=getattr(product, "image_url", None),
         )
 
         if currency_conflict:
@@ -315,6 +320,16 @@ async def handle_cart_dec(cb: CallbackQuery):
             cart_store.remove_item(user_id, product_id, variant_id)
             cart_item_removed(user_id, f"{product_id}:{variant_id}")
             await cb.answer("🗑 Товар удалён")
+
+            # Update cart view with Undo option
+            cart_items = cart_store.get_cart(user_id)
+            text = render_cart(cart_items)
+            keyboard = build_cart_keyboard(cart_items, include_undo=True)
+
+            await safe_edit_message_text(
+                cb.message.bot, cb.message.chat.id, cb.message.message_id, text, reply_markup=keyboard
+            )
+            return
         else:
             old_qty = item.qty
             cart_store.update_quantity(user_id, product_id, variant_id, item.qty - 1)
@@ -350,10 +365,35 @@ async def handle_cart_rm(cb: CallbackQuery):
 
         if cart_store.remove_item(user_id, product_id, variant_id):
             cart_item_removed(user_id, f"{product_id}:{variant_id}")
-            await cb.answer("🗑 Товар удалён")
+            await cb.answer("🗑 Товар удалён. Вернуть?", show_alert=False)
         else:
             await cb.answer("❌ Товар не найден")
             return
+
+        # Update cart view with Undo option
+        cart_items = cart_store.get_cart(user_id)
+        text = render_cart(cart_items)
+        keyboard = build_cart_keyboard(cart_items, include_undo=True)
+
+        await safe_edit_message_text(
+            cb.message.bot, cb.message.chat.id, cb.message.message_id, text, reply_markup=keyboard
+        )
+
+    except Exception as e:
+        logger.error(f"Error removing item: {e}")
+        await cb.answer("❌ Ошибка удаления", show_alert=True)
+
+
+@router.callback_query(F.data == "cart:undo")
+async def handle_cart_undo(cb: CallbackQuery):
+    """Restore last removed item if available (soft undo)."""
+    try:
+        user_id = cb.from_user.id
+        restored = cart_store.restore_last_removed(user_id)
+        if restored is None:
+            await cb.answer("⏳ Время возврата истекло", show_alert=False)
+        else:
+            await cb.answer("↩ Товар возвращён", show_alert=False)
 
         # Update cart view
         cart_items = cart_store.get_cart(user_id)
@@ -365,8 +405,8 @@ async def handle_cart_rm(cb: CallbackQuery):
         )
 
     except Exception as e:
-        logger.error(f"Error removing item: {e}")
-        await cb.answer("❌ Ошибка удаления", show_alert=True)
+        logger.error(f"Error in undo: {e}")
+        await cb.answer("❌ Ошибка возврата", show_alert=True)
 
 
 @router.callback_query(F.data == "cart:clr")
