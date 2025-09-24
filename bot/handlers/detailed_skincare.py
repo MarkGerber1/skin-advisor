@@ -715,7 +715,9 @@ async def q8_desired_effect(cb: CallbackQuery, state: FSMContext) -> None:
 
         # Генерация PDF v2 на основе блоков
         try:
-            snap = render_report_pdf(blocks, profile=profile.__dict__, report_type="detailed_skincare")
+            snap = render_report_pdf(
+                blocks, profile=profile.__dict__, report_type="detailed_skincare"
+            )
             pdf_path_v2 = generate_structured_pdf_report(uid, snap)
             print(f"✅ PDF v2 generated for skincare: {pdf_path_v2}")
         except Exception as pdf_err:
