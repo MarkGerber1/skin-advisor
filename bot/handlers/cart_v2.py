@@ -490,12 +490,16 @@ async def handle_cart_checkout(cb: CallbackQuery):
         checkout_lines = [CHECKOUT_TITLE, "", CHECKOUT_LINKS_READY]
 
         link_count = 0
+        from urllib.parse import quote_plus
         for item in cart_items:
-            if item.ref_link:
-                # Add affiliate tag if needed
-                affiliate_link = item.ref_link  # TODO: Add affiliate logic
-                checkout_lines.append(f"• {item.name} - {affiliate_link}")
-                link_count += 1
+            link = item.ref_link
+            if not link:
+                # fallback search link
+                query = quote_plus(f"{item.brand or ''} {item.name}")
+                base = os.getenv("REDIRECT_BASE", "https://goldapple.ru/search?text=")
+                link = f"{base}{query}"
+            checkout_lines.append(f"• {item.name} - {link}")
+            link_count += 1
 
         checkout_lines.append("")
         checkout_lines.append(MSG_CART_READY_FOR_CHECKOUT)

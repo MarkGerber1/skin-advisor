@@ -31,7 +31,8 @@ class MessageSanitizer:
             env_flag = None
 
         if strict_plain_text is None:
-            strict_plain_text = str(os.getenv("STRICT_PLAIN_TEXT", "0")).lower() in (
+            # По умолчанию включаем строгий plain-text режим
+            strict_plain_text = str(os.getenv("STRICT_PLAIN_TEXT", "1")).lower() in (
                 "1",
                 "true",
                 "yes",
