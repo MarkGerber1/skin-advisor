@@ -1,6 +1,6 @@
 # Dockerfile for FREE hosting platforms (Render, Fly.io, etc.)
-# Use Render's public mirror to avoid Docker Hub auth/rate-limit issues
-FROM us-west1-docker.pkg.dev/render-images/public/python:3.11-slim
+# Use AWS Public ECR mirror to avoid Docker Hub auth/rate-limit issues
+FROM public.ecr.aws/docker/library/python:3.11-slim
 
 # Set working directory
 WORKDIR /app

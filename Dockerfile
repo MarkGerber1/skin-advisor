@@ -1,5 +1,5 @@
-# Use Render mirror image to bypass Docker Hub 401/limits
-FROM us-west1-docker.pkg.dev/render-images/public/python:3.11-slim
+# Use AWS Public ECR mirror to bypass Docker Hub issues
+FROM public.ecr.aws/docker/library/python:3.11-slim
 # Force rebuild: v2
 
 WORKDIR /usr/src/app
