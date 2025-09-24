@@ -491,6 +491,7 @@ async def handle_cart_checkout(cb: CallbackQuery):
 
         link_count = 0
         from urllib.parse import quote_plus
+
         for item in cart_items:
             link = item.ref_link
             if not link:
