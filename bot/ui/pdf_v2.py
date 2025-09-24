@@ -420,27 +420,6 @@ class StructuredPDFGenerator:
                 for t in tips:
                     self._add_text_block(pdf, f"• {self._clean_text(str(t))}")
 
-    def _add_buy_section(self, pdf: FPDF, items: List[Dict[str, Any]]):
-        """Добавляет раздел 'Что купить' из snapshot.result.buy"""
-        for item in items[:15]:
-            if pdf.get_y() > 240:
-                pdf.add_page()
-            name = self._clean_text(str(item.get("name", "Товар")))
-            brand = self._clean_text(str(item.get("brand", "")))
-            price = item.get("price")
-            currency = item.get("currency") or "RUB"
-
-            title = f"{brand} - {name}" if brand else name
-            pdf.set_font_size(self.font_size_text)
-            pdf.set_text_color(*self.color_accent)
-            pdf.cell(0, 6, title, ln=True)
-
-            pdf.set_font_size(self.font_size_small)
-            pdf.set_text_color(*self.color_text)
-            if price:
-                pdf.cell(0, 4, f"Цена: {price} {currency}", ln=True)
-            pdf.ln(2)
-
     def _add_summary_section(self, pdf: FPDF, profile: Dict[str, Any], report_type: str):
         """Добавляет секцию резюме"""
         summary_parts = []
