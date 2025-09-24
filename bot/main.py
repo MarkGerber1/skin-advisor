@@ -31,33 +31,6 @@ dp = None
 _handlers_registered = False
 
 
-def get_bot_and_dispatcher():
-    """Get bot and dispatcher instances for webhook handling"""
-    global bot, dp
-    if bot is None or dp is None:
-        print("🔄 Initializing bot and dispatcher...")
-        try:
-            token = os.getenv("BOT_TOKEN")
-            if not token:
-                from config.env import get_settings
-
-                settings = get_settings()
-                token = settings.bot_token
-
-            if not token:
-                raise RuntimeError("BOT_TOKEN not found")
-
-            from aiogram import Bot, Dispatcher
-
-            bot = Bot(token)
-            dp = Dispatcher()
-            print("✅ Bot and dispatcher initialized for webhook handling")
-        except Exception as e:
-            raise RuntimeError(f"Failed to initialize bot and dispatcher: {e}")
-
-    return bot, dp
-
-
 # Routers
 try:
     from bot.handlers.start import router as start_router
@@ -167,6 +140,56 @@ except ImportError as e:
 CATALOG_PATH = os.getenv("CATALOG_PATH", "assets/fixed_catalog.yaml")
 
 
+def _ensure_routers_registered() -> None:
+    """Include all routers into dispatcher once."""
+    global _handlers_registered, dp
+    if dp is None or _handlers_registered:
+        return
+    dp.include_router(anti_pin_guard_router)
+    dp.include_router(admin_router)
+    dp.include_router(cart_v2_router)
+    dp.include_router(recommendations_router)
+    dp.include_router(start_router)
+    dp.include_router(detailed_palette_router)
+    dp.include_router(detailed_skincare_router)
+    dp.include_router(skincare_picker_router)
+    dp.include_router(makeup_picker_router)
+    dp.include_router(skincare_router)
+    dp.include_router(palette_router)
+    dp.include_router(report_router)
+    dp.include_router(universal_router)
+    _handlers_registered = True
+
+
+def get_bot_and_dispatcher():
+    """Get bot and dispatcher instances for webhook handling"""
+    global bot, dp
+    if bot is None or dp is None:
+        print("🔄 Initializing bot and dispatcher...")
+        try:
+            token = os.getenv("BOT_TOKEN")
+            if not token:
+                from config.env import get_settings
+
+                settings = get_settings()
+                token = settings.bot_token
+
+            if not token:
+                raise RuntimeError("BOT_TOKEN not found")
+
+            from aiogram import Bot, Dispatcher
+
+            bot = Bot(token)
+            dp = Dispatcher()
+            print("✅ Bot and dispatcher initialized for webhook handling")
+        except Exception as e:
+            raise RuntimeError(f"Failed to initialize bot and dispatcher: {e}")
+
+    # Ensure routers are registered for webhook mode
+    _ensure_routers_registered()
+    return bot, dp
+
+
 async def main() -> None:
     print("🤖 Bot main() started")
     print(f"📊 BOT_TOKEN: {os.getenv('BOT_TOKEN', 'NOT_SET')[:15]}...")
@@ -239,22 +262,7 @@ async def main() -> None:
         print("✅ Dispatcher created")
 
     # Register routers (order preserved)
-    global _handlers_registered
-    if not _handlers_registered:
-        dp.include_router(anti_pin_guard_router)
-        dp.include_router(admin_router)
-        dp.include_router(cart_v2_router)
-        dp.include_router(recommendations_router)
-        dp.include_router(start_router)
-        dp.include_router(detailed_palette_router)
-        dp.include_router(detailed_skincare_router)
-        dp.include_router(skincare_picker_router)
-        dp.include_router(makeup_picker_router)
-        dp.include_router(skincare_router)
-        dp.include_router(palette_router)
-        dp.include_router(report_router)
-        dp.include_router(universal_router)
-        _handlers_registered = True
+    _ensure_routers_registered()
 
     # Webhook-only mode for Render
     use_webhook = os.getenv("USE_WEBHOOK", "1").lower() in ("1", "true", "yes")
