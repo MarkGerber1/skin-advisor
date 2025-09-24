@@ -84,7 +84,7 @@ async def handle_pinned_message(message: Message, bot: Bot):
                                 f"Content: `{message_text[:200]}...`\n\n"
                                 f"_Message automatically unpinned_"
                             ),
-                            parse_mode="Markdown",
+                            # no markdown to avoid artifacts
                         )
                     except Exception as e:
                         logger.error(f"Failed to notify owner: {e}")

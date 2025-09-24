@@ -352,10 +352,13 @@ async def q5_sun_reaction(cb: CallbackQuery, state: FSMContext) -> None:
         await state.update_data(sun=answer)
         await state.set_state(DetailedPaletteFlow.Q6_FACE_SHAPE)
 
+        from bot.utils.security import sanitize_message
         await cb.message.edit_text(
-            "**Вопрос 6 из 8**\n"
-            "👤 Какая форма лица у вас преобладает?\n\n"
-            "*Это поможет точно подобрать бронзатор и скульптор:*",
+            sanitize_message(
+                "Вопрос 6 из 8\n"
+                "👤 Какая форма лица у вас преобладает?\n\n"
+                "Это поможет точно подобрать бронзатор и скульптор:"
+            ),
             reply_markup=_kb_face_shape(),
         )
         await cb.answer()
@@ -371,8 +374,9 @@ async def q6_face_shape(cb: CallbackQuery, state: FSMContext) -> None:
         await state.update_data(face_shape=answer)
         await state.set_state(DetailedPaletteFlow.Q7_MAKEUP_STYLE)
 
+        from bot.utils.security import sanitize_message
         await cb.message.edit_text(
-            "**Вопрос 7 из 8**\n" "💄 Какой эффект вы предпочитаете в макияже?",
+            sanitize_message("Вопрос 7 из 8\n💄 Какой эффект вы предпочитаете в макияже?"),
             reply_markup=_kb_makeup_style(),
         )
         await cb.answer()
