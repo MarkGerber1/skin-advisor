@@ -37,12 +37,14 @@ async def on_start(m: Message, state: FSMContext) -> None:
     main_menu_kb = main_menu()
     print(f"📋 Sending main menu with {len(main_menu_kb.keyboard)} rows")
 
+    from bot.utils.security import sanitize_message
     await m.answer(
-        "🏠 **ГЛАВНОЕ МЕНЮ**\n\n"
-        "Привет! ✨ Я подберу персональный уход и идеальные оттенки макияжа по вашему профилю.\n\n"
-        "**👇 ИСПОЛЬЗУЙТЕ КНОПКИ НИЖЕ:**",
+        sanitize_message(
+            "🏠 ГЛАВНОЕ МЕНЮ\n\n"
+            "Привет! ✨ Я подберу персональный уход и идеальные оттенки макияжа по вашему профилю.\n\n"
+            "👇 ИСПОЛЬЗУЙТЕ КНОПКИ НИЖЕ:"
+        ),
         reply_markup=main_menu_kb,
-        parse_mode="Markdown",
     )
     print("✅ Main menu sent successfully")
 
@@ -80,7 +82,8 @@ async def start_skincare(m: Message, state: FSMContext) -> None:
                 [InlineKeyboardButton(text="🏠 Домой", callback_data="recovery:home")],
             ]
         )
-        await m.answer(conflict_msg, reply_markup=kb, parse_mode="Markdown")
+        from bot.utils.security import sanitize_message
+        await m.answer(sanitize_message(conflict_msg), reply_markup=kb)
         return
 
     # Check for session recovery - НЕ ДОЛЖНО срабатывать после принудительной очистки
@@ -100,7 +103,8 @@ async def start_skincare(m: Message, state: FSMContext) -> None:
                 [InlineKeyboardButton(text="🏠 Домой", callback_data="recovery:home")],
             ]
         )
-        await m.answer(recovery_msg, reply_markup=kb, parse_mode="Markdown")
+        from bot.utils.security import sanitize_message
+        await m.answer(sanitize_message(recovery_msg), reply_markup=kb)
         return
 
     await state.clear()  # Clear any existing state

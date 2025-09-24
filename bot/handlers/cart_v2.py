@@ -21,6 +21,7 @@ from engine.analytics import (
     checkout_started,
 )
 from engine.catalog_store import CatalogStore
+import os
 from i18n.ru import *
 
 logger = logging.getLogger(__name__)
@@ -37,7 +38,8 @@ def get_catalog_store():
     """Get catalog store instance"""
     global _catalog_store
     if _catalog_store is None:
-        _catalog_store = CatalogStore.instance("assets/fixed_catalog.yaml")
+        catalog_path = os.getenv("CATALOG_PATH", "assets/fixed_catalog.yaml")
+        _catalog_store = CatalogStore.instance(catalog_path)
     return _catalog_store
 
 
