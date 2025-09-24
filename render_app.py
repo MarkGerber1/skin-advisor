@@ -31,6 +31,7 @@ async def _run_bot_polling():
 
 def _start_bot_background():
     """Start the bot polling in a background thread with its own event loop."""
+
     def _runner():
         try:
             asyncio.run(_run_bot_polling())
