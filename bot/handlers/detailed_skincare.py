@@ -382,7 +382,11 @@ async def q5_couperose(cb: CallbackQuery, state: FSMContext) -> None:
 
         from bot.utils.security import sanitize_message
 
-        await cb.message.edit_text(
+        from bot.utils.security import safe_edit_message_text
+        await safe_edit_message_text(
+            cb.message.bot,
+            cb.message.chat.id,
+            cb.message.message_id,
             sanitize_message("Вопрос 6 из 10\n🧴 Какой уход вы используете сейчас?"),
             reply_markup=_kb_current_care(),
         )
@@ -401,7 +405,11 @@ async def q6_current_care(cb: CallbackQuery, state: FSMContext) -> None:
 
         from bot.utils.security import sanitize_message
 
-        await cb.message.edit_text(
+        from bot.utils.security import safe_edit_message_text
+        await safe_edit_message_text(
+            cb.message.bot,
+            cb.message.chat.id,
+            cb.message.message_id,
             sanitize_message("Вопрос 7 из 10\n⚠️ Есть ли аллергические реакции на косметику?"),
             reply_markup=_kb_allergies(),
         )
@@ -420,7 +428,11 @@ async def q7_allergies(cb: CallbackQuery, state: FSMContext) -> None:
 
         from bot.utils.security import sanitize_message
 
-        await cb.message.edit_text(
+        from bot.utils.security import safe_edit_message_text
+        await safe_edit_message_text(
+            cb.message.bot,
+            cb.message.chat.id,
+            cb.message.message_id,
             sanitize_message("Вопрос 8 из 10\n🎯 Какой эффект вы хотите получить от ухода?"),
             reply_markup=_kb_desired_effect(),
         )
@@ -713,15 +725,23 @@ async def q8_desired_effect(cb: CallbackQuery, state: FSMContext) -> None:
             print(f"⚠️ Failed to save report blocks: {_save_err}")
         text, keyboard_spec = render_report_telegram(blocks)
 
-        # Генерация PDF v2 на основе блоков
+        # Генерация PDF v2 на основе блоков (не блокирует UI)
         try:
-            snap = render_report_pdf(
-                blocks, profile=profile.__dict__, report_type="detailed_skincare"
-            )
-            pdf_path_v2 = generate_structured_pdf_report(uid, snap)
-            print(f"✅ PDF v2 generated for skincare: {pdf_path_v2}")
-        except Exception as pdf_err:
-            print(f"⚠️ PDF v2 generation failed (skincare): {pdf_err}")
+            import asyncio
+
+            async def _gen_pdf_async():
+                try:
+                    snap = render_report_pdf(
+                        blocks, profile=profile.__dict__, report_type="detailed_skincare"
+                    )
+                    path = generate_structured_pdf_report(uid, snap)
+                    print(f"✅ PDF v2 generated for skincare: {path}")
+                except Exception as e:
+                    print(f"⚠️ PDF v2 generation failed (skincare): {e}")
+
+            asyncio.create_task(_gen_pdf_async())
+        except Exception as _bg_err:
+            print(f"⚠️ Failed to schedule PDF generation: {_bg_err}")
 
         # Превращаем keyboard_spec в InlineKeyboardMarkup
         kb = InlineKeyboardMarkup(

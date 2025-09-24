@@ -594,13 +594,23 @@ async def q8_lip_color(cb: CallbackQuery, state: FSMContext) -> None:
             print(f"⚠️ Failed to save report blocks: {_save_err}")
         text, keyboard_spec = render_report_telegram(blocks)
 
-        # Генерация PDF v2 на основе блоков
+        # Генерация PDF v2 на основе блоков (не блокирует UI)
         try:
-            snap = render_report_pdf(blocks, profile=profile_dict, report_type="detailed_palette")
-            pdf_path_v2 = generate_structured_pdf_report(uid, snap)
-            print(f"✅ PDF v2 generated for palette: {pdf_path_v2}")
-        except Exception as pdf_err:
-            print(f"⚠️ PDF v2 generation failed (palette): {pdf_err}")
+            import asyncio
+
+            async def _gen_pdf_async():
+                try:
+                    snap = render_report_pdf(
+                        blocks, profile=profile_dict, report_type="detailed_palette"
+                    )
+                    path = generate_structured_pdf_report(uid, snap)
+                    print(f"✅ PDF v2 generated for palette: {path}")
+                except Exception as e:
+                    print(f"⚠️ PDF v2 generation failed (palette): {e}")
+
+            asyncio.create_task(_gen_pdf_async())
+        except Exception as _bg_err:
+            print(f"⚠️ Failed to schedule PDF generation: {_bg_err}")
 
         kb = InlineKeyboardMarkup(
             inline_keyboard=[
