@@ -99,7 +99,7 @@ def render_cart(cart_items: list[CartItem]) -> str:
         lines.append(format_cart_item(item))
 
     lines.append("")
-    lines.append(f"Итого: {total_qty} шт × {format_price(total_price, currency)}")
+    lines.append(f"Итого: {total_qty} шт · {format_price(total_price, currency)}")
     return "\n".join(lines)
 
 
@@ -422,11 +422,7 @@ async def handle_cart_checkout(cb: CallbackQuery):
         keyboard.row(InlineKeyboardButton(text="⬅️ Назад в корзину", callback_data="cart:open"))
 
         await safe_edit_message_text(
-            cb.message.bot,
-            cb.message.chat.id,
-            cb.message.message_id,
-            text,
-            reply_markup=keyboard.as_markup(),
+            cb.message.bot, cb.message.chat.id, cb.message.message_id, text, reply_markup=keyboard.as_markup()
         )
 
     except Exception as e:
@@ -445,11 +441,7 @@ async def handle_cart_back_reco(cb: CallbackQuery):
         keyboard.row(InlineKeyboardButton(text="🏠 Главное меню", callback_data="back:main"))
 
         await safe_edit_message_text(
-            cb.message.bot,
-            cb.message.chat.id,
-            cb.message.message_id,
-            text,
-            reply_markup=keyboard.as_markup(),
+            cb.message.bot, cb.message.chat.id, cb.message.message_id, text, reply_markup=keyboard.as_markup()
         )
         await cb.answer("Возвращаемся к рекомендациям")
 
