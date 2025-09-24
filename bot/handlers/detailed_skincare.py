@@ -384,6 +384,12 @@ async def q5_couperose(cb: CallbackQuery, state: FSMContext) -> None:
 
         from bot.utils.security import safe_edit_message_text
 
+        # Защита от повторных нажатий
+        try:
+            await cb.answer("✅", cache_time=1)
+        except Exception:
+            pass
+
         await safe_edit_message_text(
             cb.message.bot,
             cb.message.chat.id,
@@ -408,6 +414,11 @@ async def q6_current_care(cb: CallbackQuery, state: FSMContext) -> None:
 
         from bot.utils.security import safe_edit_message_text
 
+        try:
+            await cb.answer("✅", cache_time=1)
+        except Exception:
+            pass
+
         await safe_edit_message_text(
             cb.message.bot,
             cb.message.chat.id,
@@ -431,6 +442,11 @@ async def q7_allergies(cb: CallbackQuery, state: FSMContext) -> None:
         from bot.utils.security import sanitize_message
 
         from bot.utils.security import safe_edit_message_text
+
+        try:
+            await cb.answer("✅", cache_time=1)
+        except Exception:
+            pass
 
         await safe_edit_message_text(
             cb.message.bot,
@@ -462,7 +478,14 @@ async def q8_desired_effect(cb: CallbackQuery, state: FSMContext) -> None:
         from engine.catalog_store import CatalogStore
         from engine.answer_expander import AnswerExpanderV2
         from engine.models import ReportData
-        from bot.ui.pdf import save_last_json, save_text_pdf
+        # Legacy PDF helpers (guarded)
+        try:
+            from bot.ui.pdf import save_last_json, save_text_pdf
+        except Exception:
+            def save_last_json(*args, **kwargs):
+                return None
+            def save_text_pdf(*args, **kwargs):
+                return None
         import os
 
         # Определяем тип лица для Engine
@@ -616,8 +639,15 @@ async def q8_desired_effect(cb: CallbackQuery, state: FSMContext) -> None:
                 "full_text": full_report,
                 "answers": data,
             }
-            save_last_json(uid, snapshot)
-            save_text_pdf(uid, title="🧴 Отчёт по уходу за кожей", body_text=full_report)
+            try:
+                save_last_json(uid, snapshot)
+            except Exception as e:
+                print(f"⚠️ save_last_json failed: {e}")
+            try:
+                # Optional legacy text PDF; errors are ignored
+                save_text_pdf(uid, title="🧴 Отчёт по уходу за кожей", body_text=full_report)
+            except Exception as e:
+                print(f"⚠️ save_text_pdf failed: {e}")
 
         # Сохраняем профиль в FSM coordinator для корзины
         print(f"💾 Saving profile to FSM coordinator for user {uid}")
