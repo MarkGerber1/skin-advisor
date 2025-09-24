@@ -353,6 +353,7 @@ async def q5_sun_reaction(cb: CallbackQuery, state: FSMContext) -> None:
         await state.set_state(DetailedPaletteFlow.Q6_FACE_SHAPE)
 
         from bot.utils.security import sanitize_message
+
         await cb.message.edit_text(
             sanitize_message(
                 "Вопрос 6 из 8\n"
@@ -375,6 +376,7 @@ async def q6_face_shape(cb: CallbackQuery, state: FSMContext) -> None:
         await state.set_state(DetailedPaletteFlow.Q7_MAKEUP_STYLE)
 
         from bot.utils.security import sanitize_message
+
         await cb.message.edit_text(
             sanitize_message("Вопрос 7 из 8\n💄 Какой эффект вы предпочитаете в макияже?"),
             reply_markup=_kb_makeup_style(),
