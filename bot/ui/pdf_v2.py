@@ -380,6 +380,18 @@ class StructuredPDFGenerator:
             products_summary = self._calculate_products_summary(result)
             self._add_summary_table(pdf, profile, products_summary)
 
+            # 5. ВОЗРАСТ И ОСОБЕННОСТИ
+            self._add_age_and_lifestyle_section(pdf, profile)
+
+            # 6. ПОШАГОВЫЕ ИНСТРУКЦИИ (AM/PM)
+            self._add_step_by_step_section(pdf, profile)
+
+            # 7. ТИПИЧНЫЕ ОШИБКИ И КАК ИХ ИСПРАВИТЬ
+            self._add_common_mistakes_section(pdf, profile)
+
+            # 8. БЫСТРЫЕ РУТИНЫ (5 МИНУТ)
+            self._add_short_routines_section(pdf)
+
             # Сохранение
             pdf.output(str(pdf_path))
             print(f"✅ Generated structured PDF v2 for user {uid}: {pdf_path}")
@@ -443,6 +455,127 @@ class StructuredPDFGenerator:
                 "для достижения здорового и сияющего вида."
             )
             self._add_text_block(pdf, recommendation)
+
+    # ---------- Extended Sections ----------
+    def _add_age_and_lifestyle_section(self, pdf: FPDF, profile: Dict[str, Any]):
+        """Добавляет секцию с учетом возраста и образа жизни."""
+        pdf.ln(2)
+        self._add_section_header(pdf, "4. УЧЁТ ВОЗРАСТА И ОБРАЗА ЖИЗНИ")
+
+        age = None
+        try:
+            age = int(profile.get("age") or profile.get("user_age") or 0)
+        except Exception:
+            age = None
+
+        undertone = profile.get("undertone", "")
+        season = profile.get("season", "")
+        skin_type = profile.get("skin_type", "")
+
+        lines: List[str] = []
+        if age is None or age <= 0:
+            lines.append(
+                "Мы не получили ваш возраст. Ниже — универсальные рекомендации, актуальные для большинства."
+            )
+        elif age < 25:
+            lines.append(
+                "До 25 лет важно не перегружать лицо активами: делайте упор на мягкое очищение, лёгкое увлажнение и SPF."
+            )
+        elif 25 <= age < 35:
+            lines.append(
+                "25–34: подключайте антиоксиданты (витамин C), деликатные кислоты 1–2 раза в неделю, регулярный SPF."
+            )
+        elif 35 <= age < 45:
+            lines.append(
+                "35–44: уделите внимание упругости — пептиды, ретиноиды в вечернем уходе, интенсивное увлажнение."
+            )
+        else:
+            lines.append(
+                "45+: приоритет — восстановление барьера, мягкие ретиноиды, ниацинамид, регулярные маски с увлажнением."
+            )
+
+        if undertone:
+            lines.append(
+                f"Подтон {undertone}: выбирайте оттенки макияжа, гармонирующие с температурой кожи (тёплые/холодные/нейтральные)."
+            )
+        if season:
+            lines.append(
+                f"Цветотип {season}: используйте палитру, которая подчёркивает естественную яркость и не конфликтует с контрастом."
+            )
+        if skin_type:
+            lines.append(f"Тип лица: {skin_type}. Подбирайте текстуры под тип (гель/крем/флюид).")
+
+        self._add_text_block(pdf, "\n".join(lines))
+
+    def _add_step_by_step_section(self, pdf: FPDF, profile: Dict[str, Any]):
+        """Добавляет пошаговые инструкции утро/вечер с примерами применения."""
+        pdf.ln(2)
+        self._add_section_header(pdf, "5. ПОШАГОВЫЕ ИНСТРУКЦИИ")
+
+        # УТРО
+        self._add_text_block(pdf, "Утро:")
+        morning_steps = [
+            "Очищение: мягкое средство, без скрипучего чувства (30–40 секунд).",
+            "Тоник или эссенция: по типу лица, ладонями или ватным диском.",
+            "Сыворотка: антиоксиданты/увлажнение (3–4 капли, по массажным линиям).",
+            "Крем: по типу лица, тонким слоем.",
+            "SPF: 2 пальца крема (лицо+шея), как последний шаг.",
+        ]
+        for s in morning_steps:
+            self._add_text_block(pdf, f"• {s}", indent=4)
+
+        pdf.ln(2)
+        # ВЕЧЕР
+        self._add_text_block(pdf, "Вечер:")
+        evening_steps = [
+            "Демакияж/очищение: при макияже — двухэтапное (масло + гель).",
+            "Активы по целям: кислоты/ретиноиды через день (начинайте с низких концентраций).",
+            "Сыворотка: по задачам (лифтинг, осветление, баланс).",
+            "Крем: питательный/восстанавливающий.",
+            "Зона глаз: точечно, без растяжения кожи.",
+        ]
+        for s in evening_steps:
+            self._add_text_block(pdf, f"• {s}", indent=4)
+
+    def _add_common_mistakes_section(self, pdf: FPDF, profile: Dict[str, Any]):
+        """Добавляет секцию типичных ошибок и как их исправить."""
+        pdf.ln(2)
+        self._add_section_header(pdf, "6. ТИПИЧНЫЕ ОШИБКИ И КАК ИХ ИСПРАВИТЬ")
+
+        mistakes = [
+            ("Пересушивание кожи",
+             "Жёсткие умывалки/кислоты ежедневно. Решение: мягкое очищение, кислоты 1–2р/неделю, добавить увлажнение."),
+            ("Неровная тональная",
+             "Нанесение на сухую/неподготовленную кожу. Решение: увлажняющая сыворотка + праймер по типу."),
+            ("Отсутствие SPF",
+             "Провоцирует пигментацию и раннее старение. Решение: SPF каждый день, обновление днём."),
+            ("Много активов сразу",
+             "Конфликт ингредиентов и раздражение. Решение: вводить по одному, чередовать дни."),
+        ]
+        for title, fix in mistakes:
+            self._add_text_block(pdf, f"• {title}")
+            self._add_text_block(pdf, f"  Как исправить: {fix}")
+
+    def _add_short_routines_section(self, pdf: FPDF):
+        """Добавляет короткие рутинные алгоритмы на 5 минут."""
+        pdf.ln(2)
+        self._add_section_header(pdf, "7. БЫСТРЫЕ РУТИНЫ НА 5 МИНУТ")
+        self._add_text_block(pdf, "Утро (5 мин):")
+        for s in [
+            "Очищение · 30 сек",
+            "Сыворотка-супергерой · 30 сек",
+            "Крем · 30 сек",
+            "SPF · 60 сек",
+        ]:
+            self._add_text_block(pdf, f"• {s}", indent=4)
+        pdf.ln(1)
+        self._add_text_block(pdf, "Вечер (5 мин):")
+        for s in [
+            "Демакияж+Очищение · 60 сек",
+            "Актив по целям · 60 сек",
+            "Крем · 30 сек",
+        ]:
+            self._add_text_block(pdf, f"• {s}", indent=4)
 
     def _add_makeup_section(self, pdf: FPDF, makeup_data: Dict[str, List]):
         """Добавляет секцию макияжа"""
