@@ -71,7 +71,7 @@ def _get_catalog_products() -> List[dict]:
                 "image_url": p.image_url,
                 "source": p.source,
             }
-            for p in catalog[:50]
+            for p in catalog[:200]
         ]
     except Exception as e:
         logger.error(f"Failed to load catalog products: {e}")
@@ -100,16 +100,13 @@ def _get_catalog_products() -> List[dict]:
         ]
 
 
-def _filter_products(category: str, page: int, per_page: int = 3) -> tuple[List[dict], int]:
+def _filter_products(category: str, page: int, per_page: int = 8) -> tuple[List[dict], int]:
     settings = get_settings()
     products_all: List[dict] = []
 
     if selector_available and _selector:
         try:
-            # Загружаем профиль пользователя при наличии callback.from_user в вызывающем коде.
-            # Здесь персонализации по конкретному user_id нет, поэтому используем fallback-каталог.
-            # Для персонализированной выдачи использовать show_recommendations_after_test.
-            products_all = _get_catalog_products()
+            products_all = _get_catalog_products()  # персонализацию после тестов делаем отдельно
         except Exception as exc:  # pragma: no cover
             logger.warning("Selector fetch failed: %s", exc)
             products_all = _get_catalog_products()
@@ -122,6 +119,7 @@ def _filter_products(category: str, page: int, per_page: int = 3) -> tuple[List[
         filtered = products_all
 
     total_pages = max(1, (len(filtered) + per_page - 1) // per_page)
+    page = max(1, min(page, total_pages))
     start = (page - 1) * per_page
     end = start + per_page
     return filtered[start:end], total_pages
@@ -133,14 +131,11 @@ async def handle_recommendations(cb: CallbackQuery, bot: Bot) -> None:
         data = cb.data
         # Legacy rec:add: callbacks - redirect to cart:add:
         if data.startswith("rec:add:"):
-            # Convert rec:add:pid:vid to cart:add:pid:vid format
             parts = data.split(":")
             if len(parts) >= 3:
                 product_id = parts[2]
                 variant_id = parts[3] if len(parts) > 3 else "default"
-                # Simulate cart:add: callback
                 cb.data = f"cart:add:{product_id}:{variant_id}"
-                # This will be handled by cart_v2 router
             await cb.answer(MSG_CART_UPDATED, show_alert=False)
             return
 
@@ -180,20 +175,19 @@ async def show_recommendations_page(
         text_lines.append(f"• {name} — {price_row}")
         keyboard.row(_product_button(product_id, BTN_ADD))
 
-    if page > 1:
-        keyboard.row(
-            InlineKeyboardButton(
-                text="⬅ Назад",
-                callback_data=f"rec:more:{category}:{page-1}",
+    # Pagination row ◀︎ 1/3 ▶︎
+    if total_pages > 1:
+        nav_row: List[InlineKeyboardButton] = []
+        if page > 1:
+            nav_row.append(
+                InlineKeyboardButton(text="◀︎", callback_data=f"rec:more:{category}:{page-1}")
             )
-        )
-    if page < total_pages:
-        keyboard.row(
-            InlineKeyboardButton(
-                text="Вперёд ➡",
-                callback_data=f"rec:more:{category}:{page+1}",
+        nav_row.append(InlineKeyboardButton(text=f"{page}/{total_pages}", callback_data="noop"))
+        if page < total_pages:
+            nav_row.append(
+                InlineKeyboardButton(text="▶︎", callback_data=f"rec:more:{category}:{page+1}")
             )
-        )
+        keyboard.row(*nav_row)
 
     keyboard.row(InlineKeyboardButton(text=BTN_BACK_RECO, callback_data="rec:back"))
     keyboard.row(InlineKeyboardButton(text=BTN_CART_CONTINUE, callback_data="cart:open"))

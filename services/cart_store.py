@@ -305,6 +305,21 @@ class CartStore:
         self._last_removed.pop(user_id, None)
         return item
 
+    # ---------------------------------------------------------------------
+    # Currency conflicts
+    # ---------------------------------------------------------------------
+
+    def remove_other_currencies(self, user_id: int, keep_currency: str) -> int:
+        """Remove all items in currencies different from keep_currency. Returns removed count."""
+        cart = self.get_cart(user_id)
+        before = len(cart)
+        kept = [item for item in cart if (item.currency or "RUB") == keep_currency]
+        removed = before - len(kept)
+        if removed > 0:
+            self._carts[user_id] = kept
+            self._save_cart(user_id, kept)
+        return removed
+
 
 _cart_store_instance: Optional[CartStore] = None
 
