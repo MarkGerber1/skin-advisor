@@ -441,16 +441,6 @@ class StructuredPDFGenerator:
                 pdf.cell(0, 4, f"Цена: {price} {currency}", ln=True)
             pdf.ln(2)
 
-            # Сохранение
-            pdf.output(str(pdf_path))
-            print(f"✅ Generated structured PDF v2 for user {uid}: {pdf_path}")
-
-            return str(pdf_path)
-
-        except Exception as e:
-            print(f"❌ Error generating structured PDF for user {uid}: {e}")
-            return ""
-
     def _add_summary_section(self, pdf: FPDF, profile: Dict[str, Any], report_type: str):
         """Добавляет секцию резюме"""
         summary_parts = []
