@@ -49,14 +49,6 @@ def _add_to_cart_button(item: Dict) -> InlineKeyboardButton | None:
     if not pid:
         return None
 
-    # Проверяем наличие ссылки - если нет, не показываем кнопку Купить
-    link = item.get("link") or item.get("url") or item.get("ref_link")
-    if not link:
-        print(
-            f"⚠️ product_link_missing: pid={pid}, brand={item.get('brand', 'unknown')}, name={item.get('name', 'unknown')}"
-        )
-        return None
-
     # Design System: Краткий и понятный текст кнопки
     brand = item.get("brand", "").strip()
     name = item.get("name", "").strip()
@@ -70,13 +62,13 @@ def _add_to_cart_button(item: Dict) -> InlineKeyboardButton | None:
 
     return InlineKeyboardButton(
         text=button_text,
-        callback_data=f"cart:add:{pid}",
+        callback_data=f"cart:add:{pid}:default",
     )
 
 
 def _price_row(it: Dict) -> str:
     value = int(it.get("price") or 0)
-    currency = it.get("currency") or "₽"
+    currency = it.get("price_currency") or it.get("currency") or "₽"
     # В тестах ожидается символ ₽ рядом с числом
     if currency in ("RUB", "₽"):
         return f"{value} ₽"
