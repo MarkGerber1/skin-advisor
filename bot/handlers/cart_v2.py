@@ -152,12 +152,35 @@ async def handle_cart_open(cb: CallbackQuery):
         keyboard = build_cart_keyboard(cart_items)
 
         await safe_edit_message_text(
-            cb.message.chat.id, cb.message.message_id, text, reply_markup=keyboard
+            cb.message.bot, cb.message.chat.id, cb.message.message_id, text, reply_markup=keyboard
         )
         await cb.answer()
 
     except Exception as e:
         logger.error(f"Error opening cart: {e}")
+        await cb.answer("❌ Ошибка открытия корзины", show_alert=True)
+
+
+@router.callback_query(F.data == "show_cart")
+async def handle_show_cart(cb: CallbackQuery):
+    """Show cart from recommendations (edit message)"""
+    user_id = cb.from_user.id
+
+    try:
+        cart_items = cart_store.get_cart(user_id)
+
+        cart_opened(user_id)
+
+        text = render_cart(cart_items)
+        keyboard = build_cart_keyboard(cart_items)
+
+        await safe_edit_message_text(
+            cb.message.bot, cb.message.chat.id, cb.message.message_id, text, reply_markup=keyboard
+        )
+        await cb.answer()
+
+    except Exception as e:
+        logger.error(f"Error showing cart: {e}")
         await cb.answer("❌ Ошибка открытия корзины", show_alert=True)
 
 
@@ -256,7 +279,7 @@ async def handle_cart_inc(cb: CallbackQuery):
         keyboard = build_cart_keyboard(cart_items)
 
         await safe_edit_message_text(
-            cb.message.chat.id, cb.message.message_id, text, reply_markup=keyboard
+            cb.message.bot, cb.message.chat.id, cb.message.message_id, text, reply_markup=keyboard
         )
 
     except Exception as e:
@@ -303,7 +326,7 @@ async def handle_cart_dec(cb: CallbackQuery):
         keyboard = build_cart_keyboard(cart_items)
 
         await safe_edit_message_text(
-            cb.message.chat.id, cb.message.message_id, text, reply_markup=keyboard
+            cb.message.bot, cb.message.chat.id, cb.message.message_id, text, reply_markup=keyboard
         )
 
     except Exception as e:
@@ -337,7 +360,7 @@ async def handle_cart_rm(cb: CallbackQuery):
         keyboard = build_cart_keyboard(cart_items)
 
         await safe_edit_message_text(
-            cb.message.chat.id, cb.message.message_id, text, reply_markup=keyboard
+            cb.message.bot, cb.message.chat.id, cb.message.message_id, text, reply_markup=keyboard
         )
 
     except Exception as e:
@@ -361,7 +384,7 @@ async def handle_cart_clr(cb: CallbackQuery):
         keyboard = build_cart_keyboard(cart_items)
 
         await safe_edit_message_text(
-            cb.message.chat.id, cb.message.message_id, text, reply_markup=keyboard
+            cb.message.bot, cb.message.chat.id, cb.message.message_id, text, reply_markup=keyboard
         )
 
     except Exception as e:
@@ -399,7 +422,7 @@ async def handle_cart_checkout(cb: CallbackQuery):
         keyboard.row(InlineKeyboardButton(text="⬅️ Назад в корзину", callback_data="cart:open"))
 
         await safe_edit_message_text(
-            cb.message.chat.id, cb.message.message_id, text, reply_markup=keyboard.as_markup()
+            cb.message.bot, cb.message.chat.id, cb.message.message_id, text, reply_markup=keyboard.as_markup()
         )
 
     except Exception as e:
@@ -418,7 +441,7 @@ async def handle_cart_back_reco(cb: CallbackQuery):
         keyboard.row(InlineKeyboardButton(text="🏠 Главное меню", callback_data="back:main"))
 
         await safe_edit_message_text(
-            cb.message.chat.id, cb.message.message_id, text, reply_markup=keyboard.as_markup()
+            cb.message.bot, cb.message.chat.id, cb.message.message_id, text, reply_markup=keyboard.as_markup()
         )
         await cb.answer("Возвращаемся к рекомендациям")
 
