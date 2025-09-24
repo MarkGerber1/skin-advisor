@@ -9,7 +9,6 @@ import sys
 import asyncio
 import threading
 import signal
-import os
 from flask import Flask, jsonify
 
 # Add current directory to Python path
