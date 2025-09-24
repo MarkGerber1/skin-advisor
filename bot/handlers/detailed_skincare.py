@@ -282,6 +282,7 @@ async def start_detailed_skincare_flow(message: Message, state: FSMContext) -> N
         subtitle = "10 вопросов · 2 минуты · соберём уход и SPF по целям"
 
     from bot.utils.security import sanitize_message
+
     await message.answer(
         sanitize_message(
             "🧴 ПОРТРЕТ ЛИЦА\n\n"
@@ -304,6 +305,7 @@ async def q1_tightness(cb: CallbackQuery, state: FSMContext) -> None:
         await state.set_state(DetailedSkincareFlow.Q2_SUN_REACTION)
 
         from bot.utils.security import sanitize_message
+
         await cb.message.edit_text(
             sanitize_message("Вопрос 2 из 10\n☀️ Как ваше лицо реагирует на солнце?"),
             reply_markup=_kb_sun_reaction(),

@@ -38,6 +38,7 @@ async def on_start(m: Message, state: FSMContext) -> None:
     print(f"📋 Sending main menu with {len(main_menu_kb.keyboard)} rows")
 
     from bot.utils.security import sanitize_message
+
     await m.answer(
         sanitize_message(
             "🏠 ГЛАВНОЕ МЕНЮ\n\n"
@@ -83,6 +84,7 @@ async def start_skincare(m: Message, state: FSMContext) -> None:
             ]
         )
         from bot.utils.security import sanitize_message
+
         await m.answer(sanitize_message(conflict_msg), reply_markup=kb)
         return
 
@@ -104,6 +106,7 @@ async def start_skincare(m: Message, state: FSMContext) -> None:
             ]
         )
         from bot.utils.security import sanitize_message
+
         await m.answer(sanitize_message(recovery_msg), reply_markup=kb)
         return
 
