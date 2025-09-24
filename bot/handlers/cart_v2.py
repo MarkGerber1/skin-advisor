@@ -475,21 +475,36 @@ async def handle_cart_checkout(cb: CallbackQuery):
             await cb.answer("Корзина пуста")
             return
 
-        checkout_started(user_id)
+        # Analytics: checkout started with totals
+        total_qty, total_price, currency = cart_store.get_cart_total(user_id)
+        try:
+            checkout_started(user_id, total_qty, total_price)
+        except TypeError:
+            # fallback for legacy signature
+            try:
+                checkout_started(user_id)  # type: ignore
+            except Exception as _e:
+                logger.warning(f"checkout_started analytics failed: {_e}")
 
         # Generate checkout links with affiliate tags
         checkout_lines = [CHECKOUT_TITLE, "", CHECKOUT_LINKS_READY]
 
+        link_count = 0
         for item in cart_items:
             if item.ref_link:
                 # Add affiliate tag if needed
                 affiliate_link = item.ref_link  # TODO: Add affiliate logic
                 checkout_lines.append(f"• {item.name} - {affiliate_link}")
+                link_count += 1
 
         checkout_lines.append("")
         checkout_lines.append(MSG_CART_READY_FOR_CHECKOUT)
 
         text = "\n".join(checkout_lines)
+        try:
+            checkout_links_generated(user_id, link_count)
+        except Exception as _e:
+            logger.warning(f"checkout_links_generated analytics failed: {_e}")
         keyboard = InlineKeyboardBuilder()
         keyboard.row(InlineKeyboardButton(text="⬅️ Назад в корзину", callback_data="cart:open"))
 

@@ -152,6 +152,18 @@ async def handle_any_unhandled_callback(cb: CallbackQuery, state: FSMContext) ->
     )
     print(f"🔍 Current state: {await state.get_state()}")
 
+    # Route known navigation fallbacks
+    if cb.data == "back:main":
+        try:
+            await state.clear()
+            if cb.message:
+                await cb.message.edit_text("🏠 Главное меню\n\nВыберите действие:")
+                await cb.message.answer("Что хотите сделать?", reply_markup=main_menu())
+            await cb.answer("🏠 Возврат в главное меню")
+            return
+        except Exception:
+            pass
+
     # Don't handle test-related callbacks - let them be processed by test routers
     if cb.data and any(
         prefix in cb.data
