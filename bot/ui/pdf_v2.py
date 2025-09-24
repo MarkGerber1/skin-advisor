@@ -360,8 +360,8 @@ class StructuredPDFGenerator:
             title = title_map.get(report_type, "ПЕРСОНАЛЬНЫЙ ОТЧЕТ")
             self._add_header(pdf, title)
 
-            # ДОБАВЛЯЕМ ВИЗУАЛЬНУЮ КАРТОЧКУ
-            self._add_visual_card_section(pdf, uid, report_type)
+            # ДОБАВЛЕНИЕ ВИЗУАЛЬНОЙ КАРТОЧКИ ВРЕМЕННО ОТКЛЮЧЕНО ДО СТАБИЛИЗАЦИИ
+            # self._add_visual_card_section(pdf, uid, report_type)
 
             # 1. РЕЗЮМЕ
             self._add_section_header(pdf, "1. РЕЗЮМЕ АНАЛИЗА")
@@ -679,7 +679,7 @@ if __name__ == "__main__":
         },
     }
 
-    def _add_visual_card_section(self, pdf: FPDF, uid: int, report_type: str):
+    def _add_visual_card_section(self, pdf: FPDF, uid: int, report_type: str, profile: Dict[str, Any] | None = None):
         """Добавляет секцию с визуальной карточкой в PDF"""
         try:
             print(f"🎨 Adding visual card to PDF for user {uid}, type {report_type}")
@@ -767,7 +767,7 @@ if __name__ == "__main__":
                     print("✅ Visual card successfully added to PDF")
 
                     # ДОБАВЛЯЕМ ДИАГРАММЫ
-                    self._add_charts_section(pdf, uid, report_type, profile)
+                    self._add_charts_section(pdf, uid, report_type, profile or {})
 
                 except Exception as e:
                     print(f"❌ Error adding image to PDF: {e}")
