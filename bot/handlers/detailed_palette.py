@@ -754,16 +754,16 @@ async def q8_lip_color(cb: CallbackQuery, state: FSMContext) -> None:
         # using top-level imported InlineKeyboardMarkup/InlineKeyboardButton
         # using top-level imported InlineKeyboardMarkup/InlineKeyboardButton
 
-            from bot.utils.security import sanitize_message
-            await cb.message.edit_text(
-                sanitize_message(
-                    f"🎉 РЕЗУЛЬТАТ ТЕСТА\n\n"
-                    f"Ваш цветотип: {season_names[season]}\n\n"
-                    f"📊 Краткий анализ:\n{tldr_report}\n\n"
-                    f"Что вы хотите увидеть?"
-                ),
-                reply_markup=create_post_test_navigation("palette", "description"),
-            )
+        from bot.utils.security import sanitize_message
+        await cb.message.edit_text(
+            sanitize_message(
+                f"🎉 РЕЗУЛЬТАТ ТЕСТА\n\n"
+                f"Ваш цветотип: {season_names[season]}\n\n"
+                f"📊 Краткий анализ:\n{tldr_report}\n\n"
+                f"Что вы хотите увидеть?"
+            ),
+            reply_markup=create_post_test_navigation("palette", "description"),
+        )
         print(f"✅ Result buttons displayed for state: {await state.get_state()}")
 
         # Генерируем визуальную карточку
