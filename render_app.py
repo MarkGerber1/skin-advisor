@@ -8,91 +8,71 @@ import os
 import sys
 import asyncio
 import signal
-import threading
 from flask import Flask, request, jsonify
 
 # Add current directory to Python path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 app = Flask(__name__)
-bot_thread = None
-bot_started = False
 
 print("🌐 Render Flask app initialized")
+
+
+async def _set_webhook():
+    """Configure Telegram webhook based on environment variables."""
+    try:
+        from bot.main import get_bot_and_dispatcher
+
+        bot, dp = get_bot_and_dispatcher()
+        base = os.getenv("WEBHOOK_URL")
+        path = os.getenv("WEBHOOK_PATH", "/webhook")
+        if not base:
+            print("⚠️ WEBHOOK_URL is not set - skipping webhook setup")
+            return
+        webhook_full_url = f"{base.rstrip('/')}{path}"
+        await bot.set_webhook(
+            url=webhook_full_url,
+            drop_pending_updates=True,
+            allowed_updates=["message", "callback_query", "inline_query"],
+        )
+        print(f"✅ Webhook set to {webhook_full_url}")
+    except Exception as e:
+        print(f"❌ Failed to set webhook: {e}")
 
 
 @app.route("/health")
 def health():
     """Health check endpoint for Render"""
-    return jsonify({"status": "OK", "bot_started": bot_started, "timestamp": "2024"})
+    return jsonify({"status": "OK", "timestamp": "2025"})
 
 
 @app.route("/webhook", methods=["GET", "POST"])
 def telegram_webhook():
-    """Handle Telegram webhook requests"""
+    """Handle Telegram webhook requests: forward updates to aiogram dispatcher."""
     if request.method == "GET":
         return jsonify({"status": "Webhook endpoint active"})
 
-    # For POST requests - acknowledge
     data = request.get_json(silent=True) or {}
-    print(f"📨 Webhook received: {data.get('update_id', 'unknown')}")
+    try:
+        from aiogram.types import Update
+        from bot.main import get_bot_and_dispatcher
 
-    # TODO: Process webhook updates if needed
-    return jsonify({"status": "OK"})
+        async def _process_update():
+            bot, dp = get_bot_and_dispatcher()
+            update = Update.model_validate(data)
+            await dp.feed_update(bot, update)
 
-
-def run_bot_in_background():
-    """Run bot in background thread"""
-    global bot_started
-
-    def bot_worker():
-        global bot_started
-        try:
-            print("🤖 Starting bot in background thread...")
-
-            # Import and run bot
-            from bot.main import main
-
-            bot_started = True
-            print("✅ Bot thread started successfully")
-
-            # Create new event loop for this thread
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-
-            try:
-                # Run the bot in this thread's event loop
-                loop.run_until_complete(main())
-            finally:
-                loop.close()
-
-        except Exception as e:
-            print(f"❌ Bot thread error: {e}")
-            bot_started = False
-
-    # Start bot in daemon thread
-    bot_thread = threading.Thread(target=bot_worker, daemon=True, name="BotThread")
-    bot_thread.start()
-    print("🚀 Bot thread launched")
-
-
-@app.route("/start-bot")
-def start_bot_endpoint():
-    """Manually start bot (for debugging)"""
-    global bot_thread
-
-    if bot_thread and bot_thread.is_alive():
-        return jsonify({"status": "Bot already running"})
-
-    run_bot_in_background()
-    return jsonify({"status": "Bot start initiated"})
+        asyncio.run(_process_update())
+        return jsonify({"status": "OK"})
+    except Exception as e:
+        print(f"❌ Webhook processing error: {e}")
+        return jsonify({"status": "ERROR", "detail": str(e)}), 500
 
 
 def signal_handler(signum, frame):
     """Handle shutdown signals"""
     print(f"📡 Received signal {signum}")
     print("🛑 Shutting down gracefully...")
-    # Flask will handle the shutdown
     sys.exit(0)
 
 
@@ -108,9 +88,11 @@ if __name__ == "__main__":
     print(f"🌐 Port: {port}")
     print(f"🌐 Environment: {os.getenv('RENDER', 'NOT_SET')}")
 
-    # Auto-start bot in background on startup
-    print("🤖 Auto-starting bot...")
-    run_bot_in_background()
+    # Configure webhook on startup
+    try:
+        asyncio.run(_set_webhook())
+    except Exception as e:
+        print(f"⚠️ Webhook setup skipped: {e}")
 
     # Start Flask server
     print(f"🌐 Starting Flask server on 0.0.0.0:{port}")
