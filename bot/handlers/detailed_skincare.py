@@ -383,6 +383,7 @@ async def q5_couperose(cb: CallbackQuery, state: FSMContext) -> None:
         from bot.utils.security import sanitize_message
 
         from bot.utils.security import safe_edit_message_text
+
         await safe_edit_message_text(
             cb.message.bot,
             cb.message.chat.id,
@@ -406,6 +407,7 @@ async def q6_current_care(cb: CallbackQuery, state: FSMContext) -> None:
         from bot.utils.security import sanitize_message
 
         from bot.utils.security import safe_edit_message_text
+
         await safe_edit_message_text(
             cb.message.bot,
             cb.message.chat.id,
@@ -429,6 +431,7 @@ async def q7_allergies(cb: CallbackQuery, state: FSMContext) -> None:
         from bot.utils.security import sanitize_message
 
         from bot.utils.security import safe_edit_message_text
+
         await safe_edit_message_text(
             cb.message.bot,
             cb.message.chat.id,
