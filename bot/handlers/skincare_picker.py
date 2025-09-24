@@ -1003,10 +1003,22 @@ async def get_user_profile(user_id: int):
 async def get_skincare_recommendations(user_id: int, profile):
     """Получить рекомендации по уходу для пользователя"""
     try:
-        if SELECTOR_AVAILABLE:
+        if ANALYTICS_AVAILABLE:
             # Используем настоящий селектор
             selector = SelectorV2()
-            result = selector.select_products_v2(profile, "skincare")
+            # Загружаем каталог и партнёрские параметры
+            from config.env import get_settings
+            from engine.catalog_store import CatalogStore
+
+            settings = get_settings()
+            catalog = CatalogStore.instance(settings.catalog_path).get()
+
+            result = selector.select_products_v2(
+                profile=profile,
+                catalog=catalog,
+                partner_code=settings.partner_code,
+                redirect_base=settings.redirect_base,
+            )
             return result.get("skincare", {})
         else:
             # Фолбэк с тестовыми данными
