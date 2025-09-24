@@ -264,14 +264,21 @@ async def main() -> None:
     # Register routers (order preserved)
     _ensure_routers_registered()
 
-    # Webhook-only mode for Render
-    use_webhook = os.getenv("USE_WEBHOOK", "1").lower() in ("1", "true", "yes")
+    # Webhook disabled by default; enable only if explicitly set
+    use_webhook = os.getenv("USE_WEBHOOK", "0").lower() in ("1", "true", "yes")
     if use_webhook:
         print("🌐 Webhook mode active - do not start polling")
         return
 
-    # Fallback local polling (if explicitly disabled webhook)
-    print("📡 Starting polling for local development...")
+    # Ensure webhook is removed before polling to avoid conflicts
+    try:
+        await bot.delete_webhook(drop_pending_updates=True)
+        print("🧹 Webhook deleted, pending updates dropped")
+    except Exception as e:
+        print(f"⚠️ delete_webhook failed: {e}")
+
+    # Start polling for production
+    print("📡 Starting polling (Render)")
     await dp.start_polling(
         bot,
         skip_updates=True,
