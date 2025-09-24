@@ -160,6 +160,7 @@ async def start_palette(m: Message, state: FSMContext) -> None:
             ]
         )
         from bot.utils.security import sanitize_message
+
         await m.answer(sanitize_message(conflict_msg), reply_markup=kb)
         return
 
@@ -181,6 +182,7 @@ async def start_palette(m: Message, state: FSMContext) -> None:
             ]
         )
         from bot.utils.security import sanitize_message
+
         await m.answer(sanitize_message(recovery_msg), reply_markup=kb)
         return
 
@@ -352,6 +354,7 @@ async def privacy_policy(m: Message, state: FSMContext) -> None:
     )
 
     from bot.utils.security import sanitize_message
+
     await m.answer(sanitize_message(privacy_text), reply_markup=privacy_kb)
 
 

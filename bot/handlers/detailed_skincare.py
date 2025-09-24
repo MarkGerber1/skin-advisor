@@ -362,6 +362,7 @@ async def q4_eye_area(cb: CallbackQuery, state: FSMContext) -> None:
         await state.set_state(DetailedSkincareFlow.Q5_COUPEROSE)
 
         from bot.utils.security import sanitize_message
+
         await cb.message.edit_text(
             sanitize_message("Вопрос 5 из 10\n🩸 Есть ли купероз или сосудистые звездочки?"),
             reply_markup=_kb_couperose(),
@@ -380,6 +381,7 @@ async def q5_couperose(cb: CallbackQuery, state: FSMContext) -> None:
         await state.set_state(DetailedSkincareFlow.Q6_CURRENT_CARE)
 
         from bot.utils.security import sanitize_message
+
         await cb.message.edit_text(
             sanitize_message("Вопрос 6 из 10\n🧴 Какой уход вы используете сейчас?"),
             reply_markup=_kb_current_care(),
@@ -398,6 +400,7 @@ async def q6_current_care(cb: CallbackQuery, state: FSMContext) -> None:
         await state.set_state(DetailedSkincareFlow.Q7_ALLERGIES)
 
         from bot.utils.security import sanitize_message
+
         await cb.message.edit_text(
             sanitize_message("Вопрос 7 из 10\n⚠️ Есть ли аллергические реакции на косметику?"),
             reply_markup=_kb_allergies(),
@@ -416,6 +419,7 @@ async def q7_allergies(cb: CallbackQuery, state: FSMContext) -> None:
         await state.set_state(DetailedSkincareFlow.Q8_DESIRED_EFFECT)
 
         from bot.utils.security import sanitize_message
+
         await cb.message.edit_text(
             sanitize_message("Вопрос 8 из 10\n🎯 Какой эффект вы хотите получить от ухода?"),
             reply_markup=_kb_desired_effect(),
@@ -1048,9 +1052,7 @@ async def show_skincare_products_universal(cb: CallbackQuery, state: FSMContext)
         )
         kb = InlineKeyboardMarkup(inline_keyboard=buttons)
 
-        await cb.message.edit_text(
-            text, reply_markup=kb
-        )
+        await cb.message.edit_text(text, reply_markup=kb)
 
         # Analytics
         if ANALYTICS_AVAILABLE:

@@ -409,6 +409,7 @@ async def q7_makeup_style(cb: CallbackQuery, state: FSMContext) -> None:
         await state.set_state(DetailedPaletteFlow.Q8_LIP_COLOR)
 
         from bot.utils.security import sanitize_message
+
         await cb.message.edit_text(
             sanitize_message("Вопрос 8 из 8\n💋 Какой цвет губ у вас естественный?"),
             reply_markup=_kb_lip_color(),
