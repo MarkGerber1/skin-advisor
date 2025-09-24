@@ -287,7 +287,7 @@ async def report_latest(m: Message, state: FSMContext) -> None:
     print(f"📊 Report button pressed by user {m.from_user.id if m.from_user else 'Unknown'}")
     await state.clear()
 
-    # Direct report sending without fake callback
+    # Direct report sending with preference for PDF v2
     try:
         import os
 
@@ -301,8 +301,15 @@ async def report_latest(m: Message, state: FSMContext) -> None:
             await m.answer("❌ Ошибка идентификации пользователя")
             return
 
-        path = os.path.join("data", "reports", str(uid), "last.pdf")
-        if not os.path.exists(path):
+        base_dir = os.path.join("data", "reports", str(uid))
+        candidates = [
+            os.path.join(base_dir, "last_v2.pdf"),
+            os.path.join(base_dir, "last_v2_simple.pdf"),
+            os.path.join(base_dir, "last_v2_minimal.pdf"),
+            os.path.join(base_dir, "last.pdf"),
+        ]
+        path = next((p for p in candidates if os.path.exists(p)), None)
+        if not path:
             await m.answer("📄 Отчёт ещё не сформирован.\nПройдите диагностику или палитомер!")
             return
 
