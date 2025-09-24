@@ -185,7 +185,11 @@ def render_skincare_report(result: Dict) -> Tuple[str, InlineKeyboardMarkup]:
                     products_with_ref_link.append(product)
                     continue
 
-                if not product.get("link") and not product.get("url") and not product.get("buy_url"):
+                if (
+                    not product.get("link")
+                    and not product.get("url")
+                    and not product.get("buy_url")
+                ):
                     print(
                         f"⚠️ Skincare product {product.get('id')} has no link, skipping affiliate link generation"
                     )
@@ -408,7 +412,11 @@ def render_makeup_report(result: Dict) -> Tuple[str, InlineKeyboardMarkup]:
                     products_with_ref_link.append(product)
                     continue
 
-                if not product.get("link") and not product.get("url") and not product.get("buy_url"):
+                if (
+                    not product.get("link")
+                    and not product.get("url")
+                    and not product.get("buy_url")
+                ):
                     print(
                         f"⚠️ Product {product.get('id')} has no link, skipping affiliate link generation"
                     )
