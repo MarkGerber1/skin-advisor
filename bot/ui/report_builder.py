@@ -12,7 +12,7 @@ Report Builder - формирует блоки отчёта и рендеры д
 
 from __future__ import annotations
 
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 from typing import Any, Dict, List, Tuple, Optional
 import json
 from pathlib import Path

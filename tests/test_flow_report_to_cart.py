@@ -1,5 +1,3 @@
-
-
 def test_stub_flow_e2e_smoke():
     # Смоук-тест заглушка: наличие модулей и базовых функций
     import importlib

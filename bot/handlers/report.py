@@ -48,9 +48,13 @@ async def send_latest_report(cb: CallbackQuery) -> None:
                 _, blocks = loaded
                 text, kb_spec = render_report_telegram(blocks)
                 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+
                 kb = InlineKeyboardMarkup(
                     inline_keyboard=[
-                        [InlineKeyboardButton(text=lbl, callback_data=cbdata) for (lbl, cbdata) in row]
+                        [
+                            InlineKeyboardButton(text=lbl, callback_data=cbdata)
+                            for (lbl, cbdata) in row
+                        ]
                         for row in kb_spec
                     ]
                 )
